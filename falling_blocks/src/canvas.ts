@@ -1,7 +1,13 @@
 class CanvasProgram {
+  gl: WebGLRenderingContext;
+  program: any;
+  cubeTexture: any;
+  playerTexture: any;
+
   constructor() {
     this.gl = this.getCanvas();
-    this.texture = this.loadTexture(this.gl, "dirt.png");
+    this.cubeTexture = this.loadTexture(this.gl, "./imgs/dirt.png");
+    this.playerTexture = this.loadTexture(this.gl, "./imgs/player.png");
     this.clearCanvas();
   }
 
@@ -15,7 +21,7 @@ class CanvasProgram {
   }
 
   getCanvas() {
-    const canvas = document.querySelector("#glCanvas");
+    const canvas = document.querySelector("#glCanvas") as HTMLCanvasElement;
     canvas.height = window.innerHeight;
     canvas.width = window.innerWidth;
     // Initialize the GL context
@@ -23,36 +29,51 @@ class CanvasProgram {
 
     // Only continue if WebGL is available and working
     if (gl === null) {
-      throw new Error("Unable to initialize WebGL. Your browser or machine may not support it.");
+      throw new Error(
+        "Unable to initialize WebGL. Your browser or machine may not support it."
+      );
     }
 
     return gl;
   }
 
-  async getProgram() {
+  async loadProgram() {
     const vsSource = await fetch("./vertex_shader.glsl").then(x => x.text());
     const fsSource = await fetch("./fragment_shader.glsl").then(x => x.text());
 
     const shaderProgram = this.initShaderProgram(this.gl, vsSource, fsSource);
 
-    return {
+    this.program = {
       program: shaderProgram,
       attribLocations: {
-        vertexPosition: this.gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
-        textureCoord: this.gl.getAttribLocation(shaderProgram, 'aTextureCoord'),
+        vertexPosition: this.gl.getAttribLocation(
+          shaderProgram,
+          "aVertexPosition"
+        ),
+        textureCoord: this.gl.getAttribLocation(shaderProgram, "aTextureCoord")
       },
       uniformLocations: {
-        projectionMatrix: this.gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
-        modelViewMatrix: this.gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
-        uSampler: this.gl.getUniformLocation(shaderProgram, 'uSampler')
-      },
+        projectionMatrix: this.gl.getUniformLocation(
+          shaderProgram,
+          "uProjectionMatrix"
+        ),
+        modelViewMatrix: this.gl.getUniformLocation(
+          shaderProgram,
+          "uModelViewMatrix"
+        ),
+        uSampler: this.gl.getUniformLocation(shaderProgram, "uSampler")
+      }
     };
   }
 
   //
   // Initialize a shader program, so WebGL knows how to draw our data
   //
-  initShaderProgram(gl, vsSource, fsSource) {
+  initShaderProgram(
+    gl: WebGLRenderingContext,
+    vsSource: string,
+    fsSource: string
+  ) {
     const vertexShader = this.loadShader(gl, gl.VERTEX_SHADER, vsSource);
     const fragmentShader = this.loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
 
@@ -63,7 +84,10 @@ class CanvasProgram {
     gl.linkProgram(shaderProgram);
 
     if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-      console.log('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
+      console.log(
+        "Unable to initialize the shader program: " +
+          gl.getProgramInfoLog(shaderProgram)
+      );
       return null;
     }
 
@@ -74,7 +98,7 @@ class CanvasProgram {
   // creates a shader of the given type, uploads the source and
   // compiles it.
   //
-  loadShader(gl, type, source) {
+  loadShader(gl: WebGLRenderingContext, type: number, source: string) {
     const shader = gl.createShader(type);
 
     // Send the source to the shader object
@@ -97,8 +121,8 @@ class CanvasProgram {
   // Initialize a texture and load an image.
   // When the image finished loading copy it into the texture.
   //
-  loadTexture(gl, url) {
-    const isPowerOf2 = x => x & x - 1 === 0
+  loadTexture(gl: WebGLRenderingContext, url: string) {
+    const isPowerOf2 = (x: number) => (x & (x - 1)) === 0;
 
     const texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -116,15 +140,29 @@ class CanvasProgram {
     const srcFormat = gl.RGBA;
     const srcType = gl.UNSIGNED_BYTE;
     const pixel = new Uint8Array([0, 0, 255, 255]); // opaque blue
-    gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
-      width, height, border, srcFormat, srcType,
-      pixel);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      level,
+      internalFormat,
+      width,
+      height,
+      border,
+      srcFormat,
+      srcType,
+      pixel
+    );
 
     const image = new Image();
-    image.onload = function () {
+    image.onload = function() {
       gl.bindTexture(gl.TEXTURE_2D, texture);
-      gl.texImage2D(gl.TEXTURE_2D, level, internalFormat,
-        srcFormat, srcType, image);
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        level,
+        internalFormat,
+        srcFormat,
+        srcType,
+        image
+      );
 
       // WebGL1 has different requirements for power of 2 images
       // vs non power of 2 images so check if the image is a

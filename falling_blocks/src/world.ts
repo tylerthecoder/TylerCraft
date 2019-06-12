@@ -1,4 +1,8 @@
 class World {
+  canvas: CanvasProgram;
+
+  cubes: Cube[];
+  player: Player;
 
   lastTime = 0;
 
@@ -8,28 +12,23 @@ class World {
   }
 
   async load() {
-    const gl = this.canvas.gl;
-    const program = await this.canvas.getProgram();
-    const texture = this.canvas.texture;
+    await this.canvas.loadProgram();
 
     const floorSize = 3;
     const floor = [];
     for (let i = -floorSize; i < floorSize; i++) {
       for (let j = -floorSize; j < floorSize; j++) {
-        floor.push(new Cube(gl, program, texture, [i, -3, j]));
+        floor.push(new Cube(this.canvas, [i, 0, j]));
       }
     }
 
     this.cubes = [
-      // new Cube(gl, program, texture, [0, 0, 5]),
-      // new Cube(gl, program, texture, [0, 0, -5]),
-      // new Cube(gl, program, texture, [0, 5, 0]),
-      // new Cube(gl, program, texture, [5, 0, 0]),
-      // new Cube(gl, program, texture, [-5, 0, 0]),
+      new Cube(this.canvas, [1, 1, 1]),
+      new Cube(this.canvas, [0, 2, -5], [0.5, 3, 0.5]),
       ...floor
     ];
 
-    this.player = new Player();
+    this.player = new Player(this.canvas);
 
     this.start();
   }
@@ -38,27 +37,31 @@ class World {
     requestAnimationFrame(this.render.bind(this));
   }
 
-  render(time) {
+  render(time: number) {
     const delta = time - this.lastTime;
     this.lastTime = time;
 
     this.canvas.clearCanvas();
 
+    // updates
     this.player.update();
-
-    const playerPos = this.player.pos.slice(0);
-    const playerRot = this.player.rot.slice(0);
 
     for (const cube of this.cubes) {
       cube.update(delta);
-      cube.render(playerPos, playerRot);
-
       //check if the player is colliding with any cubes
-      if (cube.isCollide(this.player) !== -1) {
+      if (cube.isCollide(this.player)) {
         this.player.pushOut(cube);
       }
     }
 
+    // rendering
+    const playerPos = this.player.camPos;
+    const playerRot = this.player.rot.slice(0);
+
+    for (const cube of this.cubes) {
+      cube.render(playerPos, playerRot);
+    }
+    this.player.render();
 
     requestAnimationFrame(this.render.bind(this));
   }

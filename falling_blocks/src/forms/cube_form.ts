@@ -1,12 +1,17 @@
+declare var mat4: any;
+
 class CubeForm {
-  constructor(texture, program, gl) {
+  texture: any;
+  program: any;
+  gl: any;
+
+  constructor(canvas: any, texture: any) {
     this.texture = texture;
-    this.program = program;
-    this.gl = gl;
+    this.program = canvas.program;
+    this.gl = canvas.gl;
   }
 
-
-  initPositionBuffer(gl, size) {
+  initPositionBuffer(gl: any, size: number[]) {
     // Create a buffer for the square's positions.
     const positionBuffer = gl.createBuffer();
 
@@ -16,50 +21,96 @@ class CubeForm {
 
     const positions = [
       // Front face
-      -size, -size, size,
-      size, -size, size,
-      size, size, size,
-      -size, size, size,
+      -size[0],
+      -size[1],
+      size[2],
+      size[0],
+      -size[1],
+      size[2],
+      size[0],
+      size[1],
+      size[2],
+      -size[0],
+      size[1],
+      size[2],
 
       // Back face
-      -size, -size, -size,
-      -size, size, -size,
-      size, size, -size,
-      size, -size, -size,
+      -size[0],
+      -size[1],
+      -size[2],
+      -size[0],
+      size[1],
+      -size[2],
+      size[0],
+      size[1],
+      -size[2],
+      size[0],
+      -size[1],
+      -size[2],
 
       // Top face
-      -size, size, -size,
-      -size, size, size,
-      size, size, size,
-      size, size, -size,
+      -size[0],
+      size[1],
+      -size[2],
+      -size[0],
+      size[1],
+      size[2],
+      size[0],
+      size[1],
+      size[2],
+      size[0],
+      size[1],
+      -size[2],
 
       // Bottom face
-      -size, -size, -size,
-      size, -size, -size,
-      size, -size, size,
-      -size, -size, size,
+      -size[0],
+      -size[1],
+      -size[2],
+      size[0],
+      -size[1],
+      -size[2],
+      size[0],
+      -size[1],
+      size[2],
+      -size[0],
+      -size[1],
+      size[2],
 
       // Right face
-      size, -size, -size,
-      size, size, -size,
-      size, size, size,
-      size, -size, size,
+      size[0],
+      -size[1],
+      -size[2],
+      size[0],
+      size[1],
+      -size[2],
+      size[0],
+      size[1],
+      size[2],
+      size[0],
+      -size[1],
+      size[2],
 
       // Left face
-      -size, -size, -size,
-      -size, -size, size,
-      -size, size, size,
-      -size, size, -size,
+      -size[0],
+      -size[1],
+      -size[2],
+      -size[0],
+      -size[1],
+      size[2],
+      -size[0],
+      size[1],
+      size[2],
+      -size[0],
+      size[1],
+      -size[2]
     ];
 
-    gl.bufferData(gl.ARRAY_BUFFER,
-      new Float32Array(positions),
-      gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
     return positionBuffer;
   }
 
-  initIndexBuffer(gl) {
+  initIndexBuffer(gl: any) {
     const indexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
 
@@ -68,67 +119,132 @@ class CubeForm {
     // position.
 
     const indices = [
-      0, 1, 2, 0, 2, 3, // front
-      4, 5, 6, 4, 6, 7, // back
-      8, 9, 10, 8, 10, 11, // top
-      12, 13, 14, 12, 14, 15, // bottom
-      16, 17, 18, 16, 18, 19, // right
-      20, 21, 22, 20, 22, 23, // left
+      0,
+      1,
+      2,
+      0,
+      2,
+      3, // front
+      4,
+      5,
+      6,
+      4,
+      6,
+      7, // back
+      8,
+      9,
+      10,
+      8,
+      10,
+      11, // top
+      12,
+      13,
+      14,
+      12,
+      14,
+      15, // bottom
+      16,
+      17,
+      18,
+      16,
+      18,
+      19, // right
+      20,
+      21,
+      22,
+      20,
+      22,
+      23 // left
     ];
 
     // Now send the element array to GL
 
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,
-      new Uint16Array(indices), gl.STATIC_DRAW);
+    gl.bufferData(
+      gl.ELEMENT_ARRAY_BUFFER,
+      new Uint16Array(indices),
+      gl.STATIC_DRAW
+    );
 
     return indexBuffer;
   }
 
-  initTextureBuffer(gl) {
+  initTextureBuffer(gl: any) {
     const textureCoordBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
 
     const textureCoordinates = [
       // Front
-      0.0, 0.0,
-      1.0, 0.0,
-      1.0, 1.0,
-      0.0, 1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
       // Back
-      0.0, 0.0,
-      1.0, 0.0,
-      1.0, 1.0,
-      0.0, 1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
       // Top
-      0.0, 0.0,
-      1.0, 0.0,
-      1.0, 1.0,
-      0.0, 1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
       // Bottom
-      0.0, 0.0,
-      1.0, 0.0,
-      1.0, 1.0,
-      0.0, 1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
       // Right
-      0.0, 0.0,
-      1.0, 0.0,
-      1.0, 1.0,
-      0.0, 1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
       // Left
-      0.0, 0.0,
-      1.0, 0.0,
-      1.0, 1.0,
-      0.0, 1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0
     ];
 
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCoordinates),
-      gl.STATIC_DRAW);
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array(textureCoordinates),
+      gl.STATIC_DRAW
+    );
 
     return textureCoordBuffer;
   }
 
-  render(size, pos, rot, screenPos, screenRot) {
-
+  render(
+    size: number[],
+    pos: number[],
+    rot: number,
+    screenPos: number[],
+    screenRot: number[]
+  ) {
     const gl = this.gl;
     const programInfo = this.program;
 
@@ -151,7 +267,7 @@ class CubeForm {
     // and we only want to see objects between 0.1 units
     // and 100 units away from the camera.
 
-    const fieldOfView = 45 * Math.PI / 180; // in radians
+    const fieldOfView = (45 * Math.PI) / 180; // in radians
     const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
     const zNear = 0.1;
     const zFar = 100.0;
@@ -159,42 +275,47 @@ class CubeForm {
 
     // note: glmatrix.js always has the first argument
     // as the destination to receive the result.
-    mat4.perspective(projectionMatrix,
-      fieldOfView,
-      aspect,
-      zNear,
-      zFar);
+    mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
 
     // Set the drawing position to the "identity" point, which is
     // the center of the scene.
     const modelViewMatrix = mat4.create();
 
-
-    mat4.rotate(modelViewMatrix, modelViewMatrix, Math.PI / 2 - screenRot[0], [1, 0, 0]);
+    mat4.rotate(modelViewMatrix, modelViewMatrix, Math.PI / 2 - screenRot[0], [
+      1,
+      0,
+      0
+    ]);
     mat4.rotate(modelViewMatrix, modelViewMatrix, screenRot[1], [0, 1, 0]);
-
 
     // Now move the drawing position a bit to where we want to
     // start drawing the square.
 
-    mat4.translate(modelViewMatrix, // destination matrix
+    mat4.translate(
+      modelViewMatrix, // destination matrix
       modelViewMatrix, // matrix to translate
-      pos); // amount to translate
+      pos
+    ); // amount to translate
 
-
-    mat4.rotate(modelViewMatrix, // destination matrix
+    mat4.rotate(
+      modelViewMatrix, // destination matrix
       modelViewMatrix, // matrix to rotate
       rot, // amount to rotate in radians
-      [0, 0, 1]); // axis to rotate around
+      [0, 0, 1]
+    ); // axis to rotate around
 
-    mat4.translate(modelViewMatrix, // destination matrix
+    mat4.translate(
+      modelViewMatrix, // destination matrix
       modelViewMatrix, // matrix to translate
-      pos); // amount to translate
+      pos
+    ); // amount to translate
 
-    mat4.rotate(modelViewMatrix, // destination matrix
+    mat4.rotate(
+      modelViewMatrix, // destination matrix
       modelViewMatrix, // matrix to rotate
-      rot * .7, // amount to rotate in radians
-      [0, 1, 0]); // axis to rotate around
+      rot * 0.7, // amount to rotate in radians
+      [0, 1, 0]
+    ); // axis to rotate around
 
     // Tell WebGL how to pull out the positions from the position
     // buffer into the vertexPosition attribute.
@@ -214,9 +335,9 @@ class CubeForm {
         type,
         normalize,
         stride,
-        offset);
-      gl.enableVertexAttribArray(
-        programInfo.attribLocations.vertexPosition);
+        offset
+      );
+      gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
     }
 
     // tell webgl how to pull out the texture coordinates from buffer
@@ -227,7 +348,14 @@ class CubeForm {
       const stride = 0; // how many bytes to get from one set to the next
       const offset = 0; // how many bytes inside the buffer to start from
       gl.bindBuffer(gl.ARRAY_BUFFER, buffers.textureCoord);
-      gl.vertexAttribPointer(programInfo.attribLocations.textureCoord, num, type, normalize, stride, offset);
+      gl.vertexAttribPointer(
+        programInfo.attribLocations.textureCoord,
+        num,
+        type,
+        normalize,
+        stride,
+        offset
+      );
       gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
     }
 
@@ -255,11 +383,13 @@ class CubeForm {
     gl.uniformMatrix4fv(
       programInfo.uniformLocations.projectionMatrix,
       false,
-      projectionMatrix);
+      projectionMatrix
+    );
     gl.uniformMatrix4fv(
       programInfo.uniformLocations.modelViewMatrix,
       false,
-      modelViewMatrix);
+      modelViewMatrix
+    );
 
     {
       const vertexCount = 36;
@@ -268,5 +398,4 @@ class CubeForm {
       gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
     }
   }
-
 }
