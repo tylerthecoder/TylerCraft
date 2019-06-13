@@ -3,106 +3,54 @@ declare var mat4: any;
 class CubeForm {
   texture: any;
   program: any;
-  gl: any;
+  gl: WebGLRenderingContext;
+  size: IDim;
 
-  constructor(canvas: any, texture: any) {
+  posBuffer: WebGLBuffer;
+  indexBuffer: WebGLBuffer;
+
+  constructor(canvas: CanvasProgram, texture: any, size: IDim) {
     this.texture = texture;
     this.program = canvas.program;
     this.gl = canvas.gl;
+    this.size = size;
+
+    this.posBuffer = this.initPositionBuffer();
+    this.indexBuffer = this.initIndexBuffer();
   }
 
-  initPositionBuffer(gl: any, size: number[]) {
-    // Create a buffer for the square's positions.
+  getFace(i: number, dir: number, size: number[]) {
+    const square = [[-1, -1], [1, -1], [1, 1], [-1, 1]];
+    const pos = square
+      .map(edge => {
+        edge.splice(i, 0, dir);
+        return edge.map((dim, i) => dim * size[i]);
+      })
+      .flat();
+    return {
+      pos,
+      indices: [0, 1, 2, 0, 2, 3]
+    };
+  }
+
+  initPositionBuffer() {
+    const gl = this.gl;
+
     const positionBuffer = gl.createBuffer();
+
+    const size = this.size;
 
     // Select the positionBuffer as the one to apply buffer
     // operations to from here out.
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
 
     const positions = [
-      // Front face
-      -size[0],
-      -size[1],
-      size[2],
-      size[0],
-      -size[1],
-      size[2],
-      size[0],
-      size[1],
-      size[2],
-      -size[0],
-      size[1],
-      size[2],
-
-      // Back face
-      -size[0],
-      -size[1],
-      -size[2],
-      -size[0],
-      size[1],
-      -size[2],
-      size[0],
-      size[1],
-      -size[2],
-      size[0],
-      -size[1],
-      -size[2],
-
-      // Top face
-      -size[0],
-      size[1],
-      -size[2],
-      -size[0],
-      size[1],
-      size[2],
-      size[0],
-      size[1],
-      size[2],
-      size[0],
-      size[1],
-      -size[2],
-
-      // Bottom face
-      -size[0],
-      -size[1],
-      -size[2],
-      size[0],
-      -size[1],
-      -size[2],
-      size[0],
-      -size[1],
-      size[2],
-      -size[0],
-      -size[1],
-      size[2],
-
-      // Right face
-      size[0],
-      -size[1],
-      -size[2],
-      size[0],
-      size[1],
-      -size[2],
-      size[0],
-      size[1],
-      size[2],
-      size[0],
-      -size[1],
-      size[2],
-
-      // Left face
-      -size[0],
-      -size[1],
-      -size[2],
-      -size[0],
-      -size[1],
-      size[2],
-      -size[0],
-      size[1],
-      size[2],
-      -size[0],
-      size[1],
-      -size[2]
+      ...this.getFace(2, 1, size).pos, // Front
+      ...this.getFace(2, -1, size).pos, // Back
+      ...this.getFace(1, 1, size).pos, // Top
+      ...this.getFace(1, -1, size).pos, // Bottom
+      ...this.getFace(0, 1, size).pos, // Right
+      ...this.getFace(0, -1, size).pos //Left
     ];
 
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
@@ -110,7 +58,8 @@ class CubeForm {
     return positionBuffer;
   }
 
-  initIndexBuffer(gl: any) {
+  initIndexBuffer() {
+    const gl = this.gl;
     const indexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
 
@@ -118,43 +67,15 @@ class CubeForm {
     // indices into the vertex array to specify each triangle's
     // position.
 
+    const base = [0, 1, 2, 0, 2, 3];
+
     const indices = [
-      0,
-      1,
-      2,
-      0,
-      2,
-      3, // front
-      4,
-      5,
-      6,
-      4,
-      6,
-      7, // back
-      8,
-      9,
-      10,
-      8,
-      10,
-      11, // top
-      12,
-      13,
-      14,
-      12,
-      14,
-      15, // bottom
-      16,
-      17,
-      18,
-      16,
-      18,
-      19, // right
-      20,
-      21,
-      22,
-      20,
-      22,
-      23 // left
+      ...base, //front
+      ...base.map(x => x + 4), //back
+      ...base.map(x => x + 8), //top
+      ...base.map(x => x + 12), //bottom
+      ...base.map(x => x + 16), //right
+      ...base.map(x => x + 20) //left
     ];
 
     // Now send the element array to GL
@@ -168,7 +89,7 @@ class CubeForm {
     return indexBuffer;
   }
 
-  initTextureBuffer(gl: any) {
+  initTextureBuffer(gl: WebGLRenderingContext) {
     const textureCoordBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
 
@@ -238,6 +159,30 @@ class CubeForm {
     return textureCoordBuffer;
   }
 
+  bindCube() {
+    const programInfo = this.program;
+    const gl = this.gl;
+
+    const numComponents = 3; // pull out 2 values per iteration
+    const type = gl.FLOAT; // the data in the buffer is 32bit floats
+    const normalize = false; // don't normalize
+    const stride = 0; // how many bytes to get from one set of values to the next
+    // 0 = use type and numComponents above
+    const offset = 0; // how many bytes inside the buffer to start from
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuffer);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+
+    gl.vertexAttribPointer(
+      programInfo.attribLocations.vertexPosition,
+      numComponents,
+      type,
+      normalize,
+      stride,
+      offset
+    );
+    gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
+  }
+
   render(
     size: number[],
     pos: number[],
@@ -249,8 +194,6 @@ class CubeForm {
     const programInfo = this.program;
 
     const buffers = {
-      position: this.initPositionBuffer(gl, size),
-      indices: this.initIndexBuffer(gl),
       textureCoord: this.initTextureBuffer(gl)
     };
     pos = pos.map((ele, index) => ele - screenPos[index]);
@@ -319,26 +262,7 @@ class CubeForm {
 
     // Tell WebGL how to pull out the positions from the position
     // buffer into the vertexPosition attribute.
-    {
-      const numComponents = 3; // pull out 2 values per iteration
-      const type = gl.FLOAT; // the data in the buffer is 32bit floats
-      const normalize = false; // don't normalize
-      const stride = 0; // how many bytes to get from one set of values to the next
-      // 0 = use type and numComponents above
-      const offset = 0; // how many bytes inside the buffer to start from
-      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
-
-      gl.vertexAttribPointer(
-        programInfo.attribLocations.vertexPosition,
-        numComponents,
-        type,
-        normalize,
-        stride,
-        offset
-      );
-      gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
-    }
+    this.bindCube();
 
     // tell webgl how to pull out the texture coordinates from buffer
     {

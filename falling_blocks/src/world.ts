@@ -14,7 +14,7 @@ class World {
   async load() {
     await this.canvas.loadProgram();
 
-    const floorSize = 3;
+    const floorSize = 10;
     const floor = [];
     for (let i = -floorSize; i < floorSize; i++) {
       for (let j = -floorSize; j < floorSize; j++) {

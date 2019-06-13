@@ -19,12 +19,14 @@ class Entity {
   }
 
   gravity() {
-    this.vel[1] -= .007;
+    this.vel[1] -= 0.007;
   }
 
   isCollide(ent: Entity) {
     for (let i = 0; i < 3; i++) {
-      if (!(Math.abs(this.pos[i] - ent.pos[i]) < this.dim[i] / 2 + ent.dim[i] / 2)) {
+      if (
+        !(Math.abs(this.pos[i] - ent.pos[i]) < this.dim[i] / 2 + ent.dim[i] / 2)
+      ) {
         return false;
       }
     }
@@ -37,19 +39,19 @@ class Entity {
     for (let i = 0; i < 3; i++) {
       for (let dir = -1; dir <= 1; dir += 2) {
         // calculate the distance from a face on the player to a face on the ent
-        const p = this.pos[i] + (this.dim[i] / 2 * dir);
-        const c = ent.pos[i] + (ent.dim[i] / 2 * -1 * dir);
+        const p = this.pos[i] + (this.dim[i] / 2) * dir;
+        const c = ent.pos[i] + (ent.dim[i] / 2) * -1 * dir;
         const dist = c - p;
         // find the shortest distance (that is best one to move)
         if (Math.abs(dist) < Math.abs(min[0])) {
           min = [dist, i, dir];
         }
       }
-    };
+    }
 
     const [_, i, dir] = min;
 
-    this.pos[i] = ent.pos[i] + (ent.dim[i] / 2 + this.dim[i] / 2) * -dir
+    this.pos[i] = ent.pos[i] + (ent.dim[i] / 2 + this.dim[i] / 2) * -dir;
 
     this.vel[i] = 0;
 
@@ -58,7 +60,4 @@ class Entity {
       this.jumpCount = 0;
     }
   }
-
-
-
 }

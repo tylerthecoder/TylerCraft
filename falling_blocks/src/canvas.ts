@@ -1,4 +1,5 @@
 class CanvasProgram {
+  canvas: HTMLCanvasElement;
   gl: WebGLRenderingContext;
   program: any;
   cubeTexture: any;
@@ -21,11 +22,11 @@ class CanvasProgram {
   }
 
   getCanvas() {
-    const canvas = document.querySelector("#glCanvas") as HTMLCanvasElement;
-    canvas.height = window.innerHeight;
-    canvas.width = window.innerWidth;
+    this.canvas = document.querySelector("#glCanvas") as HTMLCanvasElement;
+    this.canvas.height = window.innerHeight;
+    this.canvas.width = window.innerWidth;
     // Initialize the GL context
-    const gl = canvas.getContext("webgl");
+    const gl = this.canvas.getContext("webgl");
 
     // Only continue if WebGL is available and working
     if (gl === null) {

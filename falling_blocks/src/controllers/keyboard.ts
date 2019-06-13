@@ -2,23 +2,20 @@ class KeyboardController {
   jumpCount = 0;
   player: Player;
   keys = new Set();
-  mouseDown = true;
 
-  constructor(player: Player) {
+  constructor(player: Player, canvas: CanvasProgram) {
     this.player = player;
     this.keys = new Set();
-    this.setKeyBinding();
-  }
 
-  setKeyBinding() {
-    window.addEventListener("keydown", ({ key }) => this.keys.add(key));
-    window.addEventListener("keyup", ({ key }) => this.keys.delete(key));
+    window.addEventListener("keydown", ({ key }) =>
+      this.keys.add(key.toLowerCase())
+    );
+    window.addEventListener("keyup", ({ key }) =>
+      this.keys.delete(key.toLowerCase())
+    );
 
     window.addEventListener("mousedown", () => {
-      this.mouseDown = true;
-    });
-    window.addEventListener("mouseup", () => {
-      this.mouseDown = false;
+      canvas.canvas.requestPointerLock();
     });
 
     window.addEventListener("mousemove", this.handleMouse.bind(this));
@@ -57,11 +54,9 @@ class KeyboardController {
   }
 
   handleMouse(e: MouseEvent) {
-    if (this.mouseDown) {
-      const speed = 0.001;
-      const dx = e.movementX * speed;
-      const dy = e.movementY * speed;
-      this.player.rotate([dy, -dx, 0]);
-    }
+    const speed = 0.002;
+    const dx = e.movementX * speed;
+    const dy = e.movementY * speed;
+    this.player.rotate([-dy, dx, 0]);
   }
 }

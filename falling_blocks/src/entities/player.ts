@@ -11,14 +11,10 @@ class Player extends Entity {
   controller: any;
   form: any;
 
-  constructor(canvas: any) {
+  constructor(canvas: CanvasProgram) {
     super([0, 5, 0], [0, 0, 0], [1, 2, 1]);
-    // @ts-ignore
-
-    this.controller = new KeyboardController(this);
-    // @ts-ignore
-
-    this.form = new CubeForm(canvas, canvas.playerTexture);
+    this.controller = new KeyboardController(this, canvas);
+    this.form = new CubeForm(canvas, canvas.playerTexture, [1, 2, 1]);
   }
 
   get camPos() {
