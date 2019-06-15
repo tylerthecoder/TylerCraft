@@ -16,6 +16,7 @@ class KeyboardController {
 
     window.addEventListener("mousedown", () => {
       canvas.canvas.requestPointerLock();
+      canvas.canvas.requestFullscreen();
     });
 
     window.addEventListener("mousemove", this.handleMouse.bind(this));
@@ -27,7 +28,7 @@ class KeyboardController {
       r * Math.cos(p),
       r * Math.sin(p) * Math.cos(t)
     ];
-    return cords;
+    return cords as IDim;
   }
 
   update() {

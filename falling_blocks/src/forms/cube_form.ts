@@ -1,22 +1,34 @@
 declare var mat4: any;
 
+enum IFace {
+  FRONT = 0,
+  BACK = 1,
+  TOP = 2,
+  BOTTOM = 3,
+  RIGHT = 4,
+  LEFT = 5
+}
+
 class CubeForm {
-  texture: any;
   program: any;
   gl: WebGLRenderingContext;
-  size: IDim;
 
   posBuffer: WebGLBuffer;
   indexBuffer: WebGLBuffer;
+  textureBuffer: WebGLBuffer;
 
-  constructor(canvas: CanvasProgram, texture: any, size: IDim) {
-    this.texture = texture;
+  faces: any;
+
+  constructor(
+    public canvas: CanvasProgram,
+    public textures: WebGLTexture[],
+    public size: IDim
+  ) {
     this.program = canvas.program;
     this.gl = canvas.gl;
-    this.size = size;
 
-    this.posBuffer = this.initPositionBuffer();
-    this.indexBuffer = this.initIndexBuffer();
+    this.initPositionBuffer();
+    this.initTextureBuffer();
   }
 
   getFace(i: number, dir: number, size: number[]) {
@@ -27,90 +39,78 @@ class CubeForm {
         return edge.map((dim, i) => dim * size[i]);
       })
       .flat();
-    return {
-      pos,
-      indices: [0, 1, 2, 0, 2, 3]
-    };
+    return pos;
   }
 
   initPositionBuffer() {
-    const gl = this.gl;
-
-    const positionBuffer = gl.createBuffer();
+    // this might be controlled by a higher class. one
+    // that knows the surround blocks and such
+    const facesToRender = [0, 1, 2, 3, 4, 5];
 
     const size = this.size;
 
-    // Select the positionBuffer as the one to apply buffer
-    // operations to from here out.
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-
-    const positions = [
-      ...this.getFace(2, 1, size).pos, // Front
-      ...this.getFace(2, -1, size).pos, // Back
-      ...this.getFace(1, 1, size).pos, // Top
-      ...this.getFace(1, -1, size).pos, // Bottom
-      ...this.getFace(0, 1, size).pos, // Right
-      ...this.getFace(0, -1, size).pos //Left
-    ];
-
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
-
-    return positionBuffer;
-  }
-
-  initIndexBuffer() {
-    const gl = this.gl;
-    const indexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-
-    // This array defines each face as two triangles, using the
-    // indices into the vertex array to specify each triangle's
-    // position.
-
     const base = [0, 1, 2, 0, 2, 3];
 
-    const indices = [
-      ...base, //front
-      ...base.map(x => x + 4), //back
-      ...base.map(x => x + 8), //top
-      ...base.map(x => x + 12), //bottom
-      ...base.map(x => x + 16), //right
-      ...base.map(x => x + 20) //left
-    ];
+    this.faces = [];
+    const positions = [];
+    const indices = [];
+    let count = 0;
+    for (const face of facesToRender) {
+      const i = face >> 1;
+      const dir = face % 2 === 0 ? 1 : -1;
 
-    // Now send the element array to GL
+      const pos = this.getFace(i, dir, size);
+      const index = base.map(x => x + count);
+      count += 4;
 
+      positions.push(...pos);
+      indices.push(...index);
+
+      this.faces.push({
+        pos,
+        index,
+        texture: this.textures[face]
+      });
+    }
+
+    const gl = this.gl;
+
+    this.posBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+
+    this.indexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
     gl.bufferData(
       gl.ELEMENT_ARRAY_BUFFER,
       new Uint16Array(indices),
       gl.STATIC_DRAW
     );
-
-    return indexBuffer;
   }
 
-  initTextureBuffer(gl: WebGLRenderingContext) {
-    const textureCoordBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
+  initTextureBuffer() {
+    const gl = this.gl;
+    this.textureBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.textureBuffer);
 
     const textureCoordinates = [
       // Front
       0.0,
+      1.0,
+      0.0,
       0.0,
       1.0,
       0.0,
       1.0,
-      1.0,
-      0.0,
       1.0,
       // Back
       0.0,
+      1.0,
+      0.0,
       0.0,
       1.0,
       0.0,
       1.0,
-      1.0,
-      0.0,
       1.0,
       // Top
       0.0,
@@ -131,23 +131,23 @@ class CubeForm {
       0.0,
       1.0,
       // Right
-      0.0,
-      0.0,
-      1.0,
-      0.0,
       1.0,
       1.0,
       0.0,
       1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0,
       // Left
-      0.0,
-      0.0,
-      1.0,
-      0.0,
       1.0,
       1.0,
       0.0,
-      1.0
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      0.0
     ];
 
     gl.bufferData(
@@ -155,8 +155,6 @@ class CubeForm {
       new Float32Array(textureCoordinates),
       gl.STATIC_DRAW
     );
-
-    return textureCoordBuffer;
   }
 
   bindCube() {
@@ -183,20 +181,9 @@ class CubeForm {
     gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
   }
 
-  render(
-    size: number[],
-    pos: number[],
-    rot: number,
-    screenPos: number[],
-    screenRot: number[]
-  ) {
+  render(pos: number[], screenPos: number[], screenRot: number[]) {
     const gl = this.gl;
     const programInfo = this.program;
-
-    const buffers = {
-      textureCoord: this.initTextureBuffer(gl)
-    };
-    pos = pos.map((ele, index) => ele - screenPos[index]);
 
     gl.enable(gl.DEPTH_TEST); // Enable depth testing
     gl.depthFunc(gl.LEQUAL); // Near things obscure far things
@@ -237,28 +224,8 @@ class CubeForm {
     mat4.translate(
       modelViewMatrix, // destination matrix
       modelViewMatrix, // matrix to translate
-      pos
-    ); // amount to translate
-
-    mat4.rotate(
-      modelViewMatrix, // destination matrix
-      modelViewMatrix, // matrix to rotate
-      rot, // amount to rotate in radians
-      [0, 0, 1]
-    ); // axis to rotate around
-
-    mat4.translate(
-      modelViewMatrix, // destination matrix
-      modelViewMatrix, // matrix to translate
-      pos
-    ); // amount to translate
-
-    mat4.rotate(
-      modelViewMatrix, // destination matrix
-      modelViewMatrix, // matrix to rotate
-      rot * 0.7, // amount to rotate in radians
-      [0, 1, 0]
-    ); // axis to rotate around
+      pos.map((ele, index) => (ele - screenPos[index]) * 2)
+    );
 
     // Tell WebGL how to pull out the positions from the position
     // buffer into the vertexPosition attribute.
@@ -271,7 +238,7 @@ class CubeForm {
       const normalize = false; // don't normalize
       const stride = 0; // how many bytes to get from one set to the next
       const offset = 0; // how many bytes inside the buffer to start from
-      gl.bindBuffer(gl.ARRAY_BUFFER, buffers.textureCoord);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.textureBuffer);
       gl.vertexAttribPointer(
         programInfo.attribLocations.textureCoord,
         num,
@@ -283,22 +250,8 @@ class CubeForm {
       gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
     }
 
-    // Tell WebGL to use our program when drawing
-    gl.useProgram(programInfo.program);
-
-    // set texture parameters
-    // gl.NEAREST is also allowed, instead of gl.LINEAR, as neither mipmap.
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    // Prevents s-coordinate wrapping (repeating).
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    // Prevents t-coordinate wrapping (repeating).
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
     // Tell WebGL we want to affect texture unit 0
     gl.activeTexture(gl.TEXTURE0);
-
-    // Bind the texture to texture unit 0
-    gl.bindTexture(gl.TEXTURE_2D, this.texture);
 
     // Tell the shader we bound the texture to texture unit 0
     gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
@@ -316,10 +269,14 @@ class CubeForm {
     );
 
     {
-      const vertexCount = 36;
       const type = gl.UNSIGNED_SHORT;
-      const offset = 0;
-      gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
+
+      let count = 0;
+      for (const face of this.faces) {
+        gl.bindTexture(gl.TEXTURE_2D, face.texture);
+        gl.drawElements(gl.TRIANGLES, 6, type, count);
+        count += 12;
+      }
     }
   }
 }

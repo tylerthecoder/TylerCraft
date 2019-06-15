@@ -1,18 +1,20 @@
 class Entity {
-  pos = [0, 0, 0];
-  vel = [0, 0, 0];
-  dim = [1, 1, 1];
+  pos: IDim = [0, 0, 0];
+  vel: IDim = [0, 0, 0];
+  dim: IDim = [1, 1, 1];
+  rot: IDim = [0, 0, 0];
 
   onGround = false;
   jumpCount = 0;
 
-  constructor(pos: number[], vel: number[], dim: number[]) {
+  constructor(pos: IDim, vel: IDim, dim: IDim, rot?: IDim) {
     this.pos = pos;
     this.vel = vel;
     this.dim = dim;
+    this.rot = rot || this.rot;
   }
 
-  move(p: number[]) {
+  move(p: IDim) {
     for (let i = 0; i < p.length; i++) {
       this.pos[i] += p[i];
     }

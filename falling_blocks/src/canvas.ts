@@ -2,14 +2,35 @@ class CanvasProgram {
   canvas: HTMLCanvasElement;
   gl: WebGLRenderingContext;
   program: any;
-  cubeTexture: any;
-  playerTexture: any;
+
+  textures: { [name: string]: WebGLTexture };
 
   constructor() {
     this.gl = this.getCanvas();
-    this.cubeTexture = this.loadTexture(this.gl, "./imgs/dirt.png");
-    this.playerTexture = this.loadTexture(this.gl, "./imgs/player.png");
+
+    this.setup();
+
+    this.textures = {
+      dirt: this.loadTexture(this.gl, "./imgs/dirt.png"),
+      player: this.loadTexture(this.gl, "./imgs/player.png"),
+      grass: this.loadTexture(this.gl, "./imgs/grass.jpg"),
+      dirtGrass: this.loadTexture(this.gl, "./imgs/dirtGrass.jpg")
+    };
+
     this.clearCanvas();
+  }
+
+  setup() {
+    // const gl = this.gl;
+    // // set texture parameters
+    // // Tell WebGL we want to affect texture unit 0
+    // gl.activeTexture(gl.TEXTURE0);
+    // // gl.NEAREST is also allowed, instead of gl.LINEAR, as neither mipmap.
+    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    // // Prevents s-coordinate wrapping (repeating).
+    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    // // Prevents t-coordinate wrapping (repeating).
+    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   }
 
   clearCanvas() {
@@ -65,6 +86,7 @@ class CanvasProgram {
         uSampler: this.gl.getUniformLocation(shaderProgram, "uSampler")
       }
     };
+    this.gl.useProgram(this.program.program);
   }
 
   //
@@ -123,6 +145,7 @@ class CanvasProgram {
   // When the image finished loading copy it into the texture.
   //
   loadTexture(gl: WebGLRenderingContext, url: string) {
+    console.log(url);
     const isPowerOf2 = (x: number) => (x & (x - 1)) === 0;
 
     const texture = gl.createTexture();

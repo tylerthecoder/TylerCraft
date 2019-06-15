@@ -1,7 +1,4 @@
 class Player extends Entity {
-  rot = [Math.PI / 2, 0, 0];
-  camOffset = [0, 3, 0];
-
   thirdPerson = true;
 
   onGround = false;
@@ -12,18 +9,19 @@ class Player extends Entity {
   form: any;
 
   constructor(canvas: CanvasProgram) {
-    super([0, 5, 0], [0, 0, 0], [1, 2, 1]);
+    super([0, 5, 0], [0, 0, 0], [1, 2, 1], [Math.PI / 2, 0, 0]);
     this.controller = new KeyboardController(this, canvas);
-    this.form = new CubeForm(canvas, canvas.playerTexture, [1, 2, 1]);
-  }
 
-  get camPos() {
-    // const camOffset = this.thirdPerson ? []
+    const textures = [
+      canvas.textures.player,
+      canvas.textures.player,
+      canvas.textures.player,
+      canvas.textures.player,
+      canvas.textures.player,
+      canvas.textures.player
+    ];
 
-    this.camOffset[0] = -Math.sin(this.rot[1]) * 3;
-    this.camOffset[2] = Math.cos(this.rot[1]) * 3;
-
-    return this.pos.map((x, i) => x + this.camOffset[i]).slice(0);
+    this.form = new CubeForm(canvas, textures, [1, 2, 1]);
   }
 
   rotate(r: number[]) {
@@ -41,10 +39,8 @@ class Player extends Entity {
     this.move(this.vel);
   }
 
-  render() {
-    if (this.thirdPerson) {
-      this.form.render(this.dim, this.pos, 0, this.camPos, this.rot);
-    }
+  render(camPos: IDim, camRot: IDim) {
+    this.form.render(this.pos, camPos, camRot);
   }
 
   jump() {

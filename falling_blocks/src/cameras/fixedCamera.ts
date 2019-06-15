@@ -1,9 +1,5 @@
-class EntityCamera {
-  entity: Entity;
-
-  offset: IDim = [0, 3, 0];
-
-  constructor(ent: Entity) {
-    this.entity = ent;
+class FixedCamera extends Camera {
+  constructor(public pos: IDim, public rot: IDim) {
+    super();
   }
 }
