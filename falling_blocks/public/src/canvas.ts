@@ -145,7 +145,6 @@ class CanvasProgram {
   // When the image finished loading copy it into the texture.
   //
   loadTexture(gl: WebGLRenderingContext, url: string) {
-    console.log(url);
     const isPowerOf2 = (x: number) => (x & (x - 1)) === 0;
 
     const texture = gl.createTexture();

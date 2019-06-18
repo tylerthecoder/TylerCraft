@@ -1,25 +1,34 @@
-class KeyboardController {
-  jumpCount = 0;
-  player: Player;
+class KeyboardController extends Controller {
   keys = new Set();
 
-  constructor(player: Player, canvas: CanvasProgram) {
-    this.player = player;
-    this.keys = new Set();
+  constructor(public player: Player, canvas: CanvasProgram) {
+    super();
 
-    window.addEventListener("keydown", ({ key }) =>
-      this.keys.add(key.toLowerCase())
-    );
-    window.addEventListener("keyup", ({ key }) =>
-      this.keys.delete(key.toLowerCase())
-    );
+    window.addEventListener("keydown", ({ key }) => {
+      this.keys.add(key.toLowerCase());
+      this.sendKeys();
+    });
+    window.addEventListener("keyup", ({ key }) => {
+      this.keys.delete(key.toLowerCase());
+      this.sendKeys();
+    });
 
     window.addEventListener("mousedown", () => {
       canvas.canvas.requestPointerLock();
-      canvas.canvas.requestFullscreen();
+      // canvas.canvas.requestFullscreen();
     });
 
     window.addEventListener("mousemove", this.handleMouse.bind(this));
+  }
+
+  sendKeys() {
+    SocketHandler.send({
+      type: "keys",
+      payload: {
+        keys: Array.from(this.keys),
+        uid: this.player.uid
+      }
+    });
   }
 
   getSphereCords(r: number, t: number, p: number) {

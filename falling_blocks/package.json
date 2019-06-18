@@ -1,5 +1,15 @@
 {
+  "scripts": {
+    "dev": "npm-run-all --parallel build:watch start:watch",
+    "build:watch": "tsc -w",
+    "start:watch": "nodemon ./bin/server.js"
+  },
   "dependencies": {
-    "express": "^4.17.1"
+    "ws": "^7.0.1"
+  },
+  "devDependencies": {
+    "@types/ws": "^6.0.1",
+    "nodemon": "1.19.1",
+    "npm-run-all": "4.1.5"
   }
 }

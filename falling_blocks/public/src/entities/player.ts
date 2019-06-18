@@ -1,17 +1,21 @@
 class Player extends Entity {
+  uid: string;
+
   thirdPerson = true;
 
   onGround = false;
 
   jumpCount = 0;
 
-  controller: any;
   form: any;
 
-  constructor(canvas: CanvasProgram) {
+  constructor(canvas?: CanvasProgram) {
     super([0, 5, 0], [0, 0, 0], [1, 2, 1], [Math.PI / 2, 0, 0]);
-    this.controller = new KeyboardController(this, canvas);
 
+    if (canvas) this.build(canvas);
+  }
+
+  build(canvas: CanvasProgram) {
     const textures = [
       canvas.textures.player,
       canvas.textures.player,
@@ -20,7 +24,6 @@ class Player extends Entity {
       canvas.textures.player,
       canvas.textures.player
     ];
-
     this.form = new CubeForm(canvas, textures, [1, 2, 1]);
   }
 
@@ -34,7 +37,6 @@ class Player extends Entity {
 
   update() {
     this.onGround = false;
-    this.controller.update();
     this.gravity();
     this.move(this.vel);
   }

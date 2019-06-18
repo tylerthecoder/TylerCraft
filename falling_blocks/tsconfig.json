@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "noImplicitAny": true,
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "outDir": "./bin",
+    "sourceMap": true,
+    "target": "esnext",
+  },
+  "include": [
+    "./src/**/*"
+  ]
+}
