@@ -17,18 +17,16 @@ class CubeForm {
   indexBuffer: WebGLBuffer;
   textureBuffer: WebGLBuffer;
 
-  faces: any;
-
   constructor(
     public canvas: CanvasProgram,
-    public textures: WebGLTexture[],
+    public texture: WebGLTexture,
+    public textureCords: number[][],
     public size: IDim
   ) {
     this.program = canvas.program;
     this.gl = canvas.gl;
 
-    this.initPositionBuffer();
-    this.initTextureBuffer();
+    this.initBuffers();
   }
 
   getFace(i: number, dir: number, size: number[]) {
@@ -42,7 +40,7 @@ class CubeForm {
     return pos;
   }
 
-  initPositionBuffer() {
+  initBuffers() {
     // this might be controlled by a higher class. one
     // that knows the surround blocks and such
     const facesToRender = [0, 1, 2, 3, 4, 5];
@@ -51,9 +49,9 @@ class CubeForm {
 
     const base = [0, 1, 2, 0, 2, 3];
 
-    this.faces = [];
     const positions = [];
     const indices = [];
+    const textureCords = [];
     let count = 0;
     for (const face of facesToRender) {
       const i = face >> 1;
@@ -63,14 +61,11 @@ class CubeForm {
       const index = base.map(x => x + count);
       count += 4;
 
+      const textureCord = this.textureCords[face];
+
       positions.push(...pos);
       indices.push(...index);
-
-      this.faces.push({
-        pos,
-        index,
-        texture: this.textures[face]
-      });
+      textureCords.push(...textureCord);
     }
 
     const gl = this.gl;
@@ -86,73 +81,12 @@ class CubeForm {
       new Uint16Array(indices),
       gl.STATIC_DRAW
     );
-  }
 
-  initTextureBuffer() {
-    const gl = this.gl;
     this.textureBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.textureBuffer);
-
-    const textureCoordinates = [
-      // Front
-      0.0,
-      1.0,
-      0.0,
-      0.0,
-      1.0,
-      0.0,
-      1.0,
-      1.0,
-      // Back
-      0.0,
-      1.0,
-      0.0,
-      0.0,
-      1.0,
-      0.0,
-      1.0,
-      1.0,
-      // Top
-      0.0,
-      0.0,
-      1.0,
-      0.0,
-      1.0,
-      1.0,
-      0.0,
-      1.0,
-      // Bottom
-      0.0,
-      0.0,
-      1.0,
-      0.0,
-      1.0,
-      1.0,
-      0.0,
-      1.0,
-      // Right
-      1.0,
-      1.0,
-      0.0,
-      1.0,
-      0.0,
-      0.0,
-      1.0,
-      0.0,
-      // Left
-      1.0,
-      1.0,
-      0.0,
-      1.0,
-      0.0,
-      0.0,
-      1.0,
-      0.0
-    ];
-
     gl.bufferData(
       gl.ARRAY_BUFFER,
-      new Float32Array(textureCoordinates),
+      new Float32Array(textureCords),
       gl.STATIC_DRAW
     );
   }
@@ -271,12 +205,8 @@ class CubeForm {
     {
       const type = gl.UNSIGNED_SHORT;
 
-      let count = 0;
-      for (const face of this.faces) {
-        gl.bindTexture(gl.TEXTURE_2D, face.texture);
-        gl.drawElements(gl.TRIANGLES, 6, type, count);
-        count += 12;
-      }
+      gl.bindTexture(gl.TEXTURE_2D, this.texture);
+      gl.drawElements(gl.TRIANGLES, 36, type, 0);
     }
   }
 }

@@ -16,15 +16,18 @@ class Player extends Entity {
   }
 
   build(canvas: CanvasProgram) {
-    const textures = [
-      canvas.textures.player,
-      canvas.textures.player,
-      canvas.textures.player,
-      canvas.textures.player,
-      canvas.textures.player,
-      canvas.textures.player
+    const textureCords = [
+      [0, 1, 0, 0, 1, 0, 1, 1], // front
+      [0, 1, 0, 0, 1, 0, 1, 1], // back
+      [0, 0, 1, 0, 1, 1, 0, 1], // top
+      [0, 0, 1, 0, 1, 1, 0, 1], // bottom
+      [1, 1, 0, 1, 0, 0, 1, 0], // right
+      [1, 1, 0, 1, 0, 0, 1, 0] // left
     ];
-    this.form = new CubeForm(canvas, textures, [1, 2, 1]);
+
+    const texture = canvas.textures.player;
+
+    this.form = new CubeForm(canvas, texture, textureCords, [1, 2, 1]);
   }
 
   rotate(r: number[]) {

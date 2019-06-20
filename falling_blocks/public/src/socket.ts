@@ -19,6 +19,11 @@ interface NewPlayerMessage {
   uid: string;
 }
 
+interface PositionMessage {
+  uid: string;
+  pos: number[];
+}
+
 class SocketHandler {
   static socket: WebSocket;
   static connected: boolean;

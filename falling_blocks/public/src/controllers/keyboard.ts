@@ -1,7 +1,11 @@
 class KeyboardController extends Controller {
   keys = new Set();
 
-  constructor(public player: Player, canvas: CanvasProgram) {
+  timer = 0;
+
+  maxTime = 100;
+
+  constructor(public entity: Player, public canvas: CanvasProgram) {
     super();
 
     window.addEventListener("keydown", ({ key }) => {
@@ -26,47 +30,35 @@ class KeyboardController extends Controller {
       type: "keys",
       payload: {
         keys: Array.from(this.keys),
-        uid: this.player.uid
+        uid: this.entity.uid
       }
     });
   }
 
-  getSphereCords(r: number, t: number, p: number) {
-    const cords = [
-      r * Math.sin(p) * Math.sin(t),
-      r * Math.cos(p),
-      r * Math.sin(p) * Math.cos(t)
-    ];
-    return cords as IDim;
+  sendPos() {
+    SocketHandler.send({
+      type: "pos",
+      payload: {
+        pos: this.entity.pos,
+        uid: this.entity.uid
+      }
+    });
   }
 
   update() {
-    this.handleKeys();
-  }
-
-  handleKeys() {
-    const speed = 0.1;
-
-    const k = (key: string, amount: [number, number, number]) => {
-      if (this.keys.has(key)) {
-        this.player.move(this.getSphereCords(...amount));
-      }
-    };
-
-    k("w", [-speed, -this.player.rot[1], Math.PI / 2]);
-    k("s", [speed, -this.player.rot[1], Math.PI / 2]);
-    k("a", [speed, -this.player.rot[1] - Math.PI / 2, Math.PI / 2]);
-    k("d", [speed, -this.player.rot[1] + Math.PI / 2, Math.PI / 2]);
-
-    if (this.keys.has(" ")) {
-      this.player.jump();
+    this.wasdKeys();
+    if (++this.timer >= this.maxTime) {
+      this.sendPos();
+      this.timer = 0;
     }
   }
 
   handleMouse(e: MouseEvent) {
-    const speed = 0.002;
-    const dx = e.movementX * speed;
-    const dy = e.movementY * speed;
-    this.player.rotate([-dy, dx, 0]);
+    if (document.pointerLockElement === this.canvas.canvas) {
+      const speed = 0.002;
+      const dx = e.movementX * speed;
+      const dy = e.movementY * speed;
+      this.entity.rotate([-dy, dx, 0]);
+    }
   }
 }

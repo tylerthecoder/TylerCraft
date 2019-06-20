@@ -18,3 +18,8 @@ interface WelcomeMessage {
 interface NewPlayerMessage {
   uid: string;
 }
+
+interface PositionMessage {
+  uid: string;
+  pos: number[];
+}

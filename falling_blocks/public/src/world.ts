@@ -28,12 +28,18 @@ class World {
       this.controllers.push(controller);
       this.players.push(newPlayer);
     };
-    console.log(message);
     if (message.type === "welcome") {
       this.mainPlayer.uid = message.payload.uid;
       (message.payload as WelcomeMessage).players.forEach(addPlayer);
-    } else if (message.type === "new-player") {
+    } else if (message.type === "player-join") {
       addPlayer(message.payload.uid);
+    } else if (message.type === "player-leave") {
+      const payload = message.payload as NewPlayerMessage;
+      const notMe = (id: string) => payload.uid !== id;
+      this.players = this.players.filter(p => notMe(p.uid));
+      this.controllers = this.controllers.filter(c =>
+        notMe((c.entity as Player).uid)
+      );
     }
   }
 

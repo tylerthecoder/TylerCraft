@@ -2,9 +2,19 @@ import * as http from "http";
 import * as fs from "fs";
 import * as path from "path";
 import * as WebSocket from "ws";
+import { Game } from "./Game";
 
 const port = 3000;
 const staticPath = "../public/static";
+
+const extToContent: { [ex: string]: string } = {
+  js: "text/javascript",
+  css: "text/css",
+  json: "application/json",
+  png: "image/png",
+  jpg: "image/jpg",
+  html: "text/html"
+};
 
 const server = http.createServer((req, res) => {
   let filePath = staticPath + req.url;
@@ -14,28 +24,9 @@ const server = http.createServer((req, res) => {
 
   filePath = path.join(__dirname, filePath);
 
-  const extname = path.extname(filePath);
-  let contentType = "text/html";
-  switch (extname) {
-    case ".js":
-      contentType = "text/javascript";
-      break;
-    case ".css":
-      contentType = "text/css";
-      break;
-    case ".json":
-      contentType = "application/json";
-      break;
-    case ".png":
-      contentType = "image/png";
-      break;
-    case ".jpg":
-      contentType = "image/jpg";
-      break;
-    case ".wav":
-      contentType = "audio/wav";
-      break;
-  }
+  const extname = path.extname(filePath).substr(1);
+  const contentType =
+    extname in extToContent ? extToContent[extname] : "text/html";
 
   fs.readFile(filePath, function(error, content) {
     if (error) {
@@ -64,62 +55,84 @@ const server = http.createServer((req, res) => {
 
 server.listen(port, () => console.log(`Server running on port:${port}`));
 
-const wss = new WebSocket.Server({
-  server
-});
+const game = new Game();
 
-// make this a model later (use a DB or something else)
-const players = new Set();
+class SocketServer {
+  server: WebSocket.Server;
 
-wss.on("connection", ws => {
-  console.log("Connection");
-  ws.on("message", message => {
-    try {
-      const data = JSON.parse(String(message)) as ISocketMessage;
-      console.log(data);
-      if (data.type === "keys") {
-        const payload = data.payload as KeyPressMessage;
-        // send to EVERYONE
-        wss.clients.forEach(client => {
-          if (client === ws) return;
+  constructor(server: http.Server) {
+    this.server = new WebSocket.Server({
+      server
+    });
+    this.server.on("connection", this.newConnection.bind(this));
+  }
 
-          client.send(message);
-        });
-      }
-    } catch {
-      console.log("Invalid JSON");
-    }
-  });
+  newConnection(ws: WebSocket) {
+    console.log("Connection");
+    ws.on("message", (message: string) => this.newMessage(ws, message));
+    ws.on("close", () => this.closeConnection(ws));
 
-  const uid = `${Math.random()}${Math.random()}`;
+    const uid = game.newPlayer(ws);
 
-  ws.on("close", () => {
-    console.log("leave");
-    players.delete(uid);
-  });
-
-  ws.send(
-    JSON.stringify({
+    const welcomeMessage = {
       type: "welcome",
       payload: {
         uid,
-        players: Array.from(players)
+        players: game.allPlayers.filter(p => p.ws !== ws)
       }
-    })
-  );
+    };
+    this.sendMessage(ws, welcomeMessage);
 
-  players.add(uid);
-
-  // tell EVERYONE about the new guy! (make rooms later)
-  wss.clients.forEach(client => {
-    if (client === ws) return;
-
-    const message: ISocketMessage = {
-      type: "new-player",
+    const newPlayerMessage = {
+      type: "player-join",
       payload: {
         uid
       }
     };
-    client.send(JSON.stringify(message));
-  });
-});
+    this.sendGlobalMessage(newPlayerMessage, ws);
+  }
+
+  closeConnection(ws: WebSocket) {
+    const playerLeaveMessage = {
+      type: "player-leave",
+      payload: {
+        uid: game.getPlayerUid(ws)
+      }
+    };
+    this.sendGlobalMessage(playerLeaveMessage, ws);
+    game.removePlayer(ws);
+  }
+
+  newMessage(ws: WebSocket, message: string) {
+    try {
+      const data = JSON.parse(message);
+      this.handleMessage(ws, data);
+    } catch {
+      console.log("Invalid JSON message");
+    }
+  }
+
+  handleMessage(ws: WebSocket, message: ISocketMessage) {
+    console.log(message);
+    if (message.type === "keys") {
+      this.sendGlobalMessage(message, ws);
+    } else if (message.type === "pos") {
+      this.sendGlobalMessage(message, ws);
+      const payload = message.payload as PositionMessage;
+      game.setPlayerPos(ws, payload.pos);
+    }
+  }
+
+  sendMessage(ws: WebSocket, message: ISocketMessage) {
+    ws.send(JSON.stringify(message));
+  }
+
+  sendGlobalMessage(message: ISocketMessage, exclude?: WebSocket) {
+    this.server.clients.forEach(client => {
+      if (exclude && client === exclude) return;
+      client.send(JSON.stringify(message));
+    });
+  }
+}
+
+const wss = new SocketServer(server);

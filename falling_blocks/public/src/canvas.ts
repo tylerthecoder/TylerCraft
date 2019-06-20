@@ -11,10 +11,8 @@ class CanvasProgram {
     this.setup();
 
     this.textures = {
-      dirt: this.loadTexture(this.gl, "./imgs/dirt.png"),
       player: this.loadTexture(this.gl, "./imgs/player.png"),
-      grass: this.loadTexture(this.gl, "./imgs/grass.jpg"),
-      dirtGrass: this.loadTexture(this.gl, "./imgs/dirtGrass.jpg")
+      grassBlock: this.loadTexture(this.gl, "./imgs/grassBlock.png")
     };
 
     this.clearCanvas();
