@@ -10,7 +10,7 @@ class Player extends Entity {
   form: any;
 
   constructor(canvas?: CanvasProgram) {
-    super([0, 5, 0], [0, 0, 0], [1, 2, 1], [Math.PI / 2, 0, 0]);
+    super([0, 11, 0], [0, 0, 0], [1, 2, 1], [Math.PI / 2, 0, 0]);
 
     if (canvas) this.build(canvas);
   }

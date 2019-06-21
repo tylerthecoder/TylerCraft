@@ -1,15 +1,6 @@
 declare var mat4: any;
 
-enum IFace {
-  FRONT = 0,
-  BACK = 1,
-  TOP = 2,
-  BOTTOM = 3,
-  RIGHT = 4,
-  LEFT = 5
-}
-
-class CubeForm {
+class ChunkForm {
   program: any;
   gl: WebGLRenderingContext;
 
@@ -17,58 +8,22 @@ class CubeForm {
   indexBuffer: WebGLBuffer;
   textureBuffer: WebGLBuffer;
 
-  // this might be controlled by a higher class. one
-  // that knows the surround blocks and such
-  facesToRender = [0, 1, 2, 3, 4, 5];
+  amount: number;
 
   constructor(
     public canvas: CanvasProgram,
     public texture: WebGLTexture,
     public textureCords: number[][],
-    public size: IDim
+    public cubes: Cube[]
   ) {
     this.program = canvas.program;
     this.gl = canvas.gl;
-
-    this.initBuffers();
   }
 
-  getFace(i: number, dir: number, size: number[]) {
-    const square = [[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]];
-    const pos = square
-      .map(edge => {
-        edge.splice(i, 0, dir);
-        return edge.map((dim, i) => dim * size[i]);
-      })
-      .flat();
-    return pos;
-  }
-
-  initBuffers() {
-    const size = this.size;
-
-    const base = [0, 1, 2, 0, 2, 3];
-
-    const positions = [];
-    const indices = [];
-    const textureCords = [];
-    let count = 0;
-    for (const face of this.facesToRender) {
-      const i = face >> 1;
-      const dir = face % 2 === 0 ? 0.5 : -0.5;
-
-      const pos = this.getFace(i, dir, size);
-      const index = base.map(x => x + count);
-      count += 4;
-
-      const textureCord = this.textureCords[face];
-
-      positions.push(...pos);
-      indices.push(...index);
-      textureCords.push(...textureCord);
-    }
-
+  setBuffers(positions: number[], indices: number[], textureCords: number[]) {
     const gl = this.gl;
+
+    this.amount = indices.length;
 
     this.posBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuffer);
@@ -203,7 +158,7 @@ class CubeForm {
     {
       const type = gl.UNSIGNED_SHORT;
 
-      const count = this.facesToRender.length * 6;
+      const count = this.amount;
 
       gl.bindTexture(gl.TEXTURE_2D, this.texture);
       gl.drawElements(gl.TRIANGLES, count, type, 0);

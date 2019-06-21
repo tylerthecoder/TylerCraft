@@ -9,7 +9,6 @@ class SocketController extends Controller {
   }
 
   onMessage(message: ISocketMessage) {
-    console.log(message);
     if (message.type === "keys") {
       const payload = message.payload as KeyPressMessage;
       if (payload.uid === this.entity.uid) {

@@ -12,7 +12,7 @@ class CanvasProgram {
 
     this.textures = {
       player: this.loadTexture(this.gl, "./imgs/player.png"),
-      grassBlock: this.loadTexture(this.gl, "./imgs/grassBlock.png")
+      grassBlock: this.loadTexture(this.gl, "./imgs/grass_block.png")
     };
 
     this.clearCanvas();
@@ -24,7 +24,7 @@ class CanvasProgram {
     // // Tell WebGL we want to affect texture unit 0
     // gl.activeTexture(gl.TEXTURE0);
     // // gl.NEAREST is also allowed, instead of gl.LINEAR, as neither mipmap.
-    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     // // Prevents s-coordinate wrapping (repeating).
     // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     // // Prevents t-coordinate wrapping (repeating).
@@ -190,6 +190,7 @@ class CanvasProgram {
       // power of 2 in both dimensions.
       if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
         // Yes, it's a power of 2. Generate mips.
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
         gl.generateMipmap(gl.TEXTURE_2D);
       } else {
         // No, it's not a power of 2. Turn off mips and set
@@ -197,6 +198,7 @@ class CanvasProgram {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
       }
     };
     image.src = url;

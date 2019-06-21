@@ -1,9 +1,10 @@
 class World {
   canvas: CanvasProgram;
 
-  cubes: Cube[];
+  cubes: Cube[] = [];
   players: Player[] = [];
   controllers: Controller[] = [];
+  chunks: Chunk[] = [];
 
   mainPlayer: Player;
   camera: Camera;
@@ -50,22 +51,47 @@ class World {
 
     this.mainPlayer.build(this.canvas);
 
-    const floorSize = 10;
-    const floor = [];
-    for (let i = -floorSize; i < floorSize; i++) {
-      for (let j = -floorSize; j < floorSize; j++) {
-        floor.push(new Cube(this.canvas, [i, 0, j]));
+    const numOfChunks = 1; // squared
+    const chunkDim = 1;
+
+    const spacing = chunkDim * 2 + 1;
+
+    for (let i = -numOfChunks; i <= numOfChunks; i++) {
+      for (let j = -numOfChunks; j <= numOfChunks; j++) {
+        const cubes = [];
+        const chunkPos = [i * spacing, 0, j * spacing] as [
+          number,
+          number,
+          number
+        ];
+        for (let k = chunkPos[0] - chunkDim; k <= chunkPos[0] + chunkDim; k++) {
+          for (
+            let l = chunkPos[2] - chunkDim;
+            l <= chunkPos[2] + chunkDim;
+            l++
+          ) {
+            const pos = [k, 0, l] as [number, number, number];
+            cubes.push(new Cube(this.canvas, pos));
+          }
+        }
+        const chunk = new Chunk(cubes, this.canvas, chunkPos);
+        this.chunks.push(chunk);
+        this.cubes.push(...cubes);
       }
     }
 
-    this.cubes = [
+    const chunkCubes = [
       new Cube(this.canvas, [1, 1, 1]),
       new Cube(this.canvas, [2, 2, 0]),
       new Cube(this.canvas, [3, 3, -1]),
-      new Cube(this.canvas, [1, 4, -1]),
-      new Cube(this.canvas, [0, 2, -5], [0.5, 3, 0.5]),
-      ...floor
+      new Cube(this.canvas, [1, 4, -1])
     ];
+
+    this.cubes.push(...chunkCubes);
+
+    const chunk = new Chunk(chunkCubes, this.canvas, [0, 0, 0]);
+
+    this.chunks.push(chunk);
 
     this.controllers.push(new KeyboardController(this.mainPlayer, this.canvas));
 
@@ -110,11 +136,15 @@ class World {
     const camRot = this.camera.rot;
 
     for (const cube of this.cubes) {
-      cube.render(camPos, camRot);
+      // cube.render(camPos, camRot);
     }
 
     for (const player of this.players) {
       player.render(camPos, camRot);
+    }
+
+    for (const chunk of this.chunks) {
+      chunk.render(camPos, camRot);
     }
 
     requestAnimationFrame(this.render.bind(this));

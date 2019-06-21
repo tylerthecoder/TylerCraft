@@ -1,17 +1,17 @@
 class Cube extends Entity {
-  form: CubeForm;
+  form: CubeForm | ChunkForm;
   falling = false;
 
   constructor(canvas: CanvasProgram, pos: IDim, dim: IDim = [1, 1, 1]) {
     super(pos, [0, 0, 0], dim);
 
     const textureCords = [
-      [0.66, 1, 0.66, 0, 1, 0, 1, 1], // front
-      [0.66, 1, 0.66, 0, 1, 0, 1, 1], // back
-      [0.33, 0, 0.33, 1, 0.66, 1, 0.66, 0], // top
-      [0, 0, 0, 1, 0.33, 1, 0.33, 0], // bottom
-      [1, 1, 0.66, 1, 0.66, 0, 1, 0], // right
-      [1, 1, 0.66, 1, 0.66, 0, 1, 0] // left
+      [0.5, 0.5, 0.5, 0, 0, 0, 0, 0.5], // front
+      [0.5, 0.5, 0.5, 0, 0, 0, 0, 0.5], // back
+      [0.5, 0, 0.5, 0.5, 1, 0.5, 1, 0], // top
+      [0.5, 1, 0.5, 0.5, 0, 0.5, 0, 1], // bottom
+      [0.5, 1, 1, 1, 1, 0.5, 0.5, 0.5], // right
+      [0, 0.5, 0.5, 0.5, 0.5, 0, 0, 0] // left
     ];
 
     const texture = canvas.textures.grassBlock;

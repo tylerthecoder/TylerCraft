@@ -36,13 +36,14 @@ class KeyboardController extends Controller {
   }
 
   sendPos() {
-    SocketHandler.send({
+    const message = {
       type: "pos",
       payload: {
         pos: this.entity.pos,
         uid: this.entity.uid
       }
-    });
+    };
+    SocketHandler.send(message);
   }
 
   update() {
