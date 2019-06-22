@@ -1,6 +1,4 @@
 class World {
-  canvas: CanvasProgram = new CanvasProgram();
-
   cubes: Cube[] = [];
   chunks: Map<string, Chunk> = new Map();
 
@@ -8,15 +6,11 @@ class World {
     this.gen();
   }
 
-  async load() {
-    await this.canvas.loadProgram();
-  }
-
   gen() {
     const size = 3;
     for (let i = -size; i <= size; i++) {
       for (let j = -size; j <= size; j++) {
-        const chunk = new Chunk(this.canvas, [i, j]);
+        const chunk = new Chunk([i, j]);
         this.chunks.set(`${i},${j}`, chunk);
       }
     }
@@ -30,11 +24,11 @@ class World {
   }
 
   // maybe just pass a camera not the pos and rot
-  render(camPos: number[], camRot: number[]) {
-    this.canvas.clearCanvas();
+  render(camera: Camera) {
+    canvas.clearCanvas();
 
     for (const chunk of this.chunks.values()) {
-      chunk.render(camPos, camRot);
+      chunk.render(camera);
     }
   }
 

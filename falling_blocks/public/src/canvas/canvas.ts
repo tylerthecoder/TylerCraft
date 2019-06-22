@@ -206,3 +206,5 @@ class CanvasProgram {
     return texture;
   }
 }
+
+const canvas = new CanvasProgram();

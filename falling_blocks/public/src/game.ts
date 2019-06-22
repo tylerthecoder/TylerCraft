@@ -2,10 +2,10 @@ class Game {
   players: Player[] = [];
   controllers: Controller[] = [];
 
-  mainPlayer: Player;
+  mainPlayer = new Player();
+  world = new World();
   camera: Camera;
   socket: SocketHandler;
-  world: World = new World();
 
   totTime = 0;
   numOfFrames = 0;
@@ -14,7 +14,7 @@ class Game {
   }
 
   constructor() {
-    this.mainPlayer = new Player();
+    this.mainPlayer;
     this.players.push(this.mainPlayer);
 
     this.load();
@@ -23,7 +23,6 @@ class Game {
   socketOnMessage(message: ISocketMessage) {
     const addPlayer = (uid: string) => {
       const newPlayer = new Player();
-      newPlayer.build(this.world.canvas);
       newPlayer.uid = uid;
       const controller = new SocketController(newPlayer);
       this.controllers.push(controller);
@@ -45,22 +44,14 @@ class Game {
   }
 
   async load() {
-    await this.world.load();
-
-    this.mainPlayer.build(this.world.canvas);
+    await canvas.loadProgram();
 
     this.socket = new SocketHandler(this.socketOnMessage.bind(this));
 
-    this.controllers.push(
-      new KeyboardController(this.mainPlayer, this.world.canvas)
-    );
+    this.controllers.push(new KeyboardController(this.mainPlayer));
 
-    this.camera = new EntityCamera(this.world.canvas, this.mainPlayer);
-    // this.camera = new FixedCamera(
-    //   this.world.canvas,
-    //   [0, 3, 0],
-    //   [Math.PI / 2, 0, 0]
-    // );
+    this.camera = new EntityCamera(this.mainPlayer);
+    // this.camera = new FixedCamera([0, 3, 0], [Math.PI / 2, 0, 0]);
 
     this.start();
   }
@@ -91,16 +82,16 @@ class Game {
     }
 
     // rendering
-    const camPos = this.camera.pos;
-    const camRot = this.camera.rot;
 
     // render world first b/c it clears canvas
-    this.world.render(camPos, camRot);
+    this.world.render(this.camera);
 
     for (const player of this.players) {
-      player.render(camPos, camRot);
+      player.render(this.camera);
     }
 
     requestAnimationFrame(this.render.bind(this));
   }
 }
+
+const game = new Game();

@@ -1,22 +1,11 @@
 const CHUNK_SIZE = 5;
 
 class Chunk {
-  form: ChunkForm;
   cubes: Cube[] = [];
+  renderer = new Renderer();
 
-  constructor(canvas: CanvasProgram, public chunkPos: number[]) {
-    const textureCords = [
-      [0.5, 0.5, 0.5, 0, 0, 0, 0, 0.5], // front
-      [0.5, 0.5, 0.5, 0, 0, 0, 0, 0.5], // back
-      [0.5, 0, 0.5, 0.5, 1, 0.5, 1, 0], // top
-      [0.5, 1, 0.5, 0.5, 0, 0.5, 0, 1], // bottom
-      [0.5, 1, 1, 1, 1, 0.5, 0.5, 0.5], // right
-      [0, 0.5, 0.5, 0.5, 0.5, 0, 0, 0] // left
-    ];
-
-    const texture = canvas.textures.grassBlock;
-
-    this.form = new ChunkForm(canvas, texture, textureCords, this.cubes);
+  constructor(public chunkPos: number[]) {
+    this.renderer.setActiveTexture(canvas.textures.grassBlock);
 
     this.generate();
   }
@@ -48,8 +37,9 @@ class Chunk {
     return collide;
   }
 
-  render(screenPos: number[], screenRot: number[]) {
-    this.form.render(this.pos, screenPos, screenRot);
+  render(camera: Camera) {
+    // this.form.render(this.pos, screenPos, screenRot);
+    this.renderer.render(this.pos, camera);
   }
 
   getBufferData() {
@@ -118,6 +108,6 @@ class Chunk {
       offset += 24;
     }
 
-    this.form.setBuffers(positions, indices, textureCords);
+    this.renderer.setBuffers(positions, indices, textureCords);
   }
 }

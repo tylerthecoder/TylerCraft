@@ -2,7 +2,7 @@ abstract class Camera {
   abstract pos: IDim;
   abstract rot: IDim;
 
-  constructor(canvas: CanvasProgram) {
+  constructor() {
     window.addEventListener("mousedown", () => {
       canvas.canvas.requestPointerLock();
     });

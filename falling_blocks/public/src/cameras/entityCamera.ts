@@ -3,8 +3,8 @@ class EntityCamera extends Camera {
 
   offset: IDim = [0, 1.5, 0];
 
-  constructor(canvas: CanvasProgram, ent: Entity) {
-    super(canvas);
+  constructor(ent: Entity) {
+    super();
     this.entity = ent;
   }
 

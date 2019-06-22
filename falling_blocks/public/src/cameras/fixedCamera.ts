@@ -1,6 +1,6 @@
 class FixedCamera extends Camera {
-  constructor(canvas: CanvasProgram, public pos: IDim, public rot: IDim) {
-    super(canvas);
+  constructor(public pos: IDim, public rot: IDim) {
+    super();
   }
 
   handleMouse(e: MouseEvent) {

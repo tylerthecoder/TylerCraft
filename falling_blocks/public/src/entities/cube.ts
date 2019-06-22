@@ -1,5 +1,4 @@
 class Cube extends Entity {
-  form: CubeForm | ChunkForm;
   falling = false;
 
   constructor(pos: IDim, dim: IDim = [1, 1, 1]) {

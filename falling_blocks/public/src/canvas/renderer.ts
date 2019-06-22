@@ -1,21 +1,22 @@
 declare var mat4: any;
 
-class ChunkForm {
+class Renderer {
+  canvas: CanvasProgram;
+
   posBuffer: WebGLBuffer;
   indexBuffer: WebGLBuffer;
   textureBuffer: WebGLBuffer;
 
+  texture: WebGLTexture;
+
   amount: number;
 
-  constructor(
-    public canvas: CanvasProgram,
-    public texture: WebGLTexture,
-    public textureCords: number[][],
-    public cubes: Cube[]
-  ) {}
+  constructor() {
+    // this might be a bad practice but it make things so much easier
+  }
 
   setBuffers(positions: number[], indices: number[], textureCords: number[]) {
-    const gl = this.canvas.gl;
+    const gl = canvas.gl;
 
     this.amount = indices.length;
 
@@ -40,9 +41,15 @@ class ChunkForm {
     );
   }
 
+  setActiveTexture(texture: WebGLTexture) {
+    this.texture = texture;
+  }
+
+  // Tell WebGL how to pull out the positions from the position
+  // buffer into the vertexPosition attribute.
   bindCube() {
-    const programInfo = this.canvas.program;
-    const gl = this.canvas.gl;
+    const programInfo = canvas.program;
+    const gl = canvas.gl;
 
     const numComponents = 3; // pull out 2 values per iteration
     const type = gl.FLOAT; // the data in the buffer is 32bit floats
@@ -64,9 +71,31 @@ class ChunkForm {
     gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
   }
 
-  render(pos: number[], screenPos: number[], screenRot: number[]) {
-    const gl = this.canvas.gl;
-    const programInfo = this.canvas.program;
+  // tell webgl how to pull out the texture coordinates from buffer
+  bindTexture() {
+    const programInfo = canvas.program;
+    const gl = canvas.gl;
+
+    const num = 2; // every coordinate composed of 2 values
+    const type = gl.FLOAT; // the data in the buffer is 32 bit float
+    const normalize = false; // don't normalize
+    const stride = 0; // how many bytes to get from one set to the next
+    const offset = 0; // how many bytes inside the buffer to start from
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.textureBuffer);
+    gl.vertexAttribPointer(
+      programInfo.attribLocations.textureCoord,
+      num,
+      type,
+      normalize,
+      stride,
+      offset
+    );
+    gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
+  }
+
+  render(pos: number[], camera: Camera) {
+    const gl = canvas.gl;
+    const programInfo = canvas.program;
 
     gl.enable(gl.DEPTH_TEST); // Enable depth testing
     gl.depthFunc(gl.LEQUAL); // Near things obscure far things
@@ -92,12 +121,12 @@ class ChunkForm {
     // the center of the scene.
     const modelViewMatrix = mat4.create();
 
-    mat4.rotate(modelViewMatrix, modelViewMatrix, Math.PI / 2 - screenRot[0], [
+    mat4.rotate(modelViewMatrix, modelViewMatrix, Math.PI / 2 - camera.rot[0], [
       1,
       0,
       0
     ]);
-    mat4.rotate(modelViewMatrix, modelViewMatrix, screenRot[1], [0, 1, 0]);
+    mat4.rotate(modelViewMatrix, modelViewMatrix, camera.rot[1], [0, 1, 0]);
 
     // Now move the drawing position a bit to where we want to
     // start drawing the square.
@@ -105,31 +134,12 @@ class ChunkForm {
     mat4.translate(
       modelViewMatrix, // destination matrix
       modelViewMatrix, // matrix to translate
-      pos.map((ele, index) => ele - screenPos[index])
+      pos.map((ele, index) => ele - camera.pos[index])
     );
 
-    // Tell WebGL how to pull out the positions from the position
-    // buffer into the vertexPosition attribute.
     this.bindCube();
 
-    // tell webgl how to pull out the texture coordinates from buffer
-    {
-      const num = 2; // every coordinate composed of 2 values
-      const type = gl.FLOAT; // the data in the buffer is 32 bit float
-      const normalize = false; // don't normalize
-      const stride = 0; // how many bytes to get from one set to the next
-      const offset = 0; // how many bytes inside the buffer to start from
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.textureBuffer);
-      gl.vertexAttribPointer(
-        programInfo.attribLocations.textureCoord,
-        num,
-        type,
-        normalize,
-        stride,
-        offset
-      );
-      gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
-    }
+    this.bindTexture();
 
     // Tell WebGL we want to affect texture unit 0
     gl.activeTexture(gl.TEXTURE0);
@@ -149,13 +159,16 @@ class ChunkForm {
       modelViewMatrix
     );
 
-    {
-      const type = gl.UNSIGNED_SHORT;
+    this.draw();
+  }
 
-      const count = this.amount;
+  draw() {
+    const gl = canvas.gl;
+    const type = gl.UNSIGNED_SHORT;
 
-      gl.bindTexture(gl.TEXTURE_2D, this.texture);
-      gl.drawElements(gl.TRIANGLES, count, type, 0);
-    }
+    const count = this.amount;
+
+    gl.bindTexture(gl.TEXTURE_2D, this.texture);
+    gl.drawElements(gl.TRIANGLES, count, type, 0);
   }
 }

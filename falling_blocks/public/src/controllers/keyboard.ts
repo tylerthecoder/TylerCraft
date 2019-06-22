@@ -5,7 +5,7 @@ class KeyboardController extends Controller {
 
   maxTime = 100;
 
-  constructor(public entity: Player, public canvas: CanvasProgram) {
+  constructor(public entity: Player) {
     super();
 
     window.addEventListener("keydown", ({ key }) => {
