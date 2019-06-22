@@ -3,9 +3,17 @@ class EntityCamera extends Camera {
 
   offset: IDim = [0, 1.5, 0];
 
-  constructor(ent: Entity) {
-    super();
+  constructor(canvas: CanvasProgram, ent: Entity) {
+    super(canvas);
     this.entity = ent;
+  }
+
+  handleMouse(e: MouseEvent) {
+    const speed = 0.002;
+    const dx = e.movementX * speed;
+    const dy = e.movementY * speed;
+    this.entity.rotate([-dy, dx, 0]);
+    this.rotate(-dy, dx);
   }
 
   get pos(): IDim {

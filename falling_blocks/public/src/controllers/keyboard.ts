@@ -16,13 +16,6 @@ class KeyboardController extends Controller {
       this.keys.delete(key.toLowerCase());
       this.sendKeys();
     });
-
-    window.addEventListener("mousedown", () => {
-      canvas.canvas.requestPointerLock();
-      // canvas.canvas.requestFullscreen();
-    });
-
-    window.addEventListener("mousemove", this.handleMouse.bind(this));
   }
 
   sendKeys() {
@@ -51,15 +44,6 @@ class KeyboardController extends Controller {
     if (++this.timer >= this.maxTime) {
       this.sendPos();
       this.timer = 0;
-    }
-  }
-
-  handleMouse(e: MouseEvent) {
-    if (document.pointerLockElement === this.canvas.canvas) {
-      const speed = 0.002;
-      const dx = e.movementX * speed;
-      const dy = e.movementY * speed;
-      this.entity.rotate([-dy, dx, 0]);
     }
   }
 }

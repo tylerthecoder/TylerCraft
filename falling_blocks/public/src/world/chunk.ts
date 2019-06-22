@@ -1,8 +1,10 @@
+const CHUNK_SIZE = 5;
+
 class Chunk {
   form: ChunkForm;
-  pos: number[];
+  cubes: Cube[] = [];
 
-  constructor(public cubes: Cube[], canvas: CanvasProgram, pos: IDim) {
+  constructor(canvas: CanvasProgram, public chunkPos: number[]) {
     const textureCords = [
       [0.5, 0.5, 0.5, 0, 0, 0, 0, 0.5], // front
       [0.5, 0.5, 0.5, 0, 0, 0, 0, 0.5], // back
@@ -16,9 +18,34 @@ class Chunk {
 
     this.form = new ChunkForm(canvas, texture, textureCords, this.cubes);
 
-    this.pos = pos;
+    this.generate();
+  }
 
+  get pos() {
+    return [this.chunkPos[0] * CHUNK_SIZE, 0, this.chunkPos[1] * CHUNK_SIZE];
+  }
+
+  // use seed later down the line
+  generate() {
+    for (let i = 0; i < CHUNK_SIZE; i++) {
+      for (let j = 0; j < CHUNK_SIZE; j++) {
+        const cubePos = [this.pos[0] + i, 0, this.pos[2] + j];
+        const cube = new Cube(cubePos as IDim);
+        this.cubes.push(cube);
+      }
+    }
     this.getBufferData();
+  }
+
+  // change this to chunks instead of cubes later
+  isCollide(ent: Entity): Cube[] {
+    const collide: Cube[] = [];
+    for (const cube of this.cubes) {
+      if (cube.isCollide(ent)) {
+        collide.push(cube);
+      }
+    }
+    return collide;
   }
 
   render(screenPos: number[], screenRot: number[]) {

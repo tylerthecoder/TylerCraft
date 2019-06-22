@@ -7,12 +7,10 @@ class Player extends Entity {
 
   jumpCount = 0;
 
-  form: any;
+  form: CubeForm;
 
-  constructor(canvas?: CanvasProgram) {
+  constructor() {
     super([0, 11, 0], [0, 0, 0], [1, 2, 1], [Math.PI / 2, 0, 0]);
-
-    if (canvas) this.build(canvas);
   }
 
   build(canvas: CanvasProgram) {
@@ -26,16 +24,7 @@ class Player extends Entity {
     ];
 
     const texture = canvas.textures.player;
-
     this.form = new CubeForm(canvas, texture, textureCords, [1, 2, 1]);
-  }
-
-  rotate(r: number[]) {
-    for (let i = 0; i < r.length; i++) {
-      this.rot[i] += r[i];
-    }
-    if (this.rot[0] < 0) this.rot[0] = 0;
-    if (this.rot[0] > Math.PI) this.rot[0] = Math.PI;
   }
 
   update() {

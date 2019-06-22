@@ -20,6 +20,14 @@ class Entity {
     }
   }
 
+  rotate(r: number[]) {
+    for (let i = 0; i < r.length; i++) {
+      this.rot[i] += r[i];
+    }
+    if (this.rot[0] < 0) this.rot[0] = 0;
+    if (this.rot[0] > Math.PI) this.rot[0] = Math.PI;
+  }
+
   gravity() {
     this.vel[1] -= 0.007;
   }

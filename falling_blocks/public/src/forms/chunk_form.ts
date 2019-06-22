@@ -1,9 +1,6 @@
 declare var mat4: any;
 
 class ChunkForm {
-  program: any;
-  gl: WebGLRenderingContext;
-
   posBuffer: WebGLBuffer;
   indexBuffer: WebGLBuffer;
   textureBuffer: WebGLBuffer;
@@ -15,13 +12,10 @@ class ChunkForm {
     public texture: WebGLTexture,
     public textureCords: number[][],
     public cubes: Cube[]
-  ) {
-    this.program = canvas.program;
-    this.gl = canvas.gl;
-  }
+  ) {}
 
   setBuffers(positions: number[], indices: number[], textureCords: number[]) {
-    const gl = this.gl;
+    const gl = this.canvas.gl;
 
     this.amount = indices.length;
 
@@ -47,8 +41,8 @@ class ChunkForm {
   }
 
   bindCube() {
-    const programInfo = this.program;
-    const gl = this.gl;
+    const programInfo = this.canvas.program;
+    const gl = this.canvas.gl;
 
     const numComponents = 3; // pull out 2 values per iteration
     const type = gl.FLOAT; // the data in the buffer is 32bit floats
@@ -71,8 +65,8 @@ class ChunkForm {
   }
 
   render(pos: number[], screenPos: number[], screenRot: number[]) {
-    const gl = this.gl;
-    const programInfo = this.program;
+    const gl = this.canvas.gl;
+    const programInfo = this.canvas.program;
 
     gl.enable(gl.DEPTH_TEST); // Enable depth testing
     gl.depthFunc(gl.LEQUAL); // Near things obscure far things

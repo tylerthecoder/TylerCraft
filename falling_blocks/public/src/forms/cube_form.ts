@@ -10,9 +10,6 @@ enum IFace {
 }
 
 class CubeForm {
-  program: any;
-  gl: WebGLRenderingContext;
-
   posBuffer: WebGLBuffer;
   indexBuffer: WebGLBuffer;
   textureBuffer: WebGLBuffer;
@@ -27,9 +24,6 @@ class CubeForm {
     public textureCords: number[][],
     public size: IDim
   ) {
-    this.program = canvas.program;
-    this.gl = canvas.gl;
-
     this.initBuffers();
   }
 
@@ -68,7 +62,7 @@ class CubeForm {
       textureCords.push(...textureCord);
     }
 
-    const gl = this.gl;
+    const gl = this.canvas.gl;
 
     this.posBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuffer);
@@ -92,8 +86,8 @@ class CubeForm {
   }
 
   bindCube() {
-    const programInfo = this.program;
-    const gl = this.gl;
+    const programInfo = this.canvas.program;
+    const gl = this.canvas.gl;
 
     const numComponents = 3; // pull out 2 values per iteration
     const type = gl.FLOAT; // the data in the buffer is 32bit floats
@@ -116,8 +110,8 @@ class CubeForm {
   }
 
   render(pos: number[], screenPos: number[], screenRot: number[]) {
-    const gl = this.gl;
-    const programInfo = this.program;
+    const gl = this.canvas.gl;
+    const programInfo = this.canvas.program;
 
     gl.enable(gl.DEPTH_TEST); // Enable depth testing
     gl.depthFunc(gl.LEQUAL); // Near things obscure far things
