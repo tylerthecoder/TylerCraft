@@ -13,7 +13,7 @@ class EntityCamera extends Camera {
     const dx = e.movementX * speed;
     const dy = e.movementY * speed;
     this.entity.rotate([-dy, dx, 0]);
-    this.rotate(-dy, dx);
+    this.rotate([-dy, dx, 0]);
   }
 
   get pos(): IDim {
@@ -24,8 +24,12 @@ class EntityCamera extends Camera {
     return this.entity.pos.map((x, i) => x + this.offset[i]).slice(0) as IDim;
   }
 
+  set pos(_pos: IDim) {}
+
   get rot() {
     const rot = [this.entity.rot[0], this.entity.rot[1], this.entity.rot[2]];
     return rot as IDim;
   }
+
+  set rot(_pos: IDim) {}
 }

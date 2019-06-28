@@ -7,6 +7,6 @@ class FixedCamera extends Camera {
     const speed = 0.002;
     const dx = e.movementX * speed;
     const dy = e.movementY * speed;
-    this.rotate(-dy, dx);
+    this.rotate([-dy, dx, 0]);
   }
 }

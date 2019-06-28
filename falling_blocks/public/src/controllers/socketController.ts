@@ -1,8 +1,6 @@
 class SocketController extends Controller {
   socket: SocketHandler;
 
-  keys = new Set();
-
   constructor(public entity: Player) {
     super();
     this.socket = new SocketHandler(this.onMessage.bind(this));
@@ -25,4 +23,6 @@ class SocketController extends Controller {
   update() {
     this.wasdKeys();
   }
+
+  keysChange() {}
 }

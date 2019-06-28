@@ -1,8 +1,10 @@
 class Cube extends Entity {
   falling = false;
 
-  constructor(pos: IDim, dim: IDim = [1, 1, 1]) {
-    super(pos, [0, 0, 0], dim);
+  constructor(pos: IDim, dim?: IDim) {
+    super();
+    this.pos = pos;
+    this.dim = dim || [1, 1, 1];
   }
 
   update(_delta: number) {
@@ -15,4 +17,6 @@ class Cube extends Entity {
     }
     this.move(this.vel);
   }
+
+  render(camera: Camera) {}
 }

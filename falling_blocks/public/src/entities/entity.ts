@@ -1,4 +1,4 @@
-class Entity {
+abstract class Entity {
   pos: IDim = [0, 0, 0];
   vel: IDim = [0, 0, 0];
   dim: IDim = [1, 1, 1];
@@ -7,16 +7,22 @@ class Entity {
   onGround = false;
   jumpCount = 0;
 
-  constructor(pos: IDim, vel: IDim, dim: IDim, rot?: IDim) {
-    this.pos = pos;
-    this.vel = vel;
-    this.dim = dim;
-    this.rot = rot || this.rot;
-  }
+  uid = "";
+
+  constructor() {}
+
+  abstract update(delta: number): void;
+  abstract render(camera: Camera): void;
 
   move(p: IDim) {
     for (let i = 0; i < p.length; i++) {
       this.pos[i] += p[i];
+    }
+  }
+
+  applyForce(f: IDim) {
+    for (let i = 0; i < f.length; i++) {
+      this.vel[i] += f[i];
     }
   }
 
@@ -29,7 +35,7 @@ class Entity {
   }
 
   gravity() {
-    this.vel[1] -= 0.007;
+    this.applyForce([0, -0.007, 0]);
   }
 
   isCollide(ent: Entity) {

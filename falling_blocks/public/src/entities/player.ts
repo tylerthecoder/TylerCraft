@@ -1,16 +1,22 @@
 class Player extends Entity {
+  pos: IDim = [-2, 5, -2];
+  dim: IDim = [1, 2, 1];
+  rot: IDim = [Math.PI / 2, 0, 0];
+
   uid: string;
 
   thirdPerson = true;
 
   onGround = false;
 
+  canFire = true;
+
   jumpCount = 0;
 
   renderer = new Renderer();
 
   constructor() {
-    super([0, 11, 0], [0, 0, 0], [1, 2, 1], [Math.PI / 2, 0, 0]);
+    super();
 
     this.renderer.setActiveTexture(canvas.textures.player);
 
@@ -31,6 +37,15 @@ class Player extends Entity {
     if (this.jumpCount < 5) {
       this.vel[1] = 0.1;
       this.jumpCount++;
+    }
+  }
+
+  fireball() {
+    if (this.canFire) {
+      const pos = [this.pos[0], this.pos[1] + 4, this.pos[2]] as IDim;
+      const ball = new Ball(pos, [0, 0.02, 0]);
+      game.addEntity(ball);
+      this.canFire = false;
     }
   }
 

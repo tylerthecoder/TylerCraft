@@ -1,5 +1,5 @@
 class Game {
-  players: Player[] = [];
+  entities: Entity[] = [];
   controllers: Controller[] = [];
 
   mainPlayer = new Player();
@@ -15,7 +15,7 @@ class Game {
 
   constructor() {
     this.mainPlayer;
-    this.players.push(this.mainPlayer);
+    this.entities.push(this.mainPlayer);
 
     this.load();
   }
@@ -26,7 +26,7 @@ class Game {
       newPlayer.uid = uid;
       const controller = new SocketController(newPlayer);
       this.controllers.push(controller);
-      this.players.push(newPlayer);
+      this.entities.push(newPlayer);
     };
     if (message.type === "welcome") {
       this.mainPlayer.uid = message.payload.uid;
@@ -36,7 +36,7 @@ class Game {
     } else if (message.type === "player-leave") {
       const payload = message.payload as NewPlayerMessage;
       const notMe = (id: string) => payload.uid !== id;
-      this.players = this.players.filter(p => notMe(p.uid));
+      this.entities = this.entities.filter(p => notMe(p.uid));
       this.controllers = this.controllers.filter(c =>
         notMe((c.entity as Player).uid)
       );
@@ -49,9 +49,10 @@ class Game {
     this.socket = new SocketHandler(this.socketOnMessage.bind(this));
 
     this.controllers.push(new KeyboardController(this.mainPlayer));
-
     this.camera = new EntityCamera(this.mainPlayer);
+
     // this.camera = new FixedCamera([0, 3, 0], [Math.PI / 2, 0, 0]);
+    // this.controllers.push(new SpectatorController(this.camera));
 
     this.start();
   }
@@ -61,6 +62,7 @@ class Game {
   }
 
   render(time: number) {
+    const delta = 5;
     this.totTime = time;
     this.numOfFrames++;
 
@@ -69,15 +71,15 @@ class Game {
       controller.update();
     }
 
-    for (const player of this.players) {
-      player.update();
+    for (const entity of this.entities) {
+      entity.update(delta);
     }
 
-    // move the players out of the blocks
-    for (const player of this.players) {
-      const collisions = this.world.isCollide(player);
-      for (const entity of collisions) {
-        player.pushOut(entity);
+    // move the entities out of the blocks
+    for (const entity of this.entities) {
+      const collisions = this.world.isCollide(entity);
+      for (const e of collisions) {
+        entity.pushOut(e);
       }
     }
 
@@ -86,11 +88,17 @@ class Game {
     // render world first b/c it clears canvas
     this.world.render(this.camera);
 
-    for (const player of this.players) {
-      player.render(this.camera);
+    for (const entity of this.entities) {
+      entity.render(this.camera);
     }
 
     requestAnimationFrame(this.render.bind(this));
+  }
+
+  addPlayer() {}
+
+  addEntity(entity: Entity) {
+    this.entities.push(entity);
   }
 }
 

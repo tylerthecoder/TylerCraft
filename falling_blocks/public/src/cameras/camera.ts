@@ -1,8 +1,9 @@
-abstract class Camera {
+abstract class Camera extends Entity {
   abstract pos: IDim;
   abstract rot: IDim;
 
   constructor() {
+    super();
     window.addEventListener("mousedown", () => {
       canvas.canvas.requestPointerLock();
     });
@@ -14,10 +15,8 @@ abstract class Camera {
     });
   }
 
-  abstract handleMouse(e: MouseEvent): void;
+  update(_delta: number) {}
+  render(_camera: Camera) {}
 
-  rotate(x: number, y: number) {
-    this.rot[0] += x;
-    this.rot[1] += y;
-  }
+  abstract handleMouse(e: MouseEvent): void;
 }

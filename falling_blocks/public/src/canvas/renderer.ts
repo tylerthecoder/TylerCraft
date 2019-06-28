@@ -47,7 +47,7 @@ class Renderer {
 
   // Tell WebGL how to pull out the positions from the position
   // buffer into the vertexPosition attribute.
-  bindCube() {
+  private bindCube() {
     const programInfo = canvas.program;
     const gl = canvas.gl;
 
@@ -72,7 +72,7 @@ class Renderer {
   }
 
   // tell webgl how to pull out the texture coordinates from buffer
-  bindTexture() {
+  private bindTexture() {
     const programInfo = canvas.program;
     const gl = canvas.gl;
 
@@ -162,7 +162,7 @@ class Renderer {
     this.draw();
   }
 
-  draw() {
+  private draw() {
     const gl = canvas.gl;
     const type = gl.UNSIGNED_SHORT;
 

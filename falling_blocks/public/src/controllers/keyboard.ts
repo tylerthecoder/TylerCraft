@@ -1,21 +1,15 @@
 class KeyboardController extends Controller {
-  keys = new Set();
-
   timer = 0;
 
   maxTime = 100;
 
-  constructor(public entity: Player) {
+  constructor(public entity: Entity) {
     super();
+  }
 
-    window.addEventListener("keydown", ({ key }) => {
-      this.keys.add(key.toLowerCase());
-      this.sendKeys();
-    });
-    window.addEventListener("keyup", ({ key }) => {
-      this.keys.delete(key.toLowerCase());
-      this.sendKeys();
-    });
+  keysChange() {
+    // maybe only do this on a tick
+    this.sendKeys();
   }
 
   sendKeys() {
