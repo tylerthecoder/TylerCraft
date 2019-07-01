@@ -5,7 +5,7 @@ class Player extends Entity {
 
   uid: string;
 
-  thirdPerson = true;
+  thirdPerson = false;
 
   onGround = false;
 
@@ -30,7 +30,7 @@ class Player extends Entity {
   }
 
   render(camera: Camera) {
-    this.renderer.render(this.pos, camera);
+    if (this.thirdPerson) this.renderer.render(this.pos, camera);
   }
 
   jump() {
@@ -42,22 +42,12 @@ class Player extends Entity {
 
   fireball() {
     if (this.canFire) {
-      const pos = [this.pos[0], this.pos[1] + 4, this.pos[2]] as IDim;
-      const ball = new Ball(pos, [0, 0.02, 0]);
+      const pos = arrayAdd(this.pos, [0, 2, 0]) as IDim;
+      const ball = new Ball(pos, [0, 0.1, 0]);
+      ball.applyForce([0, 0.1, 0]);
       game.addEntity(ball);
       this.canFire = false;
     }
-  }
-
-  getFace(i: number, dir: number, size: number[]) {
-    const square = [[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]];
-    const pos = square
-      .map(edge => {
-        edge.splice(i, 0, dir);
-        return edge.map((dim, i) => dim * size[i]);
-      })
-      .flat();
-    return pos;
   }
 
   setBuffers() {
@@ -79,7 +69,15 @@ class Player extends Entity {
       const i = face >> 1;
       const dir = face % 2 === 0 ? 0.5 : -0.5;
 
-      const pos = this.getFace(i, dir, this.dim);
+      // const pos = this.getFace(i, dir, this.dim);
+      const square = [[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]];
+      const pos = square
+        .map(edge => {
+          edge.splice(i, 0, dir);
+          return edge.map((dim, i) => dim * this.dim[i]);
+        })
+        .flat();
+
       const index = base.map(x => x + count);
       count += 4;
 

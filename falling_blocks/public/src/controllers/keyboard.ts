@@ -5,6 +5,7 @@ class KeyboardController extends Controller {
 
   constructor(public entity: Entity) {
     super();
+    this.setKeyListeners();
   }
 
   keysChange() {
@@ -17,6 +18,7 @@ class KeyboardController extends Controller {
       type: "keys",
       payload: {
         keys: Array.from(this.keys),
+        rot: this.entity.rot,
         uid: this.entity.uid
       }
     });
@@ -33,8 +35,8 @@ class KeyboardController extends Controller {
     SocketHandler.send(message);
   }
 
-  update() {
-    this.wasdKeys();
+  update(delta: number) {
+    this.wasdKeys(delta);
     if (++this.timer >= this.maxTime) {
       this.sendPos();
       this.timer = 0;

@@ -8,9 +8,11 @@ class Game {
   socket: SocketHandler;
 
   totTime = 0;
-  numOfFrames = 0;
+  pastDeltas: number[] = [];
   get frameRate() {
-    return this.totTime / this.numOfFrames;
+    this.pastDeltas = this.pastDeltas.slice(-20);
+    const totTime = this.pastDeltas.reduce((acc, cur) => acc + cur);
+    return totTime / Math.min(this.pastDeltas.length, 20);
   }
 
   constructor() {
@@ -62,13 +64,13 @@ class Game {
   }
 
   render(time: number) {
-    const delta = 5;
+    const delta = time - this.totTime;
+    this.pastDeltas.push(delta);
     this.totTime = time;
-    this.numOfFrames++;
 
     // updates
     for (const controller of this.controllers) {
-      controller.update();
+      controller.update(delta);
     }
 
     for (const entity of this.entities) {
@@ -80,6 +82,14 @@ class Game {
       const collisions = this.world.isCollide(entity);
       for (const e of collisions) {
         entity.pushOut(e);
+      }
+
+      for (const e of this.entities) {
+        if (e === entity) continue;
+        const isCollide = e.isCollide(entity);
+        if (isCollide) {
+          e.pushOut(entity);
+        }
       }
     }
 

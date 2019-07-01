@@ -1,18 +1,25 @@
 abstract class Controller {
   keys = new Set();
 
-  constructor() {
+  keysPressed = new Set();
+
+  constructor() {}
+
+  abstract entity: Entity;
+  abstract update(delta: number): void;
+  abstract keysChange(): void;
+
+  setKeyListeners() {
     window.addEventListener("keydown", ({ key }) => {
       this.keys.add(key.toLowerCase());
+      this.keysChange();
     });
     window.addEventListener("keyup", ({ key }) => {
       this.keys.delete(key.toLowerCase());
+      this.keysPressed.add(key.toLowerCase());
+      this.keysChange();
     });
   }
-
-  abstract entity: Entity;
-  abstract update(): void;
-  abstract keysChange(): void;
 
   getSphereCords(r: number, t: number, p: number) {
     const cords = [
@@ -23,8 +30,8 @@ abstract class Controller {
     return cords as IDim;
   }
 
-  wasdKeys() {
-    const speed = 0.1;
+  wasdKeys(delta: number) {
+    const speed = 0.01 * delta;
 
     const k = (key: string, amount: [number, number, number]) => {
       if (this.keys.has(key)) {
@@ -46,6 +53,11 @@ abstract class Controller {
         this.entity.fireball();
       } else {
         this.entity.canFire = true;
+      }
+
+      if (this.keysPressed.has("v")) {
+        this.keysPressed.delete("v");
+        this.entity.thirdPerson = !this.entity.thirdPerson;
       }
     }
   }

@@ -8,12 +8,12 @@ class Ball extends Entity {
 
     this.dim = Array(3).fill(this.radius, 0, 3) as IDim;
 
-    this.renderer.setActiveTexture(canvas.textures.player);
+    this.renderer.setActiveTexture(canvas.textures.checker);
     this.setBuffers();
   }
 
   update(_delta: number) {
-    // this.applyForce([0.003, 0, 0.003]);
+    this.onGround = false;
     this.gravity();
     this.move(this.vel);
   }
@@ -138,7 +138,7 @@ class Ball extends Entity {
 
     const textureCords = [];
     for (let i = 0; i < 100; i++) {
-      textureCords.push(0, 0, 1, 1);
+      textureCords.push(0, 0, 0.5, 0.25);
     }
 
     this.renderer.setBuffers(positions.flat(), indices.flat(), textureCords);

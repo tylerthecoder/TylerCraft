@@ -11,8 +11,9 @@ class CanvasProgram {
     this.setup();
 
     this.textures = {
-      player: this.loadTexture(this.gl, "./imgs/player.png"),
-      grassBlock: this.loadTexture(this.gl, "./imgs/grass_block.png")
+      player: this.loadTexture("./imgs/player.png"),
+      grassBlock: this.loadTexture("./imgs/grass_block.png"),
+      checker: this.loadTexture("./imgs/checker.jpg")
     };
 
     this.clearCanvas();
@@ -142,7 +143,9 @@ class CanvasProgram {
   // Initialize a texture and load an image.
   // When the image finished loading copy it into the texture.
   //
-  loadTexture(gl: WebGLRenderingContext, url: string) {
+  loadTexture(url: string) {
+    const gl = this.gl;
+
     const isPowerOf2 = (x: number) => (x & (x - 1)) === 0;
 
     const texture = gl.createTexture();

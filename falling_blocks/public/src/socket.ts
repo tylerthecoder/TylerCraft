@@ -7,6 +7,7 @@ type Payload = KeyPressMessage | NewPlayerMessage | WelcomeMessage;
 
 interface KeyPressMessage {
   keys: string[];
+  rot: IDim;
   uid: string;
 }
 

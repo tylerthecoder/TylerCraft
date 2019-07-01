@@ -10,18 +10,20 @@ class SocketController extends Controller {
     if (message.type === "keys") {
       const payload = message.payload as KeyPressMessage;
       if (payload.uid === this.entity.uid) {
-        this.keys = new Set((message.payload as KeyPressMessage).keys);
+        console.log(message);
+        this.keys = new Set(payload.keys);
+        this.entity.rot = payload.rot;
       }
     } else if (message.type === "pos") {
       const payload = message.payload as PositionMessage;
       if (payload.uid === this.entity.uid) {
-        this.entity.pos = payload.pos.slice(0) as [number, number, number];
+        this.entity.pos = payload.pos.slice(0) as IDim;
       }
     }
   }
 
-  update() {
-    this.wasdKeys();
+  update(delta: number) {
+    this.wasdKeys(delta);
   }
 
   keysChange() {}
