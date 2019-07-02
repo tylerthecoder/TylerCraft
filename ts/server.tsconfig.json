@@ -5,15 +5,14 @@
     "removeComments": true,
     "preserveConstEnums": true,
     "esModuleInterop": true,
-    "outDir": "./bin",
+    "outDir": "../bin",
     "sourceMap": true,
     "target": "esnext",
     "lib": [
-      "esnext",
-      "dom",
+      "esnext"
     ]
   },
   "include": [
-    "./src/**/*"
+    "../app/server/**/*"
   ]
 }

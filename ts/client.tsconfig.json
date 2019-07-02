@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "module": "commonjs",
+    "noImplicitAny": true,
+    "removeComments": true,
+    "preserveConstEnums": true,
+    "esModuleInterop": true,
+    "sourceMap": true,
+    "target": "esnext",
+    "lib": [
+      "esnext",
+      "dom"
+    ]
+  },
+  "include": [
+    "../app/client/**/*"
+  ]
+}

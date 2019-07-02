@@ -35,6 +35,8 @@ export class Game {
     this.mainPlayer;
     this.entities.push(this.mainPlayer);
 
+    console.log("Starting Game");
+
     this.load();
   }
 

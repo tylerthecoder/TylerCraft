@@ -3,9 +3,12 @@ import * as fs from "fs";
 import * as path from "path";
 import { Game } from "./Game";
 import SocketServer from "./socket";
+// import { Game as G } from "../client/game";
+
+// const gg = new G();
 
 const port = 3000;
-const staticPath = "../static";
+const staticPath = "../public";
 
 const extToContent: { [ex: string]: string } = {
   js: "text/javascript",

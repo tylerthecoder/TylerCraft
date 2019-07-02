@@ -1,10 +1,11 @@
 {
   "scripts": {
-    "dev": "npm-run-all --parallel build:watch start:watch",
-    "start": "node ./bin/server",
-    "build:watch": "tsc -w",
-    "start:watch": "nodemon ./bin/server.js",
-    "client": "webpack --config webpack.config.js "
+    "start:server": "node ./bin/server",
+    "wstart:server": "nodemon ./bin/server.js",
+    "build:server": "tsc -p ./ts/server.tsconfig.json",
+    "wbuild:server": "tsc -w -p ./ts/server.tsconfig.json",
+    "build:client": "webpack --config webpack.config.js",
+    "wbuild:client": "webpack --watch --config webpack.config.js"
   },
   "dependencies": {
     "gl-matrix": "^3.0.0",
