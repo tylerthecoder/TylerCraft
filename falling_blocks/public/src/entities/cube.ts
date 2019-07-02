@@ -1,5 +1,9 @@
-class Cube extends Entity {
-  falling = false;
+import { Entity } from "./entity";
+import { Camera } from "../cameras/camera";
+import { IDim } from "..";
+
+export class Cube extends Entity {
+  gravitable = false;
 
   constructor(pos: IDim, dim?: IDim) {
     super();
@@ -7,15 +11,12 @@ class Cube extends Entity {
     this.dim = dim || [1, 1, 1];
   }
 
-  update(_delta: number) {
+  update(delta: number) {
     // if (Math.random() < 0.001) {
     //   this.falling = true;
     // }
 
-    if (this.falling) {
-      this.gravity();
-    }
-    this.move(this.vel);
+    this.baseUpdate(delta);
   }
 
   render(camera: Camera) {}

@@ -1,4 +1,4 @@
-function arrayAdd(arr1: number[], arr2: number[]) {
+export function arrayAdd(arr1: number[], arr2: number[]) {
   if (arr1.length !== arr2.length) {
     throw new Error("Arrays not same length");
   }

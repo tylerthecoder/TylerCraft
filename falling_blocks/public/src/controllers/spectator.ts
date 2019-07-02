@@ -1,4 +1,7 @@
-class SpectatorController extends Controller {
+import { Controller } from "./controller";
+import { Entity } from "../entities/entity";
+
+export class SpectatorController extends Controller {
   constructor(public entity: Entity) {
     super();
     this.setKeyListeners();

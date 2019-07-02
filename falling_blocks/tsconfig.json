@@ -4,9 +4,14 @@
     "noImplicitAny": true,
     "removeComments": true,
     "preserveConstEnums": true,
+    "esModuleInterop": true,
     "outDir": "./bin",
     "sourceMap": true,
     "target": "esnext",
+    "lib": [
+      "esnext",
+      "dom",
+    ]
   },
   "include": [
     "./src/**/*"

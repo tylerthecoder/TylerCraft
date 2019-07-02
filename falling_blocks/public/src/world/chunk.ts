@@ -1,6 +1,13 @@
-const CHUNK_SIZE = 5;
+import { Cube } from "../entities/cube";
+import { Renderer } from "../canvas/renderer";
+import { canvas } from "../canvas/canvas";
+import { Entity } from "../entities/entity";
+import { Camera } from "../cameras/camera";
+import { IDim } from "..";
 
-class Chunk {
+export const CHUNK_SIZE = 5;
+
+export class Chunk {
   cubes: Cube[] = [];
   renderer = new Renderer();
 

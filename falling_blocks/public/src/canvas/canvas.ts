@@ -1,4 +1,4 @@
-class CanvasProgram {
+export class CanvasProgram {
   canvas: HTMLCanvasElement;
   gl: WebGLRenderingContext;
   program: any;
@@ -210,4 +210,4 @@ class CanvasProgram {
   }
 }
 
-const canvas = new CanvasProgram();
+export const canvas = new CanvasProgram();

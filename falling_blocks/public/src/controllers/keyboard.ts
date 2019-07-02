@@ -1,4 +1,8 @@
-class KeyboardController extends Controller {
+import { Entity } from "../entities/entity";
+import { Controller } from "./controller";
+import { SocketHandler } from "../socket";
+
+export class KeyboardController extends Controller {
   timer = 0;
 
   maxTime = 100;

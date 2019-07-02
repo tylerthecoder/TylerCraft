@@ -1,31 +1,33 @@
-interface ISocketMessage {
+import { IDim } from ".";
+
+export interface ISocketMessage {
   type: string;
   payload: Payload;
 }
 
-type Payload = KeyPressMessage | NewPlayerMessage | WelcomeMessage;
+export type Payload = KeyPressMessage | NewPlayerMessage | WelcomeMessage;
 
-interface KeyPressMessage {
+export interface KeyPressMessage {
   keys: string[];
   rot: IDim;
   uid: string;
 }
 
-interface WelcomeMessage {
+export interface WelcomeMessage {
   uid: string;
   players: string[];
 }
 
-interface NewPlayerMessage {
+export interface NewPlayerMessage {
   uid: string;
 }
 
-interface PositionMessage {
+export interface PositionMessage {
   uid: string;
   pos: number[];
 }
 
-class SocketHandler {
+export class SocketHandler {
   static socket: WebSocket;
   static connected: boolean;
 

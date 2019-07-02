@@ -1,4 +1,13 @@
-class Player extends Entity {
+import { game } from "../game";
+import { Entity } from "./entity";
+import { Renderer } from "../canvas/renderer";
+import { canvas } from "../canvas/canvas";
+import { Ball } from "./ball";
+import { arrayAdd } from "../utils";
+import { Camera } from "../cameras/camera";
+import { IDim } from "..";
+
+export class Player extends Entity {
   pos: IDim = [-2, 5, -2];
   dim: IDim = [1, 2, 1];
   rot: IDim = [Math.PI / 2, 0, 0];
@@ -23,10 +32,9 @@ class Player extends Entity {
     this.setBuffers();
   }
 
-  update() {
+  update(delta: number) {
     this.onGround = false;
-    this.gravity();
-    this.move(this.vel);
+    this.baseUpdate(delta);
   }
 
   render(camera: Camera) {
@@ -50,7 +58,7 @@ class Player extends Entity {
     }
   }
 
-  setBuffers() {
+  private setBuffers() {
     const base = [0, 1, 2, 0, 2, 3];
     const facesToRender = [0, 1, 2, 3, 4, 5];
     const textureCords = [

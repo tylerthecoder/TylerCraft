@@ -1,15 +1,27 @@
 {
   "scripts": {
     "dev": "npm-run-all --parallel build:watch start:watch",
+    "start": "node ./bin/server",
     "build:watch": "tsc -w",
-    "start:watch": "nodemon ./bin/server.js"
+    "start:watch": "nodemon ./bin/server.js",
+    "client": "webpack --config webpack.config.js "
   },
   "dependencies": {
+    "gl-matrix": "^3.0.0",
+    "lodash": "^4.17.11",
     "ws": "^7.0.1"
   },
   "devDependencies": {
+    "@types/gl-matrix": "^2.4.5",
+    "@types/lodash": "^4.14.135",
     "@types/ws": "^6.0.1",
+    "copy-webpack-plugin": "^5.0.3",
+    "html-webpack-plugin": "^3.2.0",
     "nodemon": "1.19.1",
-    "npm-run-all": "4.1.5"
+    "npm-run-all": "4.1.5",
+    "ts-loader": "^6.0.4",
+    "typescript": "^3.5.2",
+    "webpack": "^4.35.2",
+    "webpack-cli": "^3.3.5"
   }
 }

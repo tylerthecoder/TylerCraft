@@ -1,1 +1,1 @@
-type IDim = [number, number, number];
+export type IDim = [number, number, number];

@@ -1,4 +1,8 @@
-abstract class Camera extends Entity {
+import { Entity } from "../entities/entity";
+import { canvas } from "../canvas/canvas";
+import { IDim } from "..";
+
+export abstract class Camera extends Entity {
   abstract pos: IDim;
   abstract rot: IDim;
 

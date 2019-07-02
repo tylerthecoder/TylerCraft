@@ -1,4 +1,20 @@
-class Game {
+import { Player } from "./entities/player";
+import { World } from "./world/world";
+import { Entity } from "./entities/entity";
+import { Controller } from "./controllers/controller";
+import { SocketController } from "./controllers/socketController";
+import { canvas } from "./canvas/canvas";
+import { KeyboardController } from "./controllers/keyboard";
+import { Camera } from "./cameras/camera";
+import { EntityCamera } from "./cameras/entityCamera";
+import {
+  SocketHandler,
+  WelcomeMessage,
+  NewPlayerMessage,
+  ISocketMessage
+} from "./socket";
+
+export class Game {
   entities: Entity[] = [];
   controllers: Controller[] = [];
 
@@ -43,6 +59,20 @@ class Game {
         notMe((c.entity as Player).uid)
       );
     }
+  }
+
+  serverWelcome(msg: WelcomeMessage) {
+    this.mainPlayer.uid = msg.uid;
+    msg.players.forEach(this.addOtherPlayer.bind(this));
+    // get generated world here as well
+  }
+
+  addOtherPlayer(uid: string) {
+    const newPlayer = new Player();
+    newPlayer.setUid(uid);
+    const controller = new SocketController(newPlayer);
+    newPlayer.setController(controller);
+    this.addEntity(newPlayer);
   }
 
   async load() {
@@ -110,6 +140,13 @@ class Game {
   addEntity(entity: Entity) {
     this.entities.push(entity);
   }
+
+  test() {
+    console.log("Test");
+  }
 }
 
-const game = new Game();
+export const game = new Game();
+
+// for debugging
+(window as any).game = game;

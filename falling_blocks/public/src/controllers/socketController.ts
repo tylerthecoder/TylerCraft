@@ -1,4 +1,14 @@
-class SocketController extends Controller {
+import { Controller } from "./controller";
+import { Player } from "../entities/player";
+import {
+  SocketHandler,
+  ISocketMessage,
+  KeyPressMessage,
+  PositionMessage
+} from "../socket";
+import { IDim } from "..";
+
+export class SocketController extends Controller {
   socket: SocketHandler;
 
   constructor(public entity: Player) {

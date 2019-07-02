@@ -1,4 +1,8 @@
-abstract class Controller {
+import { Entity } from "../entities/entity";
+import { Player } from "../entities/player";
+import { IDim } from "..";
+
+export abstract class Controller {
   keys = new Set();
 
   keysPressed = new Set();

@@ -1,18 +1,42 @@
-abstract class Entity {
+import { Controller } from "../controllers/controller";
+import { Camera } from "../cameras/camera";
+import { IDim } from "..";
+
+export abstract class Entity {
   pos: IDim = [0, 0, 0];
   vel: IDim = [0, 0, 0];
   dim: IDim = [1, 1, 1];
   rot: IDim = [0, 0, 0];
+
+  gravitable = true;
 
   onGround = false;
   jumpCount = 0;
 
   uid = "";
 
+  controller: Controller;
+
   constructor() {}
 
   abstract update(delta: number): void;
   abstract render(camera: Camera): void;
+
+  setUid(uid: string) {
+    this.uid = uid;
+  }
+
+  setController(controller: Controller) {
+    this.controller = controller;
+  }
+
+  baseUpdate(delta: number) {
+    if (this.controller) this.controller.update(delta);
+
+    if (this.gravitable) this.gravity();
+
+    this.move(this.vel);
+  }
 
   move(p: IDim) {
     for (let i = 0; i < p.length; i++) {

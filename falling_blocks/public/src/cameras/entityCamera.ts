@@ -1,4 +1,9 @@
-class EntityCamera extends Camera {
+import { Entity } from "../entities/entity";
+import { Camera } from "./camera";
+import { Player } from "../entities/player";
+import { IDim } from "..";
+
+export class EntityCamera extends Camera {
   entity: Entity;
 
   offset: IDim = [0, 1, 0];

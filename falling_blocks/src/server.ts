@@ -1,12 +1,11 @@
 import * as http from "http";
 import * as fs from "fs";
 import * as path from "path";
-import * as WebSocket from "ws";
 import { Game } from "./Game";
 import SocketServer from "./socket";
 
 const port = 3000;
-const staticPath = "../public/static";
+const staticPath = "../static";
 
 const extToContent: { [ex: string]: string } = {
   js: "text/javascript",

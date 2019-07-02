@@ -1,14 +1,14 @@
 import SocketServer from "./socket";
-import * as WebSocket from "ws";
+import * as wSocket from "ws";
 
 interface Player {
   uid: string;
   pos: number[];
-  ws: WebSocket;
+  ws: wSocket;
 }
 
 export default class Players {
-  players: Map<WebSocket, Player> = new Map();
+  players: Map<wSocket, Player> = new Map();
 
   get playersArray() {
     return Array.from(this.players.values());
@@ -18,7 +18,7 @@ export default class Players {
     this.wss.listen(this.newPlayer.bind(this));
   }
 
-  newPlayer(ws: WebSocket) {
+  newPlayer(ws: wSocket) {
     console.log("New Player!");
     // generate a random ID for the new player
     const uid = `${Math.random()}${Math.random()}`;
@@ -55,7 +55,7 @@ export default class Players {
     ws.on("close", this.removePlayer.bind(this, ws));
   }
 
-  removePlayer(ws: WebSocket) {
+  removePlayer(ws: wSocket) {
     // tell everyone about this tragedy
     const playerLeaveMessage = {
       type: "player-leave",
@@ -69,7 +69,7 @@ export default class Players {
     this.players.delete(ws);
   }
 
-  onMessage(ws: WebSocket, message: ISocketMessage) {
+  onMessage(ws: wSocket, message: ISocketMessage) {
     switch (message.type) {
       case "keys":
         this.wss.sendGlobal(message, ws);

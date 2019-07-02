@@ -1,4 +1,7 @@
-class FixedCamera extends Camera {
+import { Camera } from "./camera";
+import { IDim } from "..";
+
+export class FixedCamera extends Camera {
   constructor(public pos: IDim, public rot: IDim) {
     super();
   }

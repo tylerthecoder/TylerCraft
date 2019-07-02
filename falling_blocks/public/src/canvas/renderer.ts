@@ -1,6 +1,8 @@
+import { CanvasProgram, canvas } from "./canvas";
+import { Camera } from "../cameras/camera";
 declare var mat4: any;
 
-class Renderer {
+export class Renderer {
   canvas: CanvasProgram;
 
   posBuffer: WebGLBuffer;

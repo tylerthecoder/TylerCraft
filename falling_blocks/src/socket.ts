@@ -1,18 +1,18 @@
-import * as WebSocket from "ws";
+import * as wSocket from "ws";
 import { Server } from "http";
 
 // TODO: Handle pinging the clients
 
-type ConnectionListener = (ws: WebSocket) => void;
-type MessageListener = (ws: WebSocket, message: ISocketMessage) => void;
+type ConnectionListener = (ws: wSocket) => void;
+type MessageListener = (ws: wSocket, message: ISocketMessage) => void;
 
 export default class SocketServer {
-  server: WebSocket.Server;
+  server: wSocket.Server;
 
   connectionListeners: ConnectionListener[] = [];
 
   constructor(server: Server) {
-    this.server = new WebSocket.Server({
+    this.server = new wSocket.Server({
       server
     });
     this.server.on("connection", this.newConnection.bind(this));
@@ -22,13 +22,13 @@ export default class SocketServer {
     this.connectionListeners.push(listener);
   }
 
-  newConnection(ws: WebSocket) {
+  newConnection(ws: wSocket) {
     this.connectionListeners.forEach(func => {
       func(ws);
     });
   }
 
-  listenTo(ws: WebSocket, func: MessageListener) {
+  listenTo(ws: wSocket, func: MessageListener) {
     ws.on("message", (data: string) => {
       try {
         const message = JSON.parse(data) as ISocketMessage;
@@ -39,14 +39,14 @@ export default class SocketServer {
     });
   }
 
-  send(ws: WebSocket, message: ISocketMessage) {
+  send(ws: wSocket, message: ISocketMessage) {
     ws.send(JSON.stringify(message));
   }
 
-  sendGlobal(message: ISocketMessage, exclude?: WebSocket) {
+  sendGlobal(message: ISocketMessage, exclude?: wSocket) {
     this.server.clients.forEach(client => {
       if (exclude && client === exclude) return;
-      this.send(client, message);
+      this.send(client as wSocket, message);
     });
   }
 }

@@ -1,4 +1,10 @@
-class Ball extends Entity {
+import { Renderer } from "../canvas/renderer";
+import { Entity } from "./entity";
+import { canvas } from "../canvas/canvas";
+import { Camera } from "../cameras/camera";
+import { IDim } from "..";
+
+export class Ball extends Entity {
   radius = 1;
 
   renderer = new Renderer();
@@ -12,10 +18,9 @@ class Ball extends Entity {
     this.setBuffers();
   }
 
-  update(_delta: number) {
+  update(delta: number) {
     this.onGround = false;
-    this.gravity();
-    this.move(this.vel);
+    this.baseUpdate(delta);
   }
 
   render(camera: Camera) {

@@ -1,4 +1,10 @@
-class World {
+import { Cube } from "../entities/cube";
+import { Chunk, CHUNK_SIZE } from "./chunk";
+import { canvas } from "../canvas/canvas";
+import { Entity } from "../entities/entity";
+import { Camera } from "../cameras/camera";
+
+export class World {
   cubes: Cube[] = [];
   chunks: Map<string, Chunk> = new Map();
 
