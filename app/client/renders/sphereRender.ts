@@ -1,33 +1,23 @@
-import { Renderer } from "../canvas/renderer";
-import { Entity } from "./entity";
-import { canvas } from "../canvas/canvas";
+import { Renderer } from "./renderer";
+import { canvas } from "../canvas";
 import { Camera } from "../cameras/camera";
-import { IDim } from "..";
+import { Entity } from "../../src/entities/entity";
 
-export class Ball extends Entity {
+export class SphereRenderer extends Renderer {
   radius = 1;
 
-  renderer = new Renderer();
-
-  constructor(public pos: IDim, public vel: IDim) {
+  constructor(public entity: Entity) {
     super();
 
-    this.dim = Array(3).fill(this.radius, 0, 3) as IDim;
-
-    this.renderer.setActiveTexture(canvas.textures.checker);
-    this.setBuffers();
-  }
-
-  update(delta: number) {
-    this.onGround = false;
-    this.baseUpdate(delta);
+    this.setActiveTexture(canvas.textures.checker);
+    this.setup();
   }
 
   render(camera: Camera) {
-    this.renderer.render(this.pos, camera);
+    this.renderObject(this.entity.pos, camera);
   }
 
-  setBuffers() {
+  setup() {
     const layers = 9;
 
     const positions: number[][] = [];
@@ -146,6 +136,6 @@ export class Ball extends Entity {
       textureCords.push(0, 0, 0.5, 0.25);
     }
 
-    this.renderer.setBuffers(positions.flat(), indices.flat(), textureCords);
+    this.setBuffers(positions.flat(), indices.flat(), textureCords);
   }
 }

@@ -1,4 +1,4 @@
-import { IDim } from ".";
+import { IDim } from "../src";
 
 export interface ISocketMessage {
   type: string;

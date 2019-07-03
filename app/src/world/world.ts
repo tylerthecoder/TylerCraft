@@ -1,8 +1,6 @@
 import { Cube } from "../entities/cube";
 import { Chunk, CHUNK_SIZE } from "./chunk";
-import { canvas } from "../canvas/canvas";
 import { Entity } from "../entities/entity";
-import { Camera } from "../cameras/camera";
 
 export class World {
   cubes: Cube[] = [];
@@ -27,15 +25,6 @@ export class World {
     const ord2 = Math.floor(j / CHUNK_SIZE);
 
     return [ord1, ord2];
-  }
-
-  // maybe just pass a camera not the pos and rot
-  render(camera: Camera) {
-    canvas.clearCanvas();
-
-    for (const chunk of this.chunks.values()) {
-      chunk.render(camera);
-    }
   }
 
   // soon only check chunks the entity is in

@@ -1,13 +1,14 @@
-import { Entity } from "../entities/entity";
+import { Entity } from "../../src/entities/entity";
 import { Controller } from "./controller";
 import { SocketHandler } from "../socket";
+import { Player } from "../../src/entities/player";
 
-export class KeyboardController extends Controller {
+export class PlayerKeyboardController extends Controller {
   timer = 0;
 
   maxTime = 100;
 
-  constructor(public entity: Entity) {
+  constructor(public controlled: Player) {
     super();
     this.setKeyListeners();
   }
@@ -22,8 +23,8 @@ export class KeyboardController extends Controller {
       type: "keys",
       payload: {
         keys: Array.from(this.keys),
-        rot: this.entity.rot,
-        uid: this.entity.uid
+        rot: this.controlled.rot,
+        uid: this.controlled.uid
       }
     });
   }
@@ -32,8 +33,8 @@ export class KeyboardController extends Controller {
     const message = {
       type: "pos",
       payload: {
-        pos: this.entity.pos,
-        uid: this.entity.uid
+        pos: this.controlled.pos,
+        uid: this.controlled.uid
       }
     };
     SocketHandler.send(message);

@@ -1,10 +1,8 @@
-import { Player } from "./entities/player";
-import { World } from "./world/world";
-import { Entity } from "./entities/entity";
+import { Player } from "../src/entities/player";
 import { Controller } from "./controllers/controller";
-import { SocketController } from "./controllers/socketController";
-import { canvas } from "./canvas/canvas";
-import { KeyboardController } from "./controllers/keyboard";
+import { PlayerSocketController } from "./controllers/playerSocketController";
+import { canvas } from "./canvas";
+import { PlayerKeyboardController } from "./controllers/playerKeyboardController";
 import { Camera } from "./cameras/camera";
 import { EntityCamera } from "./cameras/entityCamera";
 import {
@@ -13,15 +11,28 @@ import {
   NewPlayerMessage,
   ISocketMessage
 } from "./socket";
+import { Game } from "../src/game";
+import { RenderType, Entity } from "../src/entities/entity";
+import { CubeRenderer } from "./renders/cubeRender";
+import { SphereRenderer } from "./renders/sphereRender";
+import { ChunkRenderer } from "./renders/chunkRender";
+import { Renderer } from "./renders/renderer";
+import { GameController } from "./controllers/gameController";
+import { FixedCamera } from "./cameras/fixedCamera";
+import { SpectatorController } from "./controllers/spectator";
 
-export class Game {
-  entities: Entity[] = [];
+export class ClientGame {
+  game: Game;
+
   controllers: Controller[] = [];
+  renderers: Renderer[] = [];
 
-  mainPlayer = new Player();
-  world = new World();
+  mainPlayer: Player;
+
   camera: Camera;
   socket: SocketHandler;
+
+  renderPlayer = false;
 
   totTime = 0;
   pastDeltas: number[] = [];
@@ -32,33 +43,21 @@ export class Game {
   }
 
   constructor() {
-    this.mainPlayer;
-    this.entities.push(this.mainPlayer);
-
-    console.log("Starting Game");
-
+    this.game = new Game();
     this.load();
   }
 
   socketOnMessage(message: ISocketMessage) {
-    const addPlayer = (uid: string) => {
-      const newPlayer = new Player();
-      newPlayer.uid = uid;
-      const controller = new SocketController(newPlayer);
-      this.controllers.push(controller);
-      this.entities.push(newPlayer);
-    };
     if (message.type === "welcome") {
-      this.mainPlayer.uid = message.payload.uid;
-      (message.payload as WelcomeMessage).players.forEach(addPlayer);
+      this.serverWelcome(message.payload as WelcomeMessage);
     } else if (message.type === "player-join") {
-      addPlayer(message.payload.uid);
+      this.addOtherPlayer(message.payload.uid);
     } else if (message.type === "player-leave") {
       const payload = message.payload as NewPlayerMessage;
       const notMe = (id: string) => payload.uid !== id;
-      this.entities = this.entities.filter(p => notMe(p.uid));
+      this.game.entities = this.game.entities.filter(p => notMe(p.uid));
       this.controllers = this.controllers.filter(c =>
-        notMe((c.entity as Player).uid)
+        notMe((c.controlled as Player).uid)
       );
     }
   }
@@ -70,20 +69,35 @@ export class Game {
   }
 
   addOtherPlayer(uid: string) {
-    const newPlayer = new Player();
+    const newPlayer = new Player(this.game);
     newPlayer.setUid(uid);
-    const controller = new SocketController(newPlayer);
-    newPlayer.setController(controller);
+    const controller = new PlayerSocketController(newPlayer);
+    this.controllers.push(controller);
     this.addEntity(newPlayer);
   }
 
   async load() {
     await canvas.loadProgram();
 
+    this.game.onNewEntity(this.onNewEntity.bind(this));
+
+    this.mainPlayer = new Player(this.game);
+    this.addEntity(this.mainPlayer);
+
     this.socket = new SocketHandler(this.socketOnMessage.bind(this));
 
-    this.controllers.push(new KeyboardController(this.mainPlayer));
+    const playerController = new PlayerKeyboardController(this.mainPlayer);
+    this.controllers.push(playerController);
+
+    const gameController = new GameController(this);
+    this.controllers.push(gameController);
+
     this.camera = new EntityCamera(this.mainPlayer);
+
+    this.game.world.chunks.forEach(chunk => {
+      const renderer = new ChunkRenderer(chunk);
+      this.renderers.push(renderer);
+    });
 
     // this.camera = new FixedCamera([0, 3, 0], [Math.PI / 2, 0, 0]);
     // this.controllers.push(new SpectatorController(this.camera));
@@ -92,63 +106,73 @@ export class Game {
   }
 
   start() {
-    requestAnimationFrame(this.render.bind(this));
+    requestAnimationFrame(this.loop.bind(this));
   }
 
-  render(time: number) {
+  loop(time: number) {
     const delta = time - this.totTime;
-    this.pastDeltas.push(delta);
-    this.totTime = time;
 
-    // updates
     for (const controller of this.controllers) {
       controller.update(delta);
     }
 
-    for (const entity of this.entities) {
-      entity.update(delta);
-    }
+    this.game.update(delta);
 
-    // move the entities out of the blocks
-    for (const entity of this.entities) {
-      const collisions = this.world.isCollide(entity);
-      for (const e of collisions) {
-        entity.pushOut(e);
-      }
+    this.render();
 
-      for (const e of this.entities) {
-        if (e === entity) continue;
-        const isCollide = e.isCollide(entity);
-        if (isCollide) {
-          e.pushOut(entity);
-        }
-      }
-    }
+    this.pastDeltas.push(delta);
+    this.totTime = time;
 
-    // rendering
-
-    // render world first b/c it clears canvas
-    this.world.render(this.camera);
-
-    for (const entity of this.entities) {
-      entity.render(this.camera);
-    }
-
-    requestAnimationFrame(this.render.bind(this));
+    requestAnimationFrame(this.loop.bind(this));
   }
 
-  addPlayer() {}
+  render() {
+    canvas.clearCanvas();
+
+    for (const renderer of this.renderers) {
+      if (
+        !this.renderPlayer &&
+        (renderer as CubeRenderer).entity === this.mainPlayer
+      ) {
+        continue;
+      }
+      renderer.render(this.camera);
+    }
+  }
+
+  // when there is a new entity add it to the render list
+  onNewEntity(entity: Entity) {
+    if (entity.renderType === RenderType.CUBE) {
+      const renderer = new CubeRenderer(entity);
+      this.renderers.push(renderer);
+    } else if (entity.renderType === RenderType.SPHERE) {
+      const renderer = new SphereRenderer(entity);
+      this.renderers.push(renderer);
+    }
+  }
 
   addEntity(entity: Entity) {
-    this.entities.push(entity);
+    this.game.addEntity(entity);
   }
 
-  test() {
-    console.log("Test");
+  removeEntity(uid: string) {}
+
+  toggleThirdPerson() {
+    if (this.camera instanceof EntityCamera) {
+      this.camera.thirdPerson = !this.camera.thirdPerson;
+      this.renderPlayer = !this.renderPlayer;
+    }
+  }
+
+  toggleSpectate() {
+    if (this.camera instanceof EntityCamera) {
+      this.camera = new FixedCamera(this.mainPlayer.pos, this.camera.rot);
+      this.controllers.push(new SpectatorController(this.camera));
+    }
   }
 }
 
-export const game = new Game();
+const game = new ClientGame();
 
 // for debugging
 (window as any).game = game;

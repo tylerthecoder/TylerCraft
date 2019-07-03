@@ -1,6 +1,9 @@
-import { Controller } from "../controllers/controller";
-import { Camera } from "../cameras/camera";
-import { IDim } from "..";
+import { IDim } from "../index";
+
+export enum RenderType {
+  CUBE,
+  SPHERE,
+}
 
 export abstract class Entity {
   pos: IDim = [0, 0, 0];
@@ -15,24 +18,17 @@ export abstract class Entity {
 
   uid = "";
 
-  controller: Controller;
+  renderType: RenderType;
 
   constructor() {}
 
   abstract update(delta: number): void;
-  abstract render(camera: Camera): void;
 
   setUid(uid: string) {
     this.uid = uid;
   }
 
-  setController(controller: Controller) {
-    this.controller = controller;
-  }
-
   baseUpdate(delta: number) {
-    if (this.controller) this.controller.update(delta);
-
     if (this.gravitable) this.gravity();
 
     this.move(this.vel);

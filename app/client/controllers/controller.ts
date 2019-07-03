@@ -1,6 +1,8 @@
-import { Entity } from "../entities/entity";
-import { Player } from "../entities/player";
-import { IDim } from "..";
+import { Entity } from "../../src/entities/entity";
+import { Player } from "../../src/entities/player";
+import { IDim } from "../../src";
+import { Camera } from "../cameras/camera";
+import { ClientGame } from "../game";
 
 export abstract class Controller {
   keys = new Set();
@@ -9,7 +11,8 @@ export abstract class Controller {
 
   constructor() {}
 
-  abstract entity: Entity;
+  abstract controlled: Entity | Camera | ClientGame | Player;
+
   abstract update(delta: number): void;
   abstract keysChange(): void;
 
@@ -35,41 +38,43 @@ export abstract class Controller {
   }
 
   wasdKeys(delta: number) {
+    if (!(this.controlled instanceof Entity)) return;
+
+    const entity = this.controlled as Entity;
+
     const speed = 0.01 * delta;
 
     const k = (key: string, amount: [number, number, number]) => {
       if (this.keys.has(key)) {
-        this.entity.move(this.getSphereCords(...amount));
+        entity.move(this.getSphereCords(...amount));
       }
     };
 
-    k("w", [-speed, -this.entity.rot[1], Math.PI / 2]);
-    k("s", [speed, -this.entity.rot[1], Math.PI / 2]);
-    k("a", [speed, -this.entity.rot[1] - Math.PI / 2, Math.PI / 2]);
-    k("d", [speed, -this.entity.rot[1] + Math.PI / 2, Math.PI / 2]);
+    k("w", [-speed, -entity.rot[1], Math.PI / 2]);
+    k("s", [speed, -entity.rot[1], Math.PI / 2]);
+    k("a", [speed, -entity.rot[1] - Math.PI / 2, Math.PI / 2]);
+    k("d", [speed, -entity.rot[1] + Math.PI / 2, Math.PI / 2]);
 
-    if (this.entity instanceof Player) {
+    if (entity instanceof Player) {
       if (this.keys.has(" ")) {
-        this.entity.jump();
+        entity.jump();
       }
 
       if (this.keys.has("f")) {
-        this.entity.fireball();
+        entity.fireball();
       } else {
-        this.entity.canFire = true;
-      }
-
-      if (this.keysPressed.has("v")) {
-        this.keysPressed.delete("v");
-        this.entity.thirdPerson = !this.entity.thirdPerson;
+        entity.canFire = true;
       }
     }
   }
 
   qeKeys() {
     const speed = 0.1;
+    if (!(this.controlled instanceof Entity)) return;
 
-    if (this.keys.has("q")) this.entity.move([0, speed, 0]);
-    if (this.keys.has("e")) this.entity.move([0, -speed, 0]);
+    const entity = this.controlled as Entity;
+
+    if (this.keys.has("q")) entity.move([0, speed, 0]);
+    if (this.keys.has("e")) entity.move([0, -speed, 0]);
   }
 }

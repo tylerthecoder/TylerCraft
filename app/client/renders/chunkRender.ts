@@ -1,52 +1,18 @@
-import { Cube } from "../entities/cube";
-import { Renderer } from "../canvas/renderer";
-import { canvas } from "../canvas/canvas";
-import { Entity } from "../entities/entity";
+import { Renderer } from "./renderer";
+import { canvas } from "../canvas";
 import { Camera } from "../cameras/camera";
-import { IDim } from "..";
+import { Chunk } from "../../src/world/chunk";
 
-export const CHUNK_SIZE = 5;
-
-export class Chunk {
-  cubes: Cube[] = [];
-  renderer = new Renderer();
-
-  constructor(public chunkPos: number[]) {
-    this.renderer.setActiveTexture(canvas.textures.grassBlock);
-
-    this.generate();
-  }
-
-  get pos() {
-    return [this.chunkPos[0] * CHUNK_SIZE, 0, this.chunkPos[1] * CHUNK_SIZE];
-  }
-
-  // use seed later down the line
-  generate() {
-    for (let i = 0; i < CHUNK_SIZE; i++) {
-      for (let j = 0; j < CHUNK_SIZE; j++) {
-        const cubePos = [this.pos[0] + i, 0, this.pos[2] + j];
-        const cube = new Cube(cubePos as IDim);
-        this.cubes.push(cube);
-      }
-    }
+export class ChunkRenderer extends Renderer {
+  constructor(public chunk: Chunk) {
+    super();
+    this.setActiveTexture(canvas.textures.grassBlock);
     this.getBufferData();
-  }
-
-  // change this to chunks instead of cubes later
-  isCollide(ent: Entity): Cube[] {
-    const collide: Cube[] = [];
-    for (const cube of this.cubes) {
-      if (cube.isCollide(ent)) {
-        collide.push(cube);
-      }
-    }
-    return collide;
   }
 
   render(camera: Camera) {
     // this.form.render(this.pos, screenPos, screenRot);
-    this.renderer.render(this.pos, camera);
+    this.renderObject(this.chunk.pos, camera);
   }
 
   getBufferData() {
@@ -64,9 +30,9 @@ export class Chunk {
     const textureCords = [];
     const facesToRender = [0, 1, 2, 3, 4, 5]; // make this change soon
     let offset = 0;
-    for (const cube of this.cubes) {
+    for (const cube of this.chunk.cubes) {
       // get position of cube relative to the chunk
-      const relativePos = cube.pos.map((c, i) => c - this.pos[i]);
+      const relativePos = cube.pos.map((c, i) => c - this.chunk.pos[i]);
 
       // loop through all the faces to get their cords
       let count = 0;
@@ -115,6 +81,6 @@ export class Chunk {
       offset += 24;
     }
 
-    this.renderer.setBuffers(positions, indices, textureCords);
+    this.setBuffers(positions, indices, textureCords);
   }
 }

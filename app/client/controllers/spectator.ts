@@ -1,8 +1,8 @@
 import { Controller } from "./controller";
-import { Entity } from "../entities/entity";
+import { Entity } from "../../src/entities/entity";
 
 export class SpectatorController extends Controller {
-  constructor(public entity: Entity) {
+  constructor(public controlled: Entity) {
     super();
     this.setKeyListeners();
   }

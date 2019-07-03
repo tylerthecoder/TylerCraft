@@ -1,10 +1,11 @@
-import { Entity } from "../entities/entity";
+import { Entity } from "../../src/entities/entity";
 import { Camera } from "./camera";
-import { Player } from "../entities/player";
-import { IDim } from "..";
+import { IDim } from "../../src";
 
 export class EntityCamera extends Camera {
   entity: Entity;
+
+  thirdPerson: boolean = false;
 
   offset: IDim = [0, 1, 0];
 
@@ -23,7 +24,7 @@ export class EntityCamera extends Camera {
 
   get pos(): IDim {
     let offset: number[] = [];
-    if ((this.entity as Player).thirdPerson) {
+    if (this.thirdPerson) {
       offset = [
         -Math.sin(this.entity.rot[1]) * 7,
         Math.cos(this.entity.rot[0]) * 7,

@@ -1,17 +1,17 @@
 import { Controller } from "./controller";
-import { Player } from "../entities/player";
+import { Player } from "../../src/entities/player";
 import {
   SocketHandler,
   ISocketMessage,
   KeyPressMessage,
   PositionMessage
 } from "../socket";
-import { IDim } from "..";
+import { IDim } from "../../src";
 
-export class SocketController extends Controller {
+export class PlayerSocketController extends Controller {
   socket: SocketHandler;
 
-  constructor(public entity: Player) {
+  constructor(public controlled: Player) {
     super();
     this.socket = new SocketHandler(this.onMessage.bind(this));
   }
@@ -19,15 +19,15 @@ export class SocketController extends Controller {
   onMessage(message: ISocketMessage) {
     if (message.type === "keys") {
       const payload = message.payload as KeyPressMessage;
-      if (payload.uid === this.entity.uid) {
+      if (payload.uid === this.controlled.uid) {
         console.log(message);
         this.keys = new Set(payload.keys);
-        this.entity.rot = payload.rot;
+        this.controlled.rot = payload.rot;
       }
     } else if (message.type === "pos") {
       const payload = message.payload as PositionMessage;
-      if (payload.uid === this.entity.uid) {
-        this.entity.pos = payload.pos.slice(0) as IDim;
+      if (payload.uid === this.controlled.uid) {
+        this.controlled.pos = payload.pos.slice(0) as IDim;
       }
     }
   }

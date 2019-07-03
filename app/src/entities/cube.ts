@@ -1,5 +1,4 @@
 import { Entity } from "./entity";
-import { Camera } from "../cameras/camera";
 import { IDim } from "..";
 
 export class Cube extends Entity {
@@ -18,6 +17,4 @@ export class Cube extends Entity {
 
     this.baseUpdate(delta);
   }
-
-  render(camera: Camera) {}
 }

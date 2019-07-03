@@ -1,8 +1,8 @@
-import { CanvasProgram, canvas } from "./canvas";
+import { CanvasProgram, canvas } from "../canvas";
 import { Camera } from "../cameras/camera";
 declare var mat4: any;
 
-export class Renderer {
+export abstract class Renderer {
   canvas: CanvasProgram;
 
   posBuffer: WebGLBuffer;
@@ -17,7 +17,11 @@ export class Renderer {
     // this might be a bad practice but it make things so much easier
   }
 
-  setBuffers(positions: number[], indices: number[], textureCords: number[]) {
+  protected setBuffers(
+    positions: number[],
+    indices: number[],
+    textureCords: number[]
+  ) {
     const gl = canvas.gl;
 
     this.amount = indices.length;
@@ -43,7 +47,7 @@ export class Renderer {
     );
   }
 
-  setActiveTexture(texture: WebGLTexture) {
+  protected setActiveTexture(texture: WebGLTexture) {
     this.texture = texture;
   }
 
@@ -95,7 +99,9 @@ export class Renderer {
     gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
   }
 
-  render(pos: number[], camera: Camera) {
+  abstract render(camera: Camera): void;
+
+  renderObject(pos: number[], camera: Camera) {
     const gl = canvas.gl;
     const programInfo = canvas.program;
 

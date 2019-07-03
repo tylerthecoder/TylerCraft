@@ -1,6 +1,6 @@
-import { Entity } from "../entities/entity";
-import { canvas } from "../canvas/canvas";
-import { IDim } from "..";
+import { Entity } from "../../src/entities/entity";
+import { canvas } from "../canvas";
+import { IDim } from "../../src/index";
 
 export abstract class Camera extends Entity {
   abstract pos: IDim;
