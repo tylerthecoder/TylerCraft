@@ -2,6 +2,7 @@ import { Renderer } from "./renderer";
 import { canvas } from "../canvas";
 import { Camera } from "../cameras/camera";
 import { Chunk } from "../../src/world/chunk";
+import { arrayMul, arrayAdd, arraySub } from "../../src/utils";
 
 export class ChunkRenderer extends Renderer {
   constructor(public chunk: Chunk) {
@@ -32,7 +33,7 @@ export class ChunkRenderer extends Renderer {
     let offset = 0;
     for (const cube of this.chunk.cubes) {
       // get position of cube relative to the chunk
-      const relativePos = cube.pos.map((c, i) => c - this.chunk.pos[i]);
+      const relativePos = arraySub(cube.pos, this.chunk.pos);
 
       // loop through all the faces to get their cords
       let count = 0;
@@ -56,10 +57,10 @@ export class ChunkRenderer extends Renderer {
             const size = [1, 1, 1];
 
             // multiply edges by dimensions
-            const cords = edge.map((dim, i) => dim * size[i]);
+            const cords = arrayMul(edge, size);
 
             // move the vertices by the cube's relative position in the chunk
-            const adjustedCords = cords.map((ord, i) => ord + relativePos[i]);
+            const adjustedCords = arrayAdd(cords, relativePos);
 
             return adjustedCords;
           })

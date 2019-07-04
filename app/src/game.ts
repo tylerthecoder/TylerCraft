@@ -8,10 +8,8 @@ export class Game {
 
   world = new World();
 
-  addPlayer(uid: string) {
-    const newPlayer = new Player(this);
-    newPlayer.setUid(uid);
-    this.addEntity(newPlayer);
+  get players() {
+    return this.entities.filter(ent => ent instanceof Player);
   }
 
   update(delta: number) {
@@ -36,9 +34,22 @@ export class Game {
     }
   }
 
+  addPlayer(uid?: string): Player {
+    const newPlayer = new Player(this);
+    if (uid) newPlayer.setUid(uid);
+    this.addEntity(newPlayer);
+    return newPlayer;
+  }
+
   addEntity(entity: Entity) {
     this.entities.push(entity);
     this.entityListeners.forEach(func => func(entity));
+  }
+
+  removeEntity(entity: Entity) {
+    this.entities = this.entities.filter(e => {
+      return e !== entity;
+    });
   }
 
   onNewEntity(listener: (e: Entity) => void) {

@@ -1,8 +1,10 @@
 import { Entity } from "../../src/entities/entity";
 import { Player } from "../../src/entities/player";
-import { IDim } from "../../src";
 import { Camera } from "../cameras/camera";
 import { ClientGame } from "../game";
+import { IDim } from "../../types";
+
+export type Controlled = Entity | Camera | ClientGame | Player;
 
 export abstract class Controller {
   keys = new Set();
@@ -11,7 +13,7 @@ export abstract class Controller {
 
   constructor() {}
 
-  abstract controlled: Entity | Camera | ClientGame | Player;
+  abstract controlled: Controlled;
 
   abstract update(delta: number): void;
   abstract keysChange(): void;
@@ -42,7 +44,7 @@ export abstract class Controller {
 
     const entity = this.controlled as Entity;
 
-    const speed = 0.01 * delta;
+    const speed = 0.01 * delta * entity.speed;
 
     const k = (key: string, amount: [number, number, number]) => {
       if (this.keys.has(key)) {
@@ -69,10 +71,10 @@ export abstract class Controller {
   }
 
   qeKeys() {
-    const speed = 0.1;
     if (!(this.controlled instanceof Entity)) return;
 
     const entity = this.controlled as Entity;
+    const speed = 0.1 * entity.speed;
 
     if (this.keys.has("q")) entity.move([0, speed, 0]);
     if (this.keys.has("e")) entity.move([0, -speed, 0]);

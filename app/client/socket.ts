@@ -1,31 +1,4 @@
-import { IDim } from "../src";
-
-export interface ISocketMessage {
-  type: string;
-  payload: Payload;
-}
-
-export type Payload = KeyPressMessage | NewPlayerMessage | WelcomeMessage;
-
-export interface KeyPressMessage {
-  keys: string[];
-  rot: IDim;
-  uid: string;
-}
-
-export interface WelcomeMessage {
-  uid: string;
-  players: string[];
-}
-
-export interface NewPlayerMessage {
-  uid: string;
-}
-
-export interface PositionMessage {
-  uid: string;
-  pos: number[];
-}
+import { ISocketMessage } from "../types/socket";
 
 export class SocketHandler {
   static socket: WebSocket;

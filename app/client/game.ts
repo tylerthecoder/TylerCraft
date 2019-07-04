@@ -1,16 +1,10 @@
 import { Player } from "../src/entities/player";
-import { Controller } from "./controllers/controller";
+import { Controller, Controlled } from "./controllers/controller";
 import { PlayerSocketController } from "./controllers/playerSocketController";
 import { canvas } from "./canvas";
 import { PlayerKeyboardController } from "./controllers/playerKeyboardController";
 import { Camera } from "./cameras/camera";
 import { EntityCamera } from "./cameras/entityCamera";
-import {
-  SocketHandler,
-  WelcomeMessage,
-  NewPlayerMessage,
-  ISocketMessage
-} from "./socket";
 import { Game } from "../src/game";
 import { RenderType, Entity } from "../src/entities/entity";
 import { CubeRenderer } from "./renders/cubeRender";
@@ -20,6 +14,13 @@ import { Renderer } from "./renders/renderer";
 import { GameController } from "./controllers/gameController";
 import { FixedCamera } from "./cameras/fixedCamera";
 import { SpectatorController } from "./controllers/spectator";
+import { SocketHandler } from "./socket";
+import {
+  ISocketMessage,
+  WelcomeMessage,
+  NewPlayerMessage
+} from "../types/socket";
+import { IDim } from "../types";
 
 export class ClientGame {
   game: Game;
@@ -48,6 +49,7 @@ export class ClientGame {
   }
 
   socketOnMessage(message: ISocketMessage) {
+    console.log(message);
     if (message.type === "welcome") {
       this.serverWelcome(message.payload as WelcomeMessage);
     } else if (message.type === "player-join") {
@@ -63,17 +65,15 @@ export class ClientGame {
   }
 
   serverWelcome(msg: WelcomeMessage) {
-    this.mainPlayer.uid = msg.uid;
+    this.mainPlayer.setUid(msg.uid);
     msg.players.forEach(this.addOtherPlayer.bind(this));
     // get generated world here as well
   }
 
   addOtherPlayer(uid: string) {
-    const newPlayer = new Player(this.game);
-    newPlayer.setUid(uid);
+    const newPlayer = this.game.addPlayer(uid);
     const controller = new PlayerSocketController(newPlayer);
     this.controllers.push(controller);
-    this.addEntity(newPlayer);
   }
 
   async load() {
@@ -81,31 +81,19 @@ export class ClientGame {
 
     this.game.onNewEntity(this.onNewEntity.bind(this));
 
-    this.mainPlayer = new Player(this.game);
-    this.addEntity(this.mainPlayer);
+    this.mainPlayer = this.game.addPlayer();
+    this.setUpPlayer();
 
     this.socket = new SocketHandler(this.socketOnMessage.bind(this));
 
-    const playerController = new PlayerKeyboardController(this.mainPlayer);
-    this.controllers.push(playerController);
-
     const gameController = new GameController(this);
     this.controllers.push(gameController);
-
-    this.camera = new EntityCamera(this.mainPlayer);
 
     this.game.world.chunks.forEach(chunk => {
       const renderer = new ChunkRenderer(chunk);
       this.renderers.push(renderer);
     });
 
-    // this.camera = new FixedCamera([0, 3, 0], [Math.PI / 2, 0, 0]);
-    // this.controllers.push(new SpectatorController(this.camera));
-
-    this.start();
-  }
-
-  start() {
     requestAnimationFrame(this.loop.bind(this));
   }
 
@@ -157,6 +145,12 @@ export class ClientGame {
 
   removeEntity(uid: string) {}
 
+  deleteController(controlled: Controlled) {
+    this.controllers = this.controllers.filter(controller => {
+      return controller.controlled !== controlled;
+    });
+  }
+
   toggleThirdPerson() {
     if (this.camera instanceof EntityCamera) {
       this.camera.thirdPerson = !this.camera.thirdPerson;
@@ -164,10 +158,31 @@ export class ClientGame {
     }
   }
 
+  setUpPlayer() {
+    const playerController = new PlayerKeyboardController(this.mainPlayer);
+    this.controllers.push(playerController);
+    this.camera = new EntityCamera(this.mainPlayer);
+  }
+
+  setUpSpectator() {
+    this.camera = new FixedCamera(
+      this.mainPlayer.pos.slice(0) as IDim,
+      this.camera.rot.slice(0) as IDim
+    );
+    this.controllers.push(new SpectatorController(this.camera));
+  }
+
   toggleSpectate() {
     if (this.camera instanceof EntityCamera) {
-      this.camera = new FixedCamera(this.mainPlayer.pos, this.camera.rot);
-      this.controllers.push(new SpectatorController(this.camera));
+      // spectate was previously off
+      this.renderPlayer = true;
+      this.deleteController(this.mainPlayer);
+      this.setUpSpectator();
+    } else {
+      // spectate was previously on
+      this.renderPlayer = false;
+      this.deleteController(this.camera);
+      this.setUpPlayer();
     }
   }
 }

@@ -1,8 +1,8 @@
-import { IDim } from "../index";
+import { IDim } from "../../types";
 
 export enum RenderType {
   CUBE,
-  SPHERE,
+  SPHERE
 }
 
 export abstract class Entity {
@@ -15,6 +15,7 @@ export abstract class Entity {
 
   onGround = false;
   jumpCount = 0;
+  speed = 1;
 
   uid = "";
 

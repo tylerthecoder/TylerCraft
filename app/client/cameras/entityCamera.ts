@@ -1,17 +1,14 @@
 import { Entity } from "../../src/entities/entity";
 import { Camera } from "./camera";
-import { IDim } from "../../src";
+import { IDim } from "../../types";
 
 export class EntityCamera extends Camera {
-  entity: Entity;
-
   thirdPerson: boolean = false;
 
   offset: IDim = [0, 1, 0];
 
-  constructor(ent: Entity) {
+  constructor(public entity: Entity) {
     super();
-    this.entity = ent;
   }
 
   handleMouse(e: MouseEvent) {
@@ -19,7 +16,6 @@ export class EntityCamera extends Camera {
     const dx = e.movementX * speed;
     const dy = e.movementY * speed;
     this.entity.rotate([-dy, dx, 0]);
-    this.rotate([-dy, dx, 0]);
   }
 
   get pos(): IDim {
@@ -40,9 +36,8 @@ export class EntityCamera extends Camera {
   set pos(_pos: IDim) {}
 
   get rot() {
-    const rot = [this.entity.rot[0], this.entity.rot[1], this.entity.rot[2]];
+    const rot = this.entity.rot.slice(0);
     return rot as IDim;
   }
-
   set rot(_pos: IDim) {}
 }

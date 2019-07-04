@@ -1,45 +1,35 @@
 import SocketServer from "./socket";
 import * as wSocket from "ws";
-
-interface Player {
-  uid: string;
-  pos: number[];
-  ws: wSocket;
-}
+import { Game } from "../src/game";
+import { Player } from "../src/entities/player";
+import { ISocketMessage, PositionMessage } from "../types/socket";
 
 export default class Players {
   players: Map<wSocket, Player> = new Map();
 
-  get playersArray() {
-    return Array.from(this.players.values());
-  }
-
-  constructor(public wss: SocketServer) {
+  constructor(public wss: SocketServer, public game: Game) {
     this.wss.listen(this.newPlayer.bind(this));
   }
 
   newPlayer(ws: wSocket) {
-    console.log("New Player!");
+    console.log("New player!");
     // generate a random ID for the new player
     const uid = `${Math.random()}${Math.random()}`;
+
+    const player = this.game.addPlayer(uid);
 
     // send a welcoming message to the new player
     const welcomeMessage = {
       type: "welcome",
       payload: {
         uid,
-        players: this.playersArray.map(p => p.uid)
+        players: this.game.players.map(p => p.uid).filter(id => uid !== id)
       }
     };
     this.wss.send(ws, welcomeMessage);
 
     // add them to the SYSTEM
-    const newPlayer: Player = {
-      uid,
-      ws,
-      pos: [0, 0, 0]
-    };
-    this.players.set(ws, newPlayer);
+    this.players.set(ws, player);
     this.wss.listenTo(ws, this.onMessage.bind(this));
 
     // tell EVERYone about the new guy
@@ -53,9 +43,13 @@ export default class Players {
 
     // If they leave, KILL THEM
     ws.on("close", this.removePlayer.bind(this, ws));
+
+    console.log(`${this.game.players.length} players`);
   }
 
   removePlayer(ws: wSocket) {
+    console.log("Remove Player");
+
     // tell everyone about this tragedy
     const playerLeaveMessage = {
       type: "player-leave",
@@ -66,7 +60,10 @@ export default class Players {
     this.wss.sendGlobal(playerLeaveMessage, ws);
 
     // FINISH THEM!
+    this.game.removeEntity(this.players.get(ws));
     this.players.delete(ws);
+
+    console.log(`${this.game.players.length} players`);
   }
 
   onMessage(ws: wSocket, message: ISocketMessage) {

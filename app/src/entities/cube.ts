@@ -1,5 +1,5 @@
 import { Entity } from "./entity";
-import { IDim } from "..";
+import { IDim } from "../../types";
 
 export class Cube extends Entity {
   gravitable = false;

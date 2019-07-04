@@ -1,7 +1,7 @@
 {
   "scripts": {
-    "start:server": "node ./bin/server",
-    "wstart:server": "nodemon ./bin/server.js",
+    "start:server": "node ./bin/server/server.js",
+    "wstart:server": "nodemon ./bin/server/server.js",
     "build:server": "tsc -p ./ts/server.tsconfig.json",
     "wbuild:server": "tsc -w -p ./ts/server.tsconfig.json",
     "build:client": "webpack --config webpack.config.js",

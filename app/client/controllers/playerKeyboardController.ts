@@ -1,4 +1,3 @@
-import { Entity } from "../../src/entities/entity";
 import { Controller } from "./controller";
 import { SocketHandler } from "../socket";
 import { Player } from "../../src/entities/player";

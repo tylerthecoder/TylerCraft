@@ -1,8 +1,8 @@
 import { Entity, RenderType } from "./entity";
 import { Ball } from "./ball";
 import { arrayAdd } from "../utils";
-import { IDim } from "..";
 import { Game } from "../game";
+import { IDim } from "../../types";
 
 export class Player extends Entity {
   pos: IDim = [-2, 5, -2];

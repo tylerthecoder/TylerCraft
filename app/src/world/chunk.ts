@@ -1,6 +1,6 @@
 import { Cube } from "../entities/cube";
 import { Entity } from "../entities/entity";
-import { IDim } from "..";
+import { IDim } from "../../types";
 
 export const CHUNK_SIZE = 5;
 

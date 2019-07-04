@@ -1,5 +1,5 @@
 import { Entity, RenderType } from "./entity";
-import { IDim } from "..";
+import { IDim } from "../../types";
 
 export class Ball extends Entity {
   radius = 1;

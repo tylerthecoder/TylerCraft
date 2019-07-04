@@ -1,5 +1,5 @@
 import { Camera } from "./camera";
-import { IDim } from "../../src";
+import { IDim } from "../../types";
 
 export class FixedCamera extends Camera {
   constructor(public pos: IDim, public rot: IDim) {

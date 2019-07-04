@@ -2,10 +2,9 @@ import { Renderer } from "./renderer";
 import { canvas } from "../canvas";
 import { Camera } from "../cameras/camera";
 import { Entity } from "../../src/entities/entity";
+import { arrayMul } from "../../src/utils";
 
 export class CubeRenderer extends Renderer {
-  uid: string;
-
   constructor(public entity: Entity) {
     super();
 
@@ -42,7 +41,7 @@ export class CubeRenderer extends Renderer {
       const pos = square
         .map(edge => {
           edge.splice(i, 0, dir);
-          return edge.map((dim, i) => dim * this.entity.dim[i]);
+          return arrayMul(edge, this.entity.dim); //
         })
         .flat();
 

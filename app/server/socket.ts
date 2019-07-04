@@ -1,5 +1,6 @@
 import * as wSocket from "ws";
 import { Server } from "http";
+import { ISocketMessage } from "../types/socket";
 
 // TODO: Handle pinging the clients
 

@@ -1,14 +1,11 @@
 import * as http from "http";
 import * as fs from "fs";
 import * as path from "path";
-import { Game } from "./Game";
+import { ServerGame } from "./serverGame";
 import SocketServer from "./socket";
-// import { Game as G } from "../client/game";
-
-// const gg = new G();
 
 const port = 3000;
-const staticPath = "../public";
+const staticPath = "../../public";
 
 const extToContent: { [ex: string]: string } = {
   js: "text/javascript",
@@ -52,4 +49,4 @@ server.listen(port, () => console.log(`Server running on port:${port}`));
 
 const wss = new SocketServer(server);
 
-const game = new Game(wss);
+const game = new ServerGame(wss);

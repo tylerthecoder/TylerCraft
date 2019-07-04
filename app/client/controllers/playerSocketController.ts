@@ -1,12 +1,12 @@
 import { Controller } from "./controller";
 import { Player } from "../../src/entities/player";
+import { SocketHandler } from "../socket";
 import {
-  SocketHandler,
   ISocketMessage,
   KeyPressMessage,
   PositionMessage
-} from "../socket";
-import { IDim } from "../../src";
+} from "../../types/socket";
+import { IDim } from "../../types";
 
 export class PlayerSocketController extends Controller {
   socket: SocketHandler;
@@ -20,7 +20,6 @@ export class PlayerSocketController extends Controller {
     if (message.type === "keys") {
       const payload = message.payload as KeyPressMessage;
       if (payload.uid === this.controlled.uid) {
-        console.log(message);
         this.keys = new Set(payload.keys);
         this.controlled.rot = payload.rot;
       }
