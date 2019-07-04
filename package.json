@@ -5,7 +5,8 @@
     "build:server": "tsc -p ./ts/server.tsconfig.json",
     "wbuild:server": "tsc -w -p ./ts/server.tsconfig.json",
     "build:client": "webpack --config webpack.config.js",
-    "wbuild:client": "webpack --watch --config webpack.config.js"
+    "wbuild:client": "webpack --watch --config webpack.config.js",
+    "clean": "rm -rf bin public node_modules"
   },
   "dependencies": {
     "gl-matrix": "^3.0.0",
