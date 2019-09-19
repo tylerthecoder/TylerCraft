@@ -11,7 +11,7 @@ export class World {
   }
 
   gen() {
-    const size = 3;
+    const size = 5;
     for (let i = -size; i <= size; i++) {
       for (let j = -size; j <= size; j++) {
         const chunk = new Chunk([i, j]);

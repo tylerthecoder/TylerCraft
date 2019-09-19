@@ -1,6 +1,5 @@
 import { Player } from "../src/entities/player";
 import { Controller, Controlled } from "./controllers/controller";
-import { PlayerSocketController } from "./controllers/playerSocketController";
 import { canvas } from "./canvas";
 import { PlayerKeyboardController } from "./controllers/playerKeyboardController";
 import { Camera } from "./cameras/camera";
@@ -18,7 +17,8 @@ import { SocketHandler } from "./socket";
 import {
   ISocketMessage,
   WelcomeMessage,
-  NewPlayerMessage
+  NewPlayerMessage,
+  NewEntityMessage
 } from "../types/socket";
 import { IDim } from "../types";
 
@@ -29,6 +29,7 @@ export class ClientGame {
   renderers: Renderer[] = [];
 
   mainPlayer: Player;
+  multiPlayer = true;
 
   camera: Camera;
   socket: SocketHandler;
@@ -48,43 +49,18 @@ export class ClientGame {
     this.load();
   }
 
-  socketOnMessage(message: ISocketMessage) {
-    console.log(message);
-    if (message.type === "welcome") {
-      this.serverWelcome(message.payload as WelcomeMessage);
-    } else if (message.type === "player-join") {
-      this.addOtherPlayer(message.payload.uid);
-    } else if (message.type === "player-leave") {
-      const payload = message.payload as NewPlayerMessage;
-      const notMe = (id: string) => payload.uid !== id;
-      this.game.entities = this.game.entities.filter(p => notMe(p.uid));
-      this.controllers = this.controllers.filter(c =>
-        notMe((c.controlled as Player).uid)
-      );
-    }
-  }
-
-  serverWelcome(msg: WelcomeMessage) {
-    this.mainPlayer.setUid(msg.uid);
-    msg.players.forEach(this.addOtherPlayer.bind(this));
-    // get generated world here as well
-  }
-
-  addOtherPlayer(uid: string) {
-    const newPlayer = this.game.addPlayer(uid);
-    const controller = new PlayerSocketController(newPlayer);
-    this.controllers.push(controller);
-  }
-
   async load() {
     await canvas.loadProgram();
 
+    if (this.multiPlayer) {
+      this.socket = new SocketHandler(this);
+      await this.socket.connect();
+    }
+
     this.game.onNewEntity(this.onNewEntity.bind(this));
 
-    this.mainPlayer = this.game.addPlayer();
+    this.mainPlayer = this.game.addPlayer(true);
     this.setUpPlayer();
-
-    this.socket = new SocketHandler(this.socketOnMessage.bind(this));
 
     const gameController = new GameController(this);
     this.controllers.push(gameController);
@@ -137,13 +113,21 @@ export class ClientGame {
       const renderer = new SphereRenderer(entity);
       this.renderers.push(renderer);
     }
+
+    if (this.multiPlayer) {
+      this.socket.sendEntity(entity);
+    }
   }
 
-  addEntity(entity: Entity) {
-    this.game.addEntity(entity);
+  removeEntity(uid: string) {
+    const entity = this.game.findEntity(uid);
+    this.deleteController(entity);
+    this.game.removeEntity(entity);
   }
 
-  removeEntity(uid: string) {}
+  addController(controller: Controller) {
+    this.controllers.push(controller);
+  }
 
   deleteController(controlled: Controlled) {
     this.controllers = this.controllers.filter(controller => {
@@ -187,7 +171,7 @@ export class ClientGame {
   }
 }
 
-const game = new ClientGame();
+export const game = new ClientGame();
 
 // for debugging
 (window as any).game = game;

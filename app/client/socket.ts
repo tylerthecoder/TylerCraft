@@ -1,45 +1,109 @@
-import { ISocketMessage } from "../types/socket";
+import {
+  ISocketMessage,
+  WelcomeMessage,
+  NewEntityMessage
+} from "../types/socket";
+import { ClientGame } from "./game";
+import { Ball } from "../src/entities/ball";
+import { PlayerSocketController } from "./controllers/playerSocketController";
+import { Entity } from "../src/entities/entity";
+
+type SocketListener = (message: ISocketMessage) => void;
 
 export class SocketHandler {
-  static socket: WebSocket;
-  static connected: boolean;
+  socket: WebSocket;
 
-  static connections: SocketHandler[] = [];
+  listeners: SocketListener[] = [];
 
-  constructor(
-    public catcher?: (message: ISocketMessage) => void,
-    public filter?: (message: ISocketMessage) => boolean
-  ) {
-    if (!SocketHandler.socket) {
-      SocketHandler.connect();
-    }
-    SocketHandler.connections.push(this);
+  receivedEntities: Set<string> = new Set();
+
+  constructor(public client: ClientGame) {}
+
+  connect() {
+    return new Promise(resolve => {
+      this.socket = new WebSocket("ws://localhost:3000");
+      this.socket.onopen = () => {
+        console.log("Socket Connected");
+        resolve();
+        this.startListening();
+      };
+    });
   }
 
-  static startListening() {
-    SocketHandler.socket.onmessage = e => {
+  addListener(listener: SocketListener) {
+    this.listeners.push(listener);
+  }
+
+  joinRoom(roomName: string) {}
+
+  send(obj: Object) {
+    this.socket.send(JSON.stringify(obj));
+  }
+
+  startListening() {
+    this.socket.onmessage = e => {
       const data = e.data;
       const obj = JSON.parse(data) as ISocketMessage;
-      SocketHandler.connections.forEach(listener => {
-        if (listener.catcher) {
-          listener.catcher(obj);
-        }
-      });
+      this.listeners.forEach(l => l(obj));
+      switch (obj.type) {
+        case "welcome":
+          this.welcome(obj.payload as WelcomeMessage);
+          break;
+        case "player-join":
+          this.addOtherPlayer(obj.payload.uid);
+          break;
+        case "player-leave":
+          this.client.removeEntity(obj.payload.uid);
+          break;
+        case "new-entity":
+          this.newEntity(obj.payload as NewEntityMessage);
+          break;
+      }
     };
   }
 
-  static connect() {
-    SocketHandler.socket = new WebSocket("ws://localhost:3000");
-    SocketHandler.socket.onopen = () => {
-      console.log("Socket Connected");
-      SocketHandler.connected = true;
-      SocketHandler.startListening();
-    };
+  welcome(message: WelcomeMessage) {
+    this.client.mainPlayer.setUid(message.uid);
+    message.players.forEach(this.addOtherPlayer.bind(this));
+    // get generated world here as well
   }
 
-  static joinRoom(roomName: string) {}
+  addOtherPlayer(uid: string) {
+    const newPlayer = this.client.game.addPlayer(false, uid);
+    const controller = new PlayerSocketController(newPlayer);
+    this.client.addController(controller);
+  }
 
-  static send(obj: Object) {
-    SocketHandler.socket.send(JSON.stringify(obj));
+  newEntity(payload: NewEntityMessage) {
+    this.receivedEntities.add(payload.uid);
+    if (payload.type === "ball") {
+      const entity = new Ball(payload.pos, payload.vel);
+      entity.setUid(payload.uid);
+      this.client.game.addEntity(entity);
+    }
+  }
+
+  sendEntity(entity: Entity) {
+    // we were given him, don't play telephone
+    if (this.receivedEntities.has(entity.uid)) return;
+
+    let type = "";
+    if (entity instanceof Ball) {
+      type = "ball";
+    }
+
+    if (type) {
+      const payload: NewEntityMessage = {
+        uid: entity.uid,
+        pos: entity.pos,
+        vel: entity.vel,
+        type
+      };
+      const message = {
+        type: "new-entity",
+        payload
+      };
+      this.send(message);
+    }
   }
 }

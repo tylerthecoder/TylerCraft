@@ -3,7 +3,7 @@ import { World } from "./world/world";
 import { Entity } from "./entities/entity";
 
 export class Game {
-  entities: Entity[] = [];
+  private entities: Entity[] = [];
   entityListeners: Array<(e: Entity) => void> = [];
 
   world = new World();
@@ -26,16 +26,13 @@ export class Game {
 
       for (const e of this.entities) {
         if (e === entity) continue;
-        const isCollide = e.isCollide(entity);
-        if (isCollide) {
-          e.pushOut(entity);
-        }
+        e.isCollide(entity);
       }
     }
   }
 
-  addPlayer(uid?: string): Player {
-    const newPlayer = new Player(this);
+  addPlayer(realness: boolean, uid?: string): Player {
+    const newPlayer = new Player(this, realness);
     if (uid) newPlayer.setUid(uid);
     this.addEntity(newPlayer);
     return newPlayer;
@@ -44,6 +41,10 @@ export class Game {
   addEntity(entity: Entity) {
     this.entities.push(entity);
     this.entityListeners.forEach(func => func(entity));
+  }
+
+  findEntity(uid: string) {
+    return this.entities.find(ent => ent.uid === uid);
   }
 
   removeEntity(entity: Entity) {

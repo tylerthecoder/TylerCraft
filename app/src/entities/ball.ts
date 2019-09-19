@@ -1,4 +1,4 @@
-import { Entity, RenderType } from "./entity";
+import { Entity, RenderType, FaceLocater } from "./entity";
 import { IDim } from "../../types";
 
 export class Ball extends Entity {
@@ -15,5 +15,11 @@ export class Ball extends Entity {
   update(delta: number) {
     this.onGround = false;
     this.baseUpdate(delta);
+  }
+
+  hit(entity: Entity, where: FaceLocater) {
+    if (where.side == 1 && where.dir == -1) {
+      this.onGround = true;
+    }
   }
 }

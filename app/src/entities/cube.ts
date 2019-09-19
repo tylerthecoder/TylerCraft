@@ -1,8 +1,9 @@
-import { Entity } from "./entity";
+import { Entity, FaceLocater } from "./entity";
 import { IDim } from "../../types";
 
 export class Cube extends Entity {
   gravitable = false;
+  tangible = false;
 
   constructor(pos: IDim, dim?: IDim) {
     super();
@@ -17,4 +18,6 @@ export class Cube extends Entity {
 
     this.baseUpdate(delta);
   }
+
+  hit(ent: Entity, where: FaceLocater) {}
 }

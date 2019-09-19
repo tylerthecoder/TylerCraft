@@ -22,6 +22,13 @@ interface NewPlayerMessage {
   uid: string;
 }
 
+interface NewEntityMessage {
+  uid: string;
+  type: string;
+  pos: IDim;
+  vel: IDim;
+}
+
 interface PositionMessage {
   uid: string;
   pos: IDim;

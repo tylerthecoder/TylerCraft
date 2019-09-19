@@ -1,19 +1,17 @@
 import { Controller } from "./controller";
 import { Player } from "../../src/entities/player";
-import { SocketHandler } from "../socket";
 import {
   ISocketMessage,
   KeyPressMessage,
   PositionMessage
 } from "../../types/socket";
 import { IDim } from "../../types";
+import { game } from "../game";
 
 export class PlayerSocketController extends Controller {
-  socket: SocketHandler;
-
   constructor(public controlled: Player) {
     super();
-    this.socket = new SocketHandler(this.onMessage.bind(this));
+    game.socket.addListener(this.onMessage.bind(this));
   }
 
   onMessage(message: ISocketMessage) {

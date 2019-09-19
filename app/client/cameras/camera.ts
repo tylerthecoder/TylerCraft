@@ -1,4 +1,4 @@
-import { Entity } from "../../src/entities/entity";
+import { Entity, FaceLocater } from "../../src/entities/entity";
 import { canvas } from "../canvas";
 import { IDim } from "../../types";
 
@@ -21,6 +21,7 @@ export abstract class Camera extends Entity {
 
   update(_delta: number) {}
   render(_camera: Camera) {}
+  hit(ent: Entity, where: FaceLocater) {}
 
   abstract handleMouse(e: MouseEvent): void;
 }

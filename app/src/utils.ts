@@ -31,3 +31,13 @@ export function arraySub(arr1: number[], arr2: number[]) {
   }
   return newArray;
 }
+
+/** Converts rtp to xyz */
+export function toSphereCords(r: number, t: number, p: number) {
+  const cords = [
+    r * Math.sin(p) * Math.sin(t),
+    r * Math.cos(p),
+    r * Math.sin(p) * Math.cos(t)
+  ];
+  return cords;
+}

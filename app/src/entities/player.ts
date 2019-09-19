@@ -1,4 +1,4 @@
-import { Entity, RenderType } from "./entity";
+import { Entity, RenderType, FaceLocater } from "./entity";
 import { Ball } from "./ball";
 import { arrayAdd } from "../utils";
 import { Game } from "../game";
@@ -16,12 +16,10 @@ export class Player extends Entity {
   thirdPerson = false;
 
   onGround = false;
-
   canFire = true;
-
   jumpCount = 0;
 
-  constructor(public game: Game) {
+  constructor(public game: Game, public isReal: boolean) {
     super();
   }
 
@@ -37,11 +35,19 @@ export class Player extends Entity {
     }
   }
 
+  hit(_entity: Entity, where: FaceLocater) {
+    if (where.side == 1 && where.dir == -1) {
+      this.onGround = true;
+      this.jumpCount = 0;
+    }
+  }
+
   fireball() {
-    if (this.canFire) {
+    if (this.canFire && this.isReal) {
       const pos = arrayAdd(this.pos, [0, 2, 0]) as IDim;
-      const ball = new Ball(pos, [0, 0.1, 0]);
-      ball.applyForce([0, 0.1, 0]);
+      const random = [1, 1, 1].map(e => Math.random() * 0.2 - 0.1);
+      const vel = arrayAdd([0, 0.2, 0], random) as IDim;
+      const ball = new Ball(pos, vel);
       this.game.addEntity(ball);
       this.canFire = false;
     }

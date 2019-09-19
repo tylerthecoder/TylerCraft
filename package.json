@@ -1,5 +1,6 @@
 {
   "scripts": {
+    "dev:server": "npm-run-all build:server --parallel wbuild:server wstart:server",
     "start:server": "node ./bin/server/server.js",
     "wstart:server": "nodemon ./bin/server/server.js",
     "build:server": "tsc -p ./ts/server.tsconfig.json",
@@ -10,12 +11,10 @@
   },
   "dependencies": {
     "gl-matrix": "^3.0.0",
-    "lodash": "^4.17.11",
     "ws": "^7.0.1"
   },
   "devDependencies": {
     "@types/gl-matrix": "^2.4.5",
-    "@types/lodash": "^4.14.135",
     "@types/ws": "^6.0.1",
     "copy-webpack-plugin": "^5.0.3",
     "html-webpack-plugin": "^3.2.0",

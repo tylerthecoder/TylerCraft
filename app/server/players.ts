@@ -7,16 +7,14 @@ import { ISocketMessage, PositionMessage } from "../types/socket";
 export default class Players {
   players: Map<wSocket, Player> = new Map();
 
-  constructor(public wss: SocketServer, public game: Game) {
-    this.wss.listen(this.newPlayer.bind(this));
-  }
+  constructor(public wss: SocketServer, public game: Game) {}
 
-  newPlayer(ws: wSocket) {
+  addPlayer(ws: wSocket) {
     console.log("New player!");
     // generate a random ID for the new player
     const uid = `${Math.random()}${Math.random()}`;
 
-    const player = this.game.addPlayer(uid);
+    const player = this.game.addPlayer(true, uid);
 
     // send a welcoming message to the new player
     const welcomeMessage = {
@@ -30,7 +28,6 @@ export default class Players {
 
     // add them to the SYSTEM
     this.players.set(ws, player);
-    this.wss.listenTo(ws, this.onMessage.bind(this));
 
     // tell EVERYone about the new guy
     const newPlayerMessage = {
@@ -66,6 +63,8 @@ export default class Players {
     console.log(`${this.game.players.length} players`);
   }
 
+  setPlayerPos() {}
+
   onMessage(ws: wSocket, message: ISocketMessage) {
     switch (message.type) {
       case "keys":
@@ -75,6 +74,10 @@ export default class Players {
         this.wss.sendGlobal(message, ws);
         const payload = message.payload as PositionMessage;
         this.players.get(ws).pos = payload.pos;
+        break;
+      case "newEntity":
+        console.log("Whatadsf");
+        break;
     }
   }
 }

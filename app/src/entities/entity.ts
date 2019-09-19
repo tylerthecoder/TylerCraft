@@ -5,25 +5,31 @@ export enum RenderType {
   SPHERE
 }
 
+export interface FaceLocater {
+  side: number;
+  dir: 1 | -1;
+}
+
 export abstract class Entity {
+  renderType: RenderType;
+
   pos: IDim = [0, 0, 0];
   vel: IDim = [0, 0, 0];
   dim: IDim = [1, 1, 1];
   rot: IDim = [0, 0, 0];
 
   gravitable = true;
+  tangible = true;
 
   onGround = false;
-  jumpCount = 0;
   speed = 1;
 
   uid = "";
 
-  renderType: RenderType;
-
   constructor() {}
 
   abstract update(delta: number): void;
+  abstract hit(entity: Entity, where: FaceLocater): void;
 
   setUid(uid: string) {
     this.uid = uid;
@@ -33,6 +39,13 @@ export abstract class Entity {
     if (this.gravitable) this.gravity();
 
     this.move(this.vel);
+  }
+
+  baseHit(entity: Entity) {
+    if (this.tangible) {
+      const where = this.pushOut(entity);
+      this.hit(entity, where);
+    }
   }
 
   move(p: IDim) {
@@ -67,10 +80,12 @@ export abstract class Entity {
         return false;
       }
     }
+    this.baseHit(ent);
+    ent.baseHit(this);
     return true;
   }
 
-  pushOut(ent: Entity) {
+  pushOut(ent: Entity): FaceLocater {
     let min = [Infinity];
 
     for (let i = 0; i < 3; i++) {
@@ -92,9 +107,9 @@ export abstract class Entity {
 
     this.vel[i] = 0;
 
-    if (i == 1 && dir == -1) {
-      this.onGround = true;
-      this.jumpCount = 0;
-    }
+    return {
+      side: i,
+      dir: dir as 1 | -1
+    };
   }
 }

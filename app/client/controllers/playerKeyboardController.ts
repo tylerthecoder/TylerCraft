@@ -1,6 +1,6 @@
 import { Controller } from "./controller";
-import { SocketHandler } from "../socket";
 import { Player } from "../../src/entities/player";
+import { game } from "../game";
 
 export class PlayerKeyboardController extends Controller {
   timer = 0;
@@ -18,7 +18,7 @@ export class PlayerKeyboardController extends Controller {
   }
 
   sendKeys() {
-    SocketHandler.send({
+    game.socket.send({
       type: "keys",
       payload: {
         keys: Array.from(this.keys),
@@ -36,11 +36,12 @@ export class PlayerKeyboardController extends Controller {
         uid: this.controlled.uid
       }
     };
-    SocketHandler.send(message);
+    game.socket.send(message);
   }
 
   update(delta: number) {
     this.wasdKeys(delta);
+    this.playerKeys();
     if (++this.timer >= this.maxTime) {
       this.sendPos();
       this.timer = 0;
