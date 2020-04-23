@@ -11,7 +11,7 @@ import { Entity } from "../src/entities/entity";
 type SocketListener = (message: ISocketMessage) => void;
 
 export class SocketHandler {
-  socket: WebSocket;
+  private socket: WebSocket;
 
   listeners: SocketListener[] = [];
 
@@ -44,6 +44,7 @@ export class SocketHandler {
     this.socket.onmessage = e => {
       const data = e.data;
       const obj = JSON.parse(data) as ISocketMessage;
+      console.log("Message from server", obj);
       this.listeners.forEach(l => l(obj));
       switch (obj.type) {
         case "welcome":
@@ -57,6 +58,9 @@ export class SocketHandler {
           break;
         case "new-entity":
           this.newEntity(obj.payload as NewEntityMessage);
+          break;
+        case "all-entities":
+
           break;
       }
     };

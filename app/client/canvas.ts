@@ -12,12 +12,15 @@ export class CanvasProgram {
 
     this.textures = {
       player: this.loadTexture("./img/player.png"),
-      grassBlock: this.loadTexture("./img/grass_block.png"),
+      grassBlock: this.loadTexture("./img/grass_block_2.png"),
+      stone: this.loadTexture("./img/stone.png"),
       checker: this.loadTexture("./img/checker.jpg")
     };
 
     this.clearCanvas();
   }
+
+
 
   setup() {
     // const gl = this.gl;

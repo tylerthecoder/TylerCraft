@@ -1,23 +1,28 @@
-export function arrayAdd(arr1: number[], arr2: number[]) {
-  if (arr1.length !== arr2.length) {
-    throw new Error("Arrays not same length");
-  }
+import { IDim } from "../types";
+
+export function arrayAdd<T extends number[]>(arr1: T, arr2: T): T {
   const newArray: number[] = [];
   for (let i = 0; i < arr1.length; i++) {
     newArray[i] = arr1[i] + arr2[i];
   }
-  return newArray;
+  return newArray as T;
 }
 
-export function arrayMul(arr1: number[], arr2: number[]) {
-  if (arr1.length !== arr2.length) {
-    throw new Error("Arrays not same length");
-  }
+export function arrayMul<T extends number[]>(arr1: T, arr2: T): T{
   const newArray: number[] = [];
   for (let i = 0; i < arr1.length; i++) {
     newArray[i] = arr1[i] * arr2[i];
   }
-  return newArray;
+  return newArray as T;
+}
+
+export function arrayScalarMul<T extends number[]>(arr1: T, num: number): T {
+  return arr1.map(val => val * num) as T;
+}
+
+
+export function arraySquare(arr: number[]) {
+  return arrayMul(arr, arr);
 }
 
 /** Subtracts arr1 from arr2 */
@@ -32,6 +37,18 @@ export function arraySub(arr1: number[], arr2: number[]) {
   return newArray;
 }
 
+export function arrayCompare(arr1: number[], arr2: number[]) {
+  if (arr1.length !== arr2.length) {
+    throw new Error("Arrays not same length");
+  }
+  for (let i = 0; i < arr1.length; i++) {
+    if (arr1[i] !== arr2[i]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 /** Converts rtp to xyz */
 export function toSphereCords(r: number, t: number, p: number) {
   const cords = [
@@ -40,4 +57,26 @@ export function toSphereCords(r: number, t: number, p: number) {
     r * Math.sin(p) * Math.cos(t)
   ];
   return cords;
+}
+
+export function arrayDist(arr1: number[], arr2: number[]) {
+  const sum = arrayAdd(arraySquare(arr1), arraySquare(arr2)).reduce((sum, current) => sum + current);
+  const dist = Math.sqrt(sum);
+  return dist;
+}
+
+export function arrayDot<T extends number[]>(arr1: T, arr2: T): number {
+  return arr1.reduce((acc, cur, index) => acc + cur * arr2[index]);
+}
+
+export function arrayCross(arr1: IDim, arr2: IDim): IDim {
+  return [
+    arr1[1] * arr2[2] - arr1[2] * arr2[1],
+    arr1[2] * arr2[0] - arr1[0] * arr2[2],
+    arr1[0] * arr2[1] - arr1[1] * arr2[0],
+  ]
+}
+
+export function getRandEle<T>(arr: Array<T>): T {
+  return arr[Math.floor(Math.random() * arr.length)];
 }

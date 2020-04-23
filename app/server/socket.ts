@@ -31,12 +31,13 @@ export default class SocketServer {
 
   listenTo(ws: wSocket, func: MessageListener) {
     ws.on("message", (data: string) => {
+      let message: ISocketMessage;
       try {
-        const message = JSON.parse(data) as ISocketMessage;
-        func(ws, message);
+        message = JSON.parse(data) as ISocketMessage;
       } catch {
         console.log("Error parsing JSON");
       }
+      func(ws, message);
     });
   }
 

@@ -14,13 +14,10 @@ import { GameController } from "./controllers/gameController";
 import { FixedCamera } from "./cameras/fixedCamera";
 import { SpectatorController } from "./controllers/spectator";
 import { SocketHandler } from "./socket";
-import {
-  ISocketMessage,
-  WelcomeMessage,
-  NewPlayerMessage,
-  NewEntityMessage
-} from "../types/socket";
-import { IDim } from "../types";
+import { IDim, IAction } from "../types";
+import { Cube } from "../src/entities/cube";
+
+type MetaActions = "forward" | "backward" | "left" | "right" | "jump";
 
 export class ClientGame {
   game: Game;
@@ -28,8 +25,10 @@ export class ClientGame {
   controllers: Controller[] = [];
   renderers: Renderer[] = [];
 
+  metaActions: MetaActions[];
+
   mainPlayer: Player;
-  multiPlayer = true;
+  multiPlayer = false;
 
   camera: Camera;
   socket: SocketHandler;
@@ -49,8 +48,28 @@ export class ClientGame {
     this.load();
   }
 
+  loadHandlers() {
+    window.addEventListener("mousedown", () => {
+      if (document.pointerLockElement !== canvas.canvas) {
+        canvas.canvas.requestPointerLock();
+        return;
+      }
+      this.onClick();
+    });
+
+
+    window.addEventListener("mousemove", (e: MouseEvent) => {
+      if (document.pointerLockElement === canvas.canvas) {
+        this.onMouseMove(e);
+      }
+    });
+  }
+
+
   async load() {
     await canvas.loadProgram();
+
+    this.loadHandlers();
 
     if (this.multiPlayer) {
       this.socket = new SocketHandler(this);
@@ -69,6 +88,27 @@ export class ClientGame {
       const renderer = new ChunkRenderer(chunk);
       this.renderers.push(renderer);
     });
+
+    this.game.actionListener = (actions: IAction[]) => {
+        // send actions to server
+
+      if (this.multiPlayer) {
+        this.socket.send({
+          type: "actions",
+          actionPayload: actions
+        });
+      }
+
+      for (const action of actions) {
+        if (action.blockUpdate) {
+          this.renderers.forEach(renderer => {
+            if ((renderer as ChunkRenderer).chunk === action.blockUpdate) {
+              (renderer as ChunkRenderer).getBufferData();
+            }
+          });
+        }
+      };
+    }
 
     requestAnimationFrame(this.loop.bind(this));
   }
@@ -117,6 +157,24 @@ export class ClientGame {
     if (this.multiPlayer) {
       this.socket.sendEntity(entity);
     }
+  }
+
+  onEntityClick(entity: Entity) {
+    this.game.handleAction({
+      playerClick: entity,
+    });
+  }
+
+  onClick() {
+    // const clickedEntity = this.camera.onClick(this.game.world.cubes);
+    const cube = this.game.world.lookingAt(this.camera);
+    if (cube) {
+      this.onEntityClick(cube);
+    }
+  }
+
+  onMouseMove(e: MouseEvent) {
+    this.camera.handleMouse(e);
   }
 
   removeEntity(uid: string) {

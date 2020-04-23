@@ -18,6 +18,10 @@ export class EntityCamera extends Camera {
     this.entity.rotate([-dy, dx, 0]);
   }
 
+  lookingAt(entities: Entity[]) {
+    return this.baseLookingAt(entities.filter(entity => entity !== this.entity));
+  }
+
   get pos(): IDim {
     let offset: number[] = [];
     if (this.thirdPerson) {

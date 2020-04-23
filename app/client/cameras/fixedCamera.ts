@@ -12,4 +12,10 @@ export class FixedCamera extends Camera {
     const dy = e.movementY * speed;
     this.rotate([-dy, dx, 0]);
   }
+
+  getActions() {
+    const actions = [];
+    actions.push(...this.getPlanerActionsFromMetaActions());
+    return actions;
+  }
 }

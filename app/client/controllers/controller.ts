@@ -1,9 +1,7 @@
 import { Entity } from "../../src/entities/entity";
 import { Player } from "../../src/entities/player";
 import { Camera } from "../cameras/camera";
-import { ClientGame } from "../game";
-import { IDim } from "../../types";
-import { toSphereCords } from "../../src/utils";
+import { ClientGame, game } from "../game";
 
 export type Controlled = Entity | Camera | ClientGame | Player;
 
@@ -31,22 +29,19 @@ export abstract class Controller {
     });
   }
 
+  ifHasKeyThenAddMeta(key: string, metaAction: string) {
+    if (this.keys.has(key))
+      (this.controlled as Player).metaActions.add(metaAction);
+    else {
+      (this.controlled as Player).metaActions.delete(metaAction);
+    }
+  }
+
   wasdKeys(delta: number) {
-    if (!(this.controlled instanceof Entity)) return;
-    const entity = this.controlled as Entity;
-
-    const speed = 0.01 * delta * entity.speed;
-
-    const k = (key: string, amount: [number, number, number]) => {
-      if (this.keys.has(key)) {
-        entity.move(toSphereCords(...amount) as IDim);
-      }
-    };
-
-    k("w", [-speed, -entity.rot[1], Math.PI / 2]);
-    k("s", [speed, -entity.rot[1], Math.PI / 2]);
-    k("a", [speed, -entity.rot[1] - Math.PI / 2, Math.PI / 2]);
-    k("d", [speed, -entity.rot[1] + Math.PI / 2, Math.PI / 2]);
+    this.ifHasKeyThenAddMeta("w", "forward");
+    this.ifHasKeyThenAddMeta("s", "backward");
+    this.ifHasKeyThenAddMeta("d", "right");
+    this.ifHasKeyThenAddMeta("a", "left");
   }
 
   playerKeys() {
@@ -65,12 +60,7 @@ export abstract class Controller {
   }
 
   qeKeys() {
-    if (!(this.controlled instanceof Entity)) return;
-    const entity = this.controlled as Entity;
-
-    const speed = 0.1 * entity.speed;
-
-    if (this.keys.has("q")) entity.move([0, speed, 0]);
-    if (this.keys.has("e")) entity.move([0, -speed, 0]);
+    this.ifHasKeyThenAddMeta("q", "up");
+    this.ifHasKeyThenAddMeta("e", "down");
   }
 }

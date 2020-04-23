@@ -3,6 +3,7 @@ import { canvas } from "../canvas";
 import { Camera } from "../cameras/camera";
 import { Chunk } from "../../src/world/chunk";
 import { arrayMul, arrayAdd, arraySub } from "../../src/utils";
+import TextureMapper from "../textureMapper";
 
 export class ChunkRenderer extends Renderer {
   constructor(public chunk: Chunk) {
@@ -17,14 +18,6 @@ export class ChunkRenderer extends Renderer {
   }
 
   getBufferData() {
-    const texturePos = [
-      [0.5, 0.5, 0.5, 0, 0, 0, 0, 0.5], // front
-      [0.5, 0.5, 0.5, 0, 0, 0, 0, 0.5], // back
-      [0.5, 0, 0.5, 0.5, 1, 0.5, 1, 0], // top
-      [0.5, 1, 0.5, 0.5, 0, 0.5, 0, 1], // bottom
-      [0.5, 1, 1, 1, 1, 0.5, 0.5, 0.5], // right
-      [0, 0.5, 0.5, 0.5, 0.5, 0, 0, 0] // left
-    ];
 
     const positions = []; // used to store positions of vertices
     const indices = []; // used to store pointers to those vertices
@@ -32,6 +25,7 @@ export class ChunkRenderer extends Renderer {
     const facesToRender = [0, 1, 2, 3, 4, 5]; // make this change soon
     let offset = 0;
     for (const cube of this.chunk.cubes) {
+      const texturePos = TextureMapper.getTextureCords(cube.type);
       // get position of cube relative to the chunk
       const relativePos = arraySub(cube.pos, this.chunk.pos);
 

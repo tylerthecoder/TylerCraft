@@ -1,8 +1,10 @@
-import { IDim } from ".";
+import { IDim, IAction } from ".";
 
 interface ISocketMessage {
   type: string;
   payload: Payload;
+  uid?: string;
+  actionPayload?: IAction[];
 }
 
 type Payload = KeyPressMessage | NewPlayerMessage | WelcomeMessage;

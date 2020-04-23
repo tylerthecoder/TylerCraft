@@ -13,34 +13,44 @@ export class PlayerKeyboardController extends Controller {
   }
 
   keysChange() {
-    // maybe only do this on a tick
-    this.sendKeys();
+    // // maybe only do this on a tick
+    // this.ifHasKeyThenAddMeta("w", "forward");
+    // this.ifHasKeyThenAddMeta("s", "backward");
+    // this.ifHasKeyThenAddMeta("d", "right");
+    // this.ifHasKeyThenAddMeta("a", "left");
+    // this.ifHasKeyThenAddMeta(" ", "jump");
+    // this.ifHasKeyThenAddMeta("f", "fireball");
+    // console.log(this.keys);
+    // console.log((this.controlled as Player).metaActions);
+    // this.sendKeys();
   }
 
   sendKeys() {
-    game.socket.send({
-      type: "keys",
-      payload: {
-        keys: Array.from(this.keys),
-        rot: this.controlled.rot,
-        uid: this.controlled.uid
-      }
-    });
+    // game.socket.send({
+    //   type: "keys",
+    //   payload: {
+    //     keys: Array.from(this.keys),
+    //     rot: this.controlled.rot,
+    //     uid: this.controlled.uid
+    //   }
+    // });
   }
 
   sendPos() {
-    const message = {
-      type: "pos",
-      payload: {
-        pos: this.controlled.pos,
-        uid: this.controlled.uid
-      }
-    };
-    game.socket.send(message);
+    // const message = {
+    //   type: "pos",
+    //   payload: {
+    //     pos: this.controlled.pos,
+    //     uid: this.controlled.uid
+    //   }
+    // };
+    // game.socket.send(message);
   }
 
   update(delta: number) {
     this.wasdKeys(delta);
+    this.ifHasKeyThenAddMeta(" ", "jump");
+    this.ifHasKeyThenAddMeta("f", "fireball");
     this.playerKeys();
     if (++this.timer >= this.maxTime) {
       this.sendPos();
