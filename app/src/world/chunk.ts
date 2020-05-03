@@ -6,7 +6,7 @@ import { BLOCK_DATA, BLOCK_TYPES } from "../blockdata";
 import { Game } from "../game";
 import { Camera } from "../../client/cameras/camera";
 
-export const CHUNK_SIZE = 5;
+export const CHUNK_SIZE = 3;
 
 export class Chunk {
   cubes: Cube[] = [];
@@ -52,6 +52,8 @@ export class Chunk {
 
   lookingAt(camera: Camera) {
     const cameraDir = toSphereCords(camera.rot[0], camera.rot[1], 1) as IDim;
+
+    console.log("Camera", cameraDir, camera.pos)
 
     return this.cubes.filter(cube => {
       // check each face for collision
