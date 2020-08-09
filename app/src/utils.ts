@@ -1,5 +1,11 @@
 import { IDim } from "../types";
 
+
+export function roundToNPlaces(num: number, n: number) {
+  const powerOfTen = n**10;
+  return Math.round((num + Number.EPSILON) * powerOfTen) / powerOfTen
+}
+
 export function arrayAdd<T extends number[]>(arr1: T, arr2: T): T {
   const newArray: number[] = [];
   for (let i = 0; i < arr1.length; i++) {
@@ -50,13 +56,19 @@ export function arrayCompare(arr1: number[], arr2: number[]) {
 }
 
 /** Converts rtp to xyz */
-export function toSphereCords(r: number, t: number, p: number) {
+export function sphereToCartCords(r: number, t: number, p: number): IDim {
   const cords = [
     r * Math.sin(p) * Math.sin(t),
     r * Math.cos(p),
-    r * Math.sin(p) * Math.cos(t)
-  ];
+    r * Math.sin(p) * Math.cos(t),
+  ] as IDim;
   return cords;
+}
+
+export function normalize<T extends number[]>(arr: T) {
+  // find the length of the vec, if 0 then return 1
+  const length = Math.sqrt(arr.reduce((acc, cur) => acc + cur ** 2, 0) );
+  return arrayScalarMul(arr, 1 / length);
 }
 
 export function arrayDist(arr1: number[], arr2: number[]) {

@@ -17,13 +17,15 @@ export class World {
   }
 
   gen() {
-    const size = 1;
-    for (let i = -size; i < size; i++) {
-      for (let j = -size; j < size; j++) {
+    const i = 0;
+    const j = 0;
+    // const size = 1;
+    // for (let i = -size; i < size; i++) {
+    //   for (let j = -size; j < size; j++) {
         const chunk = new Chunk([i, j], this.game);
         this.chunks.set(`${i},${j}`, chunk);
-      }
-    }
+    //   }
+    // }
   }
 
   posToChunk(i: number, j: number): number[] {

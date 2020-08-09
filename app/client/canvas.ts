@@ -1,6 +1,8 @@
 export class CanvasProgram {
   canvas: HTMLCanvasElement;
+  hudCanvas: HTMLCanvasElement;
   gl: WebGLRenderingContext;
+  hudCxt: CanvasRenderingContext2D;
   program: any;
 
   textures: { [name: string]: WebGLTexture };
@@ -45,11 +47,20 @@ export class CanvasProgram {
   }
 
   getCanvas() {
+    // init hud canvas
+    this.hudCanvas = document.querySelector("#hudCanvas");
+    this.hudCanvas.height = window.innerHeight;
+    this.hudCanvas.width = window.innerWidth;
+    this.hudCxt = this.hudCanvas.getContext("2d");
+
+    // init gl canvas
     this.canvas = document.querySelector("#glCanvas") as HTMLCanvasElement;
     this.canvas.height = window.innerHeight;
     this.canvas.width = window.innerWidth;
     // Initialize the GL context
     const gl = this.canvas.getContext("webgl");
+
+
 
     // Only continue if WebGL is available and working
     if (gl === null) {

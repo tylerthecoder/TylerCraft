@@ -1,13 +1,15 @@
 import { Entity, RenderType, FaceLocater } from "./entity";
 import { Ball } from "./ball";
-import { arrayAdd, toSphereCords, arrayMul, arrayCompare } from "../utils";
+import { arrayAdd, arrayMul, arrayCompare } from "../utils";
 import { Game } from "../game";
 import { IDim, IAction } from "../../types";
 
 export class Player extends Entity {
-  pos: IDim = [-2, 5, -2];
+  pos: IDim = [0, 5, 0];
   dim: IDim = [1, 2, 1];
-  rot: IDim = [Math.PI / 2, 0, 0];
+  rot: IDim = [0, 0, 0];
+
+  // gravitable = false;
 
   renderType = RenderType.CUBE;
 
@@ -105,6 +107,7 @@ export class Player extends Entity {
 
   hit(_entity: Entity, where: FaceLocater) {
     if (where.side == 1 && where.dir == -1) {
+      // DEBUG
       this.onGround = true;
       this.jumpCount = 0;
     }

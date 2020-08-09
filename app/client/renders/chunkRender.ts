@@ -36,10 +36,10 @@ export class ChunkRenderer extends Renderer {
         const dim = face >> 1;
 
         // get the direction of the face. In or out
-        const dir = face % 2 === 0 ? 0.5 : -0.5;
+        const dir = face % 2 === 0 ? 1 : 0;
 
         // four corners of a square, centered at origin
-        const square = [[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]];
+        const square = [[0, 0], [1, 0], [1, 1], [0, 1]];
 
         // get a flattened array of the positions
         const vertices = square
@@ -47,8 +47,7 @@ export class ChunkRenderer extends Renderer {
             // add the 3 dimension to the square
             edge.splice(dim, 0, dir);
 
-            // assume simple size for now
-            const size = [1, 1, 1];
+            const size = cube.dim;
 
             // multiply edges by dimensions
             const cords = arrayMul(edge, size);

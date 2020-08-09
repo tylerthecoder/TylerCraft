@@ -8,6 +8,7 @@ import { Game } from "../src/game";
 import { RenderType, Entity } from "../src/entities/entity";
 import { CubeRenderer } from "./renders/cubeRender";
 import { SphereRenderer } from "./renders/sphereRender";
+import { HudRenderer } from "./renders/hudRender";
 import { ChunkRenderer } from "./renders/chunkRender";
 import { Renderer } from "./renders/renderer";
 import { GameController } from "./controllers/gameController";
@@ -18,6 +19,11 @@ import { IDim, IAction } from "../types";
 import { Cube } from "../src/entities/cube";
 
 type MetaActions = "forward" | "backward" | "left" | "right" | "jump";
+
+
+// const PLAYER_CONTROLLER = SpectatorController;
+const PLAYER_CONTROLLER = PlayerKeyboardController;
+
 
 export class ClientGame {
   game: Game;
@@ -88,6 +94,11 @@ export class ClientGame {
       const renderer = new ChunkRenderer(chunk);
       this.renderers.push(renderer);
     });
+
+    const hudCanvas = new HudRenderer();
+    hudCanvas.canvas = canvas;
+
+    this.renderers.push(hudCanvas);
 
     this.game.actionListener = (actions: IAction[]) => {
         // send actions to server
@@ -201,7 +212,7 @@ export class ClientGame {
   }
 
   setUpPlayer() {
-    const playerController = new PlayerKeyboardController(this.mainPlayer);
+    const playerController = new PLAYER_CONTROLLER(this.mainPlayer);
     this.controllers.push(playerController);
     this.camera = new EntityCamera(this.mainPlayer);
   }

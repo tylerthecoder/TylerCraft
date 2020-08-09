@@ -23,4 +23,10 @@ export class Cube extends Entity {
   }
 
   hit(ent: Entity, where: FaceLocater) {}
+
+  isPointInsideMe(point: IDim) {
+    return this.pos.every((ord, index) => {
+      return point[index] >= ord && point[index] <= ord + this.dim[index]
+    });
+  }
 }

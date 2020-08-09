@@ -1,17 +1,23 @@
 import { Entity, FaceLocater } from "../../src/entities/entity";
 import { canvas } from "../canvas";
 import { IDim } from "../../types";
-import { arrayDist } from "../../src/utils";
+import { arrayDist, arrayMul } from "../../src/utils";
 import { Cube } from "../../src/entities/cube";
+import {sphereToCartCords, normalize} from "../../src/utils";
 
 export abstract class Camera extends Entity {
-  // x y and z
+  // (x, y, z)
   abstract pos: IDim;
-  // theta[0, 2pi], phi[0, pi], null
+  // (theta[0, 2pi], phi[0, pi], null)
   abstract rot: IDim;
 
   constructor() {
     super();
+  }
+
+  // a unit vector version of the rotation in (x, y, z)
+  get rotUnitVector(): IDim {
+    return arrayMul(sphereToCartCords(1, this.rot[1], this.rot[0]), [-1, 1, 1]);
   }
 
   update(_delta: number) {}

@@ -1,5 +1,6 @@
 import { CanvasProgram, canvas } from "../canvas";
 import { Camera } from "../cameras/camera";
+import { arrayAdd, arraySub } from "../../src/utils";
 declare var mat4: any;
 
 export abstract class Renderer {
@@ -129,11 +130,7 @@ export abstract class Renderer {
     // the center of the scene.
     const modelViewMatrix = mat4.create();
 
-    mat4.rotate(modelViewMatrix, modelViewMatrix, Math.PI / 2 - camera.rot[0], [
-      1,
-      0,
-      0
-    ]);
+    mat4.rotate(modelViewMatrix, modelViewMatrix, Math.PI / 2 - camera.rot[0], [1,0,0]);
     mat4.rotate(modelViewMatrix, modelViewMatrix, camera.rot[1], [0, 1, 0]);
 
     // Now move the drawing position a bit to where we want to
@@ -142,7 +139,8 @@ export abstract class Renderer {
     mat4.translate(
       modelViewMatrix, // destination matrix
       modelViewMatrix, // matrix to translate
-      pos.map((ele, index) => ele - camera.pos[index])
+      // arrayAdd(arraySub(pos, camera.pos), [.5, .5, .5]),
+      arraySub(pos, camera.pos)
     );
 
     this.bindCube();

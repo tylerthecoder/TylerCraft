@@ -1,5 +1,6 @@
 import { IDim, IAction } from "../../types";
-import { toSphereCords, arrayAdd, arrayMul, arrayCompare } from "../utils";
+import { sphereToCartCords, arrayAdd, arrayMul, arrayCompare } from "../utils";
+import { Player } from "./player";
 
 export enum RenderType {
   CUBE,
@@ -33,10 +34,11 @@ export abstract class Entity {
 
   jumpCount = 0;
 
-  constructor() {}
+  constructor() { }
 
   abstract update(delta: number): void;
   abstract hit(entity: Entity, where: FaceLocater): void;
+  // abstract isPointInsideMe(point: IDim): boolean;
 
 
   setUid(uid: string) {
@@ -81,37 +83,66 @@ export abstract class Entity {
   }
 
   isCollide(ent: Entity) {
+    // loop through each dimension. Consider each edge along that dimension a line segment
+    // check to see if my (this) line segment overlaps the entities (ent) line segment
     for (let i = 0; i < 3; i++) {
+
       if (
-        !(Math.abs(this.pos[i] - ent.pos[i]) < this.dim[i] / 2 + ent.dim[i] / 2)
+        this.pos[i] < ent.pos[i] && // ent line is front
+        ent.pos[i] > this.pos[i] + this.dim[i] // and ent is not contained in my (this) line segment
       ) {
-        return false;
+        // not possible for these to be intersecting since one dimension is too far away
+        return false
       }
+
+      if (
+        ent.pos[i] < this.pos[i] && // My (this) line is front
+        this.pos[i] > ent.pos[i] + ent.dim[i] // and ent is not contained in my (this) line segment
+      ) {
+        // not possible for these to be intersecting since one dimension is too far away
+        return false
+      }
+
+      // distance between one center and the other
+      // const dist = Math.abs((this.pos[i] + this.dim[i] / 2) - (ent.pos[i] + ent.dim[i] /2));
+
+      // if the distance is more than possible then break
+      // if (dist > this.dim[i]/2 + ent.dim[i]/2) return false;
     }
     this.baseHit(ent);
     ent.baseHit(this);
     return true;
   }
 
+
+  // push me (this) out of the supplied entity (ent)
   pushOut(ent: Entity): FaceLocater {
     let min = [Infinity];
 
+    // 0 -> 1, 1 -> 0
+    const switchDir = (dir: number) => (dir+1) % 2;
+
     for (let i = 0; i < 3; i++) {
-      for (let dir = -1; dir <= 1; dir += 2) {
+      for (let dir = 0; dir <= 1; dir ++) {
         // calculate the distance from a face on the player to a face on the ent
-        const p = this.pos[i] + (this.dim[i] / 2) * dir;
-        const c = ent.pos[i] + (ent.dim[i] / 2) * -1 * dir;
-        const dist = c - p;
+        const p = this.pos[i] + this.dim[i] * dir;
+        const c = ent.pos[i] + ent.dim[i] * switchDir(dir);
+        const dist = Math.abs(c - p);
         // find the shortest distance (that is best one to move)
-        if (Math.abs(dist) < Math.abs(min[0])) {
+        if (dist < min[0]) {
           min = [dist, i, dir];
         }
       }
     }
 
+
     const [_, i, dir] = min;
 
-    this.pos[i] = ent.pos[i] + (ent.dim[i] / 2 + this.dim[i] / 2) * -dir;
+    this.pos[i] = ent.pos[i] + ent.dim[i] * switchDir(dir) - this.dim[i] * dir;
+
+    if (i !== 1) {
+      // console.log(min, this.vel, this);
+    }
 
     this.vel[i] = 0;
 
@@ -150,27 +181,30 @@ export abstract class Entity {
     this.prevMetaActions = new Set(this.metaActions);
 
     this.metaActions.forEach(metaAction => {
+      const baseSpeed = 0.5;
       switch (metaAction) {
         case "forward":
-          cartVel = toSphereCords(-1, -this.rot[1], Math.PI / 2);
+          cartVel = sphereToCartCords(-baseSpeed, -this.rot[1], Math.PI / 2);
           vel = arrayAdd(vel, cartVel) as IDim;
           break;
         case "backward":
-          cartVel = toSphereCords(1, -this.rot[1], Math.PI / 2);
+          cartVel = sphereToCartCords(baseSpeed, -this.rot[1], Math.PI / 2);
           vel = arrayAdd(vel, cartVel) as IDim;
           break;
         case "left":
-          cartVel = toSphereCords(1, -this.rot[1] - Math.PI / 2, Math.PI / 2);
+          cartVel = sphereToCartCords(baseSpeed, -this.rot[1] - Math.PI / 2, Math.PI / 2);
           vel = arrayAdd(vel, cartVel) as IDim;
           break;
         case "right":
-          cartVel = toSphereCords(1, -this.rot[1] + Math.PI / 2, Math.PI / 2);
+          cartVel = sphereToCartCords(baseSpeed, -this.rot[1] + Math.PI / 2, Math.PI / 2);
           vel = arrayAdd(vel, cartVel) as IDim;
           break;
         case "up":
           vel = arrayAdd(vel, [0, this.speed, 0]) as IDim;
+          break;
         case "down":
           vel = arrayAdd(vel, [0, -this.speed, 0]) as IDim;
+          break;
         case "jump":
           actions.push({
             playerJump: {

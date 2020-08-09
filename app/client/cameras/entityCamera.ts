@@ -1,11 +1,12 @@
 import { Entity } from "../../src/entities/entity";
 import { Camera } from "./camera";
 import { IDim } from "../../types";
+import { arrayAdd } from "../../src/utils";
 
 export class EntityCamera extends Camera {
   thirdPerson: boolean = false;
 
-  offset: IDim = [0, 1, 0];
+  offset: IDim = [0, 0, 0];
 
   constructor(public entity: Entity) {
     super();
@@ -25,16 +26,22 @@ export class EntityCamera extends Camera {
   get pos(): IDim {
     let offset: number[] = [];
     if (this.thirdPerson) {
+      // offset = [
+      //   -Math.sin(this.entity.rot[1]) * 7,
+      //   Math.cos(this.entity.rot[0]) * 7 + 2,
+      //   Math.cos(this.entity.rot[1]) * 7
+      // ];
       offset = [
-        -Math.sin(this.entity.rot[1]) * 7,
-        Math.cos(this.entity.rot[0]) * 7,
-        Math.cos(this.entity.rot[1]) * 7
+        2, 3, 2
       ];
     } else {
       offset = this.offset;
     }
 
-    return this.entity.pos.map((x, i) => x + offset[i]).slice(0) as IDim;
+    // center the camera position
+    offset = arrayAdd(offset, [this.entity.dim[0] / 2, this.entity.dim[1] * (4/5), this.entity.dim[2] / 2]);
+
+    return arrayAdd(this.entity.pos, offset) as IDim;
   }
 
   set pos(_pos: IDim) {}

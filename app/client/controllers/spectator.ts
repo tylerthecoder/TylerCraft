@@ -5,6 +5,7 @@ export class SpectatorController extends Controller {
   constructor(public controlled: Entity) {
     super();
     this.setKeyListeners();
+    controlled.gravitable = false;
   }
 
   // other people do not need to see spectators

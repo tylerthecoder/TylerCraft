@@ -2,7 +2,7 @@ import { Renderer } from "./renderer";
 import { canvas } from "../canvas";
 import { Camera } from "../cameras/camera";
 import { Entity } from "../../src/entities/entity";
-import { arrayMul } from "../../src/utils";
+import { arrayMul, arrayAdd, arrayScalarMul } from "../../src/utils";
 
 export class CubeRenderer extends Renderer {
   constructor(public entity: Entity) {
@@ -34,10 +34,10 @@ export class CubeRenderer extends Renderer {
     let count = 0;
     for (const face of facesToRender) {
       const i = face >> 1;
-      const dir = face % 2 === 0 ? 0.5 : -0.5;
+      const dir = face % 2 === 0 ? 1 : 0;
 
       // const pos = this.getFace(i, dir, this.dim);
-      const square = [[-0.5, -0.5], [0.5, -0.5], [0.5, 0.5], [-0.5, 0.5]];
+      const square = [[0, 0], [1, 0], [1, 1], [0, 1]];
       const pos = square
         .map(edge => {
           edge.splice(i, 0, dir);

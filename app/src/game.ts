@@ -89,17 +89,6 @@ export class Game {
 
       if (action.playerClick instanceof Cube) {
         const cube = action.playerClick;
-        console.log("hit", cube);
-        const newCube = new Cube(
-          "grass",
-          arrayAdd(cube.pos, [0,-1,0]),
-          cube.dim,
-        );
-
-
-        this.handleAction({
-          addBlock: newCube,
-        });
 
         const newCub2e = new Cube(
           "grass",
