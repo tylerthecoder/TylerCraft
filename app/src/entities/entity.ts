@@ -9,7 +9,7 @@ export enum RenderType {
 
 export interface FaceLocater {
   side: number;
-  dir: 1 | -1;
+  dir: 1 | 0;
 }
 
 export abstract class Entity {
@@ -148,13 +148,13 @@ export abstract class Entity {
 
     return {
       side: i,
-      dir: dir as 1 | -1
+      dir: dir as 1 | 0
     };
   }
 
   jump() {
     if (this.jumpCount < 5) {
-      this.vel[1] = 0.1;
+      this.vel[1] = 0.11;
       this.jumpCount++;
     }
   }
@@ -166,38 +166,39 @@ export abstract class Entity {
 
   // Consumes some of the meta-action
   getPlanerActionsFromMetaActions() {
-    let vel: IDim = [0, 0, 0];
-    let cartVel: number[];
+    // inclue the vertical vel incase they are jumping
+    let vel: IDim = [0, this.vel[1], 0];
+    let cartVel: IDim;
     const actions: IAction[] = [];
 
     if (this.prevMetaActions.size > 0 && this.metaActions.size === 0) {
       actions.push({
         setEntVel: {
           uid: this.uid,
-          vel: [0,0,0]
+          vel,
         }
       });
     }
     this.prevMetaActions = new Set(this.metaActions);
 
     this.metaActions.forEach(metaAction => {
-      const baseSpeed = 0.5;
+      const baseSpeed = .07;
       switch (metaAction) {
         case "forward":
           cartVel = sphereToCartCords(-baseSpeed, -this.rot[1], Math.PI / 2);
-          vel = arrayAdd(vel, cartVel) as IDim;
+          vel = arrayAdd(vel, cartVel);
           break;
         case "backward":
           cartVel = sphereToCartCords(baseSpeed, -this.rot[1], Math.PI / 2);
-          vel = arrayAdd(vel, cartVel) as IDim;
+          vel = arrayAdd(vel, cartVel);
           break;
         case "left":
           cartVel = sphereToCartCords(baseSpeed, -this.rot[1] - Math.PI / 2, Math.PI / 2);
-          vel = arrayAdd(vel, cartVel) as IDim;
+          vel = arrayAdd(vel, cartVel);
           break;
         case "right":
           cartVel = sphereToCartCords(baseSpeed, -this.rot[1] + Math.PI / 2, Math.PI / 2);
-          vel = arrayAdd(vel, cartVel) as IDim;
+          vel = arrayAdd(vel, cartVel);
           break;
         case "up":
           vel = arrayAdd(vel, [0, this.speed, 0]) as IDim;
@@ -212,7 +213,6 @@ export abstract class Entity {
             }
           });
       }
-      vel = arrayMul(vel, [.2, .2, .2]) as IDim;
       const isDifferentVel = !arrayCompare(vel, this.prevVel)
 
       this.prevVel = vel.slice(0) as IDim;

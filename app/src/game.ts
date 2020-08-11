@@ -83,30 +83,30 @@ export class Game {
       entity.vel = action.setEntVel!.vel.slice(0) as IDim;
     }
 
-    if (action.playerClick) {
-      // add new cube based on where hit ocurred
-      // find the side somehow. I'm going to just assume it is always above for now
+    if (action.playerLeftClick) {
+      const newCube = new Cube(
+        "grass",
+        action.playerLeftClick.newCubePos
+      );
 
-      if (action.playerClick instanceof Cube) {
-        const cube = action.playerClick;
+      this.handleAction({
+        addBlock: newCube,
+      });
+    }
 
-        const newCub2e = new Cube(
-          "grass",
-          arrayAdd(cube.pos, [0,1,0]),
-          cube.dim,
-        );
+    if (action.playerRightClick) {
 
-        this.handleAction({
-          addBlock: newCub2e,
-        });
-      }
-
+      this.handleAction({
+        removeBlock: action.playerRightClick.entity as Cube,
+      });
     }
 
     if (action.addBlock) {
-      const cube = action.addBlock;
-      console.log("Adding a cube", cube)
-      this.world.addBlock(cube);
+      this.world.addBlock(action.addBlock);
+    }
+
+    if (action.removeBlock) {
+      this.world.removeBlock(action.removeBlock);
     }
   }
 

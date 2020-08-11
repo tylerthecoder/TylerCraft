@@ -17,15 +17,13 @@ export class World {
   }
 
   gen() {
-    const i = 0;
-    const j = 0;
-    // const size = 1;
-    // for (let i = -size; i < size; i++) {
-    //   for (let j = -size; j < size; j++) {
+    const size = 1;
+    for (let i = -size; i < size; i++) {
+      for (let j = -size; j < size; j++) {
         const chunk = new Chunk([i, j], this.game);
         this.chunks.set(`${i},${j}`, chunk);
-    //   }
-    // }
+      }
+    }
   }
 
   posToChunk(i: number, j: number): number[] {
@@ -56,11 +54,20 @@ export class World {
     }
   }
 
+  removeBlock(cube: Cube) {
+    for (const chunk of this.chunks.values()) {
+      if (chunk.containsCube(cube)) {
+        chunk.removeCube(cube)
+        return;
+      }
+    }
+  }
+
   lookingAt(camera: Camera) {
     for (const chunk of this.chunks.values()) {
-      const cubes = chunk.lookingAt(camera);
-      if (cubes.length > 0) {
-        return cubes[0];
+      const cubeData = chunk.lookingAt(camera);
+      if (cubeData) {
+        return cubeData;
       }
     }
   }

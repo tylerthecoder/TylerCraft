@@ -17,7 +17,15 @@ export interface IAction {
     y: number;
     uid: string;
   };
-  playerClick?: Entity;
+  playerLeftClick?: {
+    newCubePos: IDim;
+    entity: Entity;
+  };
+  playerRightClick?: {
+    newCubePos: IDim;
+    entity: Entity;
+  };
   addBlock?: Cube;
+  removeBlock?: Cube;
   blockUpdate?: Chunk;
 }

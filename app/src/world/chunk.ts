@@ -1,7 +1,7 @@
 import { Cube } from "../entities/cube";
 import { Entity } from "../entities/entity";
 import { IDim } from "../../types";
-import { getRandEle, arrayMul, arrayCompare, arrayAdd, arrayCross, arrayDot, arrayScalarMul, roundToNPlaces } from "../utils";
+import { getRandEle, arrayMul, arrayCompare, arrayAdd, arrayCross, arrayDot, arrayScalarMul, roundToNPlaces, arrayDist, arrayDistSquared } from "../utils";
 import { BLOCK_DATA, BLOCK_TYPES } from "../blockdata";
 import { Game } from "../game";
 import { Camera } from "../../client/cameras/camera";
@@ -56,61 +56,92 @@ export class Chunk {
 
     let firstIntersection: IDim;
 
-    const hitCube = this.cubes.filter(cube => {
+    const faceNormals: IDim[] = [
+      [1, 0, 0],
+      [-1, 0 , 0],
+      [0, 1, 0],
+      [0, -1, 0],
+      [0, 0, 1],
+      [0, 0, -1],
+    ]
+
+    // [dist, faceVector( a vector, when added to the cubes pos, gives you the pos of a new cube if placed on this block)]
+    const defaultBest: [number, IDim, Cube?] = [Infinity, [-1, -1, -1]];
+
+    const newCubePosData = this.cubes.reduce((bestFace, cube) => {
       // check each face for collision
       // to define all of the faces of the cubes we will use the normal for each face
 
-      const topFaceNormal = [0, 1, 0] as IDim;
-      const pointOnTopFace = arrayAdd(cube.pos, [0, 1, 0]);
-      const n = topFaceNormal;
-      const p = pointOnTopFace;
+      for (const faceNormal of faceNormals) {
 
-      // this d is the d in the equation for a plane: ax + by = cz = d
-      const d = arrayDot(n, p);
+        // a vector that is normalized by the cubes dimensions
+        const faceVector = arrayMul(cube.dim, faceNormal.map(n => n === 1 ? 1 : 0) as IDim);
 
-      // t is the "time" at which the line intersects the plane, it is used to find the point of intersection
-      const t = (d - arrayDot(n, camera.pos)) / arrayDot(n, cameraDir);
+        const pointOnFace = arrayAdd(cube.pos, faceVector);
 
-      // now find the point where the line intersections this plane (y = mx + b)
+        // this d is the d in the equation for a plane: ax + by = cz = d
+        const d = arrayDot(faceNormal, pointOnFace);
 
-      const debug_mult = arrayScalarMul(cameraDir, t);
+        // t is the "time" at which the line intersects the plane, it is used to find the point of intersection
+        const t = (d - arrayDot(faceNormal, camera.pos)) / arrayDot(faceNormal, cameraDir);
 
-      const intersection = arrayAdd(debug_mult, camera.pos);
+        // This means that the point is behind the camera (don't know why it is negative)
+        if (t > 0) {
+          continue;
+        }
 
-      // we here make the arbutairy decision that the game will have 5 points of persision when rounding
-      const roundedIntersection = intersection.map(num => roundToNPlaces(num, 5)) as IDim;
+        // now find the point where the line intersections this plane (y = mx + b)
+        const mx = arrayScalarMul(cameraDir, t);
+        const intersection = arrayAdd(mx, camera.pos);
 
-      if (!firstIntersection) {
-        firstIntersection = roundedIntersection;
+        // we here make the arbutairy decision that the game will have 5 points of persision when rounding
+        const roundedIntersection = intersection.map(num => roundToNPlaces(num, 5)) as IDim;
+
+        if (!firstIntersection) {
+          firstIntersection = roundedIntersection;
+        }
+
+        // check to see if this intersection is within the face (Doing the whole cube for now, will switch to face later)
+        const hit = cube.isPointInsideMe(roundedIntersection);
+
+        if (hit) {
+          // we have determined that the camera is looking at this face, now see if this is the point
+          // closest to the camera
+
+          // get the squared dist so we dont have to do a bunch of sqrt operations
+          const pointDist = Math.abs(arrayDistSquared(camera.pos, roundedIntersection));
+
+          if (pointDist < bestFace[0]) {
+            const newCubePos = arrayAdd(cube.pos, arrayMul(cube.dim, faceNormal));
+            bestFace = [pointDist, newCubePos, cube];
+          }
+        }
       }
 
-      // check to see if this intersection is within the face (Doing the whole cube for now, will switch to face later)
-      const hit = cube.isPointInsideMe(roundedIntersection);
+      return bestFace;
 
-      // console.log(t, debug_mult, intersection, cameraDir)
+    }, defaultBest);
 
-      return hit;
-    });
+    // this means we didn't find a block
+    if (newCubePosData[0] === Infinity)  {
+      return false;
+    }
 
-    // DEBUG
-    this.addCube(new Cube(
-      "stone",
-      firstIntersection,
-      [.1, .1, .1]
-    ));
-
-    // this.addCube(new Cube(
-    //   "stone",
-    //   camera.pos,
-    //   [.1, .1, .1]
-    // ));
-
-    return hitCube;
+    return {
+      newCubePos: newCubePosData[1],
+      entity: newCubePosData[2],
+    }
   }
 
   addCube(cube: Cube) {
-    console.log("Addede cube to chunk: ", cube);
     this.cubes.push(cube);
+    this.game.actions.push({
+      blockUpdate: this,
+    });
+  }
+
+  removeCube(cube: Cube) {
+    this.cubes = this.cubes.filter(c => cube !== c);
     this.game.actions.push({
       blockUpdate: this,
     });

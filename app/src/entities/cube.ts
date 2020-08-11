@@ -15,9 +15,10 @@ export class Cube extends Entity {
   }
 
   update(delta: number) {
-    // if (Math.random() < 0.001) {
-    //   this.falling = true;
-    // }
+    if (Math.random() < 0.001) {
+      this.gravitable = true;
+      return true;
+    }
 
     this.baseUpdate(delta);
   }

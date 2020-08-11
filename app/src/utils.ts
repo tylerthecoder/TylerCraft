@@ -3,7 +3,11 @@ import { IDim } from "../types";
 
 export function roundToNPlaces(num: number, n: number) {
   const powerOfTen = n**10;
-  return Math.round((num + Number.EPSILON) * powerOfTen) / powerOfTen
+  // return Math.round((num + Number.EPSILON) * powerOfTen) / powerOfTen
+  // const t = Math.round(num * powerOfTen) / powerOfTen
+  // console.log(num, t);
+  // return t;
+  return parseFloat(num.toFixed(n));
 }
 
 export function arrayAdd<T extends number[]>(arr1: T, arr2: T): T {
@@ -77,8 +81,19 @@ export function arrayDist(arr1: number[], arr2: number[]) {
   return dist;
 }
 
+export function arrayDistSquared(arr1: number[], arr2: number[]) {
+  return arraySub(arr1, arr2).map(Math.abs).reduce((sum, current) => sum + current);
+}
+
 export function arrayDot<T extends number[]>(arr1: T, arr2: T): number {
-  return arr1.reduce((acc, cur, index) => acc + cur * arr2[index]);
+  const mults = arrayMul(arr1, arr2);
+
+  return sumOfArray(mults);
+  // return arr1.reduce((acc, cur, index) => acc + cur * arr2[index], 0);
+}
+
+export function sumOfArray(arr: number[]): number {
+  return arr.reduce((acc, cur) => acc + cur, 0);
 }
 
 export function arrayCross(arr1: IDim, arr2: IDim): IDim {

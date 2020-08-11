@@ -18,7 +18,7 @@ export class Ball extends Entity {
   }
 
   hit(entity: Entity, where: FaceLocater) {
-    if (where.side == 1 && where.dir == -1) {
+    if (where.side === 1 && where.dir === 0) {
       this.onGround = true;
     }
   }

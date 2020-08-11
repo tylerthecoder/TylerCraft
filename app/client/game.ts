@@ -55,12 +55,12 @@ export class ClientGame {
   }
 
   loadHandlers() {
-    window.addEventListener("mousedown", () => {
+    window.addEventListener("mousedown", (e: MouseEvent) => {
       if (document.pointerLockElement !== canvas.canvas) {
         canvas.canvas.requestPointerLock();
         return;
       }
-      this.onClick();
+      this.onClick(e);
     });
 
 
@@ -133,6 +133,18 @@ export class ClientGame {
 
     this.game.update(delta);
 
+
+    // do something fun to blocks
+    // for (const chunk of this.game.world.chunks) {
+    //   chunk[1].cubes.forEach((cube) => {
+    //     if (cube.update(0)) {
+    //   this.game.actions.push({
+    //     blockUpdate: chunk[1],
+    //   });
+    //     }
+    //   })
+    // }
+
     this.render();
 
     this.pastDeltas.push(delta);
@@ -170,17 +182,17 @@ export class ClientGame {
     }
   }
 
-  onEntityClick(entity: Entity) {
-    this.game.handleAction({
-      playerClick: entity,
-    });
-  }
-
-  onClick() {
+  onClick(e: MouseEvent) {
     // const clickedEntity = this.camera.onClick(this.game.world.cubes);
-    const cube = this.game.world.lookingAt(this.camera);
-    if (cube) {
-      this.onEntityClick(cube);
+    const data = this.game.world.lookingAt(this.camera);
+    if (e.which === 1) { // left click
+      this.game.handleAction({
+        playerLeftClick: data
+      });
+    } else if (e.which === 3) { // right click
+      this.game.handleAction({
+        playerRightClick: data
+      });
     }
   }
 
