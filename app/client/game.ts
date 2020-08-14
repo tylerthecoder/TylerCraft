@@ -16,7 +16,6 @@ import { FixedCamera } from "./cameras/fixedCamera";
 import { SpectatorController } from "./controllers/spectator";
 import { SocketHandler } from "./socket";
 import { IDim, IAction } from "../types";
-import { Cube } from "../src/entities/cube";
 
 type MetaActions = "forward" | "backward" | "left" | "right" | "jump";
 
@@ -31,10 +30,8 @@ export class ClientGame {
   controllers: Controller[] = [];
   renderers: Renderer[] = [];
 
-  metaActions: MetaActions[];
-
   mainPlayer: Player;
-  multiPlayer = false;
+  multiPlayer = true;
 
   camera: Camera;
   socket: SocketHandler;
@@ -95,30 +92,31 @@ export class ClientGame {
       this.renderers.push(renderer);
     });
 
-    const hudCanvas = new HudRenderer();
-    hudCanvas.canvas = canvas;
-
+    const hudCanvas = new HudRenderer(canvas);
     this.renderers.push(hudCanvas);
 
     this.game.actionListener = (actions: IAction[]) => {
-        // send actions to server
-
-      if (this.multiPlayer) {
+      if (actions.length > 0) console.log("Actions:");
+      // send actions to server
+      if (this.multiPlayer && actions.length > 0) {
         this.socket.send({
           type: "actions",
-          actionPayload: actions
+          actionPayload: actions.filter(a => !a.isFromServer)
         });
       }
+    }
 
-      for (const action of actions) {
-        if (action.blockUpdate) {
-          this.renderers.forEach(renderer => {
-            if ((renderer as ChunkRenderer).chunk === action.blockUpdate) {
-              (renderer as ChunkRenderer).getBufferData();
+    this.game.clientActionListener = (action: IAction) => {
+      if (action.blockUpdate) {
+        this.renderers.forEach(renderer => {
+          if (renderer instanceof ChunkRenderer) {
+            const r = renderer as ChunkRenderer;
+            if (r.chunk.uid === action.blockUpdate.chunkId) {
+              r.getBufferData();
             }
-          });
-        }
-      };
+          }
+        });
+      }
     }
 
     requestAnimationFrame(this.loop.bind(this));
@@ -184,13 +182,13 @@ export class ClientGame {
 
   onClick(e: MouseEvent) {
     // const clickedEntity = this.camera.onClick(this.game.world.cubes);
-    const data = this.game.world.lookingAt(this.camera);
+    const data = this.game.world.lookingAt(this.camera.pos, this.camera.rotUnitVector);
     if (e.which === 1) { // left click
-      this.game.handleAction({
+      this.game.actions.push({
         playerLeftClick: data
       });
     } else if (e.which === 3) { // right click
-      this.game.handleAction({
+      this.game.actions.push({
         playerRightClick: data
       });
     }

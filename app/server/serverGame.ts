@@ -7,48 +7,63 @@ import { Ball } from "../src/entities/ball";
 import { Entity } from "../src/entities/entity";
 import { IDim, IAction } from "../types";
 
-export class ServerGame {
-  players: Players;
-  game = new Game();
+export class ServerGame extends Game {
+  clients: Players;
 
-  actions: Array<{
+  actionQueue: Array<{
     from: wSocket,
     action: IAction
   }> = [];
 
   constructor(public wss: SocketServer) {
-    this.players = new Players(wss, this.game);
+    super();
+
+    this.clients = new Players(wss, this);
 
     this.wss.listen(this.handleMessage.bind(this));
+
+    this.loop();
   }
 
   loop() {
-    // handle the actions
-    const changedEntities = new Set<string>();
-    this.actions.forEach(action => {
-      const uid = this.game.handleAction(action.action);
+    if (this.actionQueue.length > 100) {
+      throw new Error("BAD")
+    }
 
-      // send the message to all client's
-
-      changedEntities.add(uid);
+    let sortedActions: Map<wSocket,IAction[]> = new Map();
+    this.actionQueue.forEach(({action, from}) => {
+      if (sortedActions.has(from)) {
+        sortedActions.get(from).push(action);
+      } else {
+        sortedActions.set(from, [action]);
+      }
     });
 
-    // send a socket message if people/entities have moved
+    for (const [ws, actions] of sortedActions) {
+      this.wss.sendGlobal({
+        type: "actions",
+        actionPayload: actions,
+      }, ws);
+    }
 
+    // handle the actions
+    this.actionQueue.forEach(({action}) => {
+      this.handleAction(action);
+    });
 
+    this.actionQueue = [];
 
-    // send the entire game state when it changes?
-
-    setTimeout(this.loop, 1000 / 60);
+    setTimeout(this.loop.bind(this), 1000 / 60);
   }
 
   handleMessage(ws: wSocket) {
-    this.players.addPlayer(ws);
+    this.clients.addPlayer(ws);
 
     this.wss.listenTo(ws, (ws: wSocket, message: ISocketMessage) => {
+      console.log(message);
       switch (message.type) {
         case "actions":
-          this.actions.push(...message.actionPayload.map(
+          this.actionQueue.push(...message.actionPayload.map(
             a => ({
               action: a,
               from: ws
@@ -67,14 +82,10 @@ export class ServerGame {
           if (payload.type === "ball") {
             const ball = new Ball(payload.pos, payload.vel);
             ball.setUid(payload.uid);
-            this.game.addEntity(ball);
+            this.addEntity(ball);
           }
           break;
       }
     });
-  }
-
-  addEntity(entity: Entity) {
-    this.game.addEntity(entity);
   }
 }

@@ -5,6 +5,7 @@ import { Chunk } from "../src/world/chunk";
 export type IDim = [number, number, number];
 
 export interface IAction {
+  isFromServer?: boolean;
   setEntVel?: {
     vel: IDim;
     uid: string;
@@ -27,5 +28,7 @@ export interface IAction {
   };
   addBlock?: Cube;
   removeBlock?: Cube;
-  blockUpdate?: Chunk;
+  blockUpdate?: {
+    chunkId: string;
+  };
 }

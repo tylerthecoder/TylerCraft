@@ -13,6 +13,8 @@ type SocketListener = (message: ISocketMessage) => void;
 export class SocketHandler {
   private socket: WebSocket;
 
+  private socketUrl = `ws://${location.hostname}:3000`;
+
   listeners: SocketListener[] = [];
 
   receivedEntities: Set<string> = new Set();
@@ -21,7 +23,7 @@ export class SocketHandler {
 
   connect() {
     return new Promise(resolve => {
-      this.socket = new WebSocket("ws://localhost:3000");
+      this.socket = new WebSocket(this.socketUrl);
       this.socket.onopen = () => {
         console.log("Socket Connected");
         resolve();
@@ -62,6 +64,10 @@ export class SocketHandler {
         case "all-entities":
 
           break;
+        case "actions":
+          obj.actionPayload.forEach(a => a.isFromServer = true)
+          this.client.game.actions.push(...obj.actionPayload);
+          break;
       }
     };
   }
@@ -73,6 +79,7 @@ export class SocketHandler {
   }
 
   addOtherPlayer(uid: string) {
+    console.log("Adding Playuer")
     const newPlayer = this.client.game.addPlayer(false, uid);
     const controller = new PlayerSocketController(newPlayer);
     this.client.addController(controller);

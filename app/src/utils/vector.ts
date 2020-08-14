@@ -1,7 +1,4 @@
-
-
-
-type IDim = [number, number, number];
+/*type IDim = [number, number, number];
 
 class Vector<T extends number[] = IDim> {
 
@@ -119,4 +116,5 @@ class Vector<T extends number[] = IDim> {
 // }
 
 
-}
+// }
+

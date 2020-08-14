@@ -2,7 +2,7 @@ import { Cube } from "../entities/cube";
 import { Chunk, CHUNK_SIZE } from "./chunk";
 import { Entity } from "../entities/entity";
 import { Game } from "../game";
-import { Camera } from "../../client/cameras/camera";
+import { IDim } from "../../types";
 
 export class World {
   chunks: Map<string, Chunk> = new Map();
@@ -17,7 +17,7 @@ export class World {
   }
 
   gen() {
-    const size = 1;
+    const size = 15;
     for (let i = -size; i < size; i++) {
       for (let j = -size; j < size; j++) {
         const chunk = new Chunk([i, j], this.game);
@@ -63,9 +63,9 @@ export class World {
     }
   }
 
-  lookingAt(camera: Camera) {
+  lookingAt(cameraPos: IDim, cameraDir: IDim) {
     for (const chunk of this.chunks.values()) {
-      const cubeData = chunk.lookingAt(camera);
+      const cubeData = chunk.lookingAt(cameraPos, cameraDir);
       if (cubeData) {
         return cubeData;
       }

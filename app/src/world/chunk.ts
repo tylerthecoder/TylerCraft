@@ -2,17 +2,17 @@ import { Cube } from "../entities/cube";
 import { Entity } from "../entities/entity";
 import { IDim } from "../../types";
 import { getRandEle, arrayMul, arrayCompare, arrayAdd, arrayCross, arrayDot, arrayScalarMul, roundToNPlaces, arrayDist, arrayDistSquared } from "../utils";
-import { BLOCK_DATA, BLOCK_TYPES } from "../blockdata";
 import { Game } from "../game";
-import { Camera } from "../../client/cameras/camera";
 
 export const CHUNK_SIZE = 5;
 
 export class Chunk {
   cubes: Cube[] = [];
+  uid: string;
 
   constructor(public chunkPos: number[], private game: Game) {
     this.generate();
+    this.uid = `${chunkPos[0]}, ${chunkPos[1]}`;
   }
 
   get pos() {
@@ -51,8 +51,7 @@ export class Chunk {
 
   }
 
-  lookingAt(camera: Camera) {
-    const cameraDir = camera.rotUnitVector;
+  lookingAt(cameraPos: IDim, cameraDir: IDim) {
 
     let firstIntersection: IDim;
 
@@ -83,7 +82,7 @@ export class Chunk {
         const d = arrayDot(faceNormal, pointOnFace);
 
         // t is the "time" at which the line intersects the plane, it is used to find the point of intersection
-        const t = (d - arrayDot(faceNormal, camera.pos)) / arrayDot(faceNormal, cameraDir);
+        const t = (d - arrayDot(faceNormal, cameraPos)) / arrayDot(faceNormal, cameraDir);
 
         // This means that the point is behind the camera (don't know why it is negative)
         if (t > 0) {
@@ -92,7 +91,7 @@ export class Chunk {
 
         // now find the point where the line intersections this plane (y = mx + b)
         const mx = arrayScalarMul(cameraDir, t);
-        const intersection = arrayAdd(mx, camera.pos);
+        const intersection = arrayAdd(mx, cameraPos);
 
         // we here make the arbutairy decision that the game will have 5 points of persision when rounding
         const roundedIntersection = intersection.map(num => roundToNPlaces(num, 5)) as IDim;
@@ -109,7 +108,7 @@ export class Chunk {
           // closest to the camera
 
           // get the squared dist so we dont have to do a bunch of sqrt operations
-          const pointDist = Math.abs(arrayDistSquared(camera.pos, roundedIntersection));
+          const pointDist = Math.abs(arrayDistSquared(cameraPos, roundedIntersection));
 
           if (pointDist < bestFace[0]) {
             const newCubePos = arrayAdd(cube.pos, arrayMul(cube.dim, faceNormal));
@@ -134,16 +133,21 @@ export class Chunk {
   }
 
   addCube(cube: Cube) {
+    console.log("Adding Cube", cube);
     this.cubes.push(cube);
-    this.game.actions.push({
-      blockUpdate: this,
-    });
+    this.sendBlockUpdate();
   }
 
   removeCube(cube: Cube) {
     this.cubes = this.cubes.filter(c => cube !== c);
+    this.sendBlockUpdate();
+  }
+
+  sendBlockUpdate() {
     this.game.actions.push({
-      blockUpdate: this,
+      blockUpdate: {
+        chunkId: this.uid,
+      }
     });
   }
 

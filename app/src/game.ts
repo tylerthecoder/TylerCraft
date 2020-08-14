@@ -3,8 +3,6 @@ import { World } from "./world/world";
 import { Entity } from "./entities/entity";
 import { IDim, IAction } from "../types";
 import { Cube } from "./entities/cube";
-import { BLOCK_DATA } from "./blockdata";
-import { arrayAdd } from "./utils";
 
 export class Game {
   // TODO: change this to a map from uid to Entity
@@ -12,6 +10,9 @@ export class Game {
   entityListeners: Array<(e: Entity) => void> = [];
 
   actionListener: ((actions: IAction[]) => void) | null;
+
+  // these are just actions that can be handled by the client (related to rendering and such)
+  clientActionListener: ((actions: IAction) => void) | null;
 
   actions: IAction[] = [];
 
@@ -32,17 +33,33 @@ export class Game {
       }
     }
 
-
     this.actions.push(...myActions);
 
     if (this.actionListener) {
       this.actionListener(this.actions);
     }
 
-    // apply all of the actions
-    for (const action of this.actions) {
-      this.handleAction(action);
+    let failSafe = 0;
+    while (this.actions.length > 0 && failSafe < 100) {
+      const action = this.actions[0];
+      const status = this.handleAction(action);
+
+      if (!status && this.clientActionListener) {
+        this.clientActionListener(action);
+      }
+
+      // remove the first element from actions
+      this.actions.shift();
+
+      failSafe++;
     }
+
+    if (failSafe > 100) {
+      throw new Error("Uh Oh");
+    }
+
+    this.actions.forEach(console.log)
+
 
     // delete all of the actions
     this.actions = [];
@@ -65,49 +82,32 @@ export class Game {
     }
   }
 
-  // moveEntity(uid: string, dir: IDim) {
-  //   const entity = this.findEntity(uid);
-  //   entity.move(dir.map(d => d * entity.speed) as IDim);
-
-  // handles actions and returns affected uids
-  handleAction(action: IAction) {
-    // console.log("Handling action: ", action);
+  protected handleAction(action: IAction) {
+    console.log("Handling action: ", action);
     if (action.playerJump) {
       const player = this.findEntity(action.playerJump.uid) as Player;
       player.jump();
       return action.playerJump.uid;
-    }
-
-    if (action.setEntVel) {
+    } else if (action.setEntVel) {
       const entity = this.findEntity(action.setEntVel!.uid);
       entity.vel = action.setEntVel!.vel.slice(0) as IDim;
-    }
-
-    if (action.playerLeftClick) {
+    } else if (action.playerLeftClick) {
       const newCube = new Cube(
         "grass",
         action.playerLeftClick.newCubePos
       );
 
-      this.handleAction({
-        addBlock: newCube,
-      });
-    }
-
-    if (action.playerRightClick) {
-
-      this.handleAction({
-        removeBlock: action.playerRightClick.entity as Cube,
-      });
-    }
-
-    if (action.addBlock) {
+      this.world.addBlock(newCube);
+    } else if (action.playerRightClick) {
+      this.world.removeBlock(action.playerRightClick.entity as Cube);
+    } else if (action.addBlock) {
       this.world.addBlock(action.addBlock);
-    }
-
-    if (action.removeBlock) {
+    } else if (action.removeBlock) {
       this.world.removeBlock(action.removeBlock);
+    } else {
+      return false;
     }
+    return true;
   }
 
   addPlayer(realness: boolean, uid?: string): Player {

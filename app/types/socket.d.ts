@@ -2,7 +2,7 @@ import { IDim, IAction } from ".";
 
 interface ISocketMessage {
   type: string;
-  payload: Payload;
+  payload?: Payload;
   uid?: string;
   actionPayload?: IAction[];
 }

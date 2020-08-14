@@ -1,11 +1,16 @@
 import { Renderer } from "./renderer";
 import { Camera } from "../cameras/camera";
+import { CanvasProgram } from "../canvas";
 
 
 
 export class HudRenderer extends Renderer {
   sw = window.innerWidth;
   sh = window.innerHeight;
+
+  constructor(
+    public canvas: CanvasProgram,
+  ) {super()}
 
   drawRect(x: number, y: number, w: number, h: number) {
     this.canvas.hudCxt.fillRect(x,y,w,h)

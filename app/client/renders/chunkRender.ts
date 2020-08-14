@@ -18,7 +18,7 @@ export class ChunkRenderer extends Renderer {
   }
 
   getBufferData() {
-
+    console.log("Rerender chunk");
     const positions = []; // used to store positions of vertices
     const indices = []; // used to store pointers to those vertices
     const textureCords = [];
