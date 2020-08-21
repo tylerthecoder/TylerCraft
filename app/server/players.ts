@@ -76,7 +76,6 @@ export default class Players {
         this.players.get(ws).pos = payload.pos;
         break;
       case "newEntity":
-        console.log("Whatadsf");
         break;
     }
   }

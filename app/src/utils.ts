@@ -5,7 +5,6 @@ export function roundToNPlaces(num: number, n: number) {
   const powerOfTen = n**10;
   // return Math.round((num + Number.EPSILON) * powerOfTen) / powerOfTen
   // const t = Math.round(num * powerOfTen) / powerOfTen
-  // console.log(num, t);
   // return t;
   return parseFloat(num.toFixed(n));
 }
@@ -76,7 +75,7 @@ export function normalize<T extends number[]>(arr: T) {
 }
 
 export function arrayDist(arr1: number[], arr2: number[]) {
-  const sum = arrayAdd(arraySquare(arr1), arraySquare(arr2)).reduce((sum, current) => sum + current);
+  const sum = sumOfArray(arraySquare(arraySub(arr1, arr2)));
   const dist = Math.sqrt(sum);
   return dist;
 }

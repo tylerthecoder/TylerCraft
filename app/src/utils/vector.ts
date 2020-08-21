@@ -1,13 +1,19 @@
-/*type IDim = [number, number, number];
+type IDim = [number, number, number];
 
-class Vector<T extends number[] = IDim> {
+export type Vector2D = Vector<[number, number]>;
+export type Vector3D = Vector<[number, number, number]>;
 
+export class Vector<T extends number[] = IDim> {
   constructor(
     public data: number[]
   ) {}
 
   get(index: number): number {
     return this.data[index];
+  }
+
+  copy(): Vector<T> {
+    return new Vector(this.data.slice(0));
   }
 
   private _add(vec: Vector<T>): T {
@@ -31,7 +37,7 @@ class Vector<T extends number[] = IDim> {
   }
 
   private _mul(vec: Vector<T>): T {
-    return this.data.map((num, index) => num * vec[index]) as T;
+    return this.data.map((num, index) => num * vec.get(index)) as T;
   }
   multiply(vec: Vector<T>): Vector<T> {
     return new Vector(this._mul(vec));
@@ -59,26 +65,40 @@ class Vector<T extends number[] = IDim> {
     return true;
   }
 
-//   export function arrayDist(arr1: number[], arr2: number[]) {
-//     const sum = arrayAdd(arraySquare(arr1), arraySquare(arr2)).reduce((sum, current) => sum + current);
-//     const dist = Math.sqrt(sum);
-//     return dist;
-//   }
+  sumOfComponents(): number {
+    return this.data.reduce((acc, cur) => acc + cur);
+  }
 
+  squareDistFrom(vec: Vector<T>) {
+    const diff = this.sub(vec);
+    const squareDist = diff.multiply(diff).sumOfComponents();
+    return squareDist;
+  }
 
-// // export function arraySquare(arr: number[]) {
-// //   return arrayMul(arr, arr);
-// // }
+  distFrom(vec: Vector<T>): number {
+    const squareDist = this.distFrom(vec);
+    return Math.sqrt(squareDist);
+  }
 
-// /** Converts rtp to xyz */
-// export function sphereToCartCords(r: number, t: number, p: number): IDim {
-//   const cords = [
-//     r * Math.sin(p) * Math.sin(t),
-//     r * Math.cos(p),
-//     r * Math.sin(p) * Math.cos(t),
-//   ] as IDim;
-//   return cords;
-// }
+  dot(vec: Vector<T>): number {
+    const mults = this.multiply(vec);
+
+    return mults.sumOfComponents();
+  }
+
+  getSphereCords(): Vector<T> {
+    const r = this.data[0];
+    const t = this.data[1];
+    const p = this.data[2];
+
+    const cords = [
+      r * Math.sin(p) * Math.sin(t),
+      r * Math.cos(p),
+      r * Math.sin(p) * Math.cos(t),
+    ];
+
+    return new Vector<T>(cords);
+  }
 
 // export function normalize<T extends number[]>(arr: T) {
 //   // find the length of the vec, if 0 then return 1
@@ -86,26 +106,6 @@ class Vector<T extends number[] = IDim> {
 //   return arrayScalarMul(arr, 1 / length);
 // }
 
-// export function arrayDist(arr1: number[], arr2: number[]) {
-//   const sum = arrayAdd(arraySquare(arr1), arraySquare(arr2)).reduce((sum, current) => sum + current);
-//   const dist = Math.sqrt(sum);
-//   return dist;
-// }
-
-// export function arrayDistSquared(arr1: number[], arr2: number[]) {
-//   return arraySub(arr1, arr2).map(Math.abs).reduce((sum, current) => sum + current);
-// }
-
-// export function arrayDot<T extends number[]>(arr1: T, arr2: T): number {
-//   const mults = arrayMul(arr1, arr2);
-
-//   return sumOfArray(mults);
-//   // return arr1.reduce((acc, cur, index) => acc + cur * arr2[index], 0);
-// }
-
-// export function sumOfArray(arr: number[]): number {
-//   return arr.reduce((acc, cur) => acc + cur, 0);
-// }
 
 // export function arrayCross(arr1: IDim, arr2: IDim): IDim {
 //   return [
@@ -116,5 +116,5 @@ class Vector<T extends number[] = IDim> {
 // }
 
 
-// }
+}
 

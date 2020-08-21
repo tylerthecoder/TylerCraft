@@ -1,42 +1,34 @@
 import { Player } from "../src/entities/player";
 import { Controller, Controlled } from "./controllers/controller";
-import { canvas } from "./canvas";
 import { PlayerKeyboardController } from "./controllers/playerKeyboardController";
 import { Camera } from "./cameras/camera";
 import { EntityCamera } from "./cameras/entityCamera";
 import { Game } from "../src/game";
 import { RenderType, Entity } from "../src/entities/entity";
-import { CubeRenderer } from "./renders/cubeRender";
-import { SphereRenderer } from "./renders/sphereRender";
-import { HudRenderer } from "./renders/hudRender";
-import { ChunkRenderer } from "./renders/chunkRender";
-import { Renderer } from "./renders/renderer";
 import { GameController } from "./controllers/gameController";
 import { FixedCamera } from "./cameras/fixedCamera";
 import { SpectatorController } from "./controllers/spectator";
 import { SocketHandler } from "./socket";
+import { canvas } from "./canvas";
 import { IDim, IAction } from "../types";
+import WorldRenderer from "./renders/worldRender";
 
 type MetaActions = "forward" | "backward" | "left" | "right" | "jump";
 
 
-// const PLAYER_CONTROLLER = SpectatorController;
-const PLAYER_CONTROLLER = PlayerKeyboardController;
+const PLAYER_CONTROLLER = SpectatorController;
+// const PLAYER_CONTROLLER = PlayerKeyboardController;
 
 
-export class ClientGame {
-  game: Game;
-
+export class ClientGame extends Game {
   controllers: Controller[] = [];
-  renderers: Renderer[] = [];
+  worldRenderer: WorldRenderer;
 
   mainPlayer: Player;
-  multiPlayer = true;
+  multiPlayer = false;
 
   camera: Camera;
   socket: SocketHandler;
-
-  renderPlayer = false;
 
   totTime = 0;
   pastDeltas: number[] = [];
@@ -47,7 +39,7 @@ export class ClientGame {
   }
 
   constructor() {
-    this.game = new Game();
+    super();
     this.load();
   }
 
@@ -79,24 +71,20 @@ export class ClientGame {
       await this.socket.connect();
     }
 
-    this.game.onNewEntity(this.onNewEntity.bind(this));
+    this.worldRenderer = new WorldRenderer(this.world);
 
-    this.mainPlayer = this.game.addPlayer(true);
+    this.onNewEntity(this.onNewEntity.bind(this));
+
+    this.mainPlayer = this.addPlayer(true);
     this.setUpPlayer();
 
     const gameController = new GameController(this);
     this.controllers.push(gameController);
 
-    this.game.world.chunks.forEach(chunk => {
-      const renderer = new ChunkRenderer(chunk);
-      this.renderers.push(renderer);
-    });
 
-    const hudCanvas = new HudRenderer(canvas);
-    this.renderers.push(hudCanvas);
 
-    this.game.actionListener = (actions: IAction[]) => {
-      if (actions.length > 0) console.log("Actions:");
+    // move these to abstract functions
+    this.actionListener = (actions: IAction[]) => {
       // send actions to server
       if (this.multiPlayer && actions.length > 0) {
         this.socket.send({
@@ -106,16 +94,9 @@ export class ClientGame {
       }
     }
 
-    this.game.clientActionListener = (action: IAction) => {
+    this.clientActionListener = (action: IAction) => {
       if (action.blockUpdate) {
-        this.renderers.forEach(renderer => {
-          if (renderer instanceof ChunkRenderer) {
-            const r = renderer as ChunkRenderer;
-            if (r.chunk.uid === action.blockUpdate.chunkId) {
-              r.getBufferData();
-            }
-          }
-        });
+        this.worldRenderer.blockUpdate(action.blockUpdate.chunkId)
       }
     }
 
@@ -129,7 +110,7 @@ export class ClientGame {
       controller.update(delta);
     }
 
-    this.game.update(delta);
+    this.update(delta);
 
 
     // do something fun to blocks
@@ -152,43 +133,27 @@ export class ClientGame {
   }
 
   render() {
-    canvas.clearCanvas();
-
-    for (const renderer of this.renderers) {
-      if (
-        !this.renderPlayer &&
-        (renderer as CubeRenderer).entity === this.mainPlayer
-      ) {
-        continue;
-      }
-      renderer.render(this.camera);
-    }
+    this.worldRenderer.render(this);
   }
 
   // when there is a new entity add it to the render list
-  onNewEntity(entity: Entity) {
-    if (entity.renderType === RenderType.CUBE) {
-      const renderer = new CubeRenderer(entity);
-      this.renderers.push(renderer);
-    } else if (entity.renderType === RenderType.SPHERE) {
-      const renderer = new SphereRenderer(entity);
-      this.renderers.push(renderer);
-    }
+  renderEntity(entity: Entity) {
+    this.worldRenderer.addEntity(entity);
 
-    if (this.multiPlayer) {
-      this.socket.sendEntity(entity);
-    }
+    // if (this.multiPlayer) {
+    //   this.socket.sendEntity(entity);
+    // }
   }
 
   onClick(e: MouseEvent) {
     // const clickedEntity = this.camera.onClick(this.game.world.cubes);
-    const data = this.game.world.lookingAt(this.camera.pos, this.camera.rotUnitVector);
+    const data = this.world.lookingAt(this.camera.pos, this.camera.rotUnitVector);
     if (e.which === 1) { // left click
-      this.game.actions.push({
+      this.actions.push({
         playerLeftClick: data
       });
     } else if (e.which === 3) { // right click
-      this.game.actions.push({
+      this.actions.push({
         playerRightClick: data
       });
     }
@@ -198,10 +163,10 @@ export class ClientGame {
     this.camera.handleMouse(e);
   }
 
-  removeEntity(uid: string) {
-    const entity = this.game.findEntity(uid);
+  removeEntityFromGame(uid: string) {
+    const entity = this.findEntity(uid);
     this.deleteController(entity);
-    this.game.removeEntity(entity);
+    this.removeEntity(entity);
   }
 
   addController(controller: Controller) {
@@ -217,7 +182,7 @@ export class ClientGame {
   toggleThirdPerson() {
     if (this.camera instanceof EntityCamera) {
       this.camera.thirdPerson = !this.camera.thirdPerson;
-      this.renderPlayer = !this.renderPlayer;
+      this.worldRenderer.shouldRenderMainPlayer = !this.worldRenderer.shouldRenderMainPlayer;
     }
   }
 
@@ -238,12 +203,12 @@ export class ClientGame {
   toggleSpectate() {
     if (this.camera instanceof EntityCamera) {
       // spectate was previously off
-      this.renderPlayer = true;
+      this.worldRenderer.shouldRenderMainPlayer = true;
       this.deleteController(this.mainPlayer);
       this.setUpSpectator();
     } else {
       // spectate was previously on
-      this.renderPlayer = false;
+      this.worldRenderer.shouldRenderMainPlayer = false;
       this.deleteController(this.camera);
       this.setUpPlayer();
     }

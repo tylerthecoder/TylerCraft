@@ -28,8 +28,6 @@ export abstract class Camera extends Entity {
     const ent = this.lookingAt(entities);
 
 
-    console.log(ent);
-
     return ent;
   }
 

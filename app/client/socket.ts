@@ -56,7 +56,7 @@ export class SocketHandler {
           this.addOtherPlayer(obj.payload.uid);
           break;
         case "player-leave":
-          this.client.removeEntity(obj.payload.uid);
+          // this.client.removeEntity(obj.payload.uid);
           break;
         case "new-entity":
           this.newEntity(obj.payload as NewEntityMessage);
@@ -66,7 +66,7 @@ export class SocketHandler {
           break;
         case "actions":
           obj.actionPayload.forEach(a => a.isFromServer = true)
-          this.client.game.actions.push(...obj.actionPayload);
+          this.client.actions.push(...obj.actionPayload);
           break;
       }
     };
@@ -79,8 +79,7 @@ export class SocketHandler {
   }
 
   addOtherPlayer(uid: string) {
-    console.log("Adding Playuer")
-    const newPlayer = this.client.game.addPlayer(false, uid);
+    const newPlayer = this.client.addPlayer(false, uid);
     const controller = new PlayerSocketController(newPlayer);
     this.client.addController(controller);
   }
@@ -90,7 +89,7 @@ export class SocketHandler {
     if (payload.type === "ball") {
       const entity = new Ball(payload.pos, payload.vel);
       entity.setUid(payload.uid);
-      this.client.game.addEntity(entity);
+      this.client.addEntity(entity);
     }
   }
 

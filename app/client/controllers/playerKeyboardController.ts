@@ -20,8 +20,6 @@ export class PlayerKeyboardController extends Controller {
     // this.ifHasKeyThenAddMeta("a", "left");
     // this.ifHasKeyThenAddMeta(" ", "jump");
     // this.ifHasKeyThenAddMeta("f", "fireball");
-    // console.log(this.keys);
-    // console.log((this.controlled as Player).metaActions);
     // this.sendKeys();
   }
 

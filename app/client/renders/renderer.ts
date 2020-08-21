@@ -3,7 +3,10 @@ import { Camera } from "../cameras/camera";
 import { arrayAdd, arraySub } from "../../src/utils";
 declare var mat4: any;
 
+// Main class that defines how to render objects
+
 export abstract class Renderer {
+
   canvas: CanvasProgram;
 
   posBuffer: WebGLBuffer;

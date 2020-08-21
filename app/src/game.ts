@@ -58,8 +58,6 @@ export class Game {
       throw new Error("Uh Oh");
     }
 
-    this.actions.forEach(console.log)
-
 
     // delete all of the actions
     this.actions = [];
@@ -83,7 +81,6 @@ export class Game {
   }
 
   protected handleAction(action: IAction) {
-    console.log("Handling action: ", action);
     if (action.playerJump) {
       const player = this.findEntity(action.playerJump.uid) as Player;
       player.jump();

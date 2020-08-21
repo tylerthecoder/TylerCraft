@@ -3,26 +3,33 @@ import { Entity } from "../entities/entity";
 import { IDim } from "../../types";
 import { getRandEle, arrayMul, arrayCompare, arrayAdd, arrayCross, arrayDot, arrayScalarMul, roundToNPlaces, arrayDist, arrayDistSquared } from "../utils";
 import { Game } from "../game";
+import { CONFIG } from "../constants";
 
-export const CHUNK_SIZE = 5;
 
 export class Chunk {
   cubes: Cube[] = [];
   uid: string;
 
-  constructor(public chunkPos: number[], private game: Game) {
+  constructor(
+    public chunkPos: number[],
+    private game: Game
+  ) {
     this.generate();
     this.uid = `${chunkPos[0]}, ${chunkPos[1]}`;
   }
 
   get pos() {
-    return [this.chunkPos[0] * CHUNK_SIZE, 0, this.chunkPos[1] * CHUNK_SIZE];
+    return [this.chunkPos[0] * CONFIG.chunkSize, 0, this.chunkPos[1] * CONFIG.chunkSize];
+  }
+
+  getDistanceFromWorldPoint(point: IDim) {
+
   }
 
   // use seed later down the line
   generate() {
-    for (let i = 0; i < CHUNK_SIZE; i++) {
-      for (let j = 0; j < CHUNK_SIZE; j++) {
+    for (let i = 0; i < CONFIG.chunkSize; i++) {
+      for (let j = 0; j < CONFIG.chunkSize; j++) {
         const cubePos = [this.pos[0] + i, 0, this.pos[2] + j];
         // const type = getRandEle(Object.keys(BLOCK_DATA)) as BLOCK_TYPES;
         const type = "grass";
@@ -45,7 +52,7 @@ export class Chunk {
 
   containsCube(cube: Cube) {
     // scale cubes position by chunk size
-    const scaledPos = cube.pos.map(dim => Math.floor(dim / CHUNK_SIZE));
+    const scaledPos = cube.pos.map(dim => Math.floor(dim / CONFIG.chunkSize));
 
     return scaledPos[0] === this.chunkPos[0] && scaledPos[2] === this.chunkPos[1];
 
@@ -70,6 +77,10 @@ export class Chunk {
     const newCubePosData = this.cubes.reduce((bestFace, cube) => {
       // check each face for collision
       // to define all of the faces of the cubes we will use the normal for each face
+
+      if (cube.pos[0] === -5 && cube.pos[2] === 5) {
+        console.log("This one");
+      }
 
       for (const faceNormal of faceNormals) {
 
@@ -129,11 +140,11 @@ export class Chunk {
     return {
       newCubePos: newCubePosData[1],
       entity: newCubePosData[2],
+      dist: newCubePosData[0],
     }
   }
 
   addCube(cube: Cube) {
-    console.log("Adding Cube", cube);
     this.cubes.push(cube);
     this.sendBlockUpdate();
   }

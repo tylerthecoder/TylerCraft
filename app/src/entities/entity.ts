@@ -1,6 +1,8 @@
 import { IDim, IAction } from "../../types";
 import { sphereToCartCords, arrayAdd, arrayMul, arrayCompare } from "../utils";
 import { Player } from "./player";
+import { CONFIG } from "../constants";
+import { Vector3D, Vector } from "../utils/vector";
 
 export enum RenderType {
   CUBE,
@@ -15,8 +17,8 @@ export interface FaceLocater {
 export abstract class Entity {
   renderType: RenderType;
 
-  pos: IDim = [0, 0, 0];
-  prevVel: IDim = [0,0,0]
+  pos: IDim = [0,0,0];
+  prevVel: IDim = [0,0,0];
   vel: IDim = [0, 0, 0];
   dim: IDim = [1, 1, 1];
   rot: IDim = [0, 0, 0];
@@ -28,7 +30,6 @@ export abstract class Entity {
   metaActions = new Set();
 
   onGround = false;
-  speed = 1;
 
   uid = "";
 
@@ -140,10 +141,6 @@ export abstract class Entity {
 
     this.pos[i] = ent.pos[i] + ent.dim[i] * switchDir(dir) - this.dim[i] * dir;
 
-    if (i !== 1) {
-      // console.log(min, this.vel, this);
-    }
-
     this.vel[i] = 0;
 
     return {
@@ -181,8 +178,10 @@ export abstract class Entity {
     }
     this.prevMetaActions = new Set(this.metaActions);
 
+    let isMovingUp = false;
+
     this.metaActions.forEach(metaAction => {
-      const baseSpeed = .07;
+      const baseSpeed = CONFIG.playerSpeed;
       switch (metaAction) {
         case "forward":
           cartVel = sphereToCartCords(-baseSpeed, -this.rot[1], Math.PI / 2);
@@ -201,10 +200,13 @@ export abstract class Entity {
           vel = arrayAdd(vel, cartVel);
           break;
         case "up":
-          vel = arrayAdd(vel, [0, this.speed, 0]) as IDim;
+          // vel = arrayAdd(vel, [0, this.speed, 0]) as IDim;
+          isMovingUp = true;
+          vel[1] = baseSpeed;
           break;
         case "down":
-          vel = arrayAdd(vel, [0, -this.speed, 0]) as IDim;
+          isMovingUp = true;
+          vel[1] = -baseSpeed;
           break;
         case "jump":
           actions.push({
@@ -214,6 +216,7 @@ export abstract class Entity {
           });
       }
       const isDifferentVel = !arrayCompare(vel, this.prevVel)
+
 
       this.prevVel = vel.slice(0) as IDim;
 
@@ -226,6 +229,11 @@ export abstract class Entity {
         })
       }
     });
+
+      // if we are a spectator and we aren't pressing anything, set vert vel to 0
+      if (!isMovingUp && !this.gravitable) {
+        vel[1] = 0;
+      }
     return actions;
   }
 
