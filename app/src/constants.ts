@@ -6,4 +6,5 @@ export const CONFIG = {
   chunkDim: 8,
   playerSpeed: .2,
   playerReach: 15,
+  seed: "bungus",
 }

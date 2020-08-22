@@ -4,6 +4,7 @@ import { IDim } from "../../types";
 import { getRandEle, arrayMul, arrayCompare, arrayAdd, arrayCross, arrayDot, arrayScalarMul, roundToNPlaces, arrayDist, arrayDistSquared } from "../utils";
 import { Game } from "../game";
 import { CONFIG } from "../constants";
+import Random from "../utils/random";
 
 
 export class Chunk {
@@ -30,7 +31,10 @@ export class Chunk {
   generate() {
     for (let i = 0; i < CONFIG.chunkSize; i++) {
       for (let j = 0; j < CONFIG.chunkSize; j++) {
-        const cubePos = [this.pos[0] + i, 0, this.pos[2] + j];
+        const x = this.pos[0] + i;
+        const z = this.pos[2] + j;
+        const y = Math.floor(Random.noise(x, z) * 2 - 1);
+        const cubePos = [x, y, z];
         // const type = getRandEle(Object.keys(BLOCK_DATA)) as BLOCK_TYPES;
         const type = "grass";
         const cube = new Cube(type, cubePos as IDim);
