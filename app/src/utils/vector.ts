@@ -1,9 +1,8 @@
 type IDim = [number, number, number];
 
-export type Vector2D = Vector<[number, number]>;
-export type Vector3D = Vector<[number, number, number]>;
 
 export class Vector<T extends number[] = IDim> {
+
   constructor(
     public data: number[]
   ) {}
@@ -76,7 +75,7 @@ export class Vector<T extends number[] = IDim> {
   }
 
   distFrom(vec: Vector<T>): number {
-    const squareDist = this.distFrom(vec);
+    const squareDist = this.squareDistFrom(vec);
     return Math.sqrt(squareDist);
   }
 
@@ -117,4 +116,9 @@ export class Vector<T extends number[] = IDim> {
 
 
 }
+
+
+
+export class Vector2D extends Vector<[number, number]> {};
+export class Vector3D extends Vector<[number, number, number]> {};
 

@@ -78,10 +78,6 @@ export class Chunk {
       // check each face for collision
       // to define all of the faces of the cubes we will use the normal for each face
 
-      if (cube.pos[0] === -5 && cube.pos[2] === 5) {
-        console.log("This one");
-      }
-
       for (const faceNormal of faceNormals) {
 
         // a vector that is normalized by the cubes dimensions

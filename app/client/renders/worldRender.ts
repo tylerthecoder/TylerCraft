@@ -7,33 +7,30 @@ import { CubeRenderer } from "./cubeRender";
 import { ClientGame } from "../game";
 import { Entity, RenderType } from "../../src/entities/entity";
 import { SphereRenderer } from "./sphereRender";
-import { arrayDist } from "../../src/utils";
 import { CONFIG } from "../../src/constants";
+import { Vector2D, Vector } from "../../src/utils/vector";
+import { Camera } from "../cameras/camera";
 
 
 export default class WorldRenderer {
   renderers: Renderer[] = [];
   shouldRenderMainPlayer = false;
 
+  chunkRenderers: Map<string, ChunkRenderer> = new Map();
+
   constructor(
     private world: World
   ) {
-    this.world.chunks.forEach(chunk => {
-      const renderer = new ChunkRenderer(chunk);
-      this.renderers.push(renderer);
-    });
-
     const hudCanvas = new HudRenderer(canvas);
     this.renderers.push(hudCanvas);
   }
 
   blockUpdate(chunkId: string) {
-    const rendererToUpdate = this.renderers.find(r =>
-      (r as ChunkRenderer).chunk && (r as ChunkRenderer).chunk.uid === chunkId
+    const rendererToUpdate = Array.from(this.chunkRenderers.values()).find(r =>
+      r.chunk && r.chunk.uid === chunkId
     );
 
-    if (rendererToUpdate) (rendererToUpdate as ChunkRenderer).getBufferData();
-
+    if (rendererToUpdate) rendererToUpdate.getBufferData();
   }
 
   addEntity(entity: Entity) {
@@ -46,11 +43,23 @@ export default class WorldRenderer {
     }
   }
 
+  renderChunk(chunkPos: Vector2D, camera: Camera) {
+    const chunk = this.world.getGeneratedChunk(chunkPos);
+
+    let chunkRenderer = this.chunkRenderers.get(`${chunk.chunkPos[0]},${chunk.chunkPos[1]}`);
+
+    if (!chunkRenderer) {
+      chunkRenderer = new ChunkRenderer(chunk);
+      this.chunkRenderers.set(`${chunk.chunkPos[0]},${chunk.chunkPos[1]}`, chunkRenderer);
+    }
+
+    chunkRenderer.render(camera);
+  }
+
   render(game: ClientGame) {
     canvas.clearCanvas();
 
     for (const renderer of this.renderers) {
-
       if (renderer instanceof CubeRenderer) {
         const isMainPlayer = renderer.entity === game.mainPlayer;
 
@@ -59,29 +68,37 @@ export default class WorldRenderer {
         }
       }
 
-      if (renderer instanceof ChunkRenderer) {
-        const chunk = renderer.chunk;
+      renderer.render(game.camera);
+    }
 
-        // determine if we should render this chunk
+    // render all of the chunks
+    // loop through all of the chunks that I would be able to see.
+    const cameraXYPos = new Vector2D([
+      game.camera.pos[0],
+      game.camera.pos[2]]
+    );
+    const realRenderDistance = CONFIG.chunkSize * CONFIG.renderDistance;
+    const cameraChunkPos = this.world.worldPosToChunkPos(new Vector(game.camera.pos));
 
-        // find dist between this chunk and mainplayer and see is less then the render distance
-
-        const chunkXYPos = [chunk.pos[0] + CONFIG.chunkSize / 2, chunk.pos[2] + CONFIG.chunkSize / 2];
-        const cameraXYPos = [game.camera.pos[0], game.camera.pos[2]];
-
-        const distAway = arrayDist(chunkXYPos, cameraXYPos);
-
-        // assuming blocks are 1 wide, find the dist away in real units
-        const realRenderDistance = CONFIG.chunkSize * CONFIG.renderDistance;
+    for (let i = - CONFIG.renderDistance; i <= CONFIG.renderDistance; i++) {
+      for (let j = - CONFIG.renderDistance; j <= CONFIG.renderDistance; j++) {
+        const indexVec = new Vector2D([i, j]);
+        const chunkPos = cameraChunkPos.add(indexVec);
+        const chunkWorldPos = this.world.chunkPosToWorldPos(chunkPos, true);
+        const chunkXYPos = new Vector2D([chunkWorldPos.get(0), chunkWorldPos.get(2)]);
+        const distAway = cameraXYPos.distFrom(chunkXYPos);
 
         if (distAway > realRenderDistance) {
           // don't render this chunk because it is outside of the player's view
           continue;
         }
-      }
 
-      renderer.render(game.camera);
+        this.renderChunk(chunkPos, game.camera);
+      }
     }
+
+
+
   }
 
 
