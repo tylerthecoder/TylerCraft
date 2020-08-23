@@ -1,8 +1,6 @@
 import { IDim, IAction } from "../../types";
 import { sphereToCartCords, arrayAdd, arrayMul, arrayCompare } from "../utils";
-import { Player } from "./player";
 import { CONFIG } from "../constants";
-import { Vector3D, Vector } from "../utils/vector";
 
 export enum RenderType {
   CUBE,

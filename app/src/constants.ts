@@ -1,10 +1,15 @@
 export const PLAYER_SPEED = 10;
 
 export const CONFIG = {
-  renderDistance: 4,
+  renderDistance: 5,
   chunkSize: 16,
-  chunkDim: 8,
   playerSpeed: .2,
-  playerReach: 15,
+  playerReach: 10,
   seed: "bungus",
+  flatWorld: false,
+
+  terrain: {
+    jagFactor: 32,
+    maxHeight: 6,
+  }
 }

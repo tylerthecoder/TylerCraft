@@ -2,13 +2,36 @@ type IDim = [number, number, number];
 
 
 export class Vector<T extends number[] = IDim> {
+  static unitVectors3D = [
+    [1, 0, 0],
+    [-1, 0, 0],
+    [0, 1, 0],
+    [0, -1, 0],
+    [0, 0, 1],
+    [0, 0, -1]
+  ].map(d => new Vector(d));
+
 
   constructor(
     public data: number[]
-  ) {}
+  ) {
+
+  }
+
+  toString(): string {
+    return this.data.
+      // combine with commas
+      reduce((acc, cur) => acc + cur + ",", "").
+      // remove last comma
+      slice(0, -1);
+  }
 
   get(index: number): number {
     return this.data[index];
+  }
+
+  set(index: number, value: number) {
+    this.data[index] = value;
   }
 
   copy(): Vector<T> {

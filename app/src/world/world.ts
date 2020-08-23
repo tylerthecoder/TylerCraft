@@ -15,7 +15,7 @@ export class World {
 
   // ToDO make this a function that returns cubes close to an entity
   get cubes(): Cube[] {
-    return Array.from(this.chunks.values()).map(chunk => chunk.cubes).flat();
+    return Array.from(this.chunks.values()).map(chunk => chunk.getCubesItterable()).flat();
   }
 
   getChunkFromPos(chunkPos: Vector2D) {
@@ -74,8 +74,6 @@ export class World {
     const generatedChunk = new Chunk(chunkPos.data, this.game);
     this.setChunkAtPos(generatedChunk, chunkPos);
 
-    console.log("Generated Chunk: ", generatedChunk);
-
     return generatedChunk;
   }
 
@@ -126,14 +124,15 @@ export class World {
   }
 
   lookingAt(cameraPos: IDim, cameraDir: IDim) {
+    const camerPosVector = new Vector(cameraPos);
     let closestDist = Infinity;
     let closestCube;
 
-    const closestChunks = this.getNearestChunks(cameraPos, 2);
+    // loop over all chunks and then check if they are reachable
+    for (const chunk of this.chunks.values()) {
+      const isReachable = chunk.circleIntersect(camerPosVector, CONFIG.playerReach)
+      if (!isReachable) continue;
 
-    // don't loop over all chunks idiot
-    // only loop over nearby chunks
-    for (const chunk of closestChunks) {
       const cubeData = chunk.lookingAt(cameraPos, cameraDir);
       if (cubeData && closestDist > cubeData.dist && cubeData.dist < CONFIG.playerReach) {
         closestDist = cubeData.dist;

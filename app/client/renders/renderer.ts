@@ -142,7 +142,6 @@ export abstract class Renderer {
     mat4.translate(
       modelViewMatrix, // destination matrix
       modelViewMatrix, // matrix to translate
-      // arrayAdd(arraySub(pos, camera.pos), [.5, .5, .5]),
       arraySub(pos, camera.pos)
     );
 
@@ -168,16 +167,13 @@ export abstract class Renderer {
       modelViewMatrix
     );
 
-    this.draw();
-  }
-
-  private draw() {
-    const gl = canvas.gl;
-    const type = gl.UNSIGNED_SHORT;
-
-    const count = this.amount;
-
     gl.bindTexture(gl.TEXTURE_2D, this.texture);
-    gl.drawElements(gl.TRIANGLES, count, type, 0);
+
+    gl.drawElements(
+      gl.TRIANGLES,
+      this.amount,
+      gl.UNSIGNED_SHORT,
+      0
+    );
   }
 }

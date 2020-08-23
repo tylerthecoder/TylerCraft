@@ -1,15 +1,24 @@
 import { Cube } from "../entities/cube";
 import { Entity } from "../entities/entity";
 import { IDim } from "../../types";
-import { getRandEle, arrayMul, arrayCompare, arrayAdd, arrayCross, arrayDot, arrayScalarMul, roundToNPlaces, arrayDist, arrayDistSquared } from "../utils";
+import { arrayMul, arrayAdd, arrayDot, arrayScalarMul, roundToNPlaces, arrayDistSquared } from "../utils";
 import { Game } from "../game";
 import { CONFIG } from "../constants";
 import Random from "../utils/random";
+import {Biome, PlainsBiome} from "./biome";
+import { Vector3D, Vector } from "../utils/vector";
 
+
+export interface ICubeFace {
+  cube: Cube;
+  directionVector: Vector3D;
+}
 
 export class Chunk {
-  cubes: Cube[] = [];
+  cubes: Map<string, Cube> = new Map();
+  visibleFaces: Array<ICubeFace> = [];
   uid: string;
+  biome: Biome;
 
   constructor(
     public chunkPos: number[],
@@ -17,6 +26,8 @@ export class Chunk {
   ) {
     this.generate();
     this.uid = `${chunkPos[0]}, ${chunkPos[1]}`;
+
+    this.biome = new PlainsBiome();
   }
 
   get pos() {
@@ -27,18 +38,42 @@ export class Chunk {
 
   }
 
+  circleIntersect(circlePos: Vector3D, radius: number): boolean {
+    const testCords = circlePos.copy();
+    const chunkPosVector = new Vector(this.pos);
+
+    // find the closest faces to the circle and set the test cords to them
+    for (let i = 0; i < 3; i++) {
+      if (circlePos.get(i) < chunkPosVector.get(i)) {
+        testCords.set(i, chunkPosVector.get(i));
+      } else if (circlePos.get(i) > chunkPosVector.get(i) + CONFIG.chunkSize) {
+        testCords.set(i, chunkPosVector.get(i) + CONFIG.chunkSize);
+      }
+    }
+
+    const dist = testCords.distFrom(circlePos);
+
+    return dist <= radius;
+  }
+
   // use seed later down the line
   generate() {
     for (let i = 0; i < CONFIG.chunkSize; i++) {
       for (let j = 0; j < CONFIG.chunkSize; j++) {
         const x = this.pos[0] + i;
         const z = this.pos[2] + j;
-        const y = Math.floor(Random.noise(x, z) * 2 - 1);
-        const cubePos = [x, y, z];
-        // const type = getRandEle(Object.keys(BLOCK_DATA)) as BLOCK_TYPES;
-        const type = "grass";
-        const cube = new Cube(type, cubePos as IDim);
-        this.cubes.push(cube);
+        let y: number;
+        if (CONFIG.flatWorld) {
+          y = 0
+        } else {
+          y = Math.floor(Random.noise(x, z) * CONFIG.terrain.maxHeight);
+        }
+        for (let k = 0; k <= y; k++) {
+          const cubePos = [x, k, z];
+          const type = "grass";
+          const cube = new Cube(type, cubePos as IDim);
+          this.addCube(cube, false);
+        }
       }
     }
   }
@@ -46,7 +81,7 @@ export class Chunk {
   // change this to chunks instead of cubes later
   isCollide(ent: Entity): Cube[] {
     const collide: Cube[] = [];
-    for (const cube of this.cubes) {
+    for (const cube of this.getCubesItterable()) {
       if (cube.isCollide(ent)) {
         collide.push(cube);
       }
@@ -63,74 +98,58 @@ export class Chunk {
   }
 
   lookingAt(cameraPos: IDim, cameraDir: IDim) {
-
     let firstIntersection: IDim;
-
-    const faceNormals: IDim[] = [
-      [1, 0, 0],
-      [-1, 0 , 0],
-      [0, 1, 0],
-      [0, -1, 0],
-      [0, 0, 1],
-      [0, 0, -1],
-    ]
 
     // [dist, faceVector( a vector, when added to the cubes pos, gives you the pos of a new cube if placed on this block)]
     const defaultBest: [number, IDim, Cube?] = [Infinity, [-1, -1, -1]];
 
-    const newCubePosData = this.cubes.reduce((bestFace, cube) => {
-      // check each face for collision
-      // to define all of the faces of the cubes we will use the normal for each face
+    const newCubePosData = this.visibleFaces.reduce((bestFace, { cube, directionVector }) => {
+      const faceNormal = directionVector.data as IDim;
+      // a vector that is normalized by the cubes dimensions
+      const faceVector = arrayMul(cube.dim, faceNormal.map(n => n === 1 ? 1 : 0) as IDim);
 
-      for (const faceNormal of faceNormals) {
+      const pointOnFace = arrayAdd(cube.pos, faceVector);
 
-        // a vector that is normalized by the cubes dimensions
-        const faceVector = arrayMul(cube.dim, faceNormal.map(n => n === 1 ? 1 : 0) as IDim);
+      // this d is the d in the equation for a plane: ax + by = cz = d
+      const d = arrayDot(faceNormal, pointOnFace);
 
-        const pointOnFace = arrayAdd(cube.pos, faceVector);
+      // t is the "time" at which the line intersects the plane, it is used to find the point of intersection
+      const t = (d - arrayDot(faceNormal, cameraPos)) / arrayDot(faceNormal, cameraDir);
 
-        // this d is the d in the equation for a plane: ax + by = cz = d
-        const d = arrayDot(faceNormal, pointOnFace);
+      // This means that the point is behind the camera (don't know why it is negative)
+      if (t > 0) {
+        return bestFace; // exit
+      }
 
-        // t is the "time" at which the line intersects the plane, it is used to find the point of intersection
-        const t = (d - arrayDot(faceNormal, cameraPos)) / arrayDot(faceNormal, cameraDir);
+      // now find the point where the line intersections this plane (y = mx + b)
+      const mx = arrayScalarMul(cameraDir, t);
+      const intersection = arrayAdd(mx, cameraPos);
 
-        // This means that the point is behind the camera (don't know why it is negative)
-        if (t > 0) {
-          continue;
-        }
+      // we here make the arbutairy decision that the game will have 5 points of persision when rounding
+      const roundedIntersection = intersection.map(num => roundToNPlaces(num, 5)) as IDim;
 
-        // now find the point where the line intersections this plane (y = mx + b)
-        const mx = arrayScalarMul(cameraDir, t);
-        const intersection = arrayAdd(mx, cameraPos);
+      if (!firstIntersection) {
+        firstIntersection = roundedIntersection;
+      }
 
-        // we here make the arbutairy decision that the game will have 5 points of persision when rounding
-        const roundedIntersection = intersection.map(num => roundToNPlaces(num, 5)) as IDim;
+      // check to see if this intersection is within the face (Doing the whole cube for now, will switch to face later)
+      const hit = cube.isPointInsideMe(roundedIntersection);
 
-        if (!firstIntersection) {
-          firstIntersection = roundedIntersection;
-        }
+      if (hit) {
+        // we have determined that the camera is looking at this face, now see if this is the point
+        // closest to the camera
 
-        // check to see if this intersection is within the face (Doing the whole cube for now, will switch to face later)
-        const hit = cube.isPointInsideMe(roundedIntersection);
+        // get the squared dist so we dont have to do a bunch of sqrt operations
+        const pointDist = Math.abs(arrayDistSquared(cameraPos, roundedIntersection));
 
-        if (hit) {
-          // we have determined that the camera is looking at this face, now see if this is the point
-          // closest to the camera
-
-          // get the squared dist so we dont have to do a bunch of sqrt operations
-          const pointDist = Math.abs(arrayDistSquared(cameraPos, roundedIntersection));
-
-          if (pointDist < bestFace[0]) {
-            const newCubePos = arrayAdd(cube.pos, arrayMul(cube.dim, faceNormal));
-            bestFace = [pointDist, newCubePos, cube];
-          }
+        if (pointDist < bestFace[0]) {
+          const newCubePos = arrayAdd(cube.pos, arrayMul(cube.dim, faceNormal));
+          bestFace = [pointDist, newCubePos, cube];
         }
       }
 
-      return bestFace;
-
-    }, defaultBest);
+    return bestFace;
+    }, defaultBest)
 
     // this means we didn't find a block
     if (newCubePosData[0] === Infinity)  {
@@ -144,13 +163,27 @@ export class Chunk {
     }
   }
 
-  addCube(cube: Cube) {
-    this.cubes.push(cube);
-    this.sendBlockUpdate();
+  getCube(pos: Vector3D): Cube {
+    const cube = this.cubes.get(pos.toString());
+    if (!cube) return null;
+    return cube;
+  }
+
+  getCubesItterable(): Cube[] {
+    return Array.from(this.cubes.values());
+  }
+
+  addCube(cube: Cube, update = true) {
+    const cubeVectorPos = new Vector(cube.pos);
+    this.cubes.set(cubeVectorPos.toString(), cube);
+    if (update) {
+      this.sendBlockUpdate();
+    }
   }
 
   removeCube(cube: Cube) {
-    this.cubes = this.cubes.filter(c => cube !== c);
+    const cubeVectorPos = new Vector(cube.pos);
+    this.cubes.delete(cubeVectorPos.toString());
     this.sendBlockUpdate();
   }
 

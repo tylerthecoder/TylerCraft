@@ -1,9 +1,11 @@
 import { Renderer } from "./renderer";
 import { canvas } from "../canvas";
 import { Camera } from "../cameras/camera";
-import { Chunk } from "../../src/world/chunk";
+import { Chunk, ICubeFace } from "../../src/world/chunk";
 import { arrayMul, arrayAdd, arraySub } from "../../src/utils";
 import TextureMapper from "../textureMapper";
+import { Cube } from "../../src/entities/cube";
+import { Vector3D, Vector } from "../../src/utils/vector";
 
 export class ChunkRenderer extends Renderer {
   constructor(public chunk: Chunk) {
@@ -18,19 +20,50 @@ export class ChunkRenderer extends Renderer {
   }
 
   getBufferData() {
+    // build the cube map
+
+    const visibleCubeFaces: ICubeFace[]= [];
+
+    const cubeMap: Map<string, Cube> = new Map();
+    for (const cube of this.chunk.getCubesItterable()) {
+      cubeMap.set(`${cube.pos[0]},${cube.pos[1]},${cube.pos[2]}`, cube);
+    }
+
+    const getCube = (pos: Vector3D): Cube => {
+      const cube = cubeMap.get(pos.toString());
+      if (!cube) return null;
+      return cube;
+    }
+
     const positions = []; // used to store positions of vertices
     const indices = []; // used to store pointers to those vertices
     const textureCords = [];
-    const facesToRender = [0, 1, 2, 3, 4, 5]; // make this change soon
     let offset = 0;
-    for (const cube of this.chunk.cubes) {
+    for (const cube of this.chunk.getCubesItterable()) {
+      const cubePosVector = new Vector3D(cube.pos);
+
       const texturePos = TextureMapper.getTextureCords(cube.type);
       // get position of cube relative to the chunk
       const relativePos = arraySub(cube.pos, this.chunk.pos);
 
       // loop through all the faces to get their cords
       let count = 0;
-      for (const face of facesToRender) {
+      for (const face of [0, 1, 2, 3, 4, 5]) {
+        // check to see if there is a cube touching me on this face
+        const directionVector = Vector.unitVectors3D[face];
+        const nearbyCube = getCube(cubePosVector.add(directionVector));
+
+        // skkkkkip
+        if (nearbyCube) {
+          continue;
+        }
+
+        // add the face to the list of visibile faces on the chunk
+        visibleCubeFaces.push({
+          directionVector,
+          cube,
+        });
+
         // get the dimension of the face i.e. x, y, z
         const dim = face >> 1;
 
@@ -71,8 +104,10 @@ export class ChunkRenderer extends Renderer {
         textureCords.push(...textureCord);
       }
 
-      offset += 24;
+      offset += count;
     }
+
+    this.chunk.visibleFaces = visibleCubeFaces;
 
     this.setBuffers(positions, indices, textureCords);
   }
