@@ -71,7 +71,7 @@ export class ClientGame extends Game {
       await this.socket.connect();
     }
 
-    this.worldRenderer = new WorldRenderer(this.world);
+    this.worldRenderer = new WorldRenderer(this.world, this);
 
     this.onNewEntity(this.onNewEntity.bind(this));
 

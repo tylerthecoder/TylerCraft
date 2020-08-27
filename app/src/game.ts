@@ -90,7 +90,7 @@ export class Game {
       entity.vel = action.setEntVel!.vel.slice(0) as IDim;
     } else if (action.playerLeftClick) {
       const newCube = new Cube(
-        "grass",
+        "leaf",
         action.playerLeftClick.newCubePos
       );
 

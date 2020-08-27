@@ -19,9 +19,10 @@ export default class WorldRenderer {
   chunkRenderers: Map<string, ChunkRenderer> = new Map();
 
   constructor(
-    private world: World
+    private world: World,
+    game: ClientGame,
   ) {
-    const hudCanvas = new HudRenderer(canvas);
+    const hudCanvas = new HudRenderer(canvas, game);
     this.renderers.push(hudCanvas);
   }
 
