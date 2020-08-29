@@ -11,6 +11,11 @@ export class Vector<T extends number[] = IDim> {
     [0, 0, -1]
   ].map(d => new Vector(d));
 
+  static fromString<S extends number[] = [number, number, number]>(str: string): Vector<S> {
+    const ords = str.split(",").map(n => parseInt(n));
+    return new Vector(ords);
+  }
+
 
   constructor(
     public data: number[]

@@ -5,6 +5,10 @@ interface ISocketMessage {
   payload?: Payload;
   uid?: string;
   actionPayload?: IAction[];
+  playerPosPayload?: {
+    uid: string,
+    pos: IDim,
+  };
 }
 
 type Payload = KeyPressMessage | NewPlayerMessage | WelcomeMessage;

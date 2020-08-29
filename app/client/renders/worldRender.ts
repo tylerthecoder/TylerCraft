@@ -4,7 +4,7 @@ import { canvas } from "../canvas";
 import { ChunkRenderer } from "./chunkRender";
 import { HudRenderer } from "./hudRender";
 import { CubeRenderer } from "./cubeRender";
-import { ClientGame } from "../game";
+import { ClientGame } from "../clientGame";
 import { Entity, RenderType } from "../../src/entities/entity";
 import { SphereRenderer } from "./sphereRender";
 import { CONFIG } from "../../src/constants";

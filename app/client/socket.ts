@@ -3,7 +3,7 @@ import {
   WelcomeMessage,
   NewEntityMessage
 } from "../types/socket";
-import { ClientGame } from "./game";
+import { ClientGame } from "./clientGame";
 import { Ball } from "../src/entities/ball";
 import { PlayerSocketController } from "./controllers/playerSocketController";
 import { Entity } from "../src/entities/entity";
@@ -46,7 +46,7 @@ export class SocketHandler {
     this.socket.onmessage = e => {
       const data = e.data;
       const obj = JSON.parse(data) as ISocketMessage;
-      console.log("Message from server", obj);
+      // console.log("Message from server", obj);
       this.listeners.forEach(l => l(obj));
       switch (obj.type) {
         case "welcome":
@@ -81,7 +81,7 @@ export class SocketHandler {
   addOtherPlayer(uid: string) {
     const newPlayer = this.client.addPlayer(false, uid);
     const controller = new PlayerSocketController(newPlayer);
-    this.client.addController(controller);
+    this.client.controllers.add(controller);
   }
 
   newEntity(payload: NewEntityMessage) {

@@ -1,10 +1,21 @@
 import { Entity } from "../src/entities/entity";
-import { Cube } from "../src/entities/cube";
-import { Chunk } from "../src/world/chunk";
+import { BLOCKS } from "../src/blockdata";
 
 export type IDim = [number, number, number];
 
+export const enum IActionType {
+  setEntVel,
+  playerJump,
+  playerMoveDir,
+  playerPlaceBlock,
+  playerRemoveBlock,
+  playerFireball,
+  playerSetPos,
+  blockUpdate,
+}
+
 export interface IAction {
+  type: IActionType;
   isFromServer?: boolean;
   setEntVel?: {
     vel: IDim;
@@ -18,16 +29,23 @@ export interface IAction {
     y: number;
     uid: string;
   };
-  playerLeftClick?: {
+  playerPlaceBlock?: {
+    blockType: BLOCKS;
     newCubePos: IDim;
     entity: Entity;
   };
-  playerRightClick?: {
+  playerRemoveBlock?: {
     newCubePos: IDim;
     entity: Entity;
   };
-  addBlock?: Cube;
-  removeBlock?: Cube;
+  playerFireball?: {
+    uid: string;
+  };
+  // we *technically* shouldn't need this but the player position gets off over time
+  playerSetPos?: {
+    uid: string;
+    pos: IDim;
+  };
   blockUpdate?: {
     chunkId: string;
   };

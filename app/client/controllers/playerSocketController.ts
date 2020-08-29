@@ -6,7 +6,7 @@ import {
   PositionMessage
 } from "../../types/socket";
 import { IDim } from "../../types";
-import { game } from "../game";
+import { game } from "../clientGame";
 
 export class PlayerSocketController extends Controller {
   constructor(public controlled: Player) {

@@ -1,51 +1,37 @@
 import * as http from "http";
 import * as fs from "fs";
 import * as path from "path";
+import express from "express";
+import bodyParser from "body-parser";
 import { ServerGame } from "./serverGame";
 import SocketServer from "./socket";
 
 const port = 3000;
 const staticPath = "../../public";
 
-const extToContent: { [ex: string]: string } = {
-  js: "text/javascript",
-  css: "text/css",
-  json: "application/json",
-  png: "image/png",
-  jpg: "image/jpg",
-  html: "text/html"
-};
+const app = express();
 
-const server = http.createServer((req, res) => {
-  let filePath = staticPath + req.url;
-  if (filePath === `${staticPath}/`) {
-    filePath += "index.html";
-  }
+app.use(bodyParser.urlencoded({ extended: false }))
 
-  filePath = path.join(__dirname, filePath);
+app.use(bodyParser.json({
+  limit: "50mb"
+}));
 
-  const extname = path.extname(filePath).substr(1);
-  const contentType =
-    extname in extToContent ? extToContent[extname] : "text/html";
-
-  fs.readFile(filePath, function(error, content) {
-    if (error) {
-      if (error.code == "ENOENT") {
-        res.end("404 Not Found");
-      } else {
-        res.writeHead(500);
-        res.end(`ERROR:${JSON.stringify(error)}`);
-      }
-    } else {
-      res.writeHead(200, {
-        "Content-Type": contentType
-      });
-      res.end(content, "utf-8");
-    }
-  });
+app.post("/world", (req, res) => {
+  console.log("Saving the world");
+  const data = JSON.stringify(req.body);
+  fs.writeFileSync("/home/tyler/p/falling-blocks/worlds/world.json", data);
 });
 
-server.listen(port, () => console.log(`Server running on port:${port}`));
+app.get("/world", (req, res) => {
+  const data = fs.readFileSync("/home/tyler/p/falling-blocks/worlds/world.json");
+  res.send(data);
+});
+
+
+app.use(express.static(path.join(__dirname, staticPath)));
+
+const server = app.listen(port, () => console.log(`Server running on port:${port}`));
 
 const wss = new SocketServer(server);
 

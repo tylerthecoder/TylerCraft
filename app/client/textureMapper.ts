@@ -1,4 +1,4 @@
-import { BLOCK_TYPES } from "../src/blockdata";
+import { BLOCKS } from "../src/blockdata";
 
 const TEXTURE_ATLAS_WIDTH = 2;
 const TEXTURE_ATLAS_HEIGHT = 2;
@@ -6,34 +6,15 @@ const TEXTURE_ATLAS_HEIGHT = 2;
 const xStepVal = 1 / TEXTURE_ATLAS_WIDTH;
 const yStepVal = 1 / TEXTURE_ATLAS_HEIGHT;
 
+const textureData = new Map<BLOCKS, {offsetX: number, offsetY: number}>();
+textureData.set(BLOCKS.grass, {offsetX: 0, offsetY: 0});
+textureData.set(BLOCKS.stone, {offsetX: 1, offsetY: 0});
+textureData.set(BLOCKS.wood, {offsetX: 0, offsetY: 1});
+textureData.set(BLOCKS.leaf, {offsetX: 1, offsetY: 1});
+
 class Textures {
-
-  textureData: {
-    [texture in BLOCK_TYPES]: {
-      offsetX: number,
-      offsetY: number,
-    }
-  } = {
-    grass: {
-      offsetX: 0,
-      offsetY: 0,
-    },
-    stone: {
-      offsetX: 1,
-      offsetY: 0,
-    },
-    wood: {
-      offsetX: 0,
-      offsetY: 1,
-    },
-    leaf: {
-      offsetX: 1,
-      offsetY: 1,
-    }
-  }
-
-  getTextureCords(type: BLOCK_TYPES) {
-    const {offsetX, offsetY} = this.textureData[type];
+  getTextureCords(type: BLOCKS) {
+    const {offsetX, offsetY} = textureData.get(type);
 
 
     const startX = offsetX * xStepVal;

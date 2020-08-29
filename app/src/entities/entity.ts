@@ -1,4 +1,4 @@
-import { IDim, IAction } from "../../types";
+import { IDim, IAction, IActionType } from "../../types";
 import { sphereToCartCords, arrayAdd, arrayMul, arrayCompare } from "../utils";
 import { CONFIG } from "../constants";
 
@@ -10,6 +10,17 @@ export enum RenderType {
 export interface FaceLocater {
   side: number;
   dir: 1 | 0;
+}
+
+export enum MetaAction {
+  right,
+  left,
+  forward,
+  backward,
+  up,
+  down,
+  jump,
+  fireball,
 }
 
 export abstract class Entity {
@@ -24,8 +35,8 @@ export abstract class Entity {
   gravitable = true;
   tangible = true;
 
-  prevMetaActions = new Set();
-  metaActions = new Set();
+  prevMetaActions = new Set<MetaAction>();
+  metaActions = new Set<MetaAction>();
 
   onGround = false;
 
@@ -134,7 +145,6 @@ export abstract class Entity {
       }
     }
 
-
     const [_, i, dir] = min;
 
     this.pos[i] = ent.pos[i] + ent.dim[i] * switchDir(dir) - this.dim[i] * dir;
@@ -168,6 +178,7 @@ export abstract class Entity {
 
     if (this.prevMetaActions.size > 0 && this.metaActions.size === 0) {
       actions.push({
+        type: IActionType.setEntVel,
         setEntVel: {
           uid: this.uid,
           vel,
@@ -181,37 +192,46 @@ export abstract class Entity {
     this.metaActions.forEach(metaAction => {
       const baseSpeed = CONFIG.playerSpeed;
       switch (metaAction) {
-        case "forward":
+        case MetaAction.forward:
           cartVel = sphereToCartCords(-baseSpeed, -this.rot[1], Math.PI / 2);
           vel = arrayAdd(vel, cartVel);
           break;
-        case "backward":
+        case MetaAction.backward:
           cartVel = sphereToCartCords(baseSpeed, -this.rot[1], Math.PI / 2);
           vel = arrayAdd(vel, cartVel);
           break;
-        case "left":
+        case MetaAction.left:
           cartVel = sphereToCartCords(baseSpeed, -this.rot[1] - Math.PI / 2, Math.PI / 2);
           vel = arrayAdd(vel, cartVel);
           break;
-        case "right":
+        case MetaAction.right:
           cartVel = sphereToCartCords(baseSpeed, -this.rot[1] + Math.PI / 2, Math.PI / 2);
           vel = arrayAdd(vel, cartVel);
           break;
-        case "up":
-          // vel = arrayAdd(vel, [0, this.speed, 0]) as IDim;
+        case MetaAction.up:
           isMovingUp = true;
           vel[1] = baseSpeed;
           break;
-        case "down":
+        case MetaAction.down:
           isMovingUp = true;
           vel[1] = -baseSpeed;
           break;
-        case "jump":
+        case MetaAction.jump:
           actions.push({
+            type: IActionType.playerJump,
             playerJump: {
               uid: this.uid
             }
           });
+          break;
+        case MetaAction.fireball:
+          actions.push({
+            type: IActionType.playerFireball,
+            playerFireball: {
+              uid: this.uid
+            }
+          });
+          break;
       }
       const isDifferentVel = !arrayCompare(vel, this.prevVel)
 
@@ -220,6 +240,7 @@ export abstract class Entity {
 
       if (isDifferentVel) {
         actions.push({
+          type: IActionType.setEntVel,
           setEntVel: {
             vel,
             uid: this.uid
@@ -234,17 +255,4 @@ export abstract class Entity {
       }
     return actions;
   }
-
-  getUpDownActions() {
-    const actions = [];
-
-    this.metaActions.forEach(metaAction => {
-      switch(metaAction) {
-        case "up":
-
-      }
-    });
-  }
-
-
 }

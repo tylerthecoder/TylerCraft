@@ -7,28 +7,31 @@ import { Game } from "../src/game";
 import { RenderType, Entity } from "../src/entities/entity";
 import { GameController } from "./controllers/gameController";
 import { FixedCamera } from "./cameras/fixedCamera";
-import { SpectatorController } from "./controllers/spectator";
 import { SocketHandler } from "./socket";
 import { canvas } from "./canvas";
-import { IDim, IAction } from "../types";
+import { IDim, IAction, IActionType } from "../types";
 import WorldRenderer from "./renders/worldRender";
+import { GameSaver } from "./gameSaver";
+import { BLOCKS } from "../src/blockdata";
+import { ControllerHolder } from "./controllerHolder";
 
-type MetaActions = "forward" | "backward" | "left" | "right" | "jump";
 
-
-const PLAYER_CONTROLLER = SpectatorController;
-// const PLAYER_CONTROLLER = PlayerKeyboardController;
+const PLAYER_CONTROLLER = PlayerKeyboardController;
 
 
 export class ClientGame extends Game {
-  controllers: Controller[] = [];
+  controllers = new ControllerHolder(this);
   worldRenderer: WorldRenderer;
 
+  saver = new GameSaver();
+
   mainPlayer: Player;
-  multiPlayer = false;
+  multiPlayer = true;
 
   camera: Camera;
   socket: SocketHandler;
+
+  selectedBlock: BLOCKS = BLOCKS.stone;
 
   totTime = 0;
   pastDeltas: number[] = [];
@@ -52,14 +55,12 @@ export class ClientGame extends Game {
       this.onClick(e);
     });
 
-
     window.addEventListener("mousemove", (e: MouseEvent) => {
       if (document.pointerLockElement === canvas.canvas) {
         this.onMouseMove(e);
       }
     });
   }
-
 
   async load() {
     await canvas.loadProgram();
@@ -73,26 +74,11 @@ export class ClientGame extends Game {
 
     this.worldRenderer = new WorldRenderer(this.world, this);
 
-    this.onNewEntity(this.onNewEntity.bind(this));
-
     this.mainPlayer = this.addPlayer(true);
     this.setUpPlayer();
 
-    const gameController = new GameController(this);
-    this.controllers.push(gameController);
-
-
-
-    // move these to abstract functions
-    this.actionListener = (actions: IAction[]) => {
-      // send actions to server
-      if (this.multiPlayer && actions.length > 0) {
-        this.socket.send({
-          type: "actions",
-          actionPayload: actions.filter(a => !a.isFromServer)
-        });
-      }
-    }
+    // load the game from server
+    await this.saver.load(this);
 
     this.clientActionListener = (action: IAction) => {
       if (action.blockUpdate) {
@@ -103,27 +89,19 @@ export class ClientGame extends Game {
     requestAnimationFrame(this.loop.bind(this));
   }
 
+  private loopCount = 0;
   loop(time: number) {
     const delta = time - this.totTime;
 
-    for (const controller of this.controllers) {
-      controller.update(delta);
+    // send player data every hundred loops
+    this.loopCount++;
+    if (this.loopCount > 100) {
+
+
     }
 
+    this.controllers.update(delta);
     this.update(delta);
-
-
-    // do something fun to blocks
-    // for (const chunk of this.game.world.chunks) {
-    //   chunk[1].cubes.forEach((cube) => {
-    //     if (cube.update(0)) {
-    //   this.game.actions.push({
-    //     blockUpdate: chunk[1],
-    //   });
-    //     }
-    //   })
-    // }
-
     this.render();
 
     this.pastDeltas.push(delta);
@@ -136,25 +114,39 @@ export class ClientGame extends Game {
     this.worldRenderer.render(this);
   }
 
-  // when there is a new entity add it to the render list
-  renderEntity(entity: Entity) {
+  // this will be called by the super class when a new entity is added
+  onNewEntity(entity: Entity) {
     this.worldRenderer.addEntity(entity);
+  }
 
-    // if (this.multiPlayer) {
-    //   this.socket.sendEntity(entity);
-    // }
+  // this will be called by the super class when actions are recieved
+  onActions(actions: IAction[]) {
+    if (this.multiPlayer && actions.length > 0) {
+      this.socket.send({
+        type: "actions",
+        actionPayload: actions.filter(a => !a.isFromServer)
+      });
+    }
   }
 
   onClick(e: MouseEvent) {
-    // const clickedEntity = this.camera.onClick(this.game.world.cubes);
     const data = this.world.lookingAt(this.camera.pos, this.camera.rotUnitVector);
     if (e.which === 1) { // left click
       this.actions.push({
-        playerLeftClick: data
+        type: IActionType.playerPlaceBlock,
+        playerPlaceBlock: {
+          blockType: this.selectedBlock,
+          entity: data.entity,
+          newCubePos: data.newCubePos.data as IDim,
+        }
       });
     } else if (e.which === 3) { // right click
       this.actions.push({
-        playerRightClick: data
+        type: IActionType.playerRemoveBlock,
+        playerRemoveBlock: {
+          entity: data.entity,
+          newCubePos: data.newCubePos.data as IDim,
+        }
       });
     }
   }
@@ -165,18 +157,8 @@ export class ClientGame extends Game {
 
   removeEntityFromGame(uid: string) {
     const entity = this.findEntity(uid);
-    this.deleteController(entity);
+    this.controllers.remove(entity);
     this.removeEntity(entity);
-  }
-
-  addController(controller: Controller) {
-    this.controllers.push(controller);
-  }
-
-  deleteController(controlled: Controlled) {
-    this.controllers = this.controllers.filter(controller => {
-      return controller.controlled !== controlled;
-    });
   }
 
   toggleThirdPerson() {
@@ -187,8 +169,8 @@ export class ClientGame extends Game {
   }
 
   setUpPlayer() {
-    const playerController = new PLAYER_CONTROLLER(this.mainPlayer);
-    this.controllers.push(playerController);
+    const playerController = new PLAYER_CONTROLLER(this.mainPlayer, this);
+    this.controllers.add(playerController);
     this.camera = new EntityCamera(this.mainPlayer);
   }
 
@@ -197,21 +179,25 @@ export class ClientGame extends Game {
       this.mainPlayer.pos.slice(0) as IDim,
       this.camera.rot.slice(0) as IDim
     );
-    this.controllers.push(new SpectatorController(this.camera));
+    this.mainPlayer.spectator = true;
   }
 
   toggleSpectate() {
     if (this.camera instanceof EntityCamera) {
       // spectate was previously off
       this.worldRenderer.shouldRenderMainPlayer = true;
-      this.deleteController(this.mainPlayer);
+      this.controllers.remove(this.mainPlayer);
       this.setUpSpectator();
     } else {
       // spectate was previously on
       this.worldRenderer.shouldRenderMainPlayer = false;
-      this.deleteController(this.camera);
+      this.controllers.remove(this.camera);
       this.setUpPlayer();
     }
+  }
+
+  save() {
+    this.saver.saveToServer(this);
   }
 }
 

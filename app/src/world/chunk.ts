@@ -1,17 +1,24 @@
 import { Cube } from "../entities/cube";
 import { Entity } from "../entities/entity";
-import { IDim } from "../../types";
+import { IDim, IActionType } from "../../types";
 import { arrayMul, arrayAdd, arrayDot, arrayScalarMul, roundToNPlaces, arrayDistSquared } from "../utils";
 import { Game } from "../game";
 import { CONFIG } from "../constants";
 import Random from "../utils/random";
 import {Biome, PlainsBiome} from "./biome";
 import { Vector3D, Vector } from "../utils/vector";
+import { BLOCKS } from "../blockdata";
 
 
 export interface ICubeFace {
   cube: Cube;
   directionVector: Vector3D;
+}
+
+export interface ILookingAtData {
+  newCubePos: Vector,
+  entity: Entity,
+  dist: number;
 }
 
 export class Chunk {
@@ -70,8 +77,7 @@ export class Chunk {
         }
         for (let k = 0; k <= y; k++) {
           const cubePos = [x, k, z];
-          const type = "grass";
-          const cube = new Cube(type, cubePos as IDim);
+          const cube = new Cube(BLOCKS.grass, cubePos as IDim);
           this.addCube(cube, false);
         }
       }
@@ -97,7 +103,7 @@ export class Chunk {
 
   }
 
-  lookingAt(cameraPos: IDim, cameraDir: IDim) {
+  lookingAt(cameraPos: IDim, cameraDir: IDim): ILookingAtData | false {
     let firstIntersection: IDim;
 
     // [dist, faceVector( a vector, when added to the cubes pos, gives you the pos of a new cube if placed on this block)]
@@ -157,7 +163,7 @@ export class Chunk {
     }
 
     return {
-      newCubePos: newCubePosData[1],
+      newCubePos: new Vector(newCubePosData[1]),
       entity: newCubePosData[2],
       dist: newCubePosData[0],
     }
@@ -189,6 +195,7 @@ export class Chunk {
 
   sendBlockUpdate() {
     this.game.actions.push({
+      type: IActionType.blockUpdate,
       blockUpdate: {
         chunkId: this.uid,
       }

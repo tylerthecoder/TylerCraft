@@ -1,5 +1,5 @@
 import { Cube } from "../entities/cube";
-import { Chunk } from "./chunk";
+import { Chunk, ILookingAtData } from "./chunk";
 import { Entity } from "../entities/entity";
 import { Game } from "../game";
 import { IDim } from "../../types";
@@ -123,10 +123,10 @@ export class World {
     }
   }
 
-  lookingAt(cameraPos: IDim, cameraDir: IDim) {
+  lookingAt(cameraPos: IDim, cameraDir: IDim): ILookingAtData {
     const camerPosVector = new Vector(cameraPos);
     let closestDist = Infinity;
-    let closestCube;
+    let closestCube: ILookingAtData;
 
     // loop over all chunks and then check if they are reachable
     for (const chunk of this.chunks.values()) {

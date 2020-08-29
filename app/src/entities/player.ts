@@ -17,6 +17,8 @@ export class Player extends Entity {
   canFire = true;
   jumpCount = 0;
 
+  spectator = false;
+
   constructor(public game: Game, public isReal: boolean) {
     super();
   }

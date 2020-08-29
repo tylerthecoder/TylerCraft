@@ -1,7 +1,7 @@
-import { Entity } from "../../src/entities/entity";
+import { Entity, MetaAction } from "../../src/entities/entity";
 import { Player } from "../../src/entities/player";
 import { Camera } from "../cameras/camera";
-import { ClientGame, game } from "../game";
+import { ClientGame, game } from "../clientGame";
 
 export type Controlled = Entity | Camera | ClientGame | Player;
 
@@ -29,19 +29,21 @@ export abstract class Controller {
     });
   }
 
-  ifHasKeyThenAddMeta(key: string, metaAction: string) {
-    if (this.keys.has(key))
-      (this.controlled as Player).metaActions.add(metaAction);
-    else {
-      (this.controlled as Player).metaActions.delete(metaAction);
+  ifHasKeyThenAddMeta(key: string, metaAction: MetaAction) {
+    if (this.controlled instanceof Entity) {
+      if (this.keys.has(key))
+        this.controlled.metaActions.add(metaAction);
+      else {
+        this.controlled.metaActions.delete(metaAction);
+      }
     }
   }
 
-  wasdKeys(delta: number) {
-    this.ifHasKeyThenAddMeta("w", "forward");
-    this.ifHasKeyThenAddMeta("s", "backward");
-    this.ifHasKeyThenAddMeta("d", "right");
-    this.ifHasKeyThenAddMeta("a", "left");
+  wasdKeys(_delta: number) {
+    this.ifHasKeyThenAddMeta("w", MetaAction.forward);
+    this.ifHasKeyThenAddMeta("s", MetaAction.backward);
+    this.ifHasKeyThenAddMeta("d", MetaAction.right);
+    this.ifHasKeyThenAddMeta("a", MetaAction.left);
   }
 
   playerKeys() {
@@ -60,7 +62,7 @@ export abstract class Controller {
   }
 
   qeKeys() {
-    this.ifHasKeyThenAddMeta("q", "up");
-    this.ifHasKeyThenAddMeta("e", "down");
+    this.ifHasKeyThenAddMeta(" ", MetaAction.up);
+    this.ifHasKeyThenAddMeta("shift", MetaAction.down);
   }
 }

@@ -70,6 +70,8 @@ export class ServerGame extends Game {
             })
           ));
           break;
+        case "playerPos":
+
         case "keys":
           this.wss.sendGlobal(message, ws);
           break;

@@ -1,8 +1,9 @@
 import { Player } from "./entities/player";
 import { World } from "./world/world";
 import { Entity } from "./entities/entity";
-import { IDim, IAction } from "../types";
+import { IDim, IAction, IActionType } from "../types";
 import { Cube } from "./entities/cube";
+import { BLOCKS } from "./blockdata";
 
 export class Game {
   // TODO: change this to a map from uid to Entity
@@ -35,9 +36,8 @@ export class Game {
 
     this.actions.push(...myActions);
 
-    if (this.actionListener) {
-      this.actionListener(this.actions);
-    }
+    // send the actions to the subclass
+    this.onActions(this.actions);
 
     let failSafe = 0;
     while (this.actions.length > 0 && failSafe < 100) {
@@ -81,29 +81,53 @@ export class Game {
   }
 
   protected handleAction(action: IAction) {
-    if (action.playerJump) {
-      const player = this.findEntity(action.playerJump.uid) as Player;
+
+    switch(action.type) {
+    case IActionType.playerJump: {
+      const payload = action.playerJump;
+      const player = this.findEntity(payload.uid) as Player;
       player.jump();
       return action.playerJump.uid;
-    } else if (action.setEntVel) {
-      const entity = this.findEntity(action.setEntVel!.uid);
-      entity.vel = action.setEntVel!.vel.slice(0) as IDim;
-    } else if (action.playerLeftClick) {
-      const newCube = new Cube(
-        "leaf",
-        action.playerLeftClick.newCubePos
-      );
-
-      this.world.addBlock(newCube);
-    } else if (action.playerRightClick) {
-      this.world.removeBlock(action.playerRightClick.entity as Cube);
-    } else if (action.addBlock) {
-      this.world.addBlock(action.addBlock);
-    } else if (action.removeBlock) {
-      this.world.removeBlock(action.removeBlock);
-    } else {
-      return false;
     }
+
+    case IActionType.playerPlaceBlock:
+      const newCube = new Cube(
+        action.playerPlaceBlock.blockType,
+        action.playerPlaceBlock.newCubePos
+      );
+      this.world.addBlock(newCube);
+      break;
+
+    case IActionType.playerRemoveBlock:
+      this.world.removeBlock(action.playerRemoveBlock.entity as Cube);
+      break;
+
+    case IActionType.playerSetPos: {
+      console.log("Setting my pos");
+      const payload = action.playerSetPos;
+      const player = this.findEntity(payload.uid) as Player;
+      player.pos = payload.pos;
+      return action.playerSetPos.uid;
+    }
+
+    case IActionType.setEntVel: {
+      const payload = action.setEntVel;
+      const entity = this.findEntity(payload.uid);
+      entity.vel = payload.vel;
+      return payload.uid;
+    }
+
+
+    case IActionType.playerFireball:
+      const player = this.findEntity(action.playerFireball.uid) as Player;
+      player.fireball();
+      return action.playerFireball.uid;
+
+    default:
+      return false;
+
+    }
+
     return true;
   }
 
@@ -115,8 +139,10 @@ export class Game {
   }
 
   addEntity(entity: Entity) {
+    console.log("Adding Ent", entity)
     this.entities.push(entity);
-    this.entityListeners.forEach(func => func(entity));
+    this.onNewEntity(entity);
+    // this.entityListeners.forEach(func => func(entity));
   }
 
   findEntity(uid: string) {
@@ -129,7 +155,7 @@ export class Game {
     });
   }
 
-  onNewEntity(listener: (e: Entity) => void) {
-    this.entityListeners.push(listener);
-  }
+  // for the subclasses to override so they can "listen" to events
+  onNewEntity(_entity: Entity) {}
+  onActions(_actions: IAction[]) {}
 }

@@ -1,8 +1,7 @@
 import { Renderer } from "./renderer";
 import { Camera } from "../cameras/camera";
 import { CanvasProgram } from "../canvas";
-import { ClientGame } from "../game";
-
+import { ClientGame } from "../clientGame";
 
 
 export class HudRenderer extends Renderer {
