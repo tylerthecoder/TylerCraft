@@ -2,6 +2,7 @@ import { Renderer } from "./renderer";
 import { Camera } from "../cameras/camera";
 import { CanvasProgram } from "../canvas";
 import { ClientGame } from "../clientGame";
+import { Vector3D, Vector2D } from "../../src/utils/vector";
 
 
 export class HudRenderer extends Renderer {
@@ -51,9 +52,13 @@ export class HudRenderer extends Renderer {
     )
 
 
-    const camerPos = this.game.camera.pos.map(Math.floor).join(",")
-
+    const camerPos = camera.pos.map(Math.floor).join(",")
     this.drawText(camerPos, 0, 30);
+
+
+    const rotVec = new Vector2D([camera.rot[0], camera.rot[1]]);
+    rotVec.data = rotVec.data.map(n => Math.floor(n * 100) / 100);
+    this.drawText(rotVec.toString(), 0, 70);
 
 
 

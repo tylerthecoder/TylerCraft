@@ -16,7 +16,6 @@ export class Vector<T extends number[] = IDim> {
     return new Vector(ords);
   }
 
-
   constructor(
     public data: number[]
   ) {
@@ -79,7 +78,7 @@ export class Vector<T extends number[] = IDim> {
   scalarMultiply(number: number): Vector<T> {
     return new Vector(this._scalarMultiply(number));
   }
-  scalarMultiplyBy(number: number) {
+  scalarMultiplyTo(number: number) {
     this.data = this._scalarMultiply(number);
   }
 
@@ -113,7 +112,18 @@ export class Vector<T extends number[] = IDim> {
     return mults.sumOfComponents();
   }
 
-  getSphereCords(): Vector<T> {
+  getSphereAngles() {
+    const x = this.data[0];
+    const y = this.data[1];
+    const z = this.data[2];
+
+    const theta = Math.atan2(z, x);
+    const phi = Math.atan2(Math.sqrt(x * x + z * z), y);
+
+    return new Vector2D([theta, phi]);
+  }
+
+  toCartesianCoords(): Vector<T> {
     const r = this.data[0];
     const t = this.data[1];
     const p = this.data[2];
@@ -127,11 +137,10 @@ export class Vector<T extends number[] = IDim> {
     return new Vector<T>(cords);
   }
 
-// export function normalize<T extends number[]>(arr: T) {
-//   // find the length of the vec, if 0 then return 1
-//   const length = Math.sqrt(arr.reduce((acc, cur) => acc + cur ** 2, 0) );
-//   return arrayScalarMul(arr, 1 / length);
-// }
+  normalize() {
+    const length = Math.sqrt(this.data.reduce((acc, cur) => acc + cur ** 2, 0));
+    return this.scalarMultiply(1 / length);
+  }
 
 
 // export function arrayCross(arr1: IDim, arr2: IDim): IDim {

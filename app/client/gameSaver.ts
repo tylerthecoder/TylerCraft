@@ -71,7 +71,7 @@ export class GameSaver {
 
     console.log("Save Data", data);
 
-    fetch(`${location.hostname}/world`, {
+    fetch(this.serverURL, {
       method: "POST",
       body: JSON.stringify(data),
       headers: {

@@ -21,10 +21,17 @@ export class Player extends Entity {
 
   constructor(public game: Game, public isReal: boolean) {
     super();
+
+    this.setSpectator(true);
   }
 
   getActions(): IAction[] {
     return this.getPlanerActionsFromMetaActions();
+  }
+
+  setSpectator(val: boolean) {
+    this.spectator = val;
+    this.gravitable = !val;
   }
 
   setMoveVel(amount: { x: number; y: number }) {

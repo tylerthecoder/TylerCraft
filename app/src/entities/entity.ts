@@ -1,6 +1,7 @@
 import { IDim, IAction, IActionType } from "../../types";
 import { sphereToCartCords, arrayAdd, arrayMul, arrayCompare } from "../utils";
 import { CONFIG } from "../constants";
+import { Vector3D } from "../utils/vector";
 
 export enum RenderType {
   CUBE,
@@ -31,6 +32,8 @@ export abstract class Entity {
   vel: IDim = [0, 0, 0];
   dim: IDim = [1, 1, 1];
   rot: IDim = [0, 0, 0];
+  // the cartesian form of the vector
+  rotCart: Vector3D = new Vector3D(this.rot).toCartesianCoords();
 
   gravitable = true;
   tangible = true;
@@ -84,12 +87,19 @@ export abstract class Entity {
     for (let i = 0; i < r.length; i++) {
       this.rot[i] += r[i];
     }
+
+    // bound the rot to ([0, pi], [0, 2 * pi])
     if (this.rot[0] < 0) this.rot[0] = 0;
     if (this.rot[0] > Math.PI) this.rot[0] = Math.PI;
+    if (this.rot[1] < 0) this.rot[1] = this.rot[1] + 2 * Math.PI;
+    if (this.rot[1] > 2 * Math.PI) this.rot[1] = this.rot[1] - 2 * Math.PI;
+
+    // idk where this equation comes from. Need to look into why this is
+    this.rotCart = new Vector3D(arrayMul(sphereToCartCords(1, this.rot[1], this.rot[0]), [-1, 1, 1]))
   }
 
   gravity() {
-    this.applyForce([0, -0.007, 0]);
+    this.applyForce([0, CONFIG.gravity, 0]);
   }
 
   isCollide(ent: Entity) {
@@ -159,7 +169,7 @@ export abstract class Entity {
 
   jump() {
     if (this.jumpCount < 5) {
-      this.vel[1] = 0.11;
+      this.vel[1] = CONFIG.player.jumpSpeed;
       this.jumpCount++;
     }
   }

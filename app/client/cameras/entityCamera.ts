@@ -2,21 +2,27 @@ import { Entity } from "../../src/entities/entity";
 import { Camera } from "./camera";
 import { IDim } from "../../types";
 import { arrayAdd } from "../../src/utils";
+import { CONFIG } from "../../src/constants";
 
 export class EntityCamera extends Camera {
   thirdPerson: boolean = false;
 
   offset: IDim = [0, 0, 0];
+  rot: IDim;
 
   constructor(public entity: Entity) {
     super();
+    this.rot = entity.rot.slice(0) as IDim;
   }
 
   handleMouse(e: MouseEvent) {
-    const speed = 0.002;
-    const dx = e.movementX * speed;
-    const dy = e.movementY * speed;
+    const dx = e.movementX * CONFIG.player.rotSpeed;
+    const dy = e.movementY * CONFIG.player.rotSpeed;
     this.entity.rotate([-dy, dx, 0]);
+
+    // set my rot as my entities rot
+    this.rot = this.entity.rot.slice(0) as IDim;
+    this.rotCart = this.entity.rotCart;
   }
 
   lookingAt(entities: Entity[]) {
@@ -45,10 +51,4 @@ export class EntityCamera extends Camera {
   }
 
   set pos(_pos: IDim) {}
-
-  get rot() {
-    const rot = this.entity.rot.slice(0);
-    return rot as IDim;
-  }
-  set rot(_pos: IDim) {}
 }

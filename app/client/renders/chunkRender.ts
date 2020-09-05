@@ -10,7 +10,7 @@ import { Vector3D, Vector } from "../../src/utils/vector";
 export class ChunkRenderer extends Renderer {
   constructor(public chunk: Chunk) {
     super();
-    this.setActiveTexture(canvas.textures.grassBlock);
+    this.setActiveTexture(canvas.textures.textureAtlas);
     this.getBufferData();
   }
 

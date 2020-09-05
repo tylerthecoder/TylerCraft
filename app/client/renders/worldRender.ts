@@ -8,8 +8,10 @@ import { ClientGame } from "../clientGame";
 import { Entity, RenderType } from "../../src/entities/entity";
 import { SphereRenderer } from "./sphereRender";
 import { CONFIG } from "../../src/constants";
-import { Vector2D, Vector } from "../../src/utils/vector";
+import { Vector2D, Vector, Vector3D } from "../../src/utils/vector";
 import { Camera } from "../cameras/camera";
+import { FixedCamera } from "../cameras/fixedCamera";
+import { Chunk } from "../../src/world/chunk";
 
 
 export default class WorldRenderer {
@@ -60,6 +62,8 @@ export default class WorldRenderer {
   render(game: ClientGame) {
     canvas.clearCanvas();
 
+    const camera = game.camera;
+
     for (const renderer of this.renderers) {
       if (renderer instanceof CubeRenderer) {
         const isMainPlayer = renderer.entity === game.mainPlayer;
@@ -69,17 +73,26 @@ export default class WorldRenderer {
         }
       }
 
-      renderer.render(game.camera);
+      renderer.render(camera);
     }
 
-    // render all of the chunks
     // loop through all of the chunks that I would be able to see.
+    const cameraPos = new Vector3D(camera.pos);
+
     const cameraXYPos = new Vector2D([
-      game.camera.pos[0],
-      game.camera.pos[2]]
-    );
-    const realRenderDistance = CONFIG.chunkSize * CONFIG.renderDistance;
-    const cameraChunkPos = this.world.worldPosToChunkPos(new Vector(game.camera.pos));
+      cameraPos.get(0),
+      cameraPos.get(2),
+    ]);
+
+    const realRenderDistance = CONFIG.terrain.chunkSize * CONFIG.renderDistance;
+    const cameraChunkPos = this.world.worldPosToChunkPos(cameraPos);
+
+    const cameraRotNorm = camera.rotCart.normalize();
+
+    // this will hold the coords of ever chunk that was rendered.
+    const renderedSet = new Set<string>();
+
+    const skippedChunkPos = new Set<Vector2D>();
 
     for (let i = - CONFIG.renderDistance; i <= CONFIG.renderDistance; i++) {
       for (let j = - CONFIG.renderDistance; j <= CONFIG.renderDistance; j++) {
@@ -94,11 +107,55 @@ export default class WorldRenderer {
           continue;
         }
 
-        this.renderChunk(chunkPos, game.camera);
+        // check if you are facing that right way to see the chunk
+        const diffChunkCamera = cameraPos.sub(chunkWorldPos).normalize();
+        const dist = diffChunkCamera.distFrom(cameraRotNorm);
+
+        if (dist > CONFIG.fovFactor) {
+          // don't render this chunk because the player isn't looking at it
+          skippedChunkPos.add(chunkPos);
+          continue;
+        }
+
+        renderedSet.add(chunkPos.toString());
+
+        this.renderChunk(chunkPos, camera);
       }
     }
 
+    for (const chunkPos of skippedChunkPos.values()) {
+      // check to see if any of the neighboring chunks were rendered
+      // this is slightly inefficent but it makes sure the user sees all chunks.
+      // since we are checking to see if the user can see the middle of the chunk we miss some chunks
+      // that the user sees the edge of. This fixes that
+      let stillShouldntRender = true;
+      for (let k = -1; k <= 1; k += 1) {
+        for (let l = -1; l <= 1; l += 1) {
+          const indexVec = new Vector2D([k, l]);
+          const chunkPosToCheck = chunkPos.add(indexVec);
+          if (renderedSet.has(chunkPosToCheck.toString())) {
+            stillShouldntRender = false;
+          }
+        }
+      }
 
+      if (!stillShouldntRender) {
+        this.renderChunk(chunkPos, camera);
+      }
+    }
+
+    // This is for when you are looking directly at the ground.
+    // Since I only check when the user can't see the center of a chunk, if you are looking directly at the ground you can't
+    // see the chunk. Thus this renders the 9 chunks below you.
+    if (renderedSet.size == 0) {
+      for (let k = -1; k <= 1; k += 1) {
+        for (let l = -1; l <= 1; l += 1) {
+          const indexVec = new Vector2D([k, l]);
+          const chunkPos = cameraChunkPos.add(indexVec);
+          this.renderChunk(chunkPos, camera);
+        }
+      }
+    }
 
   }
 

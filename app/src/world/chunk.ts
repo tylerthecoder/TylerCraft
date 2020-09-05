@@ -31,18 +31,14 @@ export class Chunk {
     public chunkPos: number[],
     private game: Game
   ) {
-    this.generate();
+    // this.generate();
     this.uid = `${chunkPos[0]}, ${chunkPos[1]}`;
 
     this.biome = new PlainsBiome();
   }
 
   get pos() {
-    return [this.chunkPos[0] * CONFIG.chunkSize, 0, this.chunkPos[1] * CONFIG.chunkSize];
-  }
-
-  getDistanceFromWorldPoint(point: IDim) {
-
+    return [this.chunkPos[0] * CONFIG.terrain.chunkSize, 0, this.chunkPos[1] * CONFIG.terrain.chunkSize];
   }
 
   circleIntersect(circlePos: Vector3D, radius: number): boolean {
@@ -53,35 +49,14 @@ export class Chunk {
     for (let i = 0; i < 3; i++) {
       if (circlePos.get(i) < chunkPosVector.get(i)) {
         testCords.set(i, chunkPosVector.get(i));
-      } else if (circlePos.get(i) > chunkPosVector.get(i) + CONFIG.chunkSize) {
-        testCords.set(i, chunkPosVector.get(i) + CONFIG.chunkSize);
+      } else if (circlePos.get(i) > chunkPosVector.get(i) + CONFIG.terrain.chunkSize) {
+        testCords.set(i, chunkPosVector.get(i) + CONFIG.terrain.chunkSize);
       }
     }
 
     const dist = testCords.distFrom(circlePos);
 
     return dist <= radius;
-  }
-
-  // use seed later down the line
-  generate() {
-    for (let i = 0; i < CONFIG.chunkSize; i++) {
-      for (let j = 0; j < CONFIG.chunkSize; j++) {
-        const x = this.pos[0] + i;
-        const z = this.pos[2] + j;
-        let y: number;
-        if (CONFIG.flatWorld) {
-          y = 0
-        } else {
-          y = Math.floor(Random.noise(x, z) * CONFIG.terrain.maxHeight);
-        }
-        for (let k = 0; k <= y; k++) {
-          const cubePos = [x, k, z];
-          const cube = new Cube(BLOCKS.grass, cubePos as IDim);
-          this.addCube(cube, false);
-        }
-      }
-    }
   }
 
   // change this to chunks instead of cubes later
@@ -97,10 +72,9 @@ export class Chunk {
 
   containsCube(cube: Cube) {
     // scale cubes position by chunk size
-    const scaledPos = cube.pos.map(dim => Math.floor(dim / CONFIG.chunkSize));
+    const scaledPos = cube.pos.map(dim => Math.floor(dim / CONFIG.terrain.chunkSize));
 
     return scaledPos[0] === this.chunkPos[0] && scaledPos[2] === this.chunkPos[1];
-
   }
 
   lookingAt(cameraPos: IDim, cameraDir: IDim): ILookingAtData | false {

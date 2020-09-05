@@ -14,7 +14,7 @@ export class CanvasProgram {
 
     this.textures = {
       player: this.loadTexture("./img/player.png"),
-      grassBlock: this.loadTexture("./img/texture_map.png"),
+      textureAtlas: this.loadTexture("./img/texture_map.png"),
       checker: this.loadTexture("./img/checker.jpg")
     };
 

@@ -5,9 +5,12 @@ import { Game } from "../game";
 import { IDim } from "../../types";
 import { CONFIG } from "../constants";
 import { Vector, Vector3D, Vector2D } from "../utils/vector";
+import { TerrainGenerator } from "./terrainGenerator";
 
 export class World {
   chunks: Map<string, Chunk> = new Map();
+
+  terrainGenerator = new TerrainGenerator();
 
   constructor(private game: Game) {
     this.gen();
@@ -28,24 +31,21 @@ export class World {
 
   worldPosToChunkPos(pos: Vector3D): Vector2D {
     return new Vector2D([
-      Math.floor(pos.get(0) / CONFIG.chunkSize),
-      Math.floor(pos.get(2) / CONFIG.chunkSize),
+      Math.floor(pos.get(0) / CONFIG.terrain.chunkSize),
+      Math.floor(pos.get(2) / CONFIG.terrain.chunkSize),
     ]);
   }
 
   chunkPosToWorldPos(pos: Vector2D, center = false): Vector3D {
     return new Vector3D([
-      pos.get(0) * CONFIG.chunkSize + (center ? CONFIG.chunkSize / 2 : 0),
+      pos.get(0) * CONFIG.terrain.chunkSize + (center ? CONFIG.terrain.chunkSize / 2 : 0),
       0,
-      pos.get(1) * CONFIG.chunkSize + (center ? CONFIG.chunkSize / 2 : 0),
+      pos.get(1) * CONFIG.terrain.chunkSize + (center ? CONFIG.terrain.chunkSize / 2 : 0),
     ]);
   }
 
   getChunkFromWorldPoint(pos: Vector3D) {
-    const chunkPos = new Vector<[number, number]>([
-      Math.floor(pos.get(0) / CONFIG.chunkSize),
-      Math.floor(pos.get(2) / CONFIG.chunkSize),
-    ])
+    const chunkPos = this.worldPosToChunkPos(pos);
     return this.getChunkFromPos(chunkPos);
   }
 
@@ -71,7 +71,7 @@ export class World {
   }
 
   generateChunk(chunkPos: Vector2D) {
-    const generatedChunk = new Chunk(chunkPos.data, this.game);
+    const generatedChunk = this.terrainGenerator.generateChunk(chunkPos, this.game);
     this.setChunkAtPos(generatedChunk, chunkPos);
 
     return generatedChunk;
@@ -85,13 +85,6 @@ export class World {
   }
 
   gen() { }
-
-  posToChunk(i: number, j: number): number[] {
-    const ord1 = Math.floor(i / CONFIG.chunkSize);
-    const ord2 = Math.floor(j / CONFIG.chunkSize);
-
-    return [ord1, ord2];
-  }
 
   // soon only check chunks the entity is in
   isCollide(ent: Entity): Cube[] {
@@ -139,6 +132,11 @@ export class World {
         closestCube = cubeData;
       }
     }
+
+    if (!closestCube) {
+      return null;
+    }
+
     return closestCube;
   }
 }

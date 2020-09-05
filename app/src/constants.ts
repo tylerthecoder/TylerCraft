@@ -1,15 +1,29 @@
-export const PLAYER_SPEED = 10;
-
 export const CONFIG = {
-  renderDistance: 5,
-  chunkSize: 16,
+  renderDistance: 4,
   playerSpeed: .2,
   playerReach: 10,
   seed: "bungus",
-  flatWorld: false,
+
+  fovFactor: .8,
 
   terrain: {
     jagFactor: 32,
     maxHeight: 6,
+    flatWorld: false,
+    chunkSize: 16,
+    // flatWorld: true,
+    // chunkSize: 4,
+  },
+
+  gravity: -0.009,
+
+  player: {
+    jumpSpeed: 0.14,
+    rotSpeed: 0.002,
   }
-}
+};
+
+// declare var window;
+
+// if (window)
+//   (window as any).config = CONFIG;

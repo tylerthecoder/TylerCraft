@@ -60,7 +60,6 @@ export class ServerGame extends Game {
     this.clients.addPlayer(ws);
 
     this.wss.listenTo(ws, (ws: wSocket, message: ISocketMessage) => {
-      console.log(message);
       switch (message.type) {
         case "actions":
           this.actionQueue.push(...message.actionPayload.map(

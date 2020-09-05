@@ -15,10 +15,6 @@ import { GameSaver } from "./gameSaver";
 import { BLOCKS } from "../src/blockdata";
 import { ControllerHolder } from "./controllerHolder";
 
-
-const PLAYER_CONTROLLER = PlayerKeyboardController;
-
-
 export class ClientGame extends Game {
   controllers = new ControllerHolder(this);
   worldRenderer: WorldRenderer;
@@ -75,10 +71,13 @@ export class ClientGame extends Game {
     this.worldRenderer = new WorldRenderer(this.world, this);
 
     this.mainPlayer = this.addPlayer(true);
-    this.setUpPlayer();
+
+    const playerController = new PlayerKeyboardController(this.mainPlayer, this);
+    this.controllers.add(playerController);
+    this.camera = new EntityCamera(this.mainPlayer);
 
     // load the game from server
-    await this.saver.load(this);
+    // await this.saver.load(this);
 
     this.clientActionListener = (action: IAction) => {
       if (action.blockUpdate) {
@@ -89,16 +88,8 @@ export class ClientGame extends Game {
     requestAnimationFrame(this.loop.bind(this));
   }
 
-  private loopCount = 0;
   loop(time: number) {
     const delta = time - this.totTime;
-
-    // send player data every hundred loops
-    this.loopCount++;
-    if (this.loopCount > 100) {
-
-
-    }
 
     this.controllers.update(delta);
     this.update(delta);
@@ -130,8 +121,11 @@ export class ClientGame extends Game {
   }
 
   onClick(e: MouseEvent) {
-    const data = this.world.lookingAt(this.camera.pos, this.camera.rotUnitVector);
-    if (e.which === 1) { // left click
+    const data = this.world.lookingAt(this.camera.pos, this.camera.rotCart.data as IDim);
+
+    if (!data) return;
+
+    if (e.which === 3) { // right click
       this.actions.push({
         type: IActionType.playerPlaceBlock,
         playerPlaceBlock: {
@@ -140,7 +134,7 @@ export class ClientGame extends Game {
           newCubePos: data.newCubePos.data as IDim,
         }
       });
-    } else if (e.which === 3) { // right click
+    } else if (e.which === 1) { // left click
       this.actions.push({
         type: IActionType.playerRemoveBlock,
         playerRemoveBlock: {
@@ -169,30 +163,13 @@ export class ClientGame extends Game {
   }
 
   setUpPlayer() {
-    const playerController = new PLAYER_CONTROLLER(this.mainPlayer, this);
-    this.controllers.add(playerController);
-    this.camera = new EntityCamera(this.mainPlayer);
-  }
-
-  setUpSpectator() {
-    this.camera = new FixedCamera(
-      this.mainPlayer.pos.slice(0) as IDim,
-      this.camera.rot.slice(0) as IDim
-    );
-    this.mainPlayer.spectator = true;
   }
 
   toggleSpectate() {
-    if (this.camera instanceof EntityCamera) {
-      // spectate was previously off
-      this.worldRenderer.shouldRenderMainPlayer = true;
-      this.controllers.remove(this.mainPlayer);
-      this.setUpSpectator();
+    if (this.mainPlayer.spectator) {
+      this.mainPlayer.setSpectator(false);
     } else {
-      // spectate was previously on
-      this.worldRenderer.shouldRenderMainPlayer = false;
-      this.controllers.remove(this.camera);
-      this.setUpPlayer();
+      this.mainPlayer.setSpectator(true);
     }
   }
 

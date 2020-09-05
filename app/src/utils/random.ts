@@ -20,7 +20,9 @@ class RandomClass {
     return (num + 1) / 2;
   }
 
-
+  randomNum() {
+    return Math.random();
+  }
 }
 
 

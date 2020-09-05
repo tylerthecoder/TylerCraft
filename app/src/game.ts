@@ -103,7 +103,6 @@ export class Game {
       break;
 
     case IActionType.playerSetPos: {
-      console.log("Setting my pos");
       const payload = action.playerSetPos;
       const player = this.findEntity(payload.uid) as Player;
       player.pos = payload.pos;
