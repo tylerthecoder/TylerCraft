@@ -17,7 +17,7 @@ export class GameController extends Controller {
     })
 
     this.ifHasKeyThen("c", () => {
-      this.controlled.toggleSpectate();
+      this.controlled.toggleCreative();
     })
 
     this.ifHasKeyThen("p", () => {
@@ -38,6 +38,14 @@ export class GameController extends Controller {
 
     this.ifHasKeyThen("4", () => {
       this.controlled.selectedBlock = BLOCKS.leaf;
+    })
+
+    this.ifHasKeyThen("5", () => {
+      this.controlled.selectedBlock = BLOCKS.cloud;
+    })
+
+    this.ifHasKeyThen("6", () => {
+      this.controlled.selectedBlock = BLOCKS.gold;
     })
   }
 

@@ -4,6 +4,7 @@ import { Entity } from "./entities/entity";
 import { IDim, IAction, IActionType } from "../types";
 import { Cube } from "./entities/cube";
 import { BLOCKS } from "./blockdata";
+import { Vector3D } from "./utils/vector";
 
 export class Game {
   // TODO: change this to a map from uid to Entity
@@ -28,10 +29,8 @@ export class Game {
     // there could also be actions that came from the socket
     let myActions: IAction[] = [];
     for (const entity of this.entities) {
-      if (entity instanceof Player) {
-        const playerActions = entity.getActions();
-        myActions = myActions.concat(playerActions);
-      }
+      const playerActions = entity.getActions();
+      myActions = myActions.concat(playerActions);
     }
 
     this.actions.push(...myActions);
@@ -68,20 +67,22 @@ export class Game {
 
     // move the entities out of the blocks
     for (const entity of this.entities) {
-      const collisions = this.world.isCollide(entity);
-      for (const e of collisions) {
-        entity.pushOut(e);
+      if (entity.tangible) {
+        const collisions = this.world.isCollide(entity);
+        for (const e of collisions) {
+          entity.pushOut(e);
+        }
+
+        for (const e of this.entities) {
+          if (e === entity) continue;
+          e.isCollide(entity);
+        }
       }
 
-      for (const e of this.entities) {
-        if (e === entity) continue;
-        e.isCollide(entity);
-      }
     }
   }
 
   protected handleAction(action: IAction) {
-
     switch(action.type) {
     case IActionType.playerJump: {
       const payload = action.playerJump;
@@ -93,7 +94,7 @@ export class Game {
     case IActionType.playerPlaceBlock:
       const newCube = new Cube(
         action.playerPlaceBlock.blockType,
-        action.playerPlaceBlock.newCubePos
+        new Vector3D(action.playerPlaceBlock.newCubePos)
       );
       this.world.addBlock(newCube);
       break;

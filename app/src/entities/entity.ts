@@ -60,7 +60,6 @@ export abstract class Entity {
 
   baseUpdate(delta: number) {
     if (this.gravitable) this.gravity();
-
     this.move(this.vel);
   }
 
@@ -176,7 +175,6 @@ export abstract class Entity {
 
   getActions(): IAction[] {
     return [];
-    // return this.getPlanerActionsFromMetaActions();
   }
 
   // Consumes some of the meta-action

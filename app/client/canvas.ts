@@ -1,3 +1,5 @@
+import { CONFIG } from "../src/constants";
+
 export class CanvasProgram {
   canvas: HTMLCanvasElement;
   hudCanvas: HTMLCanvasElement;
@@ -22,16 +24,11 @@ export class CanvasProgram {
   }
 
   setup() {
-    // const gl = this.gl;
-    // // set texture parameters
-    // // Tell WebGL we want to affect texture unit 0
-    // gl.activeTexture(gl.TEXTURE0);
-    // // gl.NEAREST is also allowed, instead of gl.LINEAR, as neither mipmap.
-    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    // // Prevents s-coordinate wrapping (repeating).
-    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    // // Prevents t-coordinate wrapping (repeating).
-    // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    // for transparent images
+    if (CONFIG.transparency) {
+      this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
+      this.gl.enable(this.gl.BLEND);
+    }
   }
 
   clearCanvas() {

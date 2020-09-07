@@ -1,17 +1,21 @@
 import { Entity, FaceLocater } from "./entity";
 import { IDim } from "../../types";
 import { BLOCKS } from "../blockdata";
+import { Vector3D } from "../utils/vector";
 
 export class Cube extends Entity {
   gravitable = false;
   tangible = false;
 
+
+
   constructor(
     public type: BLOCKS,
-    public pos: IDim,
+    _pos: Vector3D,
     public dim: IDim = [1,1,1],
   ) {
     super();
+    this.pos = _pos.data as IDim;
   }
 
   update(delta: number) {

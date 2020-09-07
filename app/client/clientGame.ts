@@ -1,12 +1,9 @@
 import { Player } from "../src/entities/player";
-import { Controller, Controlled } from "./controllers/controller";
 import { PlayerKeyboardController } from "./controllers/playerKeyboardController";
 import { Camera } from "./cameras/camera";
 import { EntityCamera } from "./cameras/entityCamera";
 import { Game } from "../src/game";
 import { RenderType, Entity } from "../src/entities/entity";
-import { GameController } from "./controllers/gameController";
-import { FixedCamera } from "./cameras/fixedCamera";
 import { SocketHandler } from "./socket";
 import { canvas } from "./canvas";
 import { IDim, IAction, IActionType } from "../types";
@@ -14,6 +11,7 @@ import WorldRenderer from "./renders/worldRender";
 import { GameSaver } from "./gameSaver";
 import { BLOCKS } from "../src/blockdata";
 import { ControllerHolder } from "./controllerHolder";
+import { Spectator } from "../src/entities/spectator";
 
 export class ClientGame extends Game {
   controllers = new ControllerHolder(this);
@@ -22,11 +20,10 @@ export class ClientGame extends Game {
   saver = new GameSaver();
 
   mainPlayer: Player;
-  multiPlayer = true;
-
+  spectator: Spectator;
+  multiPlayer = false;
   camera: Camera;
   socket: SocketHandler;
-
   selectedBlock: BLOCKS = BLOCKS.stone;
 
   totTime = 0;
@@ -74,7 +71,14 @@ export class ClientGame extends Game {
 
     const playerController = new PlayerKeyboardController(this.mainPlayer, this);
     this.controllers.add(playerController);
-    this.camera = new EntityCamera(this.mainPlayer);
+    // this.camera = new EntityCamera(this.mainPlayer);
+
+    // load the spectator
+    this.spectator = new Spectator();
+    this.addEntity(this.spectator);
+    this.camera = new EntityCamera(this.spectator);
+    const spectatorController = new PlayerKeyboardController(this.spectator, this);
+    this.controllers.add(spectatorController);
 
     // load the game from server
     // await this.saver.load(this);
@@ -165,8 +169,8 @@ export class ClientGame extends Game {
   setUpPlayer() {
   }
 
-  toggleSpectate() {
-    if (this.mainPlayer.spectator) {
+  toggleCreative() {
+    if (this.mainPlayer.creative) {
       this.mainPlayer.setSpectator(false);
     } else {
       this.mainPlayer.setSpectator(true);

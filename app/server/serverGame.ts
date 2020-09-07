@@ -27,6 +27,7 @@ export class ServerGame extends Game {
 
   loop() {
     if (this.actionQueue.length > 100) {
+      console.log(this.actionQueue);
       throw new Error("BAD")
     }
 

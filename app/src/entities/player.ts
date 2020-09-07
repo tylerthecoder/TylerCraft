@@ -17,7 +17,7 @@ export class Player extends Entity {
   canFire = true;
   jumpCount = 0;
 
-  spectator = false;
+  creative = false;
 
   constructor(public game: Game, public isReal: boolean) {
     super();
@@ -30,7 +30,7 @@ export class Player extends Entity {
   }
 
   setSpectator(val: boolean) {
-    this.spectator = val;
+    this.creative = val;
     this.gravitable = !val;
   }
 

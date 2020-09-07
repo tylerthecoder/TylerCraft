@@ -4,9 +4,8 @@ import { CONFIG } from "../constants";
 import simplexNoise from "simplex-noise";
 
 class RandomClass {
-  _rndNoise: simplexNoise;
-
-  jagFactor = CONFIG.terrain.jagFactor;
+  private _rndNoise: simplexNoise;
+  private jagFactor = CONFIG.terrain.jagFactor;
 
   constructor() {
     random.use(seedrandom(CONFIG.seed));
@@ -16,12 +15,24 @@ class RandomClass {
 
   // returns random number from [0,1]
   noise(x: number, y: number) {
-    const num = this._rndNoise.noise2D(x / this.jagFactor, y / this.jagFactor);
+    return this.customNoise(x, y, this.jagFactor)
+  }
+
+  customNoise(x: number, y: number, jagFactor: number) {
+    const num = this._rndNoise.noise2D(x / jagFactor, y / jagFactor);
     return (num + 1) / 2;
   }
 
   randomNum() {
-    return Math.random();
+    return random.float(0, 1);
+  }
+
+  randomInt(min: number, max: number) {
+    return random.int(min, max);
+  }
+
+  randomString() {
+    return random.float(0,1).toString();
   }
 }
 

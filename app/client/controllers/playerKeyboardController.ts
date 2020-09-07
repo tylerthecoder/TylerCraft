@@ -1,6 +1,6 @@
 import { Controller } from "./controller";
 import { Player } from "../../src/entities/player";
-import { MetaAction } from "../../src/entities/entity";
+import { MetaAction, Entity } from "../../src/entities/entity";
 import { SocketHandler } from "../socket";
 import { ClientGame } from "../clientGame";
 import { IActionType } from "../../types";
@@ -11,7 +11,7 @@ export class PlayerKeyboardController extends Controller {
   maxTime = 100;
 
   constructor(
-    public controlled: Player,
+    public controlled: Entity,
     public game: ClientGame,
   ) {
     super();
@@ -38,28 +38,33 @@ export class PlayerKeyboardController extends Controller {
 
   update(delta: number) {
     this.wasdKeys(delta);
-    this.ifHasKeyThenAddMeta("f", MetaAction.fireball);
+    if (this.controlled instanceof Player) {
+      this.ifHasKeyThenAddMeta("f", MetaAction.fireball);
 
-    if (this.keys.has("f")) {
-      this.controlled.metaActions.add(MetaAction.fireball);
-    } else {
-      this.controlled.canFire = true;
-    }
-
-    if (this.controlled.spectator) {
-      this.qeKeys();
-    } else {
-      this.ifHasKeyThenAddMeta(" ", MetaAction.jump);
-    }
-
-    // if there were any actions performed
-    if (this.controlled.metaActions.size > 0) {
-      this.numOfUpdates++;
-
-      if (this.numOfUpdates > 10) {
-        this.numOfUpdates = 0;
-        this.sendPos();
+      if (this.keys.has("f")) {
+        this.controlled.metaActions.add(MetaAction.fireball);
+      } else {
+        this.controlled.canFire = true;
       }
+
+      if (this.controlled.creative) {
+        this.qeKeys();
+      } else {
+        this.ifHasKeyThenAddMeta(" ", MetaAction.jump);
+      }
+
+      // if there were any actions performed
+      if (this.controlled.metaActions.size > 0) {
+        this.numOfUpdates++;
+
+        if (this.numOfUpdates > 10) {
+          this.numOfUpdates = 0;
+          this.sendPos();
+        }
+      }
+    } else {
+      this.qeKeys();
     }
+
   }
 }

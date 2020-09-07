@@ -2,7 +2,7 @@ import { Cube } from "../entities/cube";
 import { Chunk, ILookingAtData } from "./chunk";
 import { Entity } from "../entities/entity";
 import { Game } from "../game";
-import { IDim } from "../../types";
+import { IDim, IActionType } from "../../types";
 import { CONFIG } from "../constants";
 import { Vector, Vector3D, Vector2D } from "../utils/vector";
 import { TerrainGenerator } from "./terrainGenerator";
@@ -56,10 +56,8 @@ export class World {
 
     for (let i=-n; i <= n; i++) {
       for (let j=-n; j <= n; j++) {
-        const chunkPos = new Vector<[number, number]>([
-          nearestChunkPos[0] + i,
-          nearestChunkPos[1] + j
-        ])
+        const indexVector = new Vector2D([i, j]);
+        const chunkPos = nearestChunkPos.add(indexVector);
         const nearChunk = this.getChunkFromPos(chunkPos);
         if (nearChunk) {
           nearbyChunks.push(nearChunk)
@@ -70,6 +68,18 @@ export class World {
     return nearbyChunks;
   }
 
+  updateChunk(chunkPos: Vector2D) {
+    const chunkToUpdate = this.chunks.get(chunkPos.add(new Vector2D([0, 1])).toString());
+    if (chunkToUpdate) {
+      this.game.actions.push({
+        type: IActionType.blockUpdate,
+        blockUpdate: {
+          chunkId: chunkToUpdate.chunkPos.toString(),
+        }
+      });
+    }
+  }
+
   generateChunk(chunkPos: Vector2D) {
     const generatedChunk = this.terrainGenerator.generateChunk(chunkPos, this.game);
     this.setChunkAtPos(generatedChunk, chunkPos);
@@ -77,11 +87,11 @@ export class World {
     return generatedChunk;
   }
 
-  getGeneratedChunk(chunkPos: Vector2D): Chunk {
+  getGeneratedChunk(chunkPos: Vector2D): {chunk: Chunk, new: boolean} {
     const chunk = this.getChunkFromPos(chunkPos);
 
-    if (chunk) return chunk;
-    return this.generateChunk(chunkPos);
+    if (chunk) return {chunk, new: false};
+    return { chunk: this.generateChunk(chunkPos), new: true };
   }
 
   gen() { }

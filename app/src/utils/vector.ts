@@ -1,6 +1,12 @@
 type IDim = [number, number, number];
 
 
+interface IItterable {
+  start: number;
+  end: number;
+  step?: number;
+}
+
 export class Vector<T extends number[] = IDim> {
   static unitVectors3D = [
     [1, 0, 0],
@@ -16,12 +22,17 @@ export class Vector<T extends number[] = IDim> {
     return new Vector(ords);
   }
 
-  constructor(
-    public data: number[]
-  ) {
+  // this might be hard
+  static itterable(itterators: IItterable[]) {
 
   }
 
+  constructor(
+    public data: number[]
+  ) { }
+
+  // this might be a very slow function to call so often
+  // maybe memoize the results? Don't know if that actually does anything in javascript
   toString(): string {
     return this.data.
       // combine with commas

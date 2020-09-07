@@ -44,7 +44,7 @@ export class GameSaver {
     const chunks = Array.from(game.world.chunks.values());
 
     for (const chunk of chunks) {
-      const chunkPosVector = new Vector2D(chunk.chunkPos);
+      const chunkPosVector = chunk.chunkPos;
       const chunkData: ChunkData = {
         b: [],
         pos: chunkPosVector.toString(),
@@ -87,23 +87,23 @@ export class GameSaver {
     const gameData = await fetch(this.serverURL).then(x => x.json());
 
     for (const chunkData of gameData.world.c) {
-      const chunkPos = Vector.fromString(chunkData.pos);
+      const chunkPos = Vector.fromString(chunkData.pos) as Vector2D;
 
       const chunk = new Chunk(
-        chunkPos.data,
+        chunkPos,
         game,
       );
 
       for (const cubeData of chunkData.b) {
         const cube = new Cube(
           cubeData.t,
-          Vector.fromString(cubeData.p).data as IDim,
+          Vector.fromString(cubeData.p),
         );
 
         chunk.addCube(cube, false);
       }
 
-      game.world.setChunkAtPos(chunk, new Vector2D(chunk.chunkPos));
+      game.world.setChunkAtPos(chunk, chunk.chunkPos);
     }
   }
 }

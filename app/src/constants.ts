@@ -4,13 +4,16 @@ export const CONFIG = {
   playerReach: 10,
   seed: "bungus",
 
-  fovFactor: .8,
+  transparency: true,
+
+  fovFactor: .6,
 
   terrain: {
     jagFactor: 32,
-    maxHeight: 6,
+    maxHeight: 10,
     flatWorld: false,
     chunkSize: 16,
+    cloudLevel: 30,
     // flatWorld: true,
     // chunkSize: 4,
   },

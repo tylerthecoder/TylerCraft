@@ -8,11 +8,9 @@ import { ClientGame } from "../clientGame";
 import { Entity, RenderType } from "../../src/entities/entity";
 import { SphereRenderer } from "./sphereRender";
 import { CONFIG } from "../../src/constants";
-import { Vector2D, Vector, Vector3D } from "../../src/utils/vector";
+import { Vector2D, Vector3D } from "../../src/utils/vector";
 import { Camera } from "../cameras/camera";
-import { FixedCamera } from "../cameras/fixedCamera";
 import { Chunk } from "../../src/world/chunk";
-
 
 export default class WorldRenderer {
   renderers: Renderer[] = [];
@@ -29,11 +27,8 @@ export default class WorldRenderer {
   }
 
   blockUpdate(chunkId: string) {
-    const rendererToUpdate = Array.from(this.chunkRenderers.values()).find(r =>
-      r.chunk && r.chunk.uid === chunkId
-    );
-
-    if (rendererToUpdate) rendererToUpdate.getBufferData();
+    const chunkToUpdate = this.chunkRenderers.get(chunkId);
+    if (chunkToUpdate) chunkToUpdate.getBufferData(this.world);
   }
 
   addEntity(entity: Entity) {
@@ -47,13 +42,20 @@ export default class WorldRenderer {
   }
 
   renderChunk(chunkPos: Vector2D, camera: Camera) {
-    const chunk = this.world.getGeneratedChunk(chunkPos);
+    const chunkData = this.world.getGeneratedChunk(chunkPos);
+    let chunkRenderer = this.chunkRenderers.get(chunkPos.toString());
 
-    let chunkRenderer = this.chunkRenderers.get(`${chunk.chunkPos[0]},${chunk.chunkPos[1]}`);
+    if (chunkData.new) {
+      // maybe do this on another thread (worker)
+      this.blockUpdate(chunkPos.add(new Vector2D([0,1])).toString());
+      this.blockUpdate(chunkPos.add(new Vector2D([1,0])).toString());
+      this.blockUpdate(chunkPos.add(new Vector2D([0,-1])).toString());
+      this.blockUpdate(chunkPos.add(new Vector2D([-1,0])).toString());
+    }
 
     if (!chunkRenderer) {
-      chunkRenderer = new ChunkRenderer(chunk);
-      this.chunkRenderers.set(`${chunk.chunkPos[0]},${chunk.chunkPos[1]}`, chunkRenderer);
+      chunkRenderer = new ChunkRenderer(chunkData.chunk, this.world);
+      this.chunkRenderers.set(chunkPos.toString(), chunkRenderer);
     }
 
     chunkRenderer.render(camera);
@@ -147,13 +149,12 @@ export default class WorldRenderer {
     // This is for when you are looking directly at the ground.
     // Since I only check when the user can't see the center of a chunk, if you are looking directly at the ground you can't
     // see the chunk. Thus this renders the 9 chunks below you.
-    if (renderedSet.size == 0) {
-      for (let k = -1; k <= 1; k += 1) {
-        for (let l = -1; l <= 1; l += 1) {
-          const indexVec = new Vector2D([k, l]);
-          const chunkPos = cameraChunkPos.add(indexVec);
+    for (let k = -1; k <= 1; k += 1) {
+      for (let l = -1; l <= 1; l += 1) {
+        const indexVec = new Vector2D([k, l]);
+        const chunkPos = cameraChunkPos.add(indexVec);
+        if (!renderedSet.has(chunkPos.toString()))
           this.renderChunk(chunkPos, camera);
-        }
       }
     }
 

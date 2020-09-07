@@ -1,6 +1,6 @@
 import { BLOCKS } from "../src/blockdata";
 
-const TEXTURE_ATLAS_WIDTH = 2;
+const TEXTURE_ATLAS_WIDTH = 3;
 const TEXTURE_ATLAS_HEIGHT = 2;
 
 const xStepVal = 1 / TEXTURE_ATLAS_WIDTH;
@@ -11,6 +11,8 @@ textureData.set(BLOCKS.grass, {offsetX: 0, offsetY: 0});
 textureData.set(BLOCKS.stone, {offsetX: 1, offsetY: 0});
 textureData.set(BLOCKS.wood, {offsetX: 0, offsetY: 1});
 textureData.set(BLOCKS.leaf, {offsetX: 1, offsetY: 1});
+textureData.set(BLOCKS.cloud, {offsetX: 2, offsetY: 0});
+textureData.set(BLOCKS.gold, {offsetX: 2, offsetY: 1});
 
 class Textures {
   getTextureCords(type: BLOCKS) {

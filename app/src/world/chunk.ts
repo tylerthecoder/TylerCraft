@@ -4,10 +4,7 @@ import { IDim, IActionType } from "../../types";
 import { arrayMul, arrayAdd, arrayDot, arrayScalarMul, roundToNPlaces, arrayDistSquared } from "../utils";
 import { Game } from "../game";
 import { CONFIG } from "../constants";
-import Random from "../utils/random";
-import {Biome, PlainsBiome} from "./biome";
-import { Vector3D, Vector } from "../utils/vector";
-import { BLOCKS } from "../blockdata";
+import { Vector3D, Vector, Vector2D } from "../utils/vector";
 
 
 export interface ICubeFace {
@@ -25,20 +22,16 @@ export class Chunk {
   cubes: Map<string, Cube> = new Map();
   visibleFaces: Array<ICubeFace> = [];
   uid: string;
-  biome: Biome;
 
   constructor(
-    public chunkPos: number[],
+    public chunkPos: Vector2D,
     private game: Game
   ) {
-    // this.generate();
-    this.uid = `${chunkPos[0]}, ${chunkPos[1]}`;
-
-    this.biome = new PlainsBiome();
+    this.uid = this.chunkPos.toString();
   }
 
   get pos() {
-    return [this.chunkPos[0] * CONFIG.terrain.chunkSize, 0, this.chunkPos[1] * CONFIG.terrain.chunkSize];
+    return [this.chunkPos.get(0) * CONFIG.terrain.chunkSize, 0, this.chunkPos.get(1) * CONFIG.terrain.chunkSize];
   }
 
   circleIntersect(circlePos: Vector3D, radius: number): boolean {
@@ -73,8 +66,7 @@ export class Chunk {
   containsCube(cube: Cube) {
     // scale cubes position by chunk size
     const scaledPos = cube.pos.map(dim => Math.floor(dim / CONFIG.terrain.chunkSize));
-
-    return scaledPos[0] === this.chunkPos[0] && scaledPos[2] === this.chunkPos[1];
+    return scaledPos[0] === this.chunkPos.get(0) && scaledPos[2] === this.chunkPos.get(1);
   }
 
   lookingAt(cameraPos: IDim, cameraDir: IDim): ILookingAtData | false {
