@@ -24,7 +24,7 @@ export class TerrainGenerator {
     if (world.chunks.has(chunkPos.toString())) {
       const chunk = world.chunks.get(chunkPos.toString());
       // we don't want this to be true
-      chunk.addCube(cube,false)
+      chunk.addCube(cube)
     }
 
 
@@ -32,8 +32,8 @@ export class TerrainGenerator {
     this.blocksToRender.set(chunkPos.toString(), [...currentBlocks, cube]);
   }
 
-  generateChunk(chunkPos: Vector2D, game: Game) {
-    const chunk = new Chunk(chunkPos, game);
+  generateChunk(chunkPos: Vector2D, world: World) {
+    const chunk = new Chunk(chunkPos);
 
     const worldPos = chunk.pos;
 
@@ -44,7 +44,7 @@ export class TerrainGenerator {
         const y = CONFIG.terrain.flatWorld ? 0 :
           Math.floor(Random.noise(x, z) * CONFIG.terrain.maxHeight);
 
-        this.preRenderNearbyChunks(chunkPos, game.world)
+        this.preRenderNearbyChunks(chunkPos, world)
 
         for (let k = 0; k <= y; k++) {
           const cubePos = [x, k, z];
@@ -52,7 +52,13 @@ export class TerrainGenerator {
           const blockType = k === y ? BLOCKS.grass : BLOCKS.stone;
 
           const cube = new Cube(blockType, new Vector3D(cubePos));
-          chunk.addCube(cube, false);
+          chunk.addCube(cube);
+        }
+
+        // add grass
+        if (Random.randomNum() > .99) {
+          const cube = new Cube(BLOCKS.redFlower, new Vector3D([x,y+1,z]));
+          chunk.addCube(cube);
         }
       }
     }
@@ -60,7 +66,7 @@ export class TerrainGenerator {
     const chunkString = chunkPos.toString();
     if (this.blocksToRender.has(chunkString)){
       this.blocksToRender.get(chunkString).forEach(cube => {
-        chunk.addCube(cube, false);
+        chunk.addCube(cube);
       });
       this.blocksToRender.delete(chunkString);
     }

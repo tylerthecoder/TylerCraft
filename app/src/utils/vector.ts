@@ -17,6 +17,31 @@ export class Vector<T extends number[] = IDim> {
     [0, 0, -1]
   ].map(d => new Vector(d));
 
+  static unitVectors2D = [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+  ].map(d => new Vector(d));
+
+  static unitVectors2DIn3D = [
+    [1, 0, 0],
+    [-1, 0, 0],
+    [0, 0, 1],
+    [0, 0, -1],
+  ].map(d => new Vector(d));
+
+  static xVectors = [
+    [1,0,1],
+    [1,1,1],
+    [0,1,0],
+    [0,0,0],
+    [0,0,1],
+    [0,1,1],
+    [1,1,0],
+    [1,0,0],
+  ];
+
   static fromString<S extends number[] = [number, number, number]>(str: string): Vector<S> {
     const ords = str.split(",").map(n => parseInt(n));
     return new Vector(ords);

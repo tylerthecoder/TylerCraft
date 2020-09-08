@@ -91,7 +91,6 @@ export class GameSaver {
 
       const chunk = new Chunk(
         chunkPos,
-        game,
       );
 
       for (const cubeData of chunkData.b) {
@@ -100,7 +99,7 @@ export class GameSaver {
           Vector.fromString(cubeData.p),
         );
 
-        chunk.addCube(cube, false);
+        chunk.addCube(cube);
       }
 
       game.world.setChunkAtPos(chunk, chunk.chunkPos);

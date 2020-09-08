@@ -109,10 +109,6 @@ export abstract class Renderer {
     const gl = canvas.gl;
     const programInfo = canvas.program;
 
-    gl.enable(gl.DEPTH_TEST); // Enable depth testing
-    gl.depthFunc(gl.LEQUAL); // Near things obscure far things
-
-    // Clear the canvas before we start drawing on it.
 
     // Create a perspective matrix, a special matrix that is
     // used to simulate the distortion of perspective in a camera.
@@ -120,7 +116,6 @@ export abstract class Renderer {
     // ratio that matches the display size of the canvas
     // and we only want to see objects between 0.1 units
     // and 100 units away from the camera.
-
     const fieldOfView = (45 * Math.PI) / 180; // in radians
     const aspect = (gl.canvas as HTMLCanvasElement).clientWidth / (gl.canvas as HTMLCanvasElement).clientHeight;
     const zNear = 0.1;
@@ -149,8 +144,6 @@ export abstract class Renderer {
 
     this.bindTexture();
 
-    // Tell WebGL we want to affect texture unit 0
-    gl.activeTexture(gl.TEXTURE0);
 
     // Tell the shader we bound the texture to texture unit 0
     gl.uniform1i(programInfo.uniformLocations.uSampler, 0);

@@ -47,6 +47,10 @@ export class GameController extends Controller {
     this.ifHasKeyThen("6", () => {
       this.controlled.selectedBlock = BLOCKS.gold;
     })
+
+    this.ifHasKeyThen("7", () => {
+      this.controlled.selectedBlock = BLOCKS.redFlower;
+    })
   }
 
 

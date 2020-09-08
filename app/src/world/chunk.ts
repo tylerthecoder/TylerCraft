@@ -1,6 +1,6 @@
 import { Cube } from "../entities/cube";
 import { Entity } from "../entities/entity";
-import { IDim, IActionType } from "../../types";
+import { IDim, IActionType, IAction } from "../../types";
 import { arrayMul, arrayAdd, arrayDot, arrayScalarMul, roundToNPlaces, arrayDistSquared } from "../utils";
 import { Game } from "../game";
 import { CONFIG } from "../constants";
@@ -25,7 +25,6 @@ export class Chunk {
 
   constructor(
     public chunkPos: Vector2D,
-    private game: Game
   ) {
     this.uid = this.chunkPos.toString();
   }
@@ -145,27 +144,24 @@ export class Chunk {
     return Array.from(this.cubes.values());
   }
 
-  addCube(cube: Cube, update = true) {
+  addCube(cube: Cube) {
     const cubeVectorPos = new Vector(cube.pos);
     this.cubes.set(cubeVectorPos.toString(), cube);
-    if (update) {
-      this.sendBlockUpdate();
-    }
   }
 
   removeCube(cube: Cube) {
     const cubeVectorPos = new Vector(cube.pos);
     this.cubes.delete(cubeVectorPos.toString());
-    this.sendBlockUpdate();
   }
 
-  sendBlockUpdate() {
-    this.game.actions.push({
+  getBlockUpdateAction(): IAction {
+    console.log("Getting update")
+    return {
       type: IActionType.blockUpdate,
       blockUpdate: {
         chunkId: this.uid,
       }
-    });
+    }
   }
 
 }

@@ -81,7 +81,7 @@ export class World {
   }
 
   generateChunk(chunkPos: Vector2D) {
-    const generatedChunk = this.terrainGenerator.generateChunk(chunkPos, this.game);
+    const generatedChunk = this.terrainGenerator.generateChunk(chunkPos, this);
     this.setChunkAtPos(generatedChunk, chunkPos);
 
     return generatedChunk;
@@ -108,22 +108,32 @@ export class World {
     return collide;
   }
 
-  addBlock(cube: Cube) {
-    for (const chunk of this.chunks.values()) {
-      if (chunk.containsCube(cube)) {
-        chunk.addCube(cube)
-        return;
+  private checkSurroundingChunkForUpdate(chunk: Chunk, pos: Vector3D) {
+    Vector.unitVectors2DIn3D.forEach(indexVec => {
+      const checkCubePos = pos.add(indexVec);
+      const otherChunk = this.getChunkFromWorldPoint(checkCubePos);
+
+      // if this is a different chunk
+      if (chunk !== otherChunk) {
+        this.game.actions.push(otherChunk.getBlockUpdateAction());
       }
-    }
+    });
+  }
+
+  addBlock(cube: Cube) {
+    const cubePosVector = new Vector3D(cube.pos);
+    const chunk = this.getChunkFromWorldPoint(cubePosVector);
+    chunk.addCube(cube);
+    this.game.actions.push(chunk.getBlockUpdateAction());
+    this.checkSurroundingChunkForUpdate(chunk, cubePosVector);
   }
 
   removeBlock(cube: Cube) {
-    for (const chunk of this.chunks.values()) {
-      if (chunk.containsCube(cube)) {
-        chunk.removeCube(cube)
-        return;
-      }
-    }
+    const cubePosVector = new Vector3D(cube.pos);
+    const chunk = this.getChunkFromWorldPoint(cubePosVector);
+    chunk.removeCube(cube)
+    this.game.actions.push(chunk.getBlockUpdateAction());
+    this.checkSurroundingChunkForUpdate(chunk, cubePosVector);
   }
 
   lookingAt(cameraPos: IDim, cameraDir: IDim): ILookingAtData {

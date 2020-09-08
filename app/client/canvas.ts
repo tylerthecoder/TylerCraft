@@ -24,18 +24,23 @@ export class CanvasProgram {
   }
 
   setup() {
+    const gl = this.gl;
+
+    gl.enable(gl.DEPTH_TEST); // Enable depth testing
+    gl.depthFunc(gl.LEQUAL); // Near things obscure far things
+    gl.activeTexture(gl.TEXTURE0); // Tell WebGL we want to affect texture unit 0
     // for transparent images
     if (CONFIG.transparency) {
-      this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
+      // this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
+      // gl.blendFunc(this.gl.ONE, this.gl.ONE_MINUS_SRC_ALPHA);
+      gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+
       this.gl.enable(this.gl.BLEND);
     }
   }
 
   clearCanvas() {
-    // Set clear color to black, fully opaque
-    this.gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    // Clear the color buffer with specified clear color
-    this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+    this.gl.clearColor(0.0, 0.8, 1.0, 1.0);
     this.gl.clearDepth(1.0); // Clear everything
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
   }
@@ -51,8 +56,10 @@ export class CanvasProgram {
     this.canvas = document.querySelector("#glCanvas") as HTMLCanvasElement;
     this.canvas.height = window.innerHeight;
     this.canvas.width = window.innerWidth;
-    // Initialize the GL context
-    const gl = this.canvas.getContext("webgl");
+    const gl = this.canvas.getContext("webgl", {
+      // premultipliedAlpha: false,
+      // alpha: false,
+    });
 
 
 
