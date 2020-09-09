@@ -31,6 +31,32 @@ export class Vector<T extends number[] = IDim> {
     [0, 0, -1],
   ].map(d => new Vector(d));
 
+  static edgeVectors3D = [
+    [1, 1, 0],
+    [1, -1, 0],
+    [1, 0, 1],
+    [1, 0, -1],
+    [-1, 1, 0],
+    [-1, -1, 0],
+    [-1, 0, 1],
+    [-1, 0, -1],
+    [0, 1, 1],
+    [0, 1, -1],
+    [0, -1, 1],
+    [0, -1, -1],
+  ].map( d => new Vector(d));
+
+  static cornerVectors3D = [
+    [1, 1, 1],
+    [1, 1, -1],
+    [1, -1, 1],
+    [1, -1, -1],
+    [-1, 1, 1],
+    [-1, 1,-1],
+    [-1, -1, 1],
+    [-1, -1, -1],
+  ].map(d => new Vector(d))
+
   static xVectors = [
     [1,0,1],
     [1,1,1],
@@ -56,9 +82,10 @@ export class Vector<T extends number[] = IDim> {
     public data: number[]
   ) { }
 
+  // if we update the string then this caching wont work :(
   str: string;
   toString(): string {
-    if (this.str) return this.str;
+    // if (this.str) return this.str;
     const str = this.data.join(",");
     this.str = str;
     return str;

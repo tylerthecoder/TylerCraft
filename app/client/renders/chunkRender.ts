@@ -18,13 +18,13 @@ export class ChunkRenderer extends Renderer {
 
   render(camera: Camera) {
     // this.form.render(this.pos, screenPos, screenRot);
-    this.renderObject(this.chunk.pos, camera);
+    this.renderObject(this.chunk.pos.data, camera);
   }
 
   // return if there is a cube (or void) at this position
   private isCube(pos: Vector3D, world: World) {
     let cube = this.chunk.getCube(pos);
-    // if it isn't in the cube map, see if the world contians it
+    // if it isn't in the cube map, see if the world contains it
     if (pos.get(1) === -1) { return true; }
     if (!cube) {
       const chunkPos = world.worldPosToChunkPos(pos);
@@ -69,7 +69,7 @@ export class ChunkRenderer extends Renderer {
     let offset = 0;
     for (const cube of this.chunk.getCubesIterable()) {
       const blockData = BLOCK_DATA.get(cube.type);
-      const relativePos = arraySub(cube.pos.data, this.chunk.pos);
+      const relativePos = arraySub(cube.pos.data, this.chunk.pos.data);
       const texturePos = TextureMapper.getTextureCords(cube.type);
 
       if (blockData.blockType === BlockType.cube) {
@@ -137,10 +137,6 @@ export class ChunkRenderer extends Renderer {
         const adjustedCords = Vector.xVectors.
           map(v => arrayAdd(v, relativePos)).
           flat();
-
-        // const adjustedVerts = vertices.map(v => {
-        //   return arrayAdd(v, relativePos);
-        // }).flat();
 
 
         const triIndices = [0, 1, 2, 0, 2, 3].map(x => x + offset);

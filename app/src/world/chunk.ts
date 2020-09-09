@@ -26,29 +26,29 @@ export class Chunk {
     faceVectors: Vector3D[],
   }>
 
-
   uid: string;
+  pos: Vector3D;
 
   constructor(
     public chunkPos: Vector2D,
   ) {
     this.uid = this.chunkPos.toString();
-  }
-
-  get pos() {
-    return [this.chunkPos.get(0) * CONFIG.terrain.chunkSize, 0, this.chunkPos.get(1) * CONFIG.terrain.chunkSize];
+    this.pos = new Vector3D([
+      this.chunkPos.get(0) * CONFIG.terrain.chunkSize,
+      0,
+      this.chunkPos.get(1) * CONFIG.terrain.chunkSize
+    ]);
   }
 
   circleIntersect(circlePos: Vector3D, radius: number): boolean {
     const testCords = circlePos.copy();
-    const chunkPosVector = new Vector(this.pos);
 
     // find the closest faces to the circle and set the test cords to them
     for (let i = 0; i < 3; i++) {
-      if (circlePos.get(i) < chunkPosVector.get(i)) {
-        testCords.set(i, chunkPosVector.get(i));
-      } else if (circlePos.get(i) > chunkPosVector.get(i) + CONFIG.terrain.chunkSize) {
-        testCords.set(i, chunkPosVector.get(i) + CONFIG.terrain.chunkSize);
+      if (circlePos.get(i) < this.pos.get(i)) {
+        testCords.set(i, this.pos.get(i));
+      } else if (circlePos.get(i) > this.pos.get(i) + CONFIG.terrain.chunkSize) {
+        testCords.set(i, this.pos.get(i) + CONFIG.terrain.chunkSize);
       }
     }
 
@@ -59,43 +59,45 @@ export class Chunk {
 
   // pass an entity and I'll push it out of me :)
   pushOut(ent: Entity) {
-    const switchDir = (dir: number) => (dir+1) % 2;
 
-    if (!this.visibleCubesFaces) return;
+    const ifCubeExistThenPushOut = (pos: Vector3D) => {
+      pos.data = pos.data.map(Math.floor);
 
-    this.visibleCubesFaces.forEach(({cube, faceVectors}) => {
-      let min = [Infinity];
-      if (!cube.isCollide(ent)) {
-        return;
-      }
+      const cube = this.cubes.get(pos.toString());
 
-      faceVectors.forEach(faceVector => {
-        const i = faceVector.data.reduce((acc, cur, index) => cur !== 0 ? index: acc, -1);
-        const dir = faceVector.get(i) === 1 ? 0 : 1;
-        const p = ent.pos.get(i) + ent.dim[i] * dir;
-        const c = cube.pos.get(i) + cube.dim[i] * switchDir(dir);
-        const dist = Math.abs(c - p);
-        // find the shortest distance (that is best one to move)
-        if (dist < min[0]) {
-          min = [dist, i, dir];
+      if (!cube) return;
+      if (!cube.isCollide(ent)) return;
+
+      ent.pushOut(cube);
+    }
+
+    // check the edges of the ent to see if it is intersecting the cubes
+    for (let x = 0; x < ent.dim[0]; x++) {
+      const centerX = x + .5;
+      for (let y = 0; y < ent.dim[1]; y++) {
+        const centerY = y + .5;
+        for (let z = 0; z < ent.dim[2]; z++) {
+          const centerZ = z + .5;
+          const center = ent.pos.add(new Vector([centerX, centerY, centerZ]));
+
+          // check the unit vectors first
+          for (const vec of Vector.unitVectors3D) {
+            const checkingPos = center.add(vec);
+            ifCubeExistThenPushOut(checkingPos);
+          }
+
+          for (const vec of Vector.edgeVectors3D) {
+            const checkingPos = center.add(vec);
+            ifCubeExistThenPushOut(checkingPos);
+          }
+
+          for (const vec of Vector.cornerVectors3D) {
+            const checkingPos = center.add(vec);
+            ifCubeExistThenPushOut(checkingPos);
+          }
         }
-      });
-      const [_, i, dir] = min;
-
-      // do the "push-out"
-      const moveTo = cube.pos.get(i) + cube.dim[i] * switchDir(dir) - ent.dim[i] * dir;
-      // if (i !== 1) {
-        // console.log(i, moveTo, cube.pos.toString());
-      // }
-      ent.pos.set(i, moveTo);
-
-      // alert the entity that they hit something
-      ent.hit(cube, {
-        side: i,
-        dir: dir as 0 | 1,
-      })
-
-    });
+      }
+    }
   }
 
   containsCube(cube: Cube) {

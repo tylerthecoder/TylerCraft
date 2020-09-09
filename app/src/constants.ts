@@ -6,16 +6,20 @@ export const CONFIG = {
 
   fovFactor: .6,
 
+  glFov: (45 * Math.PI) / 180,
+
   terrain: {
     jagFactor: 32,
     maxHeight: 10,
-    // flatWorld: false,
     chunkSize: 16,
-    cloudLevel: 30,
-    flatWorld: true,
-    trees: false,
-    flowers: false,
     // chunkSize: 4,
+    cloudLevel: 30,
+    // flatWorld: true,
+    flatWorld: false,
+    trees: true,
+    // trees: false,
+    flowers: true,
+    // flowers: false,
   },
 
   gravity: -0.009,

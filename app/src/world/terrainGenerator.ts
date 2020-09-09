@@ -35,7 +35,7 @@ export class TerrainGenerator {
   generateChunk(chunkPos: Vector2D, world: World) {
     const chunk = new Chunk(chunkPos);
 
-    const worldPos = chunk.pos;
+    const worldPos = chunk.pos.data;
 
     for (let i = 0; i < CONFIG.terrain.chunkSize; i++) {
       for (let j = 0; j < CONFIG.terrain.chunkSize; j++) {
@@ -49,7 +49,7 @@ export class TerrainGenerator {
         for (let k = 0; k <= y; k++) {
           const cubePos = [x, k, z];
 
-          const blockType = k === y ? BLOCKS.grass : BLOCKS.stone;
+          const blockType = k === y ? BLOCKS.grass : Random.randomNum() > .9 ? BLOCKS.gold : BLOCKS.stone;
 
           const cube = new Cube(blockType, new Vector3D(cubePos));
           chunk.addCube(cube);

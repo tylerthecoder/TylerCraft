@@ -106,26 +106,20 @@ export abstract class Entity {
     // check to see if my (this) line segment overlaps the entities (ent) line segment
     for (let i = 0; i < 3; i++) {
       if (
-        this.pos.get(i) < ent.pos.get(i) && // ent line is front
-        ent.pos.get(i) > this.pos.get(i) + this.dim[i] // and ent is not contained in my (this) line segment
+        this.pos.get(i) <= ent.pos.get(i) && // ent line is front
+        ent.pos.get(i) >= this.pos.get(i) + this.dim[i] // and ent is not contained in my (this) line segment
       ) {
         // not possible for these to be intersecting since one dimension is too far away
         return false
       }
 
       if (
-        ent.pos.get(i) < this.pos.get(i) && // My (this) line is front
-        this.pos.get(i) > ent.pos.get(i) + ent.dim[i] // and ent is not contained in my (this) line segment
+        ent.pos.get(i) <= this.pos.get(i) && // My (this) line is front
+        this.pos.get(i) >= ent.pos.get(i) + ent.dim[i] // and ent is not contained in my (this) line segment
       ) {
         // not possible for these to be intersecting since one dimension is too far away
         return false
       }
-
-      // distance between one center and the other
-      // const dist = Math.abs((this.pos[i] + this.dim[i] / 2) - (ent.pos[i] + ent.dim[i] /2));
-
-      // if the distance is more than possible then break
-      // if (dist > this.dim[i]/2 + ent.dim[i]/2) return false;
     }
     return true;
   }
@@ -155,7 +149,10 @@ export abstract class Entity {
 
     this.pos.set(i, ent.pos.get(i) + ent.dim[i] * switchDir(dir) - this.dim[i] * dir);
 
-    this.vel[i] = 0;
+    this.hit(ent, {
+      side: i,
+      dir: dir as 0 | 1,
+    })
 
     return {
       side: i,

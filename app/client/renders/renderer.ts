@@ -1,6 +1,7 @@
 import { CanvasProgram, canvas } from "../canvas";
 import { Camera } from "../cameras/camera";
 import { arrayAdd, arraySub } from "../../src/utils";
+import { CONFIG } from "../../src/constants";
 declare var mat4: any;
 
 // Main class that defines how to render objects
@@ -116,7 +117,7 @@ export abstract class Renderer {
     // ratio that matches the display size of the canvas
     // and we only want to see objects between 0.1 units
     // and 100 units away from the camera.
-    const fieldOfView = (45 * Math.PI) / 180; // in radians
+    const fieldOfView = CONFIG.glFov; // in radians
     const aspect = (gl.canvas as HTMLCanvasElement).clientWidth / (gl.canvas as HTMLCanvasElement).clientHeight;
     const zNear = 0.1;
     const zFar = 100.0;
