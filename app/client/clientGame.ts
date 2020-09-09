@@ -12,6 +12,7 @@ import { GameSaver } from "./gameSaver";
 import { BLOCKS } from "../src/blockdata";
 import { ControllerHolder } from "./controllerHolder";
 import { Spectator } from "../src/entities/spectator";
+import { Cube } from "../src/entities/cube";
 
 export class ClientGame extends Game {
   controllers = new ControllerHolder(this);
@@ -21,7 +22,7 @@ export class ClientGame extends Game {
 
   mainPlayer: Player;
   spectator: Spectator;
-  multiPlayer = false;
+  multiPlayer = true;
   camera: Camera;
   socket: SocketHandler;
   selectedBlock: BLOCKS = BLOCKS.stone;
@@ -39,26 +40,8 @@ export class ClientGame extends Game {
     this.load();
   }
 
-  loadHandlers() {
-    window.addEventListener("mousedown", (e: MouseEvent) => {
-      if (document.pointerLockElement !== canvas.canvas) {
-        canvas.canvas.requestPointerLock();
-        return;
-      }
-      this.onClick(e);
-    });
-
-    window.addEventListener("mousemove", (e: MouseEvent) => {
-      if (document.pointerLockElement === canvas.canvas) {
-        this.onMouseMove(e);
-      }
-    });
-  }
-
   async load() {
     await canvas.loadProgram();
-
-    this.loadHandlers();
 
     if (this.multiPlayer) {
       this.socket = new SocketHandler(this);
@@ -71,23 +54,17 @@ export class ClientGame extends Game {
 
     const playerController = new PlayerKeyboardController(this.mainPlayer, this);
     this.controllers.add(playerController);
-    // this.camera = new EntityCamera(this.mainPlayer);
+    this.camera = new EntityCamera(this.mainPlayer);
 
     // load the spectator
-    this.spectator = new Spectator();
-    this.addEntity(this.spectator);
-    this.camera = new EntityCamera(this.spectator);
-    const spectatorController = new PlayerKeyboardController(this.spectator, this);
-    this.controllers.add(spectatorController);
+    // this.spectator = new Spectator();
+    // this.addEntity(this.spectator);
+    // this.camera = new EntityCamera(this.spectator);
+    // const spectatorController = new PlayerKeyboardController(this.spectator, this);
+    // this.controllers.add(spectatorController);
 
     // load the game from server
     // await this.saver.load(this);
-
-    this.clientActionListener = (action: IAction) => {
-      if (action.blockUpdate) {
-        this.worldRenderer.blockUpdate(action.blockUpdate.chunkId)
-      }
-    }
 
     requestAnimationFrame(this.loop.bind(this));
   }
@@ -97,7 +74,7 @@ export class ClientGame extends Game {
 
     this.controllers.update(delta);
     this.update(delta);
-    this.render();
+    this.worldRenderer.render(this);
 
     this.pastDeltas.push(delta);
     this.totTime = time;
@@ -105,16 +82,18 @@ export class ClientGame extends Game {
     requestAnimationFrame(this.loop.bind(this));
   }
 
-  render() {
-    this.worldRenderer.render(this);
-  }
-
   // this will be called by the super class when a new entity is added
   onNewEntity(entity: Entity) {
     this.worldRenderer.addEntity(entity);
   }
 
-  // this will be called by the super class when actions are recieved
+  clientActionListener (action: IAction) {
+    if (action.blockUpdate) {
+      this.worldRenderer.blockUpdate(action.blockUpdate.chunkId)
+    }
+  }
+
+  // this will be called by the super class when actions are received
   onActions(actions: IAction[]) {
     if (this.multiPlayer && actions.length > 0) {
       this.socket.send({
@@ -125,7 +104,7 @@ export class ClientGame extends Game {
   }
 
   onClick(e: MouseEvent) {
-    const data = this.world.lookingAt(this.camera.pos, this.camera.rotCart.data as IDim);
+    const data = this.world.lookingAt(this.camera.pos.data as IDim, this.camera.rotCart.data as IDim);
 
     if (!data) return;
 
@@ -134,16 +113,14 @@ export class ClientGame extends Game {
         type: IActionType.playerPlaceBlock,
         playerPlaceBlock: {
           blockType: this.selectedBlock,
-          entity: data.entity,
-          newCubePos: data.newCubePos.data as IDim,
+          blockPos: data.newCubePos.data as IDim,
         }
       });
     } else if (e.which === 1) { // left click
       this.actions.push({
         type: IActionType.playerRemoveBlock,
         playerRemoveBlock: {
-          entity: data.entity,
-          newCubePos: data.newCubePos.data as IDim,
+          blockPos: (data.entity as Cube).pos.data as IDim,
         }
       });
     }
@@ -171,9 +148,9 @@ export class ClientGame extends Game {
 
   toggleCreative() {
     if (this.mainPlayer.creative) {
-      this.mainPlayer.setSpectator(false);
+      this.mainPlayer.setCreative(false);
     } else {
-      this.mainPlayer.setSpectator(true);
+      this.mainPlayer.setCreative(true);
     }
   }
 

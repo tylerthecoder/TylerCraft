@@ -7,9 +7,9 @@
     "esModuleInterop": true,
     "outDir": "../bin",
     "sourceMap": true,
-    "target": "esnext",
+    "target": "es6",
     "lib": [
-      "esnext"
+      "es2019"
     ]
   },
   "include": [

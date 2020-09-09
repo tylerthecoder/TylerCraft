@@ -20,7 +20,13 @@ export interface ILookingAtData {
 
 export class Chunk {
   cubes: Map<string, Cube> = new Map();
-  visibleFaces: Array<ICubeFace> = [];
+  // this is set by the client
+  visibleCubesFaces: Array<{
+    cube: Cube,
+    faceVectors: Vector3D[],
+  }>
+
+
   uid: string;
 
   constructor(
@@ -51,20 +57,50 @@ export class Chunk {
     return dist <= radius;
   }
 
-  // change this to chunks instead of cubes later
-  isCollide(ent: Entity): Cube[] {
-    const collide: Cube[] = [];
-    for (const cube of this.getCubesItterable()) {
-      if (cube.isCollide(ent)) {
-        collide.push(cube);
+  // pass an entity and I'll push it out of me :)
+  pushOut(ent: Entity) {
+    const switchDir = (dir: number) => (dir+1) % 2;
+
+    if (!this.visibleCubesFaces) return;
+
+    this.visibleCubesFaces.forEach(({cube, faceVectors}) => {
+      let min = [Infinity];
+      if (!cube.isCollide(ent)) {
+        return;
       }
-    }
-    return collide;
+
+      faceVectors.forEach(faceVector => {
+        const i = faceVector.data.reduce((acc, cur, index) => cur !== 0 ? index: acc, -1);
+        const dir = faceVector.get(i) === 1 ? 0 : 1;
+        const p = ent.pos.get(i) + ent.dim[i] * dir;
+        const c = cube.pos.get(i) + cube.dim[i] * switchDir(dir);
+        const dist = Math.abs(c - p);
+        // find the shortest distance (that is best one to move)
+        if (dist < min[0]) {
+          min = [dist, i, dir];
+        }
+      });
+      const [_, i, dir] = min;
+
+      // do the "push-out"
+      const moveTo = cube.pos.get(i) + cube.dim[i] * switchDir(dir) - ent.dim[i] * dir;
+      // if (i !== 1) {
+        // console.log(i, moveTo, cube.pos.toString());
+      // }
+      ent.pos.set(i, moveTo);
+
+      // alert the entity that they hit something
+      ent.hit(cube, {
+        side: i,
+        dir: dir as 0 | 1,
+      })
+
+    });
   }
 
   containsCube(cube: Cube) {
     // scale cubes position by chunk size
-    const scaledPos = cube.pos.map(dim => Math.floor(dim / CONFIG.terrain.chunkSize));
+    const scaledPos = cube.pos.data.map(dim => Math.floor(dim / CONFIG.terrain.chunkSize));
     return scaledPos[0] === this.chunkPos.get(0) && scaledPos[2] === this.chunkPos.get(1);
   }
 
@@ -74,53 +110,62 @@ export class Chunk {
     // [dist, faceVector( a vector, when added to the cubes pos, gives you the pos of a new cube if placed on this block)]
     const defaultBest: [number, IDim, Cube?] = [Infinity, [-1, -1, -1]];
 
-    const newCubePosData = this.visibleFaces.reduce((bestFace, { cube, directionVector }) => {
-      const faceNormal = directionVector.data as IDim;
-      // a vector that is normalized by the cubes dimensions
-      const faceVector = arrayMul(cube.dim, faceNormal.map(n => n === 1 ? 1 : 0) as IDim);
+    const newCubePosData = this.visibleCubesFaces.reduce((bestFace, cubeData) => {
+      const cube = cubeData.cube;
+      cubeData.faceVectors.forEach(directionVector => {
+        const faceNormal = directionVector.data as IDim;
+        // a vector that is normalized by the cubes dimensions
+        const faceVector = arrayMul(cube.dim, faceNormal.map(n => n === 1 ? 1 : 0) as IDim);
 
-      const pointOnFace = arrayAdd(cube.pos, faceVector);
+        const pointOnFace = arrayAdd(cube.pos.data, faceVector);
 
-      // this d is the d in the equation for a plane: ax + by = cz = d
-      const d = arrayDot(faceNormal, pointOnFace);
+        // this d is the d in the equation for a plane: ax + by = cz = d
+        const d = arrayDot(faceNormal, pointOnFace);
 
-      // t is the "time" at which the line intersects the plane, it is used to find the point of intersection
-      const t = (d - arrayDot(faceNormal, cameraPos)) / arrayDot(faceNormal, cameraDir);
+        // t is the "time" at which the line intersects the plane, it is used to find the point of intersection
+        const t = (d - arrayDot(faceNormal, cameraPos)) / arrayDot(faceNormal, cameraDir);
 
-      // This means that the point is behind the camera (don't know why it is negative)
-      if (t > 0) {
-        return bestFace; // exit
-      }
-
-      // now find the point where the line intersections this plane (y = mx + b)
-      const mx = arrayScalarMul(cameraDir, t);
-      const intersection = arrayAdd(mx, cameraPos);
-
-      // we here make the arbutairy decision that the game will have 5 points of persision when rounding
-      const roundedIntersection = intersection.map(num => roundToNPlaces(num, 5)) as IDim;
-
-      if (!firstIntersection) {
-        firstIntersection = roundedIntersection;
-      }
-
-      // check to see if this intersection is within the face (Doing the whole cube for now, will switch to face later)
-      const hit = cube.isPointInsideMe(roundedIntersection);
-
-      if (hit) {
-        // we have determined that the camera is looking at this face, now see if this is the point
-        // closest to the camera
-
-        // get the squared dist so we dont have to do a bunch of sqrt operations
-        const pointDist = Math.abs(arrayDistSquared(cameraPos, roundedIntersection));
-
-        if (pointDist < bestFace[0]) {
-          const newCubePos = arrayAdd(cube.pos, arrayMul(cube.dim, faceNormal));
-          bestFace = [pointDist, newCubePos, cube];
+        // This means that the point is behind the camera (don't know why it is negative)
+        if (t > 0) {
+          return bestFace; // exit
         }
-      }
 
-    return bestFace;
+        // now find the point where the line intersections this plane (y = mx + b)
+        const mx = arrayScalarMul(cameraDir, t);
+        const intersection = arrayAdd(mx, cameraPos);
+
+        // we here make the arbutairy decision that the game will have 5 points of persision when rounding
+        const roundedIntersection = intersection.map(num => roundToNPlaces(num, 5)) as IDim;
+
+        if (!firstIntersection) {
+          firstIntersection = roundedIntersection;
+        }
+
+        // check to see if this intersection is within the face (Doing the whole cube for now, will switch to face later)
+        const hit = cube.isPointInsideMe(roundedIntersection);
+
+        if (hit) {
+          // we have determined that the camera is looking at this face, now see if this is the point
+          // closest to the camera
+
+          // get the squared dist so we dont have to do a bunch of sqrt operations
+          const pointDist = Math.abs(arrayDistSquared(cameraPos, roundedIntersection));
+
+          if (pointDist < bestFace[0]) {
+            const newCubePos = arrayAdd(cube.pos.data, arrayMul(cube.dim, faceNormal)) as IDim;
+            bestFace = [pointDist, newCubePos, cube];
+          }
+        }
+      });
+
+
+      return bestFace
     }, defaultBest)
+
+    // const newCubePosData = this.visibleFaces.reduce((bestFace, { cube, directionVector }) => {
+
+    // return bestFace;
+    // }, defaultBest)
 
     // this means we didn't find a block
     if (newCubePosData[0] === Infinity)  {
@@ -140,22 +185,19 @@ export class Chunk {
     return cube;
   }
 
-  getCubesItterable(): Cube[] {
+  getCubesIterable(): Cube[] {
     return Array.from(this.cubes.values());
   }
 
   addCube(cube: Cube) {
-    const cubeVectorPos = new Vector(cube.pos);
-    this.cubes.set(cubeVectorPos.toString(), cube);
+    this.cubes.set(cube.pos.toString(), cube);
   }
 
-  removeCube(cube: Cube) {
-    const cubeVectorPos = new Vector(cube.pos);
-    this.cubes.delete(cubeVectorPos.toString());
+  removeCube(cubePos: Vector3D) {
+    this.cubes.delete(cubePos.toString());
   }
 
   getBlockUpdateAction(): IAction {
-    console.log("Getting update")
     return {
       type: IActionType.blockUpdate,
       blockUpdate: {

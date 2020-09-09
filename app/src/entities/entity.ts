@@ -1,5 +1,5 @@
 import { IDim, IAction, IActionType } from "../../types";
-import { sphereToCartCords, arrayAdd, arrayMul, arrayCompare } from "../utils";
+import { sphereToCartCords, arrayAdd, arrayMul, arrayCompare, arrayScalarMul } from "../utils";
 import { CONFIG } from "../constants";
 import { Vector3D } from "../utils/vector";
 
@@ -27,7 +27,7 @@ export enum MetaAction {
 export abstract class Entity {
   renderType: RenderType;
 
-  pos: IDim = [0,0,0];
+  pos: Vector3D = new Vector3D([0,0,0]);
   prevVel: IDim = [0,0,0];
   vel: IDim = [0, 0, 0];
   dim: IDim = [1, 1, 1];
@@ -51,7 +51,6 @@ export abstract class Entity {
 
   abstract update(delta: number): void;
   abstract hit(entity: Entity, where: FaceLocater): void;
-  // abstract isPointInsideMe(point: IDim): boolean;
 
 
   setUid(uid: string) {
@@ -60,6 +59,7 @@ export abstract class Entity {
 
   baseUpdate(delta: number) {
     if (this.gravitable) this.gravity();
+    arrayScalarMul(this.vel, delta / 16);
     this.move(this.vel);
   }
 
@@ -72,7 +72,7 @@ export abstract class Entity {
 
   move(p: IDim) {
     for (let i = 0; i < p.length; i++) {
-      this.pos[i] += p[i];
+      this.pos.data[i] += p[i];
     }
   }
 
@@ -105,18 +105,17 @@ export abstract class Entity {
     // loop through each dimension. Consider each edge along that dimension a line segment
     // check to see if my (this) line segment overlaps the entities (ent) line segment
     for (let i = 0; i < 3; i++) {
-
       if (
-        this.pos[i] < ent.pos[i] && // ent line is front
-        ent.pos[i] > this.pos[i] + this.dim[i] // and ent is not contained in my (this) line segment
+        this.pos.get(i) < ent.pos.get(i) && // ent line is front
+        ent.pos.get(i) > this.pos.get(i) + this.dim[i] // and ent is not contained in my (this) line segment
       ) {
         // not possible for these to be intersecting since one dimension is too far away
         return false
       }
 
       if (
-        ent.pos[i] < this.pos[i] && // My (this) line is front
-        this.pos[i] > ent.pos[i] + ent.dim[i] // and ent is not contained in my (this) line segment
+        ent.pos.get(i) < this.pos.get(i) && // My (this) line is front
+        this.pos.get(i) > ent.pos.get(i) + ent.dim[i] // and ent is not contained in my (this) line segment
       ) {
         // not possible for these to be intersecting since one dimension is too far away
         return false
@@ -128,8 +127,6 @@ export abstract class Entity {
       // if the distance is more than possible then break
       // if (dist > this.dim[i]/2 + ent.dim[i]/2) return false;
     }
-    this.baseHit(ent);
-    ent.baseHit(this);
     return true;
   }
 
@@ -144,8 +141,8 @@ export abstract class Entity {
     for (let i = 0; i < 3; i++) {
       for (let dir = 0; dir <= 1; dir ++) {
         // calculate the distance from a face on the player to a face on the ent
-        const p = this.pos[i] + this.dim[i] * dir;
-        const c = ent.pos[i] + ent.dim[i] * switchDir(dir);
+        const p = this.pos.get(i) + this.dim[i] * dir;
+        const c = ent.pos.get(i) + ent.dim[i] * switchDir(dir);
         const dist = Math.abs(c - p);
         // find the shortest distance (that is best one to move)
         if (dist < min[0]) {
@@ -156,7 +153,7 @@ export abstract class Entity {
 
     const [_, i, dir] = min;
 
-    this.pos[i] = ent.pos[i] + ent.dim[i] * switchDir(dir) - this.dim[i] * dir;
+    this.pos.set(i, ent.pos.get(i) + ent.dim[i] * switchDir(dir) - this.dim[i] * dir);
 
     this.vel[i] = 0;
 
@@ -179,7 +176,7 @@ export abstract class Entity {
 
   // Consumes some of the meta-action
   getPlanerActionsFromMetaActions() {
-    // inclue the vertical vel incase they are jumping
+    // include the vertical vel incase they are jumping
     let vel: IDim = [0, this.vel[1], 0];
     let cartVel: IDim;
     const actions: IAction[] = [];
@@ -198,7 +195,7 @@ export abstract class Entity {
     let isMovingUp = false;
 
     this.metaActions.forEach(metaAction => {
-      const baseSpeed = CONFIG.playerSpeed;
+      const baseSpeed = CONFIG.player.speed;
       switch (metaAction) {
         case MetaAction.forward:
           cartVel = sphereToCartCords(-baseSpeed, -this.rot[1], Math.PI / 2);
@@ -242,7 +239,6 @@ export abstract class Entity {
           break;
       }
       const isDifferentVel = !arrayCompare(vel, this.prevVel)
-
 
       this.prevVel = vel.slice(0) as IDim;
 

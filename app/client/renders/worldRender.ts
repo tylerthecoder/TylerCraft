@@ -79,15 +79,14 @@ export default class WorldRenderer {
     }
 
     // loop through all of the chunks that I would be able to see.
-    const cameraPos = new Vector3D(camera.pos);
 
     const cameraXYPos = new Vector2D([
-      cameraPos.get(0),
-      cameraPos.get(2),
+      camera.pos.get(0),
+      camera.pos.get(2),
     ]);
 
     const realRenderDistance = CONFIG.terrain.chunkSize * CONFIG.renderDistance;
-    const cameraChunkPos = this.world.worldPosToChunkPos(cameraPos);
+    const cameraChunkPos = this.world.worldPosToChunkPos(camera.pos);
 
     const cameraRotNorm = camera.rotCart.normalize();
 
@@ -110,7 +109,7 @@ export default class WorldRenderer {
         }
 
         // check if you are facing that right way to see the chunk
-        const diffChunkCamera = cameraPos.sub(chunkWorldPos).normalize();
+        const diffChunkCamera = camera.pos.sub(chunkWorldPos).normalize();
         const dist = diffChunkCamera.distFrom(cameraRotNorm);
 
         if (dist > CONFIG.fovFactor) {

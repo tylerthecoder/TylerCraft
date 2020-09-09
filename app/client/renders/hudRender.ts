@@ -52,8 +52,8 @@ export class HudRenderer extends Renderer {
     )
 
 
-    const camerPos = camera.pos.map(Math.floor).join(",")
-    this.drawText(camerPos, 0, 30);
+    const cameraPos = camera.pos.data.map(Math.floor).join(",")
+    this.drawText(cameraPos, 0, 30);
 
 
     const rotVec = new Vector2D([camera.rot[0], camera.rot[1]]);

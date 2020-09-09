@@ -3,6 +3,7 @@ import { Camera } from "./camera";
 import { IDim } from "../../types";
 import { arrayAdd } from "../../src/utils";
 import { CONFIG } from "../../src/constants";
+import { Vector3D } from "../../src/utils/vector";
 
 export class EntityCamera extends Camera {
   thirdPerson: boolean = false;
@@ -25,11 +26,11 @@ export class EntityCamera extends Camera {
     this.rotCart = this.entity.rotCart;
   }
 
-  lookingAt(entities: Entity[]) {
-    return this.baseLookingAt(entities.filter(entity => entity !== this.entity));
-  }
+  // lookingAt(entities: Entity[]) {
+  //   return this.baseLookingAt(entities.filter(entity => entity !== this.entity));
+  // }
 
-  get pos(): IDim {
+  get pos(): Vector3D {
     let offset: number[] = [];
     if (this.thirdPerson) {
       // offset = [
@@ -45,10 +46,10 @@ export class EntityCamera extends Camera {
     }
 
     // center the camera position
-    offset = arrayAdd(offset, [this.entity.dim[0] / 2, this.entity.dim[1] * (4/5), this.entity.dim[2] / 2]);
+    offset = arrayAdd(offset, [this.entity.dim[0] / 2, this.entity.dim[1] * (9/10), this.entity.dim[2] / 2]);
 
-    return arrayAdd(this.entity.pos, offset) as IDim;
+    return new Vector3D(arrayAdd(this.entity.pos.data, offset));
   }
 
-  set pos(_pos: IDim) {}
+  set pos(_pos: Vector3D) {}
 }

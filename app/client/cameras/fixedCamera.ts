@@ -1,8 +1,9 @@
 import { Camera } from "./camera";
 import { IDim } from "../../types";
+import { Vector3D } from "../../src/utils/vector";
 
 export class FixedCamera extends Camera {
-  constructor(public pos: IDim, public rot: IDim) {
+  constructor(public pos: Vector3D, public rot: IDim) {
     super();
   }
 

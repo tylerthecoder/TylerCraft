@@ -1,11 +1,25 @@
 import { Controller } from "./controller";
 import { ClientGame } from "../clientGame";
 import { BLOCKS } from "../../src/blockdata";
+import { CanvasProgram } from "../canvas";
 
 export class GameController extends Controller {
-  constructor(public controlled: ClientGame) {
+  constructor(public controlled: ClientGame, canvas: CanvasProgram) {
     super();
     this.setKeyListeners();
+    window.addEventListener("mousedown", (e: MouseEvent) => {
+      if (document.pointerLockElement !== canvas.canvas) {
+        canvas.canvas.requestPointerLock();
+        return;
+      }
+      this.controlled.onClick(e);
+    });
+
+    window.addEventListener("mousemove", (e: MouseEvent) => {
+      if (document.pointerLockElement === canvas.canvas) {
+        this.controlled.onMouseMove(e);
+      }
+    });
   }
 
   keysChange() {}

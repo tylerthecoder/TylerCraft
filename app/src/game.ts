@@ -3,8 +3,7 @@ import { World } from "./world/world";
 import { Entity } from "./entities/entity";
 import { IDim, IAction, IActionType } from "../types";
 import { Cube } from "./entities/cube";
-import { BLOCKS } from "./blockdata";
-import { Vector3D } from "./utils/vector";
+import { Vector3D, Vector } from "./utils/vector";
 
 export class Game {
   // TODO: change this to a map from uid to Entity
@@ -12,9 +11,6 @@ export class Game {
   entityListeners: Array<(e: Entity) => void> = [];
 
   actionListener: ((actions: IAction[]) => void) | null;
-
-  // these are just actions that can be handled by the client (related to rendering and such)
-  clientActionListener: ((actions: IAction) => void) | null;
 
   actions: IAction[] = [];
 
@@ -68,14 +64,14 @@ export class Game {
     // move the entities out of the blocks
     for (const entity of this.entities) {
       if (entity.tangible) {
-        const collisions = this.world.isCollide(entity);
-        for (const e of collisions) {
-          entity.pushOut(e);
-        }
+        this.world.pushOut(entity);
 
         for (const e of this.entities) {
           if (e === entity) continue;
-          e.isCollide(entity);
+          const isCollide = e.isCollide(entity);
+          if (isCollide) {
+            entity.pushOut(e);
+          }
         }
       }
 
@@ -94,19 +90,19 @@ export class Game {
     case IActionType.playerPlaceBlock:
       const newCube = new Cube(
         action.playerPlaceBlock.blockType,
-        new Vector3D(action.playerPlaceBlock.newCubePos)
+        new Vector3D(action.playerPlaceBlock.blockPos)
       );
       this.world.addBlock(newCube);
       break;
 
     case IActionType.playerRemoveBlock:
-      this.world.removeBlock(action.playerRemoveBlock.entity as Cube);
+      this.world.removeBlock(new Vector3D(action.playerRemoveBlock.blockPos));
       break;
 
     case IActionType.playerSetPos: {
       const payload = action.playerSetPos;
       const player = this.findEntity(payload.uid) as Player;
-      player.pos = payload.pos;
+      player.pos = new Vector(payload.pos);
       return action.playerSetPos.uid;
     }
 
@@ -158,4 +154,6 @@ export class Game {
   // for the subclasses to override so they can "listen" to events
   onNewEntity(_entity: Entity) {}
   onActions(_actions: IAction[]) {}
+  // these are just actions that can be handled by the client (related to rendering and such)
+  clientActionListener(_action: IAction) {}
 }

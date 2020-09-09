@@ -7,6 +7,8 @@ import { ClientGame } from "./clientGame";
 import { Ball } from "../src/entities/ball";
 import { PlayerSocketController } from "./controllers/playerSocketController";
 import { Entity } from "../src/entities/entity";
+import { Vector3D } from "../src/utils/vector";
+import { IDim } from "../types";
 
 type SocketListener = (message: ISocketMessage) => void;
 
@@ -87,7 +89,7 @@ export class SocketHandler {
   newEntity(payload: NewEntityMessage) {
     this.receivedEntities.add(payload.uid);
     if (payload.type === "ball") {
-      const entity = new Ball(payload.pos, payload.vel);
+      const entity = new Ball(new Vector3D(payload.pos), payload.vel);
       entity.setUid(payload.uid);
       this.client.addEntity(entity);
     }
@@ -105,7 +107,7 @@ export class SocketHandler {
     if (type) {
       const payload: NewEntityMessage = {
         uid: entity.uid,
-        pos: entity.pos,
+        pos: entity.pos.data as IDim,
         vel: entity.vel,
         type
       };

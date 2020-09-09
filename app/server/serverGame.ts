@@ -6,6 +6,7 @@ import { ISocketMessage, NewEntityMessage } from "../types/socket";
 import { Ball } from "../src/entities/ball";
 import { Entity } from "../src/entities/entity";
 import { IDim, IAction } from "../types";
+import { Vector } from "../src/utils/vector";
 
 export class ServerGame extends Game {
   clients: Players;
@@ -82,7 +83,7 @@ export class ServerGame extends Game {
           this.wss.sendGlobal(message, ws);
           const payload = message.payload as NewEntityMessage;
           if (payload.type === "ball") {
-            const ball = new Ball(payload.pos, payload.vel);
+            const ball = new Ball(new Vector(payload.pos), payload.vel);
             ball.setUid(payload.uid);
             this.addEntity(ball);
           }

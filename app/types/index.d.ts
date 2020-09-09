@@ -31,12 +31,10 @@ export interface IAction {
   };
   playerPlaceBlock?: {
     blockType: BLOCKS;
-    newCubePos: IDim;
-    entity: Entity;
+    blockPos: IDim;
   };
   playerRemoveBlock?: {
-    newCubePos: IDim;
-    entity: Entity;
+    blockPos: IDim;
   };
   playerFireball?: {
     uid: string;

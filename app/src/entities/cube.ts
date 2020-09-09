@@ -7,15 +7,12 @@ export class Cube extends Entity {
   gravitable = false;
   tangible = false;
 
-
-
   constructor(
     public type: BLOCKS,
-    _pos: Vector3D,
+    public pos: Vector3D,
     public dim: IDim = [1,1,1],
   ) {
     super();
-    this.pos = _pos.data as IDim;
   }
 
   update(delta: number) {
@@ -30,7 +27,7 @@ export class Cube extends Entity {
   hit(ent: Entity, where: FaceLocater) {}
 
   isPointInsideMe(point: IDim) {
-    return this.pos.every((ord, index) => {
+    return this.pos.data.every((ord, index) => {
       return point[index] >= ord && point[index] <= ord + this.dim[index]
     });
   }

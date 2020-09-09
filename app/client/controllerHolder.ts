@@ -1,13 +1,14 @@
 import { Controller, Controlled } from "./controllers/controller";
 import { GameController } from "./controllers/gameController";
 import { ClientGame } from "./clientGame";
+import { canvas } from "./canvas";
 
 
 export class ControllerHolder {
   controllers: Controller[] = [];
 
   constructor(game: ClientGame) {
-    const gameController = new GameController(game);
+    const gameController = new GameController(game, canvas);
     this.add(gameController);
   }
 

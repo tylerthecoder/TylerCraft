@@ -54,13 +54,11 @@ export class GameSaver {
         console.log("bad");
       }
 
-      for (const block of chunk.getCubesItterable()) {
-        const blockVector = new Vector3D(block.pos);
-
+      for (const block of chunk.getCubesIterable()) {
         // do relative pos to the chunk later
         const blockData: BlockData = {
           t: block.type,
-          p: blockVector.toString(),
+          p: block.pos.toString(),
         }
 
         chunkData.b.push(blockData);

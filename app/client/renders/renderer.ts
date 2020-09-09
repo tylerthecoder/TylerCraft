@@ -137,7 +137,7 @@ export abstract class Renderer {
     mat4.translate(
       modelViewMatrix, // destination matrix
       modelViewMatrix, // matrix to translate
-      arraySub(pos, camera.pos)
+      arraySub(pos, camera.pos.data)
     );
 
     this.bindCube();

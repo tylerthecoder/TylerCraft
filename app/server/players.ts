@@ -3,6 +3,7 @@ import * as wSocket from "ws";
 import { Game } from "../src/game";
 import { Player } from "../src/entities/player";
 import { ISocketMessage, PositionMessage } from "../types/socket";
+import { Vector } from "../src/utils/vector";
 
 export default class Players {
   players: Map<wSocket, Player> = new Map();
@@ -73,7 +74,7 @@ export default class Players {
       case "pos":
         this.wss.sendGlobal(message, ws);
         const payload = message.payload as PositionMessage;
-        this.players.get(ws).pos = payload.pos;
+        this.players.get(ws).pos = new Vector(payload.pos);
         break;
       case "newEntity":
         break;

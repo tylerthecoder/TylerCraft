@@ -14,7 +14,7 @@ export class CubeRenderer extends Renderer {
   }
 
   render(camera: Camera) {
-    this.renderObject(this.entity.pos, camera);
+    this.renderObject(this.entity.pos.data, camera);
   }
 
   private setup() {

@@ -22,7 +22,7 @@ export class Vector<T extends number[] = IDim> {
     [-1, 0],
     [0, 1],
     [0, -1],
-  ].map(d => new Vector(d));
+  ].map(d => new Vector<[number, number]>(d));
 
   static unitVectors2DIn3D = [
     [1, 0, 0],
@@ -56,14 +56,12 @@ export class Vector<T extends number[] = IDim> {
     public data: number[]
   ) { }
 
-  // this might be a very slow function to call so often
-  // maybe memoize the results? Don't know if that actually does anything in javascript
+  str: string;
   toString(): string {
-    return this.data.
-      // combine with commas
-      reduce((acc, cur) => acc + cur + ",", "").
-      // remove last comma
-      slice(0, -1);
+    if (this.str) return this.str;
+    const str = this.data.join(",");
+    this.str = str;
+    return str;
   }
 
   get(index: number): number {

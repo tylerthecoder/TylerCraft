@@ -5,8 +5,8 @@ import {
   KeyPressMessage,
   PositionMessage
 } from "../../types/socket";
-import { IDim } from "../../types";
 import { game } from "../clientGame";
+import { Vector } from "../../src/utils/vector";
 
 export class PlayerSocketController extends Controller {
   constructor(public controlled: Player) {
@@ -24,7 +24,7 @@ export class PlayerSocketController extends Controller {
     } else if (message.type === "pos") {
       const payload = message.payload as PositionMessage;
       if (payload.uid === this.controlled.uid) {
-        this.controlled.pos = payload.pos.slice(0) as IDim;
+        this.controlled.pos = new Vector(payload.pos);
       }
     }
   }

@@ -3,7 +3,7 @@ import { Player } from "../../src/entities/player";
 import { MetaAction, Entity } from "../../src/entities/entity";
 import { SocketHandler } from "../socket";
 import { ClientGame } from "../clientGame";
-import { IActionType } from "../../types";
+import { IActionType, IDim } from "../../types";
 
 export class PlayerKeyboardController extends Controller {
   timer = 0;
@@ -29,7 +29,7 @@ export class PlayerKeyboardController extends Controller {
       type: IActionType.playerSetPos,
       playerSetPos: {
         uid: this.controlled.uid,
-        pos: this.controlled.pos,
+        pos: this.controlled.pos.data as IDim,
       }
     });
   }

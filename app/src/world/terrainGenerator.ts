@@ -17,7 +17,7 @@ export class TerrainGenerator {
   preRenderedChunks: Set<string> = new Set();
 
   addExtraBlock(cube: Cube, world: World) {
-    const chunkPos = world.worldPosToChunkPos(new Vector3D(cube.pos));
+    const chunkPos = world.worldPosToChunkPos(cube.pos);
 
     // this is very strange because we are adding blocks after a chunk as been rendered
     // fixing will take some major engineering
@@ -56,7 +56,7 @@ export class TerrainGenerator {
         }
 
         // add grass
-        if (Random.randomNum() > .99) {
+        if (Random.randomNum() > .99 && CONFIG.terrain.flowers) {
           const cube = new Cube(BLOCKS.redFlower, new Vector3D([x,y+1,z]));
           chunk.addCube(cube);
         }
@@ -73,9 +73,6 @@ export class TerrainGenerator {
 
     return chunk;
   }
-
-
-
 
   // just go through and generate structures for chunks nearby
   preRenderNearbyChunks(chunkPos: Vector2D, world: World) {
@@ -102,7 +99,7 @@ export class TerrainGenerator {
               worldPos.get(2) + l,
             ]);
 
-            if (Random.randomNum() > .99) {
+            if (Random.randomNum() > .99 && CONFIG.terrain.trees) {
               const tree = this.generateTree(blockPos);
               for (const cube of tree) {
                 this.addExtraBlock(cube, world);

@@ -48,18 +48,28 @@ export class ChunkRenderer extends Renderer {
   // have an options to launch this on a worker thread (maybe always have it on a different thread)
   getBufferData(world: World) {
     // console.log("Chunk update");
+    const visibleCubePosMap = new Map<string, {cube: Cube, faceVectors: Vector3D[]}>();
 
-    const visibleCubeFaces: ICubeFace[]= [];
+    const addVisibleFace = (cube: Cube, directionVector: Vector3D) => {
+      let visibleCubePos = visibleCubePosMap.get(cube.pos.toString());
+      if (!visibleCubePos) {
+        visibleCubePos = {
+          cube: cube,
+          faceVectors: []
+        }
+      }
+      visibleCubePos.faceVectors.push(directionVector);
+      visibleCubePosMap.set(cube.pos.toString(), visibleCubePos);
+    }
+
 
     const positions: number[] = []; // used to store positions of vertices
     const indices: number[] = []; // used to store pointers to those vertices
     const textureCords: number[] = [];
     let offset = 0;
-    for (const cube of this.chunk.getCubesItterable()) {
-      const cubePosVector = new Vector3D(cube.pos);
+    for (const cube of this.chunk.getCubesIterable()) {
       const blockData = BLOCK_DATA.get(cube.type);
-      const relativePos = arraySub(cube.pos, this.chunk.pos);
-      const relativePosVec = new Vector3D(relativePos);
+      const relativePos = arraySub(cube.pos.data, this.chunk.pos);
       const texturePos = TextureMapper.getTextureCords(cube.type);
 
       if (blockData.blockType === BlockType.cube) {
@@ -69,17 +79,14 @@ export class ChunkRenderer extends Renderer {
         for (const face of [0, 1, 2, 3, 4, 5]) {
           // check to see if there is a cube touching me on this face
           const directionVector = Vector.unitVectors3D[face];
-          const nearbyCube = this.isCube(cubePosVector.add(directionVector), world);
+          const nearbyCube = this.isCube(cube.pos.add(directionVector), world);
           // skkkkkip
           if (nearbyCube) {
             continue;
           }
 
-          // add the face to the list of visibile faces on the chunk
-          visibleCubeFaces.push({
-            directionVector,
-            cube,
-          });
+          // add the face to the list of visible faces on the chunk
+          addVisibleFace(cube, directionVector);
 
           // get the dimension of the face i.e. x, y, z
           const dim = face >> 1;
@@ -146,7 +153,7 @@ export class ChunkRenderer extends Renderer {
         offset += 8;
       }
     }
-    this.chunk.visibleFaces = visibleCubeFaces;
+    this.chunk.visibleCubesFaces = Array.from(visibleCubePosMap.values());
     this.setBuffers(positions, indices, textureCords);
   }
 }
