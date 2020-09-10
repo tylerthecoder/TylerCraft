@@ -24,30 +24,46 @@ export enum MetaAction {
   fireball,
 }
 
+export interface IEntityData {
+  uid: string;
+  pos: IDim;
+  vel?: IDim;
+  type: "projectile";
+}
+
 export abstract class Entity {
-  renderType: RenderType;
+  // renderType: RenderType;
 
   pos: Vector3D = new Vector3D([0,0,0]);
-  prevVel: IDim = [0,0,0];
-  vel: IDim = [0, 0, 0];
+  // prevVel: IDim = [0,0,0];
+  // vel: IDim = [0, 0, 0];
   dim: IDim = [1, 1, 1];
-  rot: IDim = [0, 0, 0];
+  // rot: IDim = [0, 0, 0];
   // the cartesian form of the vector
-  rotCart: Vector3D = new Vector3D(this.rot).toCartesianCoords();
+  // rotCart: Vector3D = new Vector3D(this.rot).toCartesianCoords();
 
-  gravitable = true;
+  // gravitable = true;
   tangible = true;
 
   prevMetaActions = new Set<MetaAction>();
   metaActions = new Set<MetaAction>();
 
-  onGround = false;
+  // onGround = false;
 
   uid = "";
 
-  jumpCount = 0;
+  // jumpCount = 0;
 
   constructor() { }
+
+  public serialize(): IEntityData {
+    return {
+      uid: this.uid,
+      pos: this.pos.data as IDim,
+      // change this when we have another entity type that we need to send
+      type: "projectile",
+    }
+  }
 
   abstract update(delta: number): void;
   abstract hit(entity: Entity, where: FaceLocater): void;
@@ -57,49 +73,49 @@ export abstract class Entity {
     this.uid = uid;
   }
 
-  baseUpdate(delta: number) {
-    if (this.gravitable) this.gravity();
-    arrayScalarMul(this.vel, delta / 16);
-    this.move(this.vel);
-  }
+  // baseUpdate(delta: number) {
+  //   if (this.gravitable) this.gravity();
+  //   arrayScalarMul(this.vel, delta / 16);
+  //   this.move(this.vel);
+  // }
 
-  baseHit(entity: Entity) {
-    if (this.tangible) {
-      const where = this.pushOut(entity);
-      this.hit(entity, where);
-    }
-  }
+  // baseHit(entity: Entity) {
+  //   if (this.tangible) {
+  //     const where = this.pushOut(entity);
+  //     this.hit(entity, where);
+  //   }
+  // }
 
-  move(p: IDim) {
-    for (let i = 0; i < p.length; i++) {
-      this.pos.data[i] += p[i];
-    }
-  }
+  // move(p: IDim) {
+  //   for (let i = 0; i < p.length; i++) {
+  //     this.pos.data[i] += p[i];
+  //   }
+  // }
 
-  applyForce(f: IDim) {
-    for (let i = 0; i < f.length; i++) {
-      this.vel[i] += f[i];
-    }
-  }
+  // applyForce(f: IDim) {
+  //   for (let i = 0; i < f.length; i++) {
+  //     this.vel[i] += f[i];
+  //   }
+  // }
 
-  rotate(r: number[]) {
-    for (let i = 0; i < r.length; i++) {
-      this.rot[i] += r[i];
-    }
+  // rotate(r: number[]) {
+  //   for (let i = 0; i < r.length; i++) {
+  //     this.rot[i] += r[i];
+  //   }
 
-    // bound the rot to ([0, pi], [0, 2 * pi])
-    if (this.rot[0] < 0) this.rot[0] = 0;
-    if (this.rot[0] > Math.PI) this.rot[0] = Math.PI;
-    if (this.rot[1] < 0) this.rot[1] = this.rot[1] + 2 * Math.PI;
-    if (this.rot[1] > 2 * Math.PI) this.rot[1] = this.rot[1] - 2 * Math.PI;
+  //   // bound the rot to ([0, pi], [0, 2 * pi])
+  //   if (this.rot[0] < 0) this.rot[0] = 0;
+  //   if (this.rot[0] > Math.PI) this.rot[0] = Math.PI;
+  //   if (this.rot[1] < 0) this.rot[1] = this.rot[1] + 2 * Math.PI;
+  //   if (this.rot[1] > 2 * Math.PI) this.rot[1] = this.rot[1] - 2 * Math.PI;
 
-    // idk where this equation comes from. Need to look into why this is
-    this.rotCart = new Vector3D(arrayMul(sphereToCartCords(1, this.rot[1], this.rot[0]), [-1, 1, 1]))
-  }
+  //   // idk where this equation comes from. Need to look into why this is
+  //   this.rotCart = new Vector3D(arrayMul(sphereToCartCords(1, this.rot[1], this.rot[0]), [-1, 1, 1]))
+  // }
 
-  gravity() {
-    this.applyForce([0, CONFIG.gravity, 0]);
-  }
+  // gravity() {
+  //   this.applyForce([0, CONFIG.gravity, 0]);
+  // }
 
   isCollide(ent: Entity) {
     // loop through each dimension. Consider each edge along that dimension a line segment
@@ -160,100 +176,65 @@ export abstract class Entity {
     };
   }
 
-  jump() {
-    if (this.jumpCount < 5) {
-      this.vel[1] = CONFIG.player.jumpSpeed;
-      this.jumpCount++;
-    }
-  }
+  // jump() {
+  //   if (this.jumpCount < 5) {
+  //     this.vel[1] = CONFIG.player.jumpSpeed;
+  //     this.jumpCount++;
+  //   }
+  // }
 
   getActions(): IAction[] {
     return [];
   }
 
-  // Consumes some of the meta-action
-  getPlanerActionsFromMetaActions() {
-    // include the vertical vel incase they are jumping
-    let vel: IDim = [0, this.vel[1], 0];
-    let cartVel: IDim;
-    const actions: IAction[] = [];
+  // getWasdVel() {
+  //   for (const metaAction of this.metaActions) {
+  //     const baseSpeed = CONFIG.player.speed;
+  //     switch (metaAction) {
+  //       case MetaAction.forward:
+  //         return new Vector3D([
+  //           -baseSpeed, -this.rot[1], Math.PI / 2
+  //         ]).toCartesianCoords();
+  //       case MetaAction.backward:
+  //         return new Vector3D([
+  //           baseSpeed, -this.rot[1], Math.PI / 2
+  //         ]).toCartesianCoords();
+  //       case MetaAction.left:
+  //         return new Vector3D([
+  //           baseSpeed, -this.rot[1] - Math.PI / 2, Math.PI / 2
+  //         ]).toCartesianCoords();
+  //       case MetaAction.right:
+  //         return new Vector3D([
+  //           baseSpeed, -this.rot[1] + Math.PI / 2, Math.PI / 2
+  //         ]).toCartesianCoords();
+  //     }
+  //   }
+  //   return new Vector3D([0,0,0]);
+  // }
 
-    if (this.prevMetaActions.size > 0 && this.metaActions.size === 0) {
-      actions.push({
-        type: IActionType.setEntVel,
-        setEntVel: {
-          uid: this.uid,
-          vel,
-        }
-      });
-    }
-    this.prevMetaActions = new Set(this.metaActions);
+  // getVerticalVel() {
+  //   for (const metaAction of this.metaActions) {
+  //     const baseSpeed = CONFIG.player.speed;
+  //     switch (metaAction) {
+  //       case MetaAction.up:
+  //         return new Vector3D([0,baseSpeed, 0]);
+  //       case MetaAction.down:
+  //         return new Vector3D([0,-baseSpeed, 0]);
+  //     }
+  //   }
 
-    let isMovingUp = false;
+  //   return new Vector3D([0,0,0]);
+  // }
 
-    this.metaActions.forEach(metaAction => {
-      const baseSpeed = CONFIG.player.speed;
-      switch (metaAction) {
-        case MetaAction.forward:
-          cartVel = sphereToCartCords(-baseSpeed, -this.rot[1], Math.PI / 2);
-          vel = arrayAdd(vel, cartVel);
-          break;
-        case MetaAction.backward:
-          cartVel = sphereToCartCords(baseSpeed, -this.rot[1], Math.PI / 2);
-          vel = arrayAdd(vel, cartVel);
-          break;
-        case MetaAction.left:
-          cartVel = sphereToCartCords(baseSpeed, -this.rot[1] - Math.PI / 2, Math.PI / 2);
-          vel = arrayAdd(vel, cartVel);
-          break;
-        case MetaAction.right:
-          cartVel = sphereToCartCords(baseSpeed, -this.rot[1] + Math.PI / 2, Math.PI / 2);
-          vel = arrayAdd(vel, cartVel);
-          break;
-        case MetaAction.up:
-          isMovingUp = true;
-          vel[1] = baseSpeed;
-          break;
-        case MetaAction.down:
-          isMovingUp = true;
-          vel[1] = -baseSpeed;
-          break;
-        case MetaAction.jump:
-          actions.push({
-            type: IActionType.playerJump,
-            playerJump: {
-              uid: this.uid
-            }
-          });
-          break;
-        case MetaAction.fireball:
-          actions.push({
-            type: IActionType.playerFireball,
-            playerFireball: {
-              uid: this.uid
-            }
-          });
-          break;
-      }
-      const isDifferentVel = !arrayCompare(vel, this.prevVel)
-
-      this.prevVel = vel.slice(0) as IDim;
-
-      if (isDifferentVel) {
-        actions.push({
-          type: IActionType.setEntVel,
-          setEntVel: {
-            vel,
-            uid: this.uid
-          }
-        })
-      }
-    });
-
-      // if we are a spectator and we aren't pressing anything, set vert vel to 0
-      if (!isMovingUp && !this.gravitable) {
-        vel[1] = 0;
-      }
-    return actions;
-  }
+  // getJumpAction(): IAction {
+  //   if (this.metaActions.has(MetaAction.jump)) {
+  //     return {
+  //       type: IActionType.playerJump,
+  //       playerJump: {
+  //         uid: this.uid,
+  //       }
+  //     }
+  //   }
+  //   return null;
+  // }
 }

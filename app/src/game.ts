@@ -5,6 +5,7 @@ import { IDim, IAction, IActionType } from "../types";
 import { Cube } from "./entities/cube";
 import { Vector3D, Vector } from "./utils/vector";
 import { Projectile } from "./entities/projectile";
+import { MovableEntity } from "./entities/moveableEntity";
 
 export class Game {
   // TODO: change this to a map from uid to Entity
@@ -88,11 +89,19 @@ export class Game {
       return action.playerJump.uid;
     }
 
+    case IActionType.addEntity: {
+      const {ent} = action.addEntity;
+      if (ent.type === "projectile") {
+        this.addEntity(Projectile.deserialize(ent));
+      }
+      return;
+    }
+
     case IActionType.removeEntity: {
       const payload = action.removeEntity;
       const entity = this.findEntity(payload.uid);
       if (!entity) return;
-      this.removeEntity(entity);
+      this.removeEntity(entity.uid);
       return;
     }
 
@@ -117,7 +126,7 @@ export class Game {
 
     case IActionType.setEntVel: {
       const payload = action.setEntVel;
-      const entity = this.findEntity(payload.uid);
+      const entity = this.findEntity(payload.uid) as MovableEntity;
       if (!entity) return;
       entity.vel = payload.vel;
       return payload.uid;
@@ -137,33 +146,31 @@ export class Game {
   }
 
   addPlayer(realness: boolean, uid?: string): Player {
-    const newPlayer = new Player(this, realness);
+    const newPlayer = new Player(realness);
     if (uid) newPlayer.setUid(uid);
     this.addEntity(newPlayer);
     return newPlayer;
   }
 
   addEntity(entity: Entity) {
-    console.log("Adding Ent", entity)
     this.entities.push(entity);
     this.onNewEntity(entity);
-    // this.entityListeners.forEach(func => func(entity));
   }
 
   findEntity(uid: string) {
     return this.entities.find(ent => ent.uid === uid);
   }
 
-  removeEntity(entity: Entity) {
-    this.onRemoveEntity(entity);
+  removeEntity(uid: string) {
+    this.onRemoveEntity(uid);
     this.entities = this.entities.filter(e => {
-      return e !== entity;
+      return e.uid !== uid;
     });
   }
 
   // for the subclasses to override so they can "listen" to events
   onNewEntity(_entity: Entity) {}
-  onRemoveEntity(_entity: Entity) {}
+  onRemoveEntity(uid: string) {}
   onActions(_actions: IAction[]) {}
   // these are just actions that can be handled by the client (related to rendering and such)
   clientActionListener(_action: IAction) {}

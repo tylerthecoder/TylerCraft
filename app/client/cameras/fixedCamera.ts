@@ -1,5 +1,5 @@
 import { Camera } from "./camera";
-import { IDim } from "../../types";
+import { IAction, IDim } from "../../types";
 import { Vector3D } from "../../src/utils/vector";
 
 export class FixedCamera extends Camera {
@@ -12,11 +12,5 @@ export class FixedCamera extends Camera {
     const dx = e.movementX * speed;
     const dy = e.movementY * speed;
     this.rotate([-dy, dx, 0]);
-  }
-
-  getActions() {
-    const actions = [];
-    actions.push(...this.getPlanerActionsFromMetaActions());
-    return actions;
   }
 }

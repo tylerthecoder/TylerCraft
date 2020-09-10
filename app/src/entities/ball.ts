@@ -1,8 +1,9 @@
 import { Entity, RenderType, FaceLocater } from "./entity";
 import { IDim } from "../../types";
 import { Vector3D } from "../utils/vector";
+import { MovableEntity } from "./moveableEntity";
 
-export class Ball extends Entity {
+export class Ball extends MovableEntity {
   radius = 1;
 
   // gravitable = false;

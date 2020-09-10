@@ -1,11 +1,12 @@
-import { Entity, RenderType, FaceLocater } from "./entity";
+import { Entity, RenderType, FaceLocater, MetaAction } from "./entity";
 import { arrayAdd, arrayScalarMul} from "../utils";
 import { Game } from "../game";
-import { IDim, IAction } from "../../types";
+import { IDim, IAction, IActionType } from "../../types";
 import { Vector, Vector3D } from "../utils/vector";
 import { Projectile } from "./projectile";
+import { MovableEntity } from "./moveableEntity";
 
-export class Player extends Entity {
+export class Player extends MovableEntity {
   // Entity overrides
   pos: Vector3D = new Vector3D([0, 5, 0]);
   dim: IDim = [1, 2, 1];
@@ -15,19 +16,52 @@ export class Player extends Entity {
   // Player Member Variables
   thirdPerson = false;
   onGround = false;
-  canFire = true;
+
   jumpCount = 0;
+
+  actions: IAction[] = [];
+
+  fire = {
+    count: 0,
+    holding: false,
+    coolDown: 10,
+  }
 
   creative = false;
 
-  constructor(public game: Game, public isReal: boolean) {
+  constructor(public isReal: boolean) {
     super();
 
     this.setCreative(false);
   }
 
   getActions(): IAction[] {
-    return this.getPlanerActionsFromMetaActions();
+    const actions = this.actions
+
+    const totVel = this.getWasdVel();
+
+    if (this.creative) {
+      totVel.addTo(this.getVerticalVel());
+    } else {
+      totVel.set(1, this.vel[1]);
+      const jumpAction = this.getJumpAction();
+      if (jumpAction) {
+        this.actions.push(jumpAction);
+      }
+    }
+
+    if (!totVel.equals(new Vector(this.vel))) {
+      actions.push( {
+        type: IActionType.setEntVel,
+        setEntVel: {
+          vel: totVel.data as IDim,
+          uid: this.uid,
+        }
+      })
+    }
+
+    this.actions = [];
+    return actions;
   }
 
   setCreative(val: boolean) {
@@ -37,6 +71,7 @@ export class Player extends Entity {
 
   update(delta: number) {
     this.onGround = false;
+    if (this.fire.count > 0 && !this.fire.holding) this.fire.count--;
     this.baseUpdate(delta);
   }
 
@@ -49,12 +84,19 @@ export class Player extends Entity {
   }
 
   fireball() {
-    if (this.canFire && this.isReal) {
-      const vel = this.rotCart.scalarMultiply(-.4).data as IDim;
-      const pos = arrayAdd(arrayAdd(this.pos.data, arrayScalarMul(vel, 4)), [.5,2,.5]) as IDim;
-      const ball = new Projectile(new Vector(pos), vel);
-      this.game.addEntity(ball);
-      this.canFire = false;
-    }
+    if (this.fire.count > 0) return;
+
+    const vel = this.rotCart.scalarMultiply(-.4).data as IDim;
+    const pos = arrayAdd(arrayAdd(this.pos.data, arrayScalarMul(vel, 4)), [.5,2,.5]) as IDim;
+    const ball = new Projectile(new Vector(pos), vel);
+
+    this.actions.push({
+      type: IActionType.addEntity,
+      addEntity: {
+        ent: ball.serialize(),
+      }
+    });
+
+    this.fire.count = this.fire.coolDown;
   }
 }

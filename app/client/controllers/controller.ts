@@ -45,24 +45,4 @@ export abstract class Controller {
     this.ifHasKeyThenAddMeta("d", MetaAction.right);
     this.ifHasKeyThenAddMeta("a", MetaAction.left);
   }
-
-  playerKeys() {
-    if (!(this.controlled instanceof Player)) return;
-    const player = this.controlled as Player;
-
-    if (this.keys.has(" ")) {
-      player.jump();
-    }
-
-    if (this.keys.has("f")) {
-      player.fireball();
-    } else {
-      player.canFire = true;
-    }
-  }
-
-  qeKeys() {
-    this.ifHasKeyThenAddMeta(" ", MetaAction.up);
-    this.ifHasKeyThenAddMeta("shift", MetaAction.down);
-  }
 }

@@ -58,7 +58,7 @@ export default class Players {
     this.wss.sendGlobal(playerLeaveMessage, ws);
 
     // FINISH THEM!
-    this.game.removeEntity(this.players.get(ws));
+    this.game.removeEntity(this.players.get(ws).uid);
     this.players.delete(ws);
 
     console.log(`${this.game.players.length} players`);

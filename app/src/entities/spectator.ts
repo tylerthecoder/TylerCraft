@@ -1,10 +1,11 @@
 import { Entity, FaceLocater } from "./entity";
 import { Game } from "../game";
-import { IDim, IAction } from "../../types";
+import { IDim, IAction, IActionType } from "../../types";
 import Random from "../utils/random";
 import { Vector } from "../utils/vector";
+import { MovableEntity } from "./moveableEntity";
 
-export class Spectator extends Entity {
+export class Spectator extends MovableEntity {
   // Entity overrides
   pos = new Vector([0, 5, 0]);
   dim: IDim = [1, 2, 1];
@@ -18,7 +19,23 @@ export class Spectator extends Entity {
   }
 
   getActions(): IAction[] {
-    const actions = this.getPlanerActionsFromMetaActions();
+    const actions: IAction[] = [];
+
+    const wasdVel = this.getWasdVel();
+    const vertVel = this.getVerticalVel();
+
+    const totVel = wasdVel.add(vertVel);
+
+    if (!totVel.equals(new Vector(this.vel))) {
+      actions.push( {
+        type: IActionType.setEntVel,
+        setEntVel: {
+          vel: totVel.data as IDim,
+          uid: this.uid,
+        }
+      })
+    }
+
     return actions;
   }
 

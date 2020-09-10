@@ -1,4 +1,4 @@
-import { Entity } from "../src/entities/entity";
+import { Entity, IEntityData } from "../src/entities/entity";
 import { BLOCKS } from "../src/blockdata";
 
 export type IDim = [number, number, number];
@@ -12,6 +12,7 @@ export const enum IActionType {
   playerFireball,
   playerSetPos,
   blockUpdate,
+  addEntity,
   removeEntity,
 }
 
@@ -49,6 +50,9 @@ export interface IAction {
   blockUpdate?: {
     chunkId: string;
   };
+  addEntity?: {
+    ent: IEntityData,
+  }
   removeEntity?: {
     uid: string;
   }

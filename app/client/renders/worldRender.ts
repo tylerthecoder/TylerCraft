@@ -10,6 +10,10 @@ import { SphereRenderer } from "./sphereRender";
 import { CONFIG } from "../../src/constants";
 import { Vector2D, Vector3D } from "../../src/utils/vector";
 import { Camera } from "../cameras/camera";
+import { Cube } from "../../src/entities/cube";
+import { Player } from "../../src/entities/player";
+import { Projectile } from "../../src/entities/projectile";
+import { Ball } from "../../src/entities/ball";
 
 export default class WorldRenderer {
   private renderers: Renderer[] = [];
@@ -32,17 +36,23 @@ export default class WorldRenderer {
   }
 
   addEntity(entity: Entity) {
-    if (entity.renderType === RenderType.CUBE) {
+    if (
+      entity instanceof Cube ||
+      entity instanceof Player ||
+      entity instanceof Projectile
+    ) {
       const renderer = new CubeRenderer(entity);
       this.entityRenderers.set(entity.uid, renderer);
-    } else if (entity.renderType === RenderType.SPHERE) {
+    } else if (
+      entity instanceof Ball
+    ) {
       const renderer = new SphereRenderer(entity);
       this.entityRenderers.set(entity.uid, renderer);
     }
   }
 
-  removeEntity(entity: Entity) {
-    this.entityRenderers.delete(entity.uid);
+  removeEntity(uid: string) {
+    this.entityRenderers.delete(uid);
   }
 
   renderChunk(chunkPos: Vector2D, camera: Camera) {

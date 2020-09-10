@@ -89,8 +89,8 @@ export class ClientGame extends Game {
     this.worldRenderer.addEntity(entity);
   }
 
-  onRemoveEntity(entity: Entity) {
-    this.worldRenderer.removeEntity(entity);
+  onRemoveEntity(uid: string) {
+    this.worldRenderer.removeEntity(uid);
   }
 
   clientActionListener (action: IAction) {
@@ -139,7 +139,7 @@ export class ClientGame extends Game {
   removeEntityFromGame(uid: string) {
     const entity = this.findEntity(uid);
     this.controllers.remove(entity);
-    this.removeEntity(entity);
+    this.removeEntity(uid);
   }
 
   toggleThirdPerson() {

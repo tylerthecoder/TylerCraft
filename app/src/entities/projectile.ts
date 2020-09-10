@@ -1,14 +1,24 @@
-import { Entity, FaceLocater, RenderType } from "./entity";
+import { Entity, FaceLocater, IEntityData, RenderType } from "./entity";
 import { IAction, IActionType, IDim } from "../../types";
 import { Vector3D } from "../utils/vector";
 import { Cube } from "./cube";
 import Random from "../utils/random";
+import { MovableEntity } from "./moveableEntity";
 
-export class Projectile extends Entity {
+export class Projectile extends MovableEntity {
   gravitable = false;
   renderType = RenderType.CUBE;
 
   private actions: IAction[] = [];
+
+  static deserialize(data: IEntityData): Entity {
+    const ent = new Projectile(
+      new Vector3D(data.pos),
+      data.vel,
+    )
+
+    return ent;
+  }
 
   constructor(
     public pos: Vector3D,

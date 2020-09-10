@@ -91,6 +91,13 @@ export class Vector<T extends number[] = IDim> {
     return str;
   }
 
+  equals(vec: Vector<T>): boolean {
+    for (let i = 0; i < this.data.length; i++) {
+      if (this.data[i] !== vec.get(i)) return false;
+    }
+    return true;
+  }
+
   get(index: number): number {
     return this.data[index];
   }

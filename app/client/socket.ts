@@ -58,7 +58,7 @@ export class SocketHandler {
           this.addOtherPlayer(obj.payload.uid);
           break;
         case "player-leave":
-          // this.client.removeEntity(obj.payload.uid);
+          this.client.removeEntity(obj.payload.uid);
           break;
         case "new-entity":
           this.newEntity(obj.payload as NewEntityMessage);
@@ -92,30 +92,6 @@ export class SocketHandler {
       const entity = new Ball(new Vector3D(payload.pos), payload.vel);
       entity.setUid(payload.uid);
       this.client.addEntity(entity);
-    }
-  }
-
-  sendEntity(entity: Entity) {
-    // we were given him, don't play telephone
-    if (this.receivedEntities.has(entity.uid)) return;
-
-    let type = "";
-    if (entity instanceof Ball) {
-      type = "ball";
-    }
-
-    if (type) {
-      const payload: NewEntityMessage = {
-        uid: entity.uid,
-        pos: entity.pos.data as IDim,
-        vel: entity.vel,
-        type
-      };
-      const message = {
-        type: "new-entity",
-        payload
-      };
-      this.send(message);
     }
   }
 }

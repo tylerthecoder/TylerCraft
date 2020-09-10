@@ -1,7 +1,6 @@
 import { Controller } from "./controller";
 import { Player } from "../../src/entities/player";
 import { MetaAction, Entity } from "../../src/entities/entity";
-import { SocketHandler } from "../socket";
 import { ClientGame } from "../clientGame";
 import { IActionType, IDim } from "../../types";
 
@@ -39,16 +38,19 @@ export class PlayerKeyboardController extends Controller {
   update(delta: number) {
     this.wasdKeys(delta);
     if (this.controlled instanceof Player) {
-      this.ifHasKeyThenAddMeta("f", MetaAction.fireball);
+      const player = this.controlled;
+
+      // the player is "holding" when the key is pressed
+      player.fire.holding = this.keys.has("f");
 
       if (this.keys.has("f")) {
-        this.controlled.metaActions.add(MetaAction.fireball);
-      } else {
-        this.controlled.canFire = true;
+        player.fireball();
       }
 
+
       if (this.controlled.creative) {
-        this.qeKeys();
+        this.ifHasKeyThenAddMeta(" ", MetaAction.up);
+        this.ifHasKeyThenAddMeta("shift", MetaAction.down);
       } else {
         this.ifHasKeyThenAddMeta(" ", MetaAction.jump);
       }
@@ -63,7 +65,8 @@ export class PlayerKeyboardController extends Controller {
         }
       }
     } else {
-      this.qeKeys();
+      this.ifHasKeyThenAddMeta(" ", MetaAction.up);
+      this.ifHasKeyThenAddMeta("shift", MetaAction.down);
     }
 
   }

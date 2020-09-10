@@ -4,6 +4,7 @@ import { IDim } from "../../types";
 import { arrayAdd } from "../../src/utils";
 import { CONFIG } from "../../src/constants";
 import { Vector3D } from "../../src/utils/vector";
+import { MovableEntity } from "../../src/entities/moveableEntity";
 
 export class EntityCamera extends Camera {
   thirdPerson: boolean = false;
@@ -11,7 +12,7 @@ export class EntityCamera extends Camera {
   offset: IDim = [0, 0, 0];
   rot: IDim;
 
-  constructor(public entity: Entity) {
+  constructor(public entity: MovableEntity) {
     super();
     this.rot = entity.rot.slice(0) as IDim;
   }

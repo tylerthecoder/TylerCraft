@@ -15,7 +15,7 @@ export class Cube extends Entity {
   }
 
   update(delta: number) {
-    this.baseUpdate(delta);
+    // this.baseUpdate(delta);
   }
 
   hit(ent: Entity, where: FaceLocater) {}
