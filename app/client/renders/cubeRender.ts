@@ -1,15 +1,14 @@
 import { Renderer } from "./renderer";
-import { canvas } from "../canvas";
 import { Camera } from "../cameras/camera";
 import { Entity } from "../../src/entities/entity";
 import { arrayMul, arrayAdd, arrayScalarMul } from "../../src/utils";
+import TextureMapper from "../textureMapper";
+import { canvas } from "../canvas";
 
 export class CubeRenderer extends Renderer {
   constructor(public entity: Entity) {
     super();
-
-    this.setActiveTexture(canvas.textures.player);
-
+    this.setActiveTexture(canvas.textures.textureAtlas);
     this.setup();
   }
 
@@ -20,14 +19,7 @@ export class CubeRenderer extends Renderer {
   private setup() {
     const base = [0, 1, 2, 0, 2, 3];
     const facesToRender = [0, 1, 2, 3, 4, 5];
-    const textureCords = [
-      [0, 1, 0, 0, 1, 0, 1, 1], // front
-      [0, 1, 0, 0, 1, 0, 1, 1], // back
-      [0, 0, 1, 0, 1, 1, 0, 1], // top
-      [0, 0, 1, 0, 1, 1, 0, 1], // bottom
-      [1, 1, 0, 1, 0, 0, 1, 0], // right
-      [1, 1, 0, 1, 0, 0, 1, 0] // left
-    ].flat();
+    const textureCords = TextureMapper.getTextureCordsEntity(this.entity).flat();
 
     const positions = [];
     const indices = [];

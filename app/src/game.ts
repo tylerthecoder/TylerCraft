@@ -4,6 +4,7 @@ import { Entity } from "./entities/entity";
 import { IDim, IAction, IActionType } from "../types";
 import { Cube } from "./entities/cube";
 import { Vector3D, Vector } from "./utils/vector";
+import { Projectile } from "./entities/projectile";
 
 export class Game {
   // TODO: change this to a map from uid to Entity
@@ -87,6 +88,14 @@ export class Game {
       return action.playerJump.uid;
     }
 
+    case IActionType.removeEntity: {
+      const payload = action.removeEntity;
+      const entity = this.findEntity(payload.uid);
+      if (!entity) return;
+      this.removeEntity(entity);
+      return;
+    }
+
     case IActionType.playerPlaceBlock:
       const newCube = new Cube(
         action.playerPlaceBlock.blockType,
@@ -95,8 +104,8 @@ export class Game {
       this.world.addBlock(newCube);
       break;
 
-    case IActionType.playerRemoveBlock:
-      this.world.removeBlock(new Vector3D(action.playerRemoveBlock.blockPos));
+    case IActionType.removeBlock:
+      this.world.removeBlock(new Vector3D(action.removeBlock.blockPos));
       break;
 
     case IActionType.playerSetPos: {
@@ -109,10 +118,10 @@ export class Game {
     case IActionType.setEntVel: {
       const payload = action.setEntVel;
       const entity = this.findEntity(payload.uid);
+      if (!entity) return;
       entity.vel = payload.vel;
       return payload.uid;
     }
-
 
     case IActionType.playerFireball:
       const player = this.findEntity(action.playerFireball.uid) as Player;
@@ -146,6 +155,7 @@ export class Game {
   }
 
   removeEntity(entity: Entity) {
+    this.onRemoveEntity(entity);
     this.entities = this.entities.filter(e => {
       return e !== entity;
     });
@@ -153,6 +163,7 @@ export class Game {
 
   // for the subclasses to override so they can "listen" to events
   onNewEntity(_entity: Entity) {}
+  onRemoveEntity(_entity: Entity) {}
   onActions(_actions: IAction[]) {}
   // these are just actions that can be handled by the client (related to rendering and such)
   clientActionListener(_action: IAction) {}

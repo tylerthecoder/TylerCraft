@@ -14,20 +14,20 @@ export const CONFIG = {
     chunkSize: 16,
     // chunkSize: 4,
     cloudLevel: 30,
-    // flatWorld: true,
-    flatWorld: false,
-    trees: true,
-    // trees: false,
-    flowers: true,
-    // flowers: false,
+    flatWorld: true,
+    // flatWorld: false,
+    // trees: true,
+    trees: false,
+    // flowers: true,
+    flowers: false,
   },
 
-  gravity: -0.009,
+  gravity: -0.013,
 
   player: {
     speed: .2,
     reach: 10,
-    jumpSpeed: 0.14,
+    jumpSpeed: 0.16,
     rotSpeed: 0.002,
   }
 };

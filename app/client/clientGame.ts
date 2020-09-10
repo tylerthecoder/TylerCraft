@@ -26,6 +26,7 @@ export class ClientGame extends Game {
   camera: Camera;
   socket: SocketHandler;
   selectedBlock: BLOCKS = BLOCKS.stone;
+  numOfBlocks = 7;
 
   totTime = 0;
   pastDeltas: number[] = [];
@@ -62,6 +63,7 @@ export class ClientGame extends Game {
     // this.camera = new EntityCamera(this.spectator);
     // const spectatorController = new PlayerKeyboardController(this.spectator, this);
     // this.controllers.add(spectatorController);
+    // this.worldRenderer.shouldRenderMainPlayer = true;
 
     // load the game from server
     // await this.saver.load(this);
@@ -85,6 +87,10 @@ export class ClientGame extends Game {
   // this will be called by the super class when a new entity is added
   onNewEntity(entity: Entity) {
     this.worldRenderer.addEntity(entity);
+  }
+
+  onRemoveEntity(entity: Entity) {
+    this.worldRenderer.removeEntity(entity);
   }
 
   clientActionListener (action: IAction) {
@@ -118,8 +124,8 @@ export class ClientGame extends Game {
       });
     } else if (e.which === 1) { // left click
       this.actions.push({
-        type: IActionType.playerRemoveBlock,
-        playerRemoveBlock: {
+        type: IActionType.removeBlock,
+        removeBlock: {
           blockPos: (data.entity as Cube).pos.data as IDim,
         }
       });

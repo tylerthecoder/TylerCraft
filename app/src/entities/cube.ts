@@ -10,17 +10,11 @@ export class Cube extends Entity {
   constructor(
     public type: BLOCKS,
     public pos: Vector3D,
-    public dim: IDim = [1,1,1],
   ) {
     super();
   }
 
   update(delta: number) {
-    if (Math.random() < 0.001) {
-      this.gravitable = true;
-      return true;
-    }
-
     this.baseUpdate(delta);
   }
 

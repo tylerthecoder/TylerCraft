@@ -8,14 +8,16 @@ export const enum IActionType {
   playerJump,
   playerMoveDir,
   playerPlaceBlock,
-  playerRemoveBlock,
+  removeBlock,
   playerFireball,
   playerSetPos,
   blockUpdate,
+  removeEntity,
 }
 
 export interface IAction {
   type: IActionType;
+  dontSendToServer?: boolean;
   isFromServer?: boolean;
   setEntVel?: {
     vel: IDim;
@@ -33,7 +35,7 @@ export interface IAction {
     blockType: BLOCKS;
     blockPos: IDim;
   };
-  playerRemoveBlock?: {
+  removeBlock?: {
     blockPos: IDim;
   };
   playerFireball?: {
@@ -47,4 +49,7 @@ export interface IAction {
   blockUpdate?: {
     chunkId: string;
   };
+  removeEntity?: {
+    uid: string;
+  }
 }

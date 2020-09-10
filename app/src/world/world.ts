@@ -70,13 +70,10 @@ export class World {
 
   // soon only check chunks the entity is in
   pushOut(ent: Entity) {
-
-    const chunksToCheck: Chunk[] = [];
-
     const inChunk = this.getChunkFromWorldPoint(ent.pos);
     if (!inChunk) return;
 
-    chunksToCheck.push(inChunk);
+    const chunksToCheck: Chunk[] = [inChunk];
 
     Vector.unitVectors2D.forEach(unitDir => {
       const otherChunkPos = inChunk.chunkPos.add(unitDir);
@@ -85,7 +82,7 @@ export class World {
     });
 
     for (const chunk of chunksToCheck) {
-      const cubes = chunk.pushOut(ent);
+      chunk.pushOut(ent);
     }
   }
 

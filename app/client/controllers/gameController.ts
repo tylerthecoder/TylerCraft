@@ -20,6 +20,16 @@ export class GameController extends Controller {
         this.controlled.onMouseMove(e);
       }
     });
+
+    window.addEventListener("wheel", (e: WheelEvent) => {
+      if (e.deltaY > 0) {
+        this.controlled.selectedBlock = (this.controlled.selectedBlock + 1) % this.controlled.numOfBlocks;
+      }
+
+      if (e.deltaY < 0) {
+        this.controlled.selectedBlock = ((this.controlled.selectedBlock - 1) + this.controlled.numOfBlocks) % this.controlled.numOfBlocks;
+      }
+    })
   }
 
   keysChange() {}

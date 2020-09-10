@@ -1,9 +1,9 @@
 import { Entity, RenderType, FaceLocater } from "./entity";
-import { Ball } from "./ball";
-import { arrayAdd, arrayMul, arrayCompare } from "../utils";
+import { arrayAdd, arrayScalarMul} from "../utils";
 import { Game } from "../game";
 import { IDim, IAction } from "../../types";
 import { Vector, Vector3D } from "../utils/vector";
+import { Projectile } from "./projectile";
 
 export class Player extends Entity {
   // Entity overrides
@@ -50,10 +50,9 @@ export class Player extends Entity {
 
   fireball() {
     if (this.canFire && this.isReal) {
-      const pos = arrayAdd(this.pos.data, [0, 2, 0]) as IDim;
-      const random = [1, 1, 1].map(e => Math.random() * 0.2 - 0.1);
-      const vel = arrayAdd([0, 0.2, 0], random) as IDim;
-      const ball = new Ball(new Vector(pos), vel);
+      const vel = this.rotCart.scalarMultiply(-.4).data as IDim;
+      const pos = arrayAdd(arrayAdd(this.pos.data, arrayScalarMul(vel, 4)), [.5,2,.5]) as IDim;
+      const ball = new Projectile(new Vector(pos), vel);
       this.game.addEntity(ball);
       this.canFire = false;
     }

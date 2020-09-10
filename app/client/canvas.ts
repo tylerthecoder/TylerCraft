@@ -15,7 +15,6 @@ export class CanvasProgram {
     this.setup();
 
     this.textures = {
-      player: this.loadTexture("./img/player.png"),
       textureAtlas: this.loadTexture("./img/texture_map.png"),
       checker: this.loadTexture("./img/checker.jpg")
     };

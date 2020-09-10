@@ -10,13 +10,13 @@ import { SphereRenderer } from "./sphereRender";
 import { CONFIG } from "../../src/constants";
 import { Vector2D, Vector3D } from "../../src/utils/vector";
 import { Camera } from "../cameras/camera";
-import { Chunk } from "../../src/world/chunk";
 
 export default class WorldRenderer {
-  renderers: Renderer[] = [];
+  private renderers: Renderer[] = [];
+  private entityRenderers: Map<string, Renderer> = new Map();
+  private chunkRenderers: Map<string, ChunkRenderer> = new Map();
   shouldRenderMainPlayer = false;
 
-  chunkRenderers: Map<string, ChunkRenderer> = new Map();
 
   constructor(
     private world: World,
@@ -34,11 +34,15 @@ export default class WorldRenderer {
   addEntity(entity: Entity) {
     if (entity.renderType === RenderType.CUBE) {
       const renderer = new CubeRenderer(entity);
-      this.renderers.push(renderer);
+      this.entityRenderers.set(entity.uid, renderer);
     } else if (entity.renderType === RenderType.SPHERE) {
       const renderer = new SphereRenderer(entity);
-      this.renderers.push(renderer);
+      this.entityRenderers.set(entity.uid, renderer);
     }
+  }
+
+  removeEntity(entity: Entity) {
+    this.entityRenderers.delete(entity.uid);
   }
 
   renderChunk(chunkPos: Vector2D, camera: Camera) {
@@ -67,19 +71,21 @@ export default class WorldRenderer {
     const camera = game.camera;
 
     for (const renderer of this.renderers) {
-      if (renderer instanceof CubeRenderer) {
-        const isMainPlayer = renderer.entity === game.mainPlayer;
+      renderer.render(camera);
+    }
+
+    for (const entityRenderer of this.entityRenderers.values()) {
+      if (entityRenderer instanceof CubeRenderer) {
+        const isMainPlayer = entityRenderer.entity === game.mainPlayer;
 
         if (isMainPlayer && !this.shouldRenderMainPlayer) {
           continue;
         }
       }
-
-      renderer.render(camera);
+      entityRenderer.render(camera);
     }
 
     // loop through all of the chunks that I would be able to see.
-
     const cameraXYPos = new Vector2D([
       camera.pos.get(0),
       camera.pos.get(2),

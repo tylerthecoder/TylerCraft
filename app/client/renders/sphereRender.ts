@@ -2,12 +2,15 @@ import { Renderer } from "./renderer";
 import { canvas } from "../canvas";
 import { Camera } from "../cameras/camera";
 import { Entity } from "../../src/entities/entity";
+import { Ball } from "../../src/entities/ball";
 
 export class SphereRenderer extends Renderer {
   radius = 1;
 
   constructor(public entity: Entity) {
     super();
+
+    this.radius = (entity as Ball).radius;
 
     this.setActiveTexture(canvas.textures.checker);
     this.setup();

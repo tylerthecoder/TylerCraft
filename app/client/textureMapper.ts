@@ -1,4 +1,6 @@
 import { BLOCKS } from "../src/blockdata";
+import { Entity } from "../src/entities/entity";
+import { Player } from "../src/entities/player";
 
 const TEXTURE_ATLAS_WIDTH = 3;
 const TEXTURE_ATLAS_HEIGHT = 3;
@@ -36,6 +38,81 @@ class Textures {
       [midX, endY, endX, endY, endX, midY, midX, midY], // right
       [startX, midY, midX, midY, midX, startY, startX, startY], // left
     ]
+  }
+
+  getBlockPreviewCords(type: BLOCKS, width: number, height: number) {
+    const {offsetX, offsetY} = textureData.get(type);
+
+    const x = offsetX * xStepVal * width;
+    const y = offsetY * yStepVal * height;
+    const w = xStepVal * width;
+    const h = yStepVal * height;
+
+    return { x, y, w, h }
+  }
+
+  getTextureCordsEntity(ent: Entity) {
+    // if (ent instanceof Player) {
+
+      // top and bottom face face
+      let startYVal = yStepVal * 2.5;
+      let endYVal = yStepVal * 3;
+      let startXVal = 0;
+      let endXVal = xStepVal;
+
+      const top = [
+        startXVal, startYVal,
+        startXVal, endYVal,
+        endXVal / 2, endYVal,
+        endXVal / 2, startYVal,
+      ];
+
+
+      const bottom = [
+        endXVal /2, startYVal,
+        endXVal /2, endYVal,
+        endXVal, endYVal,
+        endXVal, startYVal
+      ]
+
+      // front faces
+
+      startXVal = xStepVal;
+      startYVal = yStepVal * 2;
+      let midXVal = xStepVal * 1.5;
+      endXVal = xStepVal * 2;
+      endYVal = yStepVal * 3;
+
+      const front = [
+        midXVal, endYVal,
+        midXVal, startYVal,
+        startXVal, startYVal,
+        startXVal, endYVal,
+      ]
+
+      const back = [
+        endXVal, endYVal,
+        endXVal, startYVal,
+        midXVal, startYVal,
+        midXVal, endYVal,
+      ]
+
+      const other = [
+        midXVal, endYVal,
+        endXVal, endYVal,
+        endXVal, startYVal,
+        midXVal, startYVal,
+      ]
+
+      return [
+        front,
+        back,
+        top,
+        bottom,
+        other,
+        other,
+      ]
+    // }
   }
 }
 
