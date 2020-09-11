@@ -24,7 +24,7 @@ export class PlayerKeyboardController extends Controller {
   }
 
   sendPos() {
-    this.game.actions.push({
+    this.game.addAction({
       type: IActionType.playerSetPos,
       playerSetPos: {
         uid: this.controlled.uid,

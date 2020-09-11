@@ -45,7 +45,7 @@ export class World {
   updateChunk(chunkPos: Vector2D) {
     const chunkToUpdate = this.chunks.get(chunkPos.add(new Vector2D([0, 1])).toString());
     if (chunkToUpdate) {
-      this.game.actions.push({
+      this.game.addAction({
         type: IActionType.blockUpdate,
         blockUpdate: {
           chunkId: chunkToUpdate.chunkPos.toString(),
@@ -93,7 +93,7 @@ export class World {
 
       // if this is a different chunk
       if (chunk !== otherChunk) {
-        this.game.actions.push(otherChunk.getBlockUpdateAction());
+        this.game.addAction(otherChunk.getBlockUpdateAction());
       }
     });
   }
@@ -102,7 +102,7 @@ export class World {
     const chunk = this.getChunkFromWorldPoint(cube.pos);
     if (!chunk) return;
     chunk.addCube(cube);
-    this.game.actions.push(chunk.getBlockUpdateAction());
+    this.game.addAction(chunk.getBlockUpdateAction());
     this.checkSurroundingChunkForUpdate(chunk, cube.pos);
   }
 
@@ -111,7 +111,7 @@ export class World {
     if (!chunk) return;
     this.checkSurroundingChunkForUpdate(chunk, cubePos);
     chunk.removeCube(cubePos)
-    this.game.actions.push(chunk.getBlockUpdateAction());
+    this.game.addAction(chunk.getBlockUpdateAction());
   }
 
   lookingAt(cameraPos: IDim, cameraDir: IDim): ILookingAtData {

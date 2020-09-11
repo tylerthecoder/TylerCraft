@@ -79,15 +79,6 @@ export class ServerGame extends Game {
         case "pos":
           this.wss.sendGlobal(message, ws);
           break;
-        case "new-entity":
-          this.wss.sendGlobal(message, ws);
-          const payload = message.payload as NewEntityMessage;
-          if (payload.type === "ball") {
-            const ball = new Ball(new Vector(payload.pos), payload.vel);
-            ball.setUid(payload.uid);
-            this.addEntity(ball);
-          }
-          break;
       }
     });
   }

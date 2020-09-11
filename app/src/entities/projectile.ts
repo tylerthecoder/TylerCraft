@@ -14,7 +14,7 @@ export class Projectile extends MovableEntity {
   static deserialize(data: IEntityData): Entity {
     const ent = new Projectile(
       new Vector3D(data.pos),
-      data.vel,
+      new Vector3D(data.vel),
     )
 
     return ent;
@@ -22,7 +22,7 @@ export class Projectile extends MovableEntity {
 
   constructor(
     public pos: Vector3D,
-    public vel: IDim,
+    public vel: Vector3D,
     public dim: IDim = [.2, .2, .2],
   ) {
     super();
@@ -49,6 +49,23 @@ export class Projectile extends MovableEntity {
           removeBlock: {
             blockPos: ent.pos.data as IDim,
           },
+        },
+        {
+          dontSendToServer: true,
+          type: IActionType.removeEntity,
+          removeEntity: {
+            uid: this.uid,
+          }
+        }
+      )
+    } else {
+      this.actions.push(
+        {
+          type: IActionType.hurtEntity,
+          hurtEntity: {
+            uid: ent.uid,
+            amount: 5,
+          }
         },
         {
           dontSendToServer: true,

@@ -26,7 +26,7 @@ export class Spectator extends MovableEntity {
 
     const totVel = wasdVel.add(vertVel);
 
-    if (!totVel.equals(new Vector(this.vel))) {
+    if (!totVel.equals(this.vel)) {
       actions.push( {
         type: IActionType.setEntVel,
         setEntVel: {
@@ -37,11 +37,6 @@ export class Spectator extends MovableEntity {
     }
 
     return actions;
-  }
-
-  setMoveVel(amount: { x: number; y: number }) {
-    this.vel[0] = amount.x;
-    this.vel[2] = amount.y;
   }
 
   update(delta: number) {

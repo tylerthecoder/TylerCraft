@@ -5,7 +5,6 @@ export type IDim = [number, number, number];
 
 export const enum IActionType {
   setEntVel,
-  playerJump,
   playerMoveDir,
   playerPlaceBlock,
   removeBlock,
@@ -14,6 +13,7 @@ export const enum IActionType {
   blockUpdate,
   addEntity,
   removeEntity,
+  hurtEntity,
 }
 
 export interface IAction {
@@ -55,5 +55,9 @@ export interface IAction {
   }
   removeEntity?: {
     uid: string;
+  }
+  hurtEntity?: {
+    uid: string,
+    amount: number,
   }
 }

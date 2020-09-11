@@ -6,12 +6,8 @@ import { MovableEntity } from "./moveableEntity";
 export class Ball extends MovableEntity {
   radius = 1;
 
-  // gravitable = false;
-
-  renderType = RenderType.SPHERE;
-
   constructor(
-    public pos: Vector3D, public vel: IDim
+    public pos: Vector3D, public vel: Vector3D
   ) {
     super();
 
@@ -24,7 +20,7 @@ export class Ball extends MovableEntity {
   }
 
   hit(_entity: Entity, where: FaceLocater) {
-    this.vel[where.side] = 0;
+    this.vel.set(where.side, 0);
     if (where.side === 1 && where.dir === 0) {
       this.onGround = true;
     }

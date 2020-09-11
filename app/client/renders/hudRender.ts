@@ -50,13 +50,11 @@ export class HudRenderer extends Renderer {
     );
   }
 
-  render(camera: Camera) {
+
+  drawCrosshairs() {
+    this.canvas.hudCxt.fillStyle = "red";
     const crossHairWidth = 3;
     const crossHairHeight = 40;
-
-    this.clearScreen();
-
-    this.canvas.hudCxt.fillStyle = "red";
 
     // draw the vertical cross hair
     this.drawRect(
@@ -73,7 +71,13 @@ export class HudRenderer extends Renderer {
       crossHairHeight,
       crossHairWidth,
     );
+  }
 
+  render(camera: Camera) {
+
+    this.clearScreen();
+
+    this.drawCrosshairs();
 
     const cameraPos = camera.pos.data.map(Math.floor).join(",")
     this.drawText(cameraPos, 0, 30);
@@ -87,7 +91,6 @@ export class HudRenderer extends Renderer {
     // draw selected items
     const numOfBoxes = 10;
     const boxDimension = 70;
-
 
     for (let i = 0; i < numOfBoxes; i++) {
       const x = (i - 5) * boxDimension + this.sw /2;
@@ -108,7 +111,15 @@ export class HudRenderer extends Renderer {
       this.strokeRect(x, y, w, h)
     }
 
+    // draw health bar
 
+    const healthBarWidth = 400;
+    const healthBarHeight = 30;
+    const healthBarY = 100;
+    this.canvas.hudCxt.strokeStyle = "black";
+    this.strokeRect((this.sw / 2) - healthBarWidth / 2, this.sh - (healthBarY + healthBarHeight), healthBarWidth, healthBarHeight)
+    this.canvas.hudCxt.fillStyle = "red";
+    this.drawRect((this.sw / 2) - healthBarWidth / 2, this.sh - (healthBarY + healthBarHeight), healthBarWidth * this.game.mainPlayer.health.current / this.game.mainPlayer.health.max, healthBarHeight);
 
   }
 

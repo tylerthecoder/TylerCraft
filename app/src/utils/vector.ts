@@ -8,6 +8,8 @@ interface IItterable {
 }
 
 export class Vector<T extends number[] = IDim> {
+  static zero3D = new Vector([0,0,0]);
+
   static unitVectors3D = [
     [1, 0, 0],
     [-1, 0, 0],

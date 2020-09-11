@@ -8,14 +8,10 @@ import { Projectile } from "./entities/projectile";
 import { MovableEntity } from "./entities/moveableEntity";
 
 export class Game {
+  protected actions: IAction[] = [];
+
   // TODO: change this to a map from uid to Entity
   entities: Entity[] = [];
-  entityListeners: Array<(e: Entity) => void> = [];
-
-  actionListener: ((actions: IAction[]) => void) | null;
-
-  actions: IAction[] = [];
-
   world = new World(this);
 
   get players() {
@@ -81,14 +77,8 @@ export class Game {
   }
 
   protected handleAction(action: IAction) {
+    // console.log("Handling Action", action);
     switch(action.type) {
-    case IActionType.playerJump: {
-      const payload = action.playerJump;
-      const player = this.findEntity(payload.uid) as Player;
-      player.jump();
-      return action.playerJump.uid;
-    }
-
     case IActionType.addEntity: {
       const {ent} = action.addEntity;
       if (ent.type === "projectile") {
@@ -127,8 +117,11 @@ export class Game {
     case IActionType.setEntVel: {
       const payload = action.setEntVel;
       const entity = this.findEntity(payload.uid) as MovableEntity;
-      if (!entity) return;
-      entity.vel = payload.vel;
+      if (!entity) {
+        console.log(payload.uid);
+        return;
+      }
+      entity.vel = new Vector(payload.vel);
       return payload.uid;
     }
 
@@ -137,12 +130,31 @@ export class Game {
       player.fireball();
       return action.playerFireball.uid;
 
+    case IActionType.hurtEntity: {
+      const payload = action.hurtEntity;
+      const entity = this.findEntity(payload.uid) as Player;
+      if (!entity) {
+        console.log(payload.uid);
+        return;
+      }
+      entity.hurt(payload.amount);
+    }
+
+
     default:
       return false;
 
     }
 
     return true;
+  }
+
+  addAction(action: IAction) {
+    this.actions.push(action);
+  }
+
+  addActions(actions: IAction[]) {
+    this.actions.push(...actions);
   }
 
   addPlayer(realness: boolean, uid?: string): Player {

@@ -60,15 +60,9 @@ export class SocketHandler {
         case "player-leave":
           this.client.removeEntity(obj.payload.uid);
           break;
-        case "new-entity":
-          this.newEntity(obj.payload as NewEntityMessage);
-          break;
-        case "all-entities":
-
-          break;
         case "actions":
           obj.actionPayload.forEach(a => a.isFromServer = true)
-          this.client.actions.push(...obj.actionPayload);
+          this.client.addActions(obj.actionPayload);
           break;
       }
     };
@@ -84,14 +78,5 @@ export class SocketHandler {
     const newPlayer = this.client.addPlayer(false, uid);
     const controller = new PlayerSocketController(newPlayer);
     this.client.controllers.add(controller);
-  }
-
-  newEntity(payload: NewEntityMessage) {
-    this.receivedEntities.add(payload.uid);
-    if (payload.type === "ball") {
-      const entity = new Ball(new Vector3D(payload.pos), payload.vel);
-      entity.setUid(payload.uid);
-      this.client.addEntity(entity);
-    }
   }
 }

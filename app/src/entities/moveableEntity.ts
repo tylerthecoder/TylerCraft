@@ -1,14 +1,12 @@
-import { IAction, IActionType, IDim } from "../../types";
+import { IDim } from "../../types";
 import { CONFIG } from "../constants";
-import { arrayMul, arrayScalarMul, sphereToCartCords } from "../utils";
-import { Vector3D } from "../utils/vector";
+import { arrayAdd, arrayMul, sphereToCartCords } from "../utils";
+import { Vector, Vector3D } from "../utils/vector";
 import { Entity, MetaAction, IEntityData } from "./entity";
 
 
 export abstract class MovableEntity extends Entity {
-
-  prevVel: IDim = [0,0,0];
-  vel: IDim = [0, 0, 0];
+  vel = Vector.zero3D;
   rot: IDim = [0, 0, 0];
   rotCart: Vector3D = new Vector3D(this.rot).toCartesianCoords();
 
@@ -20,7 +18,7 @@ export abstract class MovableEntity extends Entity {
     return {
       uid: this.uid,
       pos: this.pos.data as IDim,
-      vel: this.vel,
+      vel: this.vel.data as IDim,
       // change this when we have another entity type that we need to send
       type: "projectile",
     }
@@ -28,8 +26,8 @@ export abstract class MovableEntity extends Entity {
 
   baseUpdate(delta: number) {
     if (this.gravitable) this.gravity();
-    arrayScalarMul(this.vel, delta / 16);
-    this.move(this.vel);
+
+    this.pos.addTo(this.vel.scalarMultiply(delta / 16));
   }
 
   baseHit(entity: Entity) {
@@ -45,21 +43,9 @@ export abstract class MovableEntity extends Entity {
     }
   }
 
-  applyForce(f: IDim) {
-    for (let i = 0; i < f.length; i++) {
-      this.vel[i] += f[i];
-    }
-  }
-
+  static gravityVector = new Vector3D([0, CONFIG.gravity, 0]);
   gravity() {
-    this.applyForce([0, CONFIG.gravity, 0]);
-  }
-
-  jump() {
-    if (this.jumpCount < 5) {
-      this.vel[1] = CONFIG.player.jumpSpeed;
-      this.jumpCount++;
-    }
+    this.vel.addTo(MovableEntity.gravityVector);
   }
 
   rotate(r: number[]) {
@@ -116,16 +102,15 @@ export abstract class MovableEntity extends Entity {
     return new Vector3D([0,0,0]);
   }
 
-  getJumpAction(): IAction {
+  getJumpVel(): Vector3D {
     if (this.metaActions.has(MetaAction.jump)) {
-      return {
-        type: IActionType.playerJump,
-        playerJump: {
-          uid: this.uid,
-        }
-      }
+      return new Vector3D([
+        0,
+        CONFIG.player.jumpSpeed,
+        0
+      ]);
     }
-    return null;
+    return Vector.zero3D;
   }
 
 }
