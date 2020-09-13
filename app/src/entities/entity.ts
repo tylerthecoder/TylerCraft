@@ -34,9 +34,6 @@ export interface IEntityData {
 export abstract class Entity {
   pos: Vector3D = new Vector3D([0,0,0]);
   dim: IDim = [1, 1, 1];
-  tangible = true;
-  prevMetaActions = new Set<MetaAction>();
-  metaActions = new Set<MetaAction>();
   uid = "";
 
   constructor() { }
@@ -103,7 +100,9 @@ export abstract class Entity {
 
     const [_, i, dir] = min;
 
-    this.pos.set(i, ent.pos.get(i) + ent.dim[i] * switchDir(dir) - this.dim[i] * dir);
+    const newPos = ent.pos.get(i) + ent.dim[i] * switchDir(dir) - this.dim[i] * dir;
+
+    this.pos.set(i, newPos);
 
     this.hit(ent, {
       side: i,

@@ -2,15 +2,9 @@ import { Cube } from "../entities/cube";
 import { Entity } from "../entities/entity";
 import { IDim, IActionType, IAction } from "../../types";
 import { arrayMul, arrayAdd, arrayDot, arrayScalarMul, roundToNPlaces, arrayDistSquared } from "../utils";
-import { Game } from "../game";
 import { CONFIG } from "../constants";
 import { Vector3D, Vector, Vector2D } from "../utils/vector";
 
-
-export interface ICubeFace {
-  cube: Cube;
-  directionVector: Vector3D;
-}
 
 export interface ILookingAtData {
   newCubePos: Vector,

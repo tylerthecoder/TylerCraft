@@ -4,8 +4,6 @@ import { BLOCKS } from "../blockdata";
 import { Vector3D } from "../utils/vector";
 
 export class Cube extends Entity {
-  gravitable = false;
-  tangible = false;
 
   constructor(
     public type: BLOCKS,

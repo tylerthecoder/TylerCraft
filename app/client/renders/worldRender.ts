@@ -56,19 +56,26 @@ export default class WorldRenderer {
   }
 
   renderChunk(chunkPos: Vector2D, camera: Camera) {
-    const chunkData = this.world.getGeneratedChunk(chunkPos);
+    const chunk = this.world.getChunkFromPos(chunkPos, {loadIfNotFound: true});
+
+    if (!chunk) {
+      // console.log("Chunk not found, loading");
+      return;
+    }
+
     let chunkRenderer = this.chunkRenderers.get(chunkPos.toString());
 
-    if (chunkData.new) {
-      // maybe do this on another thread (worker)
+    // this is a new chunk we haven't seen yet
+    if (!chunkRenderer) {
+
+      // not ideal but it is what needs to be done to make sure that the visible faces are rendered correctly
+      // maybe put on another thread later.
       this.blockUpdate(chunkPos.add(new Vector2D([0,1])).toString());
       this.blockUpdate(chunkPos.add(new Vector2D([1,0])).toString());
       this.blockUpdate(chunkPos.add(new Vector2D([0,-1])).toString());
       this.blockUpdate(chunkPos.add(new Vector2D([-1,0])).toString());
-    }
 
-    if (!chunkRenderer) {
-      chunkRenderer = new ChunkRenderer(chunkData.chunk, this.world);
+      chunkRenderer = new ChunkRenderer(chunk, this.world);
       this.chunkRenderers.set(chunkPos.toString(), chunkRenderer);
     }
 

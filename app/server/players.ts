@@ -2,8 +2,7 @@ import SocketServer from "./socket";
 import * as wSocket from "ws";
 import { Game } from "../src/game";
 import { Player } from "../src/entities/player";
-import { ISocketMessage, PositionMessage } from "../types/socket";
-import { Vector } from "../src/utils/vector";
+import { ISocketMessage, ISocketMessageType } from "../types/socket";
 
 export default class Players {
   players: Map<wSocket, Player> = new Map();
@@ -11,16 +10,15 @@ export default class Players {
   constructor(public wss: SocketServer, public game: Game) {}
 
   addPlayer(ws: wSocket) {
-    console.log("New player!");
     // generate a random ID for the new player
     const uid = `${Math.random()}${Math.random()}`;
 
     const player = this.game.addPlayer(true, uid);
 
     // send a welcoming message to the new player
-    const welcomeMessage = {
-      type: "welcome",
-      payload: {
+    const welcomeMessage: ISocketMessage = {
+      type: ISocketMessageType.welcome,
+      welcomePayload: {
         uid,
         players: this.game.players.map(p => p.uid).filter(id => uid !== id)
       }
@@ -30,10 +28,10 @@ export default class Players {
     // add them to the SYSTEM
     this.players.set(ws, player);
 
-    // tell EVERYone about the new guy
-    const newPlayerMessage = {
-      type: "player-join",
-      payload: {
+    // tell Everyone about the new guy
+    const newPlayerMessage: ISocketMessage = {
+      type: ISocketMessageType.newPlayer,
+      newPlayerPayload: {
         uid
       }
     };
@@ -42,16 +40,14 @@ export default class Players {
     // If they leave, KILL THEM
     ws.on("close", this.removePlayer.bind(this, ws));
 
-    console.log(`${this.game.players.length} players`);
+    console.log(`New player! ${this.game.players.length} players`);
   }
 
   removePlayer(ws: wSocket) {
-    console.log("Remove Player");
-
     // tell everyone about this tragedy
-    const playerLeaveMessage = {
-      type: "player-leave",
-      payload: {
+    const playerLeaveMessage: ISocketMessage = {
+      type: ISocketMessageType.playerLeave,
+      playerLeavePayload: {
         uid: this.players.get(ws).uid
       }
     };
@@ -61,23 +57,11 @@ export default class Players {
     this.game.removeEntity(this.players.get(ws).uid);
     this.players.delete(ws);
 
-    console.log(`${this.game.players.length} players`);
+    console.log(`Remove Player! ${this.game.players.length} players`);
   }
 
   setPlayerPos() {}
 
   onMessage(ws: wSocket, message: ISocketMessage) {
-    switch (message.type) {
-      case "keys":
-        this.wss.sendGlobal(message, ws);
-        break;
-      case "pos":
-        this.wss.sendGlobal(message, ws);
-        const payload = message.payload as PositionMessage;
-        this.players.get(ws).pos = new Vector(payload.pos);
-        break;
-      case "newEntity":
-        break;
-    }
   }
 }

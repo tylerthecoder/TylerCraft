@@ -1,41 +1,35 @@
 import { IDim, IAction } from ".";
 
-interface ISocketMessage {
-  type: string;
-  payload?: Payload;
-  uid?: string;
-  actionPayload?: IAction[];
-  playerPosPayload?: {
-    uid: string,
-    pos: IDim,
-  };
+export const enum ISocketMessageType {
+  actions,
+  getChunk,
+  sendChunk,
+  welcome,
+  newPlayer,
+  playerLeave,
 }
 
-type Payload = KeyPressMessage | NewPlayerMessage | WelcomeMessage;
-
-interface KeyPressMessage {
-  keys: string[];
-  rot: IDim;
-  uid: string;
-}
-
-interface WelcomeMessage {
+export interface ISocketWelcomePayload {
   uid: string;
   players: string[];
 }
 
-interface NewPlayerMessage {
-  uid: string;
-}
-
-interface NewEntityMessage {
-  uid: string;
-  type: string;
-  pos: IDim;
-  vel: IDim;
-}
-
-interface PositionMessage {
-  uid: string;
-  pos: IDim;
+interface ISocketMessage {
+  type: ISocketMessageType;
+  uid?: string;
+  actionPayload?: IAction[];
+  welcomePayload?: ISocketWelcomePayload,
+  newPlayerPayload?: {
+    uid: string,
+  },
+  playerLeavePayload?: {
+    uid: string,
+  },
+  getChunkPayload?: {
+    pos: string,
+  }
+  sendChunkPayload?: {
+    pos: string,
+    data: string,
+  }
 }

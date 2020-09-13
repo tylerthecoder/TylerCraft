@@ -1,7 +1,7 @@
 import { Renderer } from "./renderer";
 import { canvas } from "../canvas";
 import { Camera } from "../cameras/camera";
-import { Chunk, ICubeFace } from "../../src/world/chunk";
+import { Chunk } from "../../src/world/chunk";
 import { arrayMul, arrayAdd, arraySub } from "../../src/utils";
 import TextureMapper from "../textureMapper";
 import { Cube } from "../../src/entities/cube";
@@ -28,7 +28,7 @@ export class ChunkRenderer extends Renderer {
     if (pos.get(1) === -1) { return true; }
     if (!cube) {
       const chunkPos = world.worldPosToChunkPos(pos);
-      const chunk = world.chunks.get(chunkPos.toString());
+      const chunk = world.getChunkFromPos(chunkPos);
       if (!chunk) return true;
       cube = chunk.getCube(pos);
       if (!cube) {

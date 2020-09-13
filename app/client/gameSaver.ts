@@ -41,7 +41,7 @@ export class GameSaver {
       }
     };
 
-    const chunks = Array.from(game.world.chunks.values());
+    const chunks = Array.from(game.world.getChunks());
 
     for (const chunk of chunks) {
       const chunkPosVector = chunk.chunkPos;

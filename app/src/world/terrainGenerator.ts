@@ -21,8 +21,8 @@ export class TerrainGenerator {
 
     // this is very strange because we are adding blocks after a chunk as been rendered
     // fixing will take some major engineering
-    if (world.chunks.has(chunkPos.toString())) {
-      const chunk = world.chunks.get(chunkPos.toString());
+    if (world.hasChunk(chunkPos)) {
+      const chunk = world.getChunkFromPos(chunkPos);
       // we don't want this to be true
       chunk.addCube(cube)
     }
@@ -85,7 +85,7 @@ export class TerrainGenerator {
           continue;
         }
 
-        if (world.chunks.has(checkingChunkPos.toString())) {
+        if (world.hasChunk(checkingChunkPos)) {
           continue;
         }
 

@@ -1,7 +1,8 @@
 import { Entity, MetaAction } from "../../src/entities/entity";
+import { MovableEntity } from "../../src/entities/moveableEntity";
 import { Player } from "../../src/entities/player";
 import { Camera } from "../cameras/camera";
-import { ClientGame, game } from "../clientGame";
+import { ClientGame} from "../clientGame";
 
 export type Controlled = Entity | Camera | ClientGame | Player;
 
@@ -30,7 +31,7 @@ export abstract class Controller {
   }
 
   ifHasKeyThenAddMeta(key: string, metaAction: MetaAction) {
-    if (this.controlled instanceof Entity) {
+    if (this.controlled instanceof MovableEntity) {
       if (this.keys.has(key))
         this.controlled.metaActions.add(metaAction);
       else {

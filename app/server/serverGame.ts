@@ -2,11 +2,10 @@ import SocketServer from "./socket";
 import Players from "./players";
 import * as wSocket from "ws";
 import { Game } from "../src/game";
-import { ISocketMessage, NewEntityMessage } from "../types/socket";
-import { Ball } from "../src/entities/ball";
-import { Entity } from "../src/entities/entity";
-import { IDim, IAction } from "../types";
-import { Vector } from "../src/utils/vector";
+import { ISocketMessage, ISocketMessageType } from "../types/socket";
+import { IAction } from "../types";
+import { Vector, Vector2D } from "../src/utils/vector";
+import { serializeChunk } from "../src/serializer";
 
 export class ServerGame extends Game {
   clients: Players;
@@ -41,9 +40,10 @@ export class ServerGame extends Game {
       }
     });
 
+
     for (const [ws, actions] of sortedActions) {
       this.wss.sendGlobal({
-        type: "actions",
+        type: ISocketMessageType.actions,
         actionPayload: actions,
       }, ws);
     }
@@ -58,27 +58,38 @@ export class ServerGame extends Game {
     setTimeout(this.loop.bind(this), 1000 / 60);
   }
 
+  private sendChunkTo(chunkPosString: string, ws: wSocket) {
+    const chunkPos = Vector.fromString(chunkPosString) as Vector2D;
+    const chunk = this.world.getChunkFromPos(chunkPos, {generateIfNotFound: true});
+    const serializedData = serializeChunk(chunk);
+    this.wss.send(ws, {
+      type: ISocketMessageType.sendChunk,
+      sendChunkPayload: {
+        pos: chunkPosString,
+        data: serializedData,
+      }
+    });
+  }
+
   handleMessage(ws: wSocket) {
     this.clients.addPlayer(ws);
 
     this.wss.listenTo(ws, (ws: wSocket, message: ISocketMessage) => {
+      // console.log("Got Message", message);
       switch (message.type) {
-        case "actions":
-          this.actionQueue.push(...message.actionPayload.map(
-            a => ({
-              action: a,
-              from: ws
-            })
-          ));
-          break;
-        case "playerPos":
-
-        case "keys":
-          this.wss.sendGlobal(message, ws);
-          break;
-        case "pos":
-          this.wss.sendGlobal(message, ws);
-          break;
+      case ISocketMessageType.actions: {
+        const payload = message.actionPayload;
+        this.actionQueue.push(...payload.map(
+          a => ({
+            action: a,
+            from: ws
+          })
+        ));
+        break;
+      }
+      case ISocketMessageType.getChunk:
+        const payload = message.getChunkPayload;
+        this.sendChunkTo(payload.pos, ws);
       }
     });
   }

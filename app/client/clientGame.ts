@@ -13,16 +13,13 @@ import { BLOCKS } from "../src/blockdata";
 import { ControllerHolder } from "./controllerHolder";
 import { Spectator } from "../src/entities/spectator";
 import { Cube } from "../src/entities/cube";
+import { ISocketMessage, ISocketMessageType } from "../types/socket";
 
 export class ClientGame extends Game {
   controllers = new ControllerHolder(this);
-  worldRenderer: WorldRenderer;
-
+  worldRenderer = new WorldRenderer(this.world, this);
   saver = new GameSaver();
-
-  mainPlayer: Player;
   spectator: Spectator;
-  multiPlayer = true;
   camera: Camera;
   socket: SocketHandler;
   selectedBlock: BLOCKS = BLOCKS.stone;
@@ -39,6 +36,7 @@ export class ClientGame extends Game {
   constructor() {
     super();
     this.load();
+    this.setup();
   }
 
   async load() {
@@ -49,21 +47,10 @@ export class ClientGame extends Game {
       await this.socket.connect();
     }
 
-    this.worldRenderer = new WorldRenderer(this.world, this);
+    this.setUpPlayer();
+    // this.setUpSpectator();
 
-    this.mainPlayer = this.addPlayer(true);
-
-    const playerController = new PlayerKeyboardController(this.mainPlayer, this);
-    this.controllers.add(playerController);
-    this.camera = new EntityCamera(this.mainPlayer);
-
-    // load the spectator
-    // this.spectator = new Spectator();
-    // this.addEntity(this.spectator);
-    // this.camera = new EntityCamera(this.spectator);
-    // const spectatorController = new PlayerKeyboardController(this.spectator, this);
-    // this.controllers.add(spectatorController);
-    // this.worldRenderer.shouldRenderMainPlayer = true;
+    this.world.load();
 
     // load the game from server
     // await this.saver.load(this);
@@ -103,7 +90,7 @@ export class ClientGame extends Game {
   onActions(actions: IAction[]) {
     if (this.multiPlayer && actions.length > 0) {
       this.socket.send({
-        type: "actions",
+        type: ISocketMessageType.actions,
         actionPayload: actions.filter(a => !a.isFromServer)
       });
     }
@@ -150,6 +137,18 @@ export class ClientGame extends Game {
   }
 
   setUpPlayer() {
+    const playerController = new PlayerKeyboardController(this.mainPlayer, this);
+    this.controllers.add(playerController);
+    this.camera = new EntityCamera(this.mainPlayer);
+  }
+
+  setUpSpectator() {
+    this.spectator = new Spectator();
+    this.addEntity(this.spectator);
+    this.camera = new EntityCamera(this.spectator);
+    const spectatorController = new PlayerKeyboardController(this.spectator, this);
+    this.controllers.add(spectatorController);
+    this.worldRenderer.shouldRenderMainPlayer = true;
   }
 
   toggleCreative() {
@@ -162,6 +161,10 @@ export class ClientGame extends Game {
 
   save() {
     this.saver.saveToServer(this);
+  }
+
+  sendMessageToServer(message: ISocketMessage) {
+    this.socket.send(message);
   }
 }
 

@@ -1,14 +1,12 @@
+import { deserializeChunk } from "../src/serializer";
+import { Vector, Vector2D } from "../src/utils/vector";
+import { IDim } from "../types";
 import {
   ISocketMessage,
-  WelcomeMessage,
-  NewEntityMessage
+  ISocketMessageType,
+  ISocketWelcomePayload
 } from "../types/socket";
 import { ClientGame } from "./clientGame";
-import { Ball } from "../src/entities/ball";
-import { PlayerSocketController } from "./controllers/playerSocketController";
-import { Entity } from "../src/entities/entity";
-import { Vector3D } from "../src/utils/vector";
-import { IDim } from "../types";
 
 type SocketListener = (message: ISocketMessage) => void;
 
@@ -40,7 +38,7 @@ export class SocketHandler {
 
   joinRoom(roomName: string) {}
 
-  send(obj: Object) {
+  send(obj: ISocketMessage) {
     this.socket.send(JSON.stringify(obj));
   }
 
@@ -51,24 +49,30 @@ export class SocketHandler {
       // console.log("Message from server", obj);
       this.listeners.forEach(l => l(obj));
       switch (obj.type) {
-        case "welcome":
-          this.welcome(obj.payload as WelcomeMessage);
+        case ISocketMessageType.welcome:
+          this.welcome(obj.welcomePayload);
           break;
-        case "player-join":
-          this.addOtherPlayer(obj.payload.uid);
+        case ISocketMessageType.newPlayer:
+          this.addOtherPlayer(obj.newPlayerPayload.uid);
           break;
-        case "player-leave":
-          this.client.removeEntity(obj.payload.uid);
+        case ISocketMessageType.playerLeave:
+          this.client.removeEntity(obj.playerLeavePayload.uid);
           break;
-        case "actions":
+        case ISocketMessageType.actions:
           obj.actionPayload.forEach(a => a.isFromServer = true)
           this.client.addActions(obj.actionPayload);
           break;
+        case ISocketMessageType.sendChunk:
+          const payload = obj.sendChunkPayload;
+          const chunk = deserializeChunk(payload.data);
+          const chunkPosVector = Vector.fromString(payload.pos) as Vector2D;
+          this.client.world.setChunkAtPos(chunk, chunkPosVector)
+
       }
     };
   }
 
-  welcome(message: WelcomeMessage) {
+  welcome(message: ISocketWelcomePayload) {
     this.client.mainPlayer.setUid(message.uid);
     message.players.forEach(this.addOtherPlayer.bind(this));
     // get generated world here as well
@@ -76,7 +80,5 @@ export class SocketHandler {
 
   addOtherPlayer(uid: string) {
     const newPlayer = this.client.addPlayer(false, uid);
-    const controller = new PlayerSocketController(newPlayer);
-    this.client.controllers.add(controller);
   }
 }

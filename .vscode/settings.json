@@ -4,4 +4,13 @@
     "wasd"
   ],
   "typescript.tsdk": "./node_modules/typescript/lib",
+  "files.exclude": {
+    "bin/": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/bower_components": true,
+    "**/*.code-search": true,
+    "bin/": true
+  }
 }

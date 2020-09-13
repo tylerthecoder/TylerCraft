@@ -6,20 +6,34 @@ import { IDim, IActionType } from "../../types";
 import { CONFIG } from "../constants";
 import { Vector, Vector3D, Vector2D } from "../utils/vector";
 import { TerrainGenerator } from "./terrainGenerator";
+import { ISocketMessageType } from "../../types/socket";
 
 export class World {
-  chunks: Map<string, Chunk> = new Map();
-
-  terrainGenerator = new TerrainGenerator();
+  private chunks: Map<string, Chunk> = new Map();
+  private terrainGenerator = new TerrainGenerator();
+  public loadingChunks = new Set<string>();
+  public loadedChunks = new Set<string>();
 
   constructor(private game: Game) { }
 
-  getChunkFromPos(chunkPos: Vector2D) {
-    return this.chunks.get(chunkPos.toString());
+  getChunkFromPos(chunkPos: Vector2D, config?: {generateIfNotFound?: boolean, loadIfNotFound?: boolean}) {
+    const chunk = this.chunks.get(chunkPos.toString());
+    if (!chunk && config?.loadIfNotFound) this.loadChunk(chunkPos);
+    if (!chunk && config?.generateIfNotFound) return this.generateChunk(chunkPos);
+    return chunk;
   }
 
   setChunkAtPos(chunk: Chunk, chunkPos: Vector2D) {
     this.chunks.set(chunkPos.toString(), chunk);
+    this.loadedChunks.add(chunkPos.toString());
+  }
+
+  getChunks(): IterableIterator<Chunk> {
+    return this.chunks.values();
+  }
+
+  hasChunk(chunkPos: Vector2D): boolean {
+    return this.chunks.has(chunkPos.toString());
   }
 
   worldPosToChunkPos(pos: Vector3D): Vector2D {
@@ -35,6 +49,28 @@ export class World {
       0,
       pos.get(1) * CONFIG.terrain.chunkSize + (center ? CONFIG.terrain.chunkSize / 2 : 0),
     ]);
+  }
+
+  loadChunk(chunkPos: Vector2D) {
+    // no repeat loading
+    if (this.loadingChunks.has(chunkPos.toString())) {
+      return;
+    }
+    this.loadingChunks.add(chunkPos.toString());
+    if (this.game.multiPlayer) {
+      // ask server for chunk
+      this.game.sendMessageToServer({
+        type: ISocketMessageType.getChunk,
+        getChunkPayload: {
+          pos: chunkPos.toString(),
+        }
+      })
+    } else {
+      // ask terrain generator for chunk
+      // once terrainGenerator becomes async the chunk can be set somewhere else
+      const generatedChunk = this.terrainGenerator.generateChunk(chunkPos, this);
+      this.setChunkAtPos(generatedChunk, chunkPos);
+    }
   }
 
   getChunkFromWorldPoint(pos: Vector3D) {
@@ -57,15 +93,17 @@ export class World {
   private generateChunk(chunkPos: Vector2D) {
     const generatedChunk = this.terrainGenerator.generateChunk(chunkPos, this);
     this.setChunkAtPos(generatedChunk, chunkPos);
-
     return generatedChunk;
   }
 
-  getGeneratedChunk(chunkPos: Vector2D): {chunk: Chunk, new: boolean} {
-    const chunk = this.getChunkFromPos(chunkPos);
-
-    if (chunk) return {chunk, new: false};
-    return { chunk: this.generateChunk(chunkPos), new: true };
+  // load the starting chunks
+  load() {
+    for (let i = -CONFIG.loadDistance; i < CONFIG.loadDistance; i++) {
+      for (let j = -CONFIG.loadDistance; j < CONFIG.loadDistance; j++) {
+        const chunkPos = new Vector2D([i, j]);
+        this.loadChunk(chunkPos);
+      }
+    }
   }
 
   // soon only check chunks the entity is in

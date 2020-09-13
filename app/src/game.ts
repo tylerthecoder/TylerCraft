@@ -6,6 +6,7 @@ import { Cube } from "./entities/cube";
 import { Vector3D, Vector } from "./utils/vector";
 import { Projectile } from "./entities/projectile";
 import { MovableEntity } from "./entities/moveableEntity";
+import { ISocketMessage } from "../types/socket";
 
 export class Game {
   protected actions: IAction[] = [];
@@ -13,6 +14,12 @@ export class Game {
   // TODO: change this to a map from uid to Entity
   entities: Entity[] = [];
   world = new World(this);
+  mainPlayer: Player;
+  multiPlayer = true;
+
+  setup() {
+    this.mainPlayer = this.addPlayer(true);
+  }
 
   get players() {
     return this.entities.filter(ent => ent instanceof Player);
@@ -61,7 +68,7 @@ export class Game {
 
     // move the entities out of the blocks
     for (const entity of this.entities) {
-      if (entity.tangible) {
+      // if (entity.tangible) {
         this.world.pushOut(entity);
 
         for (const e of this.entities) {
@@ -71,7 +78,7 @@ export class Game {
             entity.pushOut(e);
           }
         }
-      }
+      // }
 
     }
   }
@@ -182,8 +189,9 @@ export class Game {
 
   // for the subclasses to override so they can "listen" to events
   onNewEntity(_entity: Entity) {}
-  onRemoveEntity(uid: string) {}
+  onRemoveEntity(_uid: string) {}
   onActions(_actions: IAction[]) {}
   // these are just actions that can be handled by the client (related to rendering and such)
   clientActionListener(_action: IAction) {}
+  sendMessageToServer(_message: ISocketMessage) {}
 }

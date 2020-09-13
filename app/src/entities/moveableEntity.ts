@@ -14,6 +14,8 @@ export abstract class MovableEntity extends Entity {
   gravitable = true;
   jumpCount = 0;
 
+  metaActions = new Set<MetaAction>();
+
   public serialize(): IEntityData {
     return {
       uid: this.uid,
@@ -25,16 +27,19 @@ export abstract class MovableEntity extends Entity {
   }
 
   baseUpdate(delta: number) {
-    if (this.gravitable) this.gravity();
+    if (this.gravitable && !this.onGround) this.gravity();
 
-    this.pos.addTo(this.vel.scalarMultiply(delta / 16));
+    // if we leave the tab for a long time delta gets very big.
+    // idk if this is the best solution but I'm going to make them stop moving
+    const scaleFactor = delta > 100 ? 0 : delta / 16;
+    const scaledVel = this.vel.scalarMultiply(scaleFactor);
+
+    this.pos.addTo(scaledVel);
   }
 
   baseHit(entity: Entity) {
-    if (this.tangible) {
-      const where = this.pushOut(entity);
-      this.hit(entity, where);
-    }
+    const where = this.pushOut(entity);
+    this.hit(entity, where);
   }
 
   move(p: IDim) {

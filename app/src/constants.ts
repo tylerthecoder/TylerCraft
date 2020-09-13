@@ -1,5 +1,6 @@
 export const CONFIG = {
   renderDistance: 4,
+  loadDistance: 4,
   seed: "bungus",
 
   transparency: true,
@@ -23,7 +24,6 @@ export const CONFIG = {
   },
 
   gravity: -0.013,
-  // gravity: -0.0001,
 
   player: {
     speed: .2,
