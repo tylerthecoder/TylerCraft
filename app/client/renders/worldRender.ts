@@ -55,7 +55,7 @@ export default class WorldRenderer {
     this.entityRenderers.delete(uid);
   }
 
-  renderChunk(chunkPos: Vector2D, camera: Camera) {
+  renderChunk(chunkPos: Vector2D, camera: Camera, renderedSet: Set<ChunkRenderer>) {
     const chunk = this.world.getChunkFromPos(chunkPos, {loadIfNotFound: true});
 
     if (!chunk) {
@@ -79,13 +79,18 @@ export default class WorldRenderer {
       this.chunkRenderers.set(chunkPos.toString(), chunkRenderer);
     }
 
+    renderedSet.add(chunkRenderer);
+
     chunkRenderer.render(camera);
   }
 
   render(game: ClientGame) {
     canvas.clearCanvas();
-
     const camera = game.camera;
+
+
+    const renderedChunks = new Set<ChunkRenderer>();
+
 
     for (const renderer of this.renderers) {
       renderer.render(camera);
@@ -143,7 +148,7 @@ export default class WorldRenderer {
 
         renderedSet.add(chunkPos.toString());
 
-        this.renderChunk(chunkPos, camera);
+        this.renderChunk(chunkPos, camera, renderedChunks);
       }
     }
 
@@ -164,7 +169,7 @@ export default class WorldRenderer {
       }
 
       if (!stillShouldntRender) {
-        this.renderChunk(chunkPos, camera);
+        this.renderChunk(chunkPos, camera, renderedChunks);
       }
     }
 
@@ -176,8 +181,14 @@ export default class WorldRenderer {
         const indexVec = new Vector2D([k, l]);
         const chunkPos = cameraChunkPos.add(indexVec);
         if (!renderedSet.has(chunkPos.toString()))
-          this.renderChunk(chunkPos, camera);
+          this.renderChunk(chunkPos, camera, renderedChunks);
       }
+    }
+
+
+    // loop through all the chunk renders and only render the transparent things
+    for (const chunkRenderer of renderedChunks.values()) {
+      chunkRenderer.render(camera, true);
     }
 
   }

@@ -1,4 +1,5 @@
 import { CONFIG } from "../src/constants";
+declare var mat4: any;
 
 export class CanvasProgram {
   canvas: HTMLCanvasElement;
@@ -60,8 +61,6 @@ export class CanvasProgram {
       // alpha: false,
     });
 
-
-
     // Only continue if WebGL is available and working
     if (gl === null) {
       throw new Error(
@@ -73,10 +72,12 @@ export class CanvasProgram {
   }
 
   async loadProgram() {
+    const gl = this.gl;
+
     const vsSource = await fetch("./shaders/vertex.glsl").then(x => x.text());
     const fsSource = await fetch("./shaders/fragment.glsl").then(x => x.text());
 
-    const shaderProgram = this.initShaderProgram(this.gl, vsSource, fsSource);
+    const shaderProgram = this.initShaderProgram(gl, vsSource, fsSource);
 
     this.program = {
       program: shaderProgram,
@@ -99,7 +100,34 @@ export class CanvasProgram {
         uSampler: this.gl.getUniformLocation(shaderProgram, "uSampler")
       }
     };
-    this.gl.useProgram(this.program.program);
+
+    gl.useProgram(this.program.program);
+
+    gl.enableVertexAttribArray(this.program.attribLocations.vertexPosition);
+    gl.enableVertexAttribArray(this.program.attribLocations.textureCoord);
+
+    // Tell the shader we bound the texture to texture unit 0
+    gl.uniform1i(this.program.uniformLocations.uSampler, 0);
+
+    // Create a perspective matrix, a special matrix that is
+    // used to simulate the distortion of perspective in a camera.
+    // Our field of view is 45 degrees, with a width/height
+    // ratio that matches the display size of the canvas
+    // and we only want to see objects between 0.1 units
+    // and 100 units away from the camera.
+    const fieldOfView = CONFIG.glFov;
+    const canvasElement = gl.canvas as HTMLCanvasElement;
+    const aspect = canvasElement.clientWidth / canvasElement.clientHeight;
+    const zNear = 0.1;
+    const zFar = 100.0;
+    const projectionMatrix = mat4.create();
+    mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
+
+    this.gl.uniformMatrix4fv(
+      this.program.uniformLocations.projectionMatrix,
+      false,
+      projectionMatrix
+    );
   }
 
   //

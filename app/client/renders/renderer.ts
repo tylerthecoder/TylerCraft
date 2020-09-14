@@ -1,10 +1,7 @@
 import { CanvasProgram, canvas } from "../canvas";
 import { Camera } from "../cameras/camera";
-import { arrayAdd, arraySub } from "../../src/utils";
-import { CONFIG } from "../../src/constants";
+import { arraySub } from "../../src/utils";
 declare var mat4: any;
-
-// Main class that defines how to render objects
 
 export abstract class Renderer {
 
@@ -13,19 +10,23 @@ export abstract class Renderer {
   posBuffer: WebGLBuffer;
   indexBuffer: WebGLBuffer;
   textureBuffer: WebGLBuffer;
+  transPosBuffer: WebGLBuffer;
+  transIndexBuffer: WebGLBuffer;
+  transTextureBuffer: WebGLBuffer;
 
   texture: WebGLTexture;
-
   amount: number;
+  transAmount: number;
 
-  constructor() {
-    // this might be a bad practice but it make things so much easier
-  }
+  constructor() {}
 
   protected setBuffers(
     positions: number[],
     indices: number[],
-    textureCords: number[]
+    textureCords: number[],
+    transPositions?: number[],
+    transIndices?: number[],
+    transTextureCords?: number[],
   ) {
     const gl = canvas.gl;
 
@@ -37,19 +38,31 @@ export abstract class Renderer {
 
     this.indexBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-    gl.bufferData(
-      gl.ELEMENT_ARRAY_BUFFER,
-      new Uint16Array(indices),
-      gl.STATIC_DRAW
-    );
+    gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
 
     this.textureBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.textureBuffer);
-    gl.bufferData(
-      gl.ARRAY_BUFFER,
-      new Float32Array(textureCords),
-      gl.STATIC_DRAW
-    );
+    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array(textureCords), gl.STATIC_DRAW);
+
+    if (transPositions) {
+      this.transPosBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.transPosBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(transPositions), gl.STATIC_DRAW);
+    }
+
+    if (transIndices) {
+      this.transIndexBuffer = gl.createBuffer();
+      this.transAmount = transIndices.length;
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.transIndexBuffer);
+      gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(transIndices), gl.STATIC_DRAW);
+    }
+
+    if (transTextureCords) {
+      this.transTextureBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.transTextureBuffer);
+      gl.bufferData( gl.ARRAY_BUFFER, new Float32Array(transTextureCords), gl.STATIC_DRAW);
+    }
+
   }
 
   protected setActiveTexture(texture: WebGLTexture) {
@@ -58,18 +71,20 @@ export abstract class Renderer {
 
   // Tell WebGL how to pull out the positions from the position
   // buffer into the vertexPosition attribute.
-  private bindCube() {
+  private bindCube(trans: boolean) {
     const programInfo = canvas.program;
     const gl = canvas.gl;
+
+    const posBuffer = trans ? this.transPosBuffer : this.posBuffer;
+    const indexBuffer = trans ? this.transIndexBuffer : this.indexBuffer;
 
     const numComponents = 3; // pull out 2 values per iteration
     const type = gl.FLOAT; // the data in the buffer is 32bit floats
     const normalize = false; // don't normalize
     const stride = 0; // how many bytes to get from one set of values to the next
-    // 0 = use type and numComponents above
     const offset = 0; // how many bytes inside the buffer to start from
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuffer);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+    gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
 
     gl.vertexAttribPointer(
       programInfo.attribLocations.vertexPosition,
@@ -79,20 +94,21 @@ export abstract class Renderer {
       stride,
       offset
     );
-    gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
   }
 
   // tell webgl how to pull out the texture coordinates from buffer
-  private bindTexture() {
+  private bindTexture(trans: boolean) {
     const programInfo = canvas.program;
     const gl = canvas.gl;
+
+    const textureBuffer = trans ? this.transTextureBuffer : this.textureBuffer;
 
     const num = 2; // every coordinate composed of 2 values
     const type = gl.FLOAT; // the data in the buffer is 32 bit float
     const normalize = false; // don't normalize
     const stride = 0; // how many bytes to get from one set to the next
     const offset = 0; // how many bytes inside the buffer to start from
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.textureBuffer);
+    gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
     gl.vertexAttribPointer(
       programInfo.attribLocations.textureCoord,
       num,
@@ -101,60 +117,31 @@ export abstract class Renderer {
       stride,
       offset
     );
-    gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
   }
 
   abstract render(camera: Camera): void;
 
-  renderObject(pos: number[], camera: Camera) {
+  renderObject(pos: number[], camera: Camera, trans?: boolean) {
     const gl = canvas.gl;
     const programInfo = canvas.program;
-
-
-    // Create a perspective matrix, a special matrix that is
-    // used to simulate the distortion of perspective in a camera.
-    // Our field of view is 45 degrees, with a width/height
-    // ratio that matches the display size of the canvas
-    // and we only want to see objects between 0.1 units
-    // and 100 units away from the camera.
-    const fieldOfView = CONFIG.glFov; // in radians
-    const aspect = (gl.canvas as HTMLCanvasElement).clientWidth / (gl.canvas as HTMLCanvasElement).clientHeight;
-    const zNear = 0.1;
-    const zFar = 100.0;
-    const projectionMatrix = mat4.create();
-
-    mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
 
     // Set the drawing position to the "identity" point, which is
     // the center of the scene.
     const modelViewMatrix = mat4.create();
-
     mat4.rotate(modelViewMatrix, modelViewMatrix, Math.PI / 2 - camera.rot[0], [1,0,0]);
     mat4.rotate(modelViewMatrix, modelViewMatrix, camera.rot[1], [0, 1, 0]);
 
-    // Now move the drawing position a bit to where we want to
-    // start drawing the square.
-
+    // Now move the drawing position to where we want to start drawing the square.
     mat4.translate(
       modelViewMatrix, // destination matrix
       modelViewMatrix, // matrix to translate
       arraySub(pos, camera.pos.data)
     );
 
-    this.bindCube();
-
-    this.bindTexture();
-
-
-    // Tell the shader we bound the texture to texture unit 0
-    gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
+    this.bindCube(trans || false);
+    this.bindTexture(trans || false);
 
     // Set the shader uniforms
-    gl.uniformMatrix4fv(
-      programInfo.uniformLocations.projectionMatrix,
-      false,
-      projectionMatrix
-    );
     gl.uniformMatrix4fv(
       programInfo.uniformLocations.modelViewMatrix,
       false,
@@ -165,7 +152,7 @@ export abstract class Renderer {
 
     gl.drawElements(
       gl.TRIANGLES,
-      this.amount,
+      trans ? this.transAmount : this.amount,
       gl.UNSIGNED_SHORT,
       0
     );

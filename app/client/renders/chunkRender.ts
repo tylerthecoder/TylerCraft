@@ -9,6 +9,9 @@ import { Vector3D, Vector, Vector2D } from "../../src/utils/vector";
 import { World } from "../../src/world/world";
 import { BLOCK_DATA, BlockType } from "../../src/blockdata";
 
+
+type IVisibleFaceMap = Map<string, {cube: Cube, faceVectors: Vector3D[]}>;
+
 export class ChunkRenderer extends Renderer {
   constructor(public chunk: Chunk, world: World) {
     super();
@@ -16,9 +19,8 @@ export class ChunkRenderer extends Renderer {
     this.getBufferData(world);
   }
 
-  render(camera: Camera) {
-    // this.form.render(this.pos, screenPos, screenRot);
-    this.renderObject(this.chunk.pos.data, camera);
+  render(camera: Camera, trans?: boolean) {
+    this.renderObject(this.chunk.pos.data, camera, trans);
   }
 
   // return if there is a cube (or void) at this position
@@ -45,33 +47,27 @@ export class ChunkRenderer extends Renderer {
     return true;
   }
 
-  // have an options to launch this on a worker thread (maybe always have it on a different thread)
-  getBufferData(world: World) {
-    // console.log("Chunk update");
-    const visibleCubePosMap = new Map<string, {cube: Cube, faceVectors: Vector3D[]}>();
-
-    const addVisibleFace = (cube: Cube, directionVector: Vector3D) => {
-      let visibleCubePos = visibleCubePosMap.get(cube.pos.toString());
-      if (!visibleCubePos) {
-        visibleCubePos = {
-          cube: cube,
-          faceVectors: []
-        }
+  private addVisibleFace(faceMap: IVisibleFaceMap, cube: Cube, directionVector: Vector3D) {
+    let visibleCubePos = faceMap.get(cube.pos.toString());
+    if (!visibleCubePos) {
+      visibleCubePos = {
+        cube: cube,
+        faceVectors: []
       }
-      visibleCubePos.faceVectors.push(directionVector);
-      visibleCubePosMap.set(cube.pos.toString(), visibleCubePos);
     }
+    visibleCubePos.faceVectors.push(directionVector);
+    faceMap.set(cube.pos.toString(), visibleCubePos);
+  }
 
-
-    const positions: number[] = []; // used to store positions of vertices
-    const indices: number[] = []; // used to store pointers to those vertices
-    const textureCords: number[] = [];
-    let offset = 0;
-    for (const cube of this.chunk.getCubesIterable()) {
+  private getDataForBlock(cube: Cube, offset: number, world: World, visibleFaceMap: IVisibleFaceMap):
+  {addToOffset: number, positions: number[], indices: number[], textureCords: number[]}
+  {
       const blockData = BLOCK_DATA.get(cube.type);
       const relativePos = arraySub(cube.pos.data, this.chunk.pos.data);
       const texturePos = TextureMapper.getTextureCords(cube.type);
-
+      const positions: number[] = [];
+      const indices: number[] = [];
+      const textureCords: number[] = [];
       if (blockData.blockType === BlockType.cube) {
 
         // loop through all the faces to get their cords
@@ -86,7 +82,7 @@ export class ChunkRenderer extends Renderer {
           }
 
           // add the face to the list of visible faces on the chunk
-          addVisibleFace(cube, directionVector);
+          this.addVisibleFace(visibleFaceMap, cube, directionVector);
 
           // get the dimension of the face i.e. x, y, z
           const dim = face >> 1;
@@ -128,11 +124,13 @@ export class ChunkRenderer extends Renderer {
           textureCords.push(...textureCord);
         }
 
-        offset += count;
+        return {
+          addToOffset: count,
+          positions,
+          indices,
+          textureCords,
+        }
       } else if (blockData.blockType === BlockType.x) {
-
-        // the main verticies of an x
-        // const vertices = [[0, 0, 0], [1, 0, 1], [1, 1, 1], [0, 1, 0]];
 
         const adjustedCords = Vector.xVectors.
           map(v => arrayAdd(v, relativePos)).
@@ -146,10 +144,65 @@ export class ChunkRenderer extends Renderer {
         indices.push(...triIndices, ...secondTriIndices);
         textureCords.push(...texturePos[0], ...texturePos[1]);
 
-        offset += 8;
+        return {
+          addToOffset: 8,
+          positions,
+          indices,
+          textureCords,
+        }
+      }
+  }
+
+  // have an options to launch this on a worker thread (maybe always have it on a different thread)
+  getBufferData(world: World) {
+    // console.log("Chunk update");
+    const visibleCubePosMap = new Map<string, {cube: Cube, faceVectors: Vector3D[]}>();
+
+    const addVisibleFace = (cube: Cube, directionVector: Vector3D) => {
+      let visibleCubePos = visibleCubePosMap.get(cube.pos.toString());
+      if (!visibleCubePos) {
+        visibleCubePos = {
+          cube: cube,
+          faceVectors: []
+        }
+      }
+      visibleCubePos.faceVectors.push(directionVector);
+      visibleCubePosMap.set(cube.pos.toString(), visibleCubePos);
+    }
+
+
+    const positions: number[] = []; // used to store positions of vertices
+    const indices: number[] = []; // used to store pointers to those vertices
+    const textureCords: number[] = [];
+    let offset = 0;
+
+    const transPositions: number[] = [];
+    const transIndices: number[] = [];
+    const transTextureCords: number[] = [];
+    let transOffset = 0;
+    for (const cube of this.chunk.getCubesIterable()) {
+      const blockData = BLOCK_DATA.get(cube.type);
+
+
+      if (blockData.transparent) {
+        const {
+          addToOffset, positions: p, indices: i, textureCords: t
+        } = this.getDataForBlock(cube, transOffset, world, visibleCubePosMap);
+        transOffset += addToOffset;
+        transPositions.push(...p);
+        transIndices.push(...i);
+        transTextureCords.push(...t);
+      } else {
+        const {
+          addToOffset, positions: p, indices: i, textureCords: t
+        } = this.getDataForBlock(cube, offset, world, visibleCubePosMap);
+        offset += addToOffset;
+        positions.push(...p);
+        indices.push(...i);
+        textureCords.push(...t);
       }
     }
     this.chunk.visibleCubesFaces = Array.from(visibleCubePosMap.values());
-    this.setBuffers(positions, indices, textureCords);
+    this.setBuffers(positions, indices, textureCords, transPositions, transIndices, transTextureCords);
   }
 }
