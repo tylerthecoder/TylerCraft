@@ -24,7 +24,7 @@ export class ChunkRenderer extends Renderer {
   }
 
   // return if there is a cube (or void) at this position
-  private isCube(pos: Vector3D, world: World) {
+  private isCube(pos: Vector3D, world: World, currentCube: Cube) {
     let cube = this.chunk.getCube(pos);
     // if it isn't in the cube map, see if the world contains it
     if (pos.get(1) === -1) { return true; }
@@ -38,11 +38,15 @@ export class ChunkRenderer extends Renderer {
       }
     }
     const blockData = BLOCK_DATA.get(cube.type);
+    const currentCubeBlockData = BLOCK_DATA.get(currentCube.type);
 
-    if (blockData.blockType === BlockType.x) {
-      return false;
+    if (blockData.blockType === BlockType.fluid && currentCubeBlockData.blockType === BlockType.fluid) {
+      return true;
     }
 
+    if (blockData.transparent) {
+      return false;
+    }
 
     return true;
   }
@@ -68,14 +72,14 @@ export class ChunkRenderer extends Renderer {
       const positions: number[] = [];
       const indices: number[] = [];
       const textureCords: number[] = [];
-      if (blockData.blockType === BlockType.cube) {
+      if (blockData.blockType === BlockType.cube || blockData.blockType === BlockType.fluid) {
 
         // loop through all the faces to get their cords
         let count = 0;
         for (const face of [0, 1, 2, 3, 4, 5]) {
           // check to see if there is a cube touching me on this face
           const directionVector = Vector.unitVectors3D[face];
-          const nearbyCube = this.isCube(cube.pos.add(directionVector), world);
+          const nearbyCube = this.isCube(cube.pos.add(directionVector), world, cube);
           // skkkkkip
           if (nearbyCube) {
             continue;
@@ -143,6 +147,11 @@ export class ChunkRenderer extends Renderer {
         positions.push(...adjustedCords);
         indices.push(...triIndices, ...secondTriIndices);
         textureCords.push(...texturePos[0], ...texturePos[1]);
+
+        // make a flower still "hittable"
+        for (const directionVector of Vector.unitVectors3D) {
+          this.addVisibleFace(visibleFaceMap, cube, directionVector);
+        }
 
         return {
           addToOffset: 8,

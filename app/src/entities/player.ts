@@ -9,7 +9,7 @@ import { CONFIG } from "../constants";
 export class Player extends MovableEntity {
   // Entity overrides
   pos: Vector3D = new Vector3D([0, 10, 0]);
-  dim: IDim = [1, 2, 1];
+  dim: IDim = [.8, 2, .8];
 
   // Player Member Variables
   thirdPerson = false;

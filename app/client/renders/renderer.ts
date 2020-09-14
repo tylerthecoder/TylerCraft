@@ -110,7 +110,7 @@ export abstract class Renderer {
     const offset = 0; // how many bytes inside the buffer to start from
     gl.bindBuffer(gl.ARRAY_BUFFER, textureBuffer);
     gl.vertexAttribPointer(
-      programInfo.attribLocations.textureCoord,
+      programInfo.attribLocations.textureCord,
       num,
       type,
       normalize,

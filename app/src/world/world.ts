@@ -78,6 +78,13 @@ export class World {
     return this.getChunkFromPos(chunkPos);
   }
 
+  getBlockFromWorldPoint(pos: Vector3D): Cube {
+    const chunk = this.getChunkFromWorldPoint(pos);
+    if (!chunk) return null;
+    const cube = chunk.cubes.get(pos.floor().toString());
+    if (cube) return cube;
+  }
+
   updateChunk(chunkPos: Vector2D) {
     const chunkToUpdate = this.chunks.get(chunkPos.add(new Vector2D([0, 1])).toString());
     if (chunkToUpdate) {
@@ -152,17 +159,16 @@ export class World {
     this.game.addAction(chunk.getBlockUpdateAction());
   }
 
-  lookingAt(cameraPos: IDim, cameraDir: IDim): ILookingAtData {
-    const cameraPosVector = new Vector(cameraPos);
+  lookingAt(cameraPos: Vector3D, cameraDir: IDim): ILookingAtData {
     let closestDist = Infinity;
     let closestCube: ILookingAtData;
 
     // loop over all chunks and then check if they are reachable
     for (const chunk of this.chunks.values()) {
-      const isReachable = chunk.circleIntersect(cameraPosVector, CONFIG.player.reach)
+      const isReachable = chunk.circleIntersect(cameraPos, CONFIG.player.reach)
       if (!isReachable) continue;
 
-      const cubeData = chunk.lookingAt(cameraPos, cameraDir);
+      const cubeData = chunk.lookingAt(cameraPos.data as IDim, cameraDir);
       if (cubeData && closestDist > cubeData.dist && cubeData.dist < CONFIG.player.reach) {
         closestDist = cubeData.dist;
         closestCube = cubeData;

@@ -141,7 +141,7 @@ export class Game {
       const payload = action.hurtEntity;
       const entity = this.findEntity(payload.uid) as Player;
       if (!entity) {
-        console.log(payload.uid);
+        console.log("Entity not found", payload.uid);
         return;
       }
       entity.hurt(payload.amount);

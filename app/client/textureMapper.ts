@@ -16,6 +16,7 @@ textureData.set(BLOCKS.leaf, {offsetX: 1, offsetY: 1});
 textureData.set(BLOCKS.cloud, {offsetX: 2, offsetY: 0});
 textureData.set(BLOCKS.gold, {offsetX: 2, offsetY: 1});
 textureData.set(BLOCKS.redFlower, {offsetX: 0, offsetY: 2});
+textureData.set(BLOCKS.water, {offsetX: 2, offsetY: 2});
 
 class Textures {
   getTextureCords(type: BLOCKS) {

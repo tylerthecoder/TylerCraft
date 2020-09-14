@@ -46,11 +46,18 @@ export class TerrainGenerator {
 
         this.preRenderNearbyChunks(chunkPos, world)
 
+        // generate water
+        if (y < CONFIG.terrain.waterLever) {
+         for (let k = y; k < 3; k++) {
+          const cubePos = [x, k, z];
+          const cube = new Cube(BLOCKS.water, new Vector3D(cubePos));
+          chunk.addCube(cube);
+         }
+        }
+
         for (let k = 0; k <= y; k++) {
           const cubePos = [x, k, z];
-
           const blockType = k === y ? BLOCKS.grass : Random.randomNum() > .9 ? BLOCKS.gold : BLOCKS.stone;
-
           const cube = new Cube(blockType, new Vector3D(cubePos));
           chunk.addCube(cube);
         }

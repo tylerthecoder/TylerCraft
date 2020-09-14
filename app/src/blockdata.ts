@@ -7,17 +7,20 @@ export enum BLOCKS {
   cloud = 4,
   gold = 5,
   redFlower = 6,
+  water = 7,
 }
 
 export enum BlockType {
   cube = 0,
   x = 1,
+  fluid = 2,
 }
 
 interface BlockData {
   gravitable: boolean;
   blockType: BlockType;
   transparent?: boolean;
+  intangible?: boolean;
 }
 
 export const BLOCK_DATA: Map<BLOCKS, BlockData> = new Map( )
@@ -50,4 +53,11 @@ BLOCK_DATA.set(BLOCKS.redFlower, {
   gravitable: false,
   blockType: BlockType.x,
   transparent: true,
+  intangible: true,
+});
+BLOCK_DATA.set(BLOCKS.water, {
+  gravitable: false,
+  blockType: BlockType.fluid,
+  transparent: true,
+  intangible: true,
 });

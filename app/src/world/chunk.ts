@@ -4,6 +4,7 @@ import { IDim, IActionType, IAction } from "../../types";
 import { arrayMul, arrayAdd, arrayDot, arrayScalarMul, roundToNPlaces, arrayDistSquared } from "../utils";
 import { CONFIG } from "../constants";
 import { Vector3D, Vector, Vector2D } from "../utils/vector";
+import { BlockType, BLOCK_DATA } from "../blockdata";
 
 
 export interface ILookingAtData {
@@ -39,6 +40,7 @@ export class Chunk {
 
     // find the closest faces to the circle and set the test cords to them
     for (let i = 0; i < 3; i++) {
+      if (i === 1) continue; // only run for x and z
       if (circlePos.get(i) < this.pos.get(i)) {
         testCords.set(i, this.pos.get(i));
       } else if (circlePos.get(i) > this.pos.get(i) + CONFIG.terrain.chunkSize) {
@@ -58,9 +60,12 @@ export class Chunk {
       pos.data = pos.data.map(Math.floor);
 
       const cube = this.cubes.get(pos.toString());
-
       if (!cube) return;
+
+      const cubeData = BLOCK_DATA.get(cube.type);
+
       if (!cube.isCollide(ent)) return;
+      if (cubeData.intangible) return;
 
       ent.pushOut(cube);
     }

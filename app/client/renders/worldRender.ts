@@ -8,12 +8,13 @@ import { ClientGame } from "../clientGame";
 import { Entity, RenderType } from "../../src/entities/entity";
 import { SphereRenderer } from "./sphereRender";
 import { CONFIG } from "../../src/constants";
-import { Vector2D, Vector3D } from "../../src/utils/vector";
+import { Vector, Vector2D, Vector3D } from "../../src/utils/vector";
 import { Camera } from "../cameras/camera";
 import { Cube } from "../../src/entities/cube";
 import { Player } from "../../src/entities/player";
 import { Projectile } from "../../src/entities/projectile";
 import { Ball } from "../../src/entities/ball";
+import { BLOCKS, BLOCK_DATA } from "../../src/blockdata";
 
 export default class WorldRenderer {
   private renderers: Renderer[] = [];
@@ -33,6 +34,16 @@ export default class WorldRenderer {
   blockUpdate(chunkId: string) {
     const chunkToUpdate = this.chunkRenderers.get(chunkId);
     if (chunkToUpdate) chunkToUpdate.getBufferData(this.world);
+  }
+
+  getFilter(camera: Camera): Vector3D | null {
+    const block = this.world.getBlockFromWorldPoint(camera.pos);
+
+    if (block?.type === BLOCKS.water) {
+      return new Vector3D([0,.3,1]);
+    } else {
+      return Vector.zero3D;
+    }
   }
 
   addEntity(entity: Entity) {
@@ -87,6 +98,9 @@ export default class WorldRenderer {
   render(game: ClientGame) {
     canvas.clearCanvas();
     const camera = game.camera;
+
+    const filter = this.getFilter(camera);
+    canvas.setColorFilter(filter);
 
 
     const renderedChunks = new Set<ChunkRenderer>();

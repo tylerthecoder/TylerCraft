@@ -29,8 +29,10 @@ export class ClientGame extends Game {
   pastDeltas: number[] = [];
   get frameRate() {
     this.pastDeltas = this.pastDeltas.slice(-20);
-    const totTime = this.pastDeltas.reduce((acc, cur) => acc + cur);
-    return totTime / Math.min(this.pastDeltas.length, 20);
+    const totTime = this.pastDeltas.reduce((acc, cur) => acc + cur, 0);
+    const averageMs = totTime / Math.min(this.pastDeltas.length, 20);
+    const fps = 1 / (averageMs / 1000);
+    return fps;
   }
 
   constructor() {
@@ -97,7 +99,7 @@ export class ClientGame extends Game {
   }
 
   onClick(e: MouseEvent) {
-    const data = this.world.lookingAt(this.camera.pos.data as IDim, this.camera.rotCart.data as IDim);
+    const data = this.world.lookingAt(this.camera.pos, this.camera.rotCart.data as IDim);
 
     if (!data) return;
 

@@ -112,6 +112,10 @@ export class Vector<T extends number[] = IDim> {
     return new Vector(this.data.slice(0));
   }
 
+  floor(): Vector<T> {
+    return new Vector(this.data.map(Math.floor));
+  }
+
   private _add(vec: Vector<T>): T {
     return this.data.map( (num, index) => num + vec.get(index)) as T;
   }

@@ -11,10 +11,11 @@ export const CONFIG = {
 
   terrain: {
     jagFactor: 32,
-    maxHeight: 10,
+    maxHeight: 12,
+    cloudLevel: 30,
+    waterLever: 3,
     chunkSize: 16,
     // chunkSize: 4,
-    cloudLevel: 30,
     // flatWorld: true,
     flatWorld: false,
     trees: true,

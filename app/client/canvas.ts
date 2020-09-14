@@ -1,4 +1,5 @@
 import { CONFIG } from "../src/constants";
+import { Vector3D } from "../src/utils/vector";
 declare var mat4: any;
 
 export class CanvasProgram {
@@ -6,7 +7,11 @@ export class CanvasProgram {
   hudCanvas: HTMLCanvasElement;
   gl: WebGLRenderingContext;
   hudCxt: CanvasRenderingContext2D;
-  program: any;
+  program: {
+    program: WebGLProgram,
+    attribLocations: {[name: string]: number},
+    uniformLocations: {[name: string]: WebGLUniformLocation},
+  };
 
   textures: { [name: string]: WebGLTexture };
 
@@ -71,6 +76,10 @@ export class CanvasProgram {
     return gl;
   }
 
+  setColorFilter(color: Vector3D) {
+    this.gl.uniform4f(this.program.uniformLocations.uFilter, color.get(0), color.get(1), color.get(2), 0);
+  }
+
   async loadProgram() {
     const gl = this.gl;
 
@@ -82,32 +91,27 @@ export class CanvasProgram {
     this.program = {
       program: shaderProgram,
       attribLocations: {
-        vertexPosition: this.gl.getAttribLocation(
-          shaderProgram,
-          "aVertexPosition"
-        ),
-        textureCoord: this.gl.getAttribLocation(shaderProgram, "aTextureCoord")
+        vertexPosition: gl.getAttribLocation( shaderProgram, "aVertexPosition"),
+        textureCord: gl.getAttribLocation(shaderProgram, "aTextureCord"),
       },
       uniformLocations: {
-        projectionMatrix: this.gl.getUniformLocation(
-          shaderProgram,
-          "uProjectionMatrix"
-        ),
-        modelViewMatrix: this.gl.getUniformLocation(
-          shaderProgram,
-          "uModelViewMatrix"
-        ),
-        uSampler: this.gl.getUniformLocation(shaderProgram, "uSampler")
+        projectionMatrix: gl.getUniformLocation( shaderProgram, "uProjectionMatrix"),
+        modelViewMatrix: gl.getUniformLocation( shaderProgram, "uModelViewMatrix"),
+        uSampler: gl.getUniformLocation(shaderProgram, "uSampler"),
+        uFilter: gl.getUniformLocation(shaderProgram, "uFilter"),
       }
     };
 
     gl.useProgram(this.program.program);
 
     gl.enableVertexAttribArray(this.program.attribLocations.vertexPosition);
-    gl.enableVertexAttribArray(this.program.attribLocations.textureCoord);
+    gl.enableVertexAttribArray(this.program.attribLocations.textureCord);
 
     // Tell the shader we bound the texture to texture unit 0
     gl.uniform1i(this.program.uniformLocations.uSampler, 0);
+
+    // set the color filter
+    this.setColorFilter(new Vector3D([0,0,0]));
 
     // Create a perspective matrix, a special matrix that is
     // used to simulate the distortion of perspective in a camera.
