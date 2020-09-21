@@ -8,6 +8,7 @@ import { CONFIG } from "../constants";
 
 
 export interface ISerializedPlayer extends ISerializedEntity{
+  vel: IDim;
   isReal: boolean;
 }
 

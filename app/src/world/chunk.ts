@@ -9,7 +9,7 @@ import { ISerializedCube, deserializeCube, serializeCube } from "../serializer";
 
 export interface ILookingAtData {
   newCubePos: Vector,
-  entity: Entity,
+  entity?: Entity,
   dist: number;
 }
 
@@ -113,7 +113,7 @@ export class Chunk {
       const cube = this.cubes.get(pos.toString());
       if (!cube) return;
 
-      const cubeData = BLOCK_DATA.get(cube.type);
+      const cubeData = BLOCK_DATA.get(cube.type)!;
 
       if (!cube.isCollide(ent)) return;
       if (cubeData.intangible) return;
@@ -231,7 +231,7 @@ export class Chunk {
     }
   }
 
-  getCube(pos: Vector3D): Cube {
+  getCube(pos: Vector3D): Cube|null {
     const cube = this.cubes.get(pos.toString());
     if (!cube) return null;
     return cube;

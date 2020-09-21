@@ -1,4 +1,3 @@
-import { Entity } from "../../src/entities/entity";
 import { Camera } from "./camera";
 import { IDim } from "../../types";
 import { arrayAdd } from "../../src/utils";
@@ -7,8 +6,7 @@ import { Vector3D } from "../../src/utils/vector";
 import { MovableEntity } from "../../src/entities/moveableEntity";
 
 export class EntityCamera extends Camera {
-  thirdPerson: boolean = false;
-
+  thirdPerson = false;
   offset: IDim = [0, 0, 0];
   rot: IDim;
 
@@ -52,5 +50,5 @@ export class EntityCamera extends Camera {
     return new Vector3D(arrayAdd(this.entity.pos.data, offset));
   }
 
-  set pos(_pos: Vector3D) {}
+  set pos(_pos: Vector3D) {/* NO-OP */}
 }

@@ -16,13 +16,13 @@ app.use(bodyParser.json({
   limit: "50mb"
 }));
 
-app.post("/world", (req, res) => {
+app.post("/world", (req) => {
   console.log("Saving the world");
   const data = JSON.stringify(req.body);
   fs.writeFileSync("/home/tyler/p/falling-blocks/worlds/world.json", data);
 });
 
-app.get("/world", (req, res) => {
+app.get("/world", (_req, res) => {
   const data = fs.readFileSync("/home/tyler/p/falling-blocks/worlds/world.json");
   res.send(data);
 });

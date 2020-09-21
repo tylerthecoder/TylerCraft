@@ -32,7 +32,9 @@ export class GameController extends Controller {
     })
   }
 
-  keysChange() {}
+  keysChange() {
+    // NO-OP
+  }
 
   update(_delta: number) {
 

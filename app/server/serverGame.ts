@@ -24,16 +24,16 @@ export class ServerGame extends Game {
     this.loop();
   }
 
-  loop() {
+  loop(): void {
     if (this.actionQueue.length > 100) {
       console.log(this.actionQueue);
       throw new Error("BAD")
     }
 
-    let sortedActions: Map<wSocket,IAction[]> = new Map();
+    const sortedActions: Map<wSocket,IAction[]> = new Map();
     this.actionQueue.forEach(({action, from}) => {
       if (sortedActions.has(from)) {
-        sortedActions.get(from).push(action);
+        sortedActions.get(from)!.push(action);
       } else {
         sortedActions.set(from, [action]);
       }
@@ -60,6 +60,7 @@ export class ServerGame extends Game {
   private sendChunkTo(chunkPosString: string, ws: wSocket) {
     const chunkPos = Vector.fromString(chunkPosString) as Vector2D;
     const chunk = this.world.getChunkFromPos(chunkPos, {generateIfNotFound: true});
+    if (!chunk) throw new Error("Chunk wasn't found");
     const serializedData = JSON.stringify(chunk.serialize());
     this.wss.send(ws, {
       type: ISocketMessageType.sendChunk,
@@ -70,14 +71,14 @@ export class ServerGame extends Game {
     });
   }
 
-  handleMessage(ws: wSocket) {
+  handleMessage(ws: wSocket): void {
     this.clients.addPlayer(ws);
 
     this.wss.listenTo(ws, (ws: wSocket, message: ISocketMessage) => {
       // console.log("Got Message", message);
       switch (message.type) {
       case ISocketMessageType.actions: {
-        const payload = message.actionPayload;
+        const payload = message.actionPayload!;
         this.actionQueue.push(...payload.map(
           a => ({
             action: a,
@@ -86,9 +87,13 @@ export class ServerGame extends Game {
         ));
         break;
       }
-      case ISocketMessageType.getChunk:
-        const payload = message.getChunkPayload;
+      case ISocketMessageType.getChunk: {
+        const payload = message.getChunkPayload!;
         this.sendChunkTo(payload.pos, ws);
+        break;
+      }
+      default:
+        throw new Error("Unexpected message type")
       }
     });
   }

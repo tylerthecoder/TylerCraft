@@ -49,7 +49,7 @@ export class Game {
   serialize(): ISerializedGame {
     return {
       config: CONFIG,
-      entities: this.entities.map(ent => ent.serialize(getEntityType(ent))),
+      entities: this.entities.map(ent => ent.serialize(getEntityType(ent)!)),
       world: this.world.serialize(),
       mainPlayerUid: this.mainPlayer.uid,
       gameId: this.gameId,
@@ -122,41 +122,42 @@ export class Game {
     // console.log("Handling Action", action);
     switch(action.type) {
     case IActionType.addEntity: {
-      const {ent} = action.addEntity;
+      const {ent} = action.addEntity!;
       const entity = deserializeEntity(ent);
       this.addEntity(entity);
       return;
     }
 
     case IActionType.removeEntity: {
-      const payload = action.removeEntity;
+      const payload = action.removeEntity!;
       const entity = this.findEntity(payload.uid);
       if (!entity) return;
       this.removeEntity(entity.uid);
       return;
     }
 
-    case IActionType.playerPlaceBlock:
-      const newCube = new Cube(
-        action.playerPlaceBlock.blockType,
-        new Vector3D(action.playerPlaceBlock.blockPos)
-      );
+    case IActionType.playerPlaceBlock: {
+      const payload = action.playerPlaceBlock!;
+      const newCube = new Cube( payload.blockType, new Vector3D(payload.blockPos));
       this.world.addBlock(newCube);
-      break;
+      return;
+    }
 
-    case IActionType.removeBlock:
-      this.world.removeBlock(new Vector3D(action.removeBlock.blockPos));
+    case IActionType.removeBlock: {
+      const payload = action.removeBlock!
+      this.world.removeBlock(new Vector3D(payload.blockPos));
       break;
+    }
 
     case IActionType.playerSetPos: {
-      const payload = action.playerSetPos;
+      const payload = action.playerSetPos!;
       const player = this.findEntity(payload.uid) as Player;
       player.pos = new Vector(payload.pos);
-      return action.playerSetPos.uid;
+      return payload.uid;
     }
 
     case IActionType.setEntVel: {
-      const payload = action.setEntVel;
+      const payload = action.setEntVel!;
       const entity = this.findEntity(payload.uid) as MovableEntity;
       if (!entity) {
         console.log(payload.uid);
@@ -166,25 +167,26 @@ export class Game {
       return payload.uid;
     }
 
-    case IActionType.playerFireball:
-      const player = this.findEntity(action.playerFireball.uid) as Player;
+    case IActionType.playerFireball: {
+      const payload = action.playerFireball!
+      const player = this.findEntity(payload.uid) as Player;
       player.fireball();
-      return action.playerFireball.uid;
+      return payload.uid;
+    }
 
     case IActionType.hurtEntity: {
-      const payload = action.hurtEntity;
+      const payload = action.hurtEntity!;
       const entity = this.findEntity(payload.uid) as Player;
       if (!entity) {
         console.log("Entity not found", payload.uid);
         return;
       }
       entity.hurt(payload.amount);
+      break;
     }
-
 
     default:
       return false;
-
     }
 
     return true;
@@ -222,10 +224,10 @@ export class Game {
   }
 
   // for the subclasses to override so they can "listen" to events
-  onNewEntity(_entity: Entity) {}
-  onRemoveEntity(_uid: string) {}
-  onActions(_actions: IAction[]) {}
+  onNewEntity(_entity: Entity) {/* NO-OP */}
+  onRemoveEntity(_uid: string) {/* NO-OP */}
+  onActions(_actions: IAction[]) {/* NO-OP */}
   // these are just actions that can be handled by the client (related to rendering and such)
-  clientActionListener(_action: IAction) {}
-  sendMessageToServer(_message: ISocketMessage) {}
+  clientActionListener(_action: IAction) {/* NO-OP */}
+  sendMessageToServer(_message: ISocketMessage) {/* NO-OP */}
 }

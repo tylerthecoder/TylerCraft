@@ -1,6 +1,4 @@
 import { BLOCKS } from "../src/blockdata";
-import { Entity } from "../src/entities/entity";
-import { Player } from "../src/entities/player";
 
 const TEXTURE_ATLAS_WIDTH = 3;
 const TEXTURE_ATLAS_HEIGHT = 3;
@@ -20,7 +18,7 @@ textureData.set(BLOCKS.water, {offsetX: 2, offsetY: 2});
 
 class Textures {
   getTextureCords(type: BLOCKS) {
-    const {offsetX, offsetY} = textureData.get(type);
+    const {offsetX, offsetY} = textureData.get(type)!;
 
 
     const startX = offsetX * xStepVal;
@@ -42,7 +40,7 @@ class Textures {
   }
 
   getBlockPreviewCords(type: BLOCKS, width: number, height: number) {
-    const {offsetX, offsetY} = textureData.get(type);
+    const {offsetX, offsetY} = textureData.get(type)!;
 
     const x = offsetX * xStepVal * width;
     const y = offsetY * yStepVal * height;
@@ -52,7 +50,7 @@ class Textures {
     return { x, y, w, h }
   }
 
-  getTextureCordsEntity(ent: Entity) {
+  getTextureCordsEntity() {
     // if (ent instanceof Player) {
 
       // top and bottom face face
@@ -80,7 +78,7 @@ class Textures {
 
       startXVal = xStepVal;
       startYVal = yStepVal * 2;
-      let midXVal = xStepVal * 1.5;
+      const midXVal = xStepVal * 1.5;
       endXVal = xStepVal * 2;
       endYVal = yStepVal * 3;
 

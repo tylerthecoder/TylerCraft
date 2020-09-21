@@ -2,7 +2,6 @@ import { IDim } from "../types";
 
 
 export function roundToNPlaces(num: number, n: number) {
-  const powerOfTen = n**10;
   // return Math.round((num + Number.EPSILON) * powerOfTen) / powerOfTen
   // const t = Math.round(num * powerOfTen) / powerOfTen
   // return t;

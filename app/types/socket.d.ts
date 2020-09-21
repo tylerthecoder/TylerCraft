@@ -1,4 +1,4 @@
-import { IDim, IAction } from ".";
+import { IAction } from ".";
 
 export const enum ISocketMessageType {
   actions,

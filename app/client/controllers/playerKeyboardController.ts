@@ -18,9 +18,7 @@ export class PlayerKeyboardController extends Controller {
   }
 
   keysChange() {
-  }
-
-  sendKeys() {
+    // NO_OP
   }
 
   sendPos() {

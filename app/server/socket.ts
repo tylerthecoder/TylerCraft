@@ -19,33 +19,32 @@ export default class SocketServer {
     this.server.on("connection", this.newConnection.bind(this));
   }
 
-  listen(listener: ConnectionListener) {
+  listen(listener: ConnectionListener): void {
     this.connectionListeners.push(listener);
   }
 
-  newConnection(ws: wSocket) {
+  newConnection(ws: wSocket):void  {
     this.connectionListeners.forEach(func => {
       func(ws);
     });
   }
 
-  listenTo(ws: wSocket, func: MessageListener) {
+  listenTo(ws: wSocket, func: MessageListener): void {
     ws.on("message", (data: string) => {
-      let message: ISocketMessage;
       try {
-        message = JSON.parse(data) as ISocketMessage;
+        const message = JSON.parse(data) as ISocketMessage;
+        func(ws, message);
       } catch {
         console.log("Error parsing JSON");
       }
-      func(ws, message);
     });
   }
 
-  send(ws: wSocket, message: ISocketMessage) {
+  send(ws: wSocket, message: ISocketMessage): void {
     ws.send(JSON.stringify(message));
   }
 
-  sendGlobal(message: ISocketMessage, exclude?: wSocket) {
+  sendGlobal(message: ISocketMessage, exclude?: wSocket): void {
     this.server.clients.forEach(client => {
       if (exclude && client === exclude) return;
       this.send(client as wSocket, message);

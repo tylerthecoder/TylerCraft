@@ -99,7 +99,9 @@ export default class WorldRenderer {
     const camera = game.camera;
 
     const filter = this.getFilter(camera);
-    canvas.setColorFilter(filter);
+    if (filter) {
+      canvas.setColorFilter(filter);
+    }
 
 
     const renderedChunks = new Set<ChunkRenderer>();

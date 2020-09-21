@@ -1,9 +1,8 @@
 import { BLOCKS } from "./blockdata";
 import { Cube } from "./entities/cube";
 import { Entity, IEntityType, ISerializedEntity } from "./entities/entity";
-import { MovableEntity } from "./entities/moveableEntity";
 import { ISerializedPlayer, Player } from "./entities/player";
-import { Projectile } from "./entities/projectile";
+import { ISerializedProjectile, Projectile } from "./entities/projectile";
 import { Vector } from "./utils/vector";
 
 export type ISerializedCube = [pos: string, type: BLOCKS];
@@ -23,7 +22,7 @@ export function deserializeCube(data: ISerializedCube): Cube {
 export function deserializeEntity(data: ISerializedEntity) {
     switch (data.type) {
     case IEntityType.Projectile:
-      return Projectile.deserialize(data)
+      return Projectile.deserialize(data as ISerializedProjectile)
     case IEntityType.Player:
       return Player.deserialize(data as ISerializedPlayer)
     }

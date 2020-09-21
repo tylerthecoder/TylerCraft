@@ -5,14 +5,11 @@
     "removeComments": true,
     "preserveConstEnums": true,
     "esModuleInterop": true,
-    "outDir": "../bin",
     "sourceMap": true,
+    "strictNullChecks": true,
     "target": "es6",
     "lib": [
       "es2019"
     ]
   },
-  "include": [
-    "../app/server/**/*"
-  ]
 }

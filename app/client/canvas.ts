@@ -1,6 +1,8 @@
 import { CONFIG } from "../src/constants";
 import { Vector3D } from "../src/utils/vector";
-declare var mat4: any;
+declare const mat4: any;
+// import {mat4} from "gl-matrix";
+
 
 export class CanvasProgram {
   canvas: HTMLCanvasElement;
@@ -52,10 +54,10 @@ export class CanvasProgram {
 
   getCanvas() {
     // init hud canvas
-    this.hudCanvas = document.querySelector("#hudCanvas");
+    this.hudCanvas = document.querySelector("#hudCanvas") as HTMLCanvasElement;
     this.hudCanvas.height = window.innerHeight;
     this.hudCanvas.width = window.innerWidth;
-    this.hudCxt = this.hudCanvas.getContext("2d");
+    this.hudCxt = this.hudCanvas.getContext("2d")!;
 
     // init gl canvas
     this.canvas = document.querySelector("#glCanvas") as HTMLCanvasElement;
@@ -95,10 +97,10 @@ export class CanvasProgram {
         textureCord: gl.getAttribLocation(shaderProgram, "aTextureCord"),
       },
       uniformLocations: {
-        projectionMatrix: gl.getUniformLocation( shaderProgram, "uProjectionMatrix"),
-        modelViewMatrix: gl.getUniformLocation( shaderProgram, "uModelViewMatrix"),
-        uSampler: gl.getUniformLocation(shaderProgram, "uSampler"),
-        uFilter: gl.getUniformLocation(shaderProgram, "uFilter"),
+        projectionMatrix: gl.getUniformLocation( shaderProgram, "uProjectionMatrix")!,
+        modelViewMatrix: gl.getUniformLocation( shaderProgram, "uModelViewMatrix")!,
+        uSampler: gl.getUniformLocation(shaderProgram, "uSampler")!,
+        uFilter: gl.getUniformLocation(shaderProgram, "uFilter")!,
       }
     };
 
@@ -141,12 +143,17 @@ export class CanvasProgram {
     gl: WebGLRenderingContext,
     vsSource: string,
     fsSource: string
-  ) {
+  ): WebGLProgram {
     const vertexShader = this.loadShader(gl, gl.VERTEX_SHADER, vsSource);
     const fragmentShader = this.loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
 
     // Create the shader program
     const shaderProgram = gl.createProgram();
+
+    if (!shaderProgram) {
+      throw new Error("Error loading shader program")
+    }
+
     gl.attachShader(shaderProgram, vertexShader);
     gl.attachShader(shaderProgram, fragmentShader);
     gl.linkProgram(shaderProgram);
@@ -156,7 +163,7 @@ export class CanvasProgram {
         "Unable to initialize the shader program: " +
           gl.getProgramInfoLog(shaderProgram)
       );
-      return null;
+      throw new Error("Unable to init shader program")
     }
 
     return shaderProgram;
@@ -166,8 +173,12 @@ export class CanvasProgram {
   // creates a shader of the given type, uploads the source and
   // compiles it.
   //
-  loadShader(gl: WebGLRenderingContext, type: number, source: string) {
+  loadShader(gl: WebGLRenderingContext, type: number, source: string): WebGLShader {
     const shader = gl.createShader(type);
+
+    if (!shader) {
+      throw new Error("Error loading shader")
+    }
 
     // Send the source to the shader object
     gl.shaderSource(shader, source);
@@ -179,7 +190,7 @@ export class CanvasProgram {
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
       console.log(gl.getShaderInfoLog(shader));
       gl.deleteShader(shader);
-      return null;
+      throw new Error("Error loading shader")
     }
 
     return shader;
@@ -189,7 +200,7 @@ export class CanvasProgram {
   // Initialize a texture and load an image.
   // When the image finished loading copy it into the texture.
   //
-  loadTexture(url: string) {
+  loadTexture(url: string): WebGLTexture {
     const gl = this.gl;
 
     const isPowerOf2 = (x: number) => (x & (x - 1)) === 0;
@@ -251,6 +262,10 @@ export class CanvasProgram {
       }
     };
     image.src = url;
+
+    if (!texture) {
+      throw new Error("Error loading texture file")
+    }
 
     return texture;
   }

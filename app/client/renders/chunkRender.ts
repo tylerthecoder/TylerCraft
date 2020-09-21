@@ -5,7 +5,7 @@ import { Chunk } from "../../src/world/chunk";
 import { arrayMul, arrayAdd, arraySub } from "../../src/utils";
 import TextureMapper from "../textureMapper";
 import { Cube } from "../../src/entities/cube";
-import { Vector3D, Vector, Vector2D } from "../../src/utils/vector";
+import { Vector3D, Vector } from "../../src/utils/vector";
 import { World } from "../../src/world/world";
 import { BLOCK_DATA, BlockType } from "../../src/blockdata";
 
@@ -19,7 +19,7 @@ export class ChunkRenderer extends Renderer {
     this.getBufferData(world);
   }
 
-  render(camera: Camera, trans?: boolean) {
+  render(camera: Camera, trans?: boolean): void {
     this.renderObject(this.chunk.pos.data, camera, trans);
   }
 
@@ -37,8 +37,8 @@ export class ChunkRenderer extends Renderer {
         return false;
       }
     }
-    const blockData = BLOCK_DATA.get(cube.type);
-    const currentCubeBlockData = BLOCK_DATA.get(currentCube.type);
+    const blockData = BLOCK_DATA.get(cube.type)!;
+    const currentCubeBlockData = BLOCK_DATA.get(currentCube.type)!;
 
     if (blockData.blockType === BlockType.fluid && currentCubeBlockData.blockType === BlockType.fluid) {
       return true;
@@ -66,7 +66,7 @@ export class ChunkRenderer extends Renderer {
   private getDataForBlock(cube: Cube, offset: number, world: World, visibleFaceMap: IVisibleFaceMap):
   {addToOffset: number, positions: number[], indices: number[], textureCords: number[]}
   {
-      const blockData = BLOCK_DATA.get(cube.type);
+      const blockData = BLOCK_DATA.get(cube.type)!;
       const relativePos = arraySub(cube.pos.data, this.chunk.pos.data);
       const texturePos = TextureMapper.getTextureCords(cube.type);
       const positions: number[] = [];
@@ -159,25 +159,27 @@ export class ChunkRenderer extends Renderer {
           indices,
           textureCords,
         }
+      } else {
+        throw new Error("")
       }
   }
 
   // have an options to launch this on a worker thread (maybe always have it on a different thread)
-  getBufferData(world: World) {
+  getBufferData(world: World): void {
     // console.log("Chunk update");
     const visibleCubePosMap = new Map<string, {cube: Cube, faceVectors: Vector3D[]}>();
 
-    const addVisibleFace = (cube: Cube, directionVector: Vector3D) => {
-      let visibleCubePos = visibleCubePosMap.get(cube.pos.toString());
-      if (!visibleCubePos) {
-        visibleCubePos = {
-          cube: cube,
-          faceVectors: []
-        }
-      }
-      visibleCubePos.faceVectors.push(directionVector);
-      visibleCubePosMap.set(cube.pos.toString(), visibleCubePos);
-    }
+    // const addVisibleFace = (cube: Cube, directionVector: Vector3D) => {
+    //   let visibleCubePos = visibleCubePosMap.get(cube.pos.toString());
+    //   if (!visibleCubePos) {
+    //     visibleCubePos = {
+    //       cube: cube,
+    //       faceVectors: []
+    //     }
+    //   }
+    //   visibleCubePos.faceVectors.push(directionVector);
+    //   visibleCubePosMap.set(cube.pos.toString(), visibleCubePos);
+    // }
 
 
     const positions: number[] = []; // used to store positions of vertices
@@ -190,7 +192,7 @@ export class ChunkRenderer extends Renderer {
     const transTextureCords: number[] = [];
     let transOffset = 0;
     for (const cube of this.chunk.getCubesIterable()) {
-      const blockData = BLOCK_DATA.get(cube.type);
+      const blockData = BLOCK_DATA.get(cube.type)!;
 
 
       if (blockData.transparent) {

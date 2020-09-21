@@ -1,9 +1,8 @@
 import { Game } from "../src/game";
-import { Vector3D, Vector, Vector2D } from "../src/utils/vector";
+import { Vector, Vector2D } from "../src/utils/vector";
 import { CONFIG } from "../src/constants";
 import { Chunk } from "../src/world/chunk";
 import { Cube } from "../src/entities/cube";
-import { IDim } from "../types";
 import { BLOCKS } from "../src/blockdata";
 
 
@@ -25,7 +24,7 @@ interface ChunkData {
 
 interface BlockData {
   t: BLOCKS;
-  // positon
+  // position
   p: string;
 }
 

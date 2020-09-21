@@ -35,8 +35,6 @@ export class SocketHandler {
     this.listeners.push(listener);
   }
 
-  joinRoom(roomName: string) {}
-
   send(obj: ISocketMessage) {
     this.socket.send(JSON.stringify(obj));
   }
@@ -49,25 +47,25 @@ export class SocketHandler {
       this.listeners.forEach(l => l(obj));
       switch (obj.type) {
         case ISocketMessageType.welcome:
-          this.welcome(obj.welcomePayload);
+          this.welcome(obj.welcomePayload!);
           break;
         case ISocketMessageType.newPlayer:
-          this.addOtherPlayer(obj.newPlayerPayload.uid);
+          this.addOtherPlayer(obj.newPlayerPayload!.uid);
           break;
         case ISocketMessageType.playerLeave:
-          this.client.removeEntity(obj.playerLeavePayload.uid);
+          this.client.removeEntity(obj.playerLeavePayload!.uid);
           break;
         case ISocketMessageType.actions:
-          obj.actionPayload.forEach(a => a.isFromServer = true)
-          this.client.addActions(obj.actionPayload);
+          obj.actionPayload!.forEach(a => a.isFromServer = true)
+          this.client.addActions(obj.actionPayload!);
           break;
-        case ISocketMessageType.sendChunk:
-          const payload = obj.sendChunkPayload;
+        case ISocketMessageType.sendChunk: {
+          const payload = obj.sendChunkPayload!;
           const chunkData = JSON.parse(payload.data) as ISerializedChunk;
           const chunk = Chunk.deserialize(chunkData);
           const chunkPosVector = Vector.fromString(payload.pos) as Vector2D;
           this.client.world.setChunkAtPos(chunk, chunkPosVector)
-
+        }
       }
     };
   }
@@ -79,6 +77,6 @@ export class SocketHandler {
   }
 
   addOtherPlayer(uid: string) {
-    const newPlayer = this.client.addPlayer(false, uid);
+    this.client.addPlayer(false, uid);
   }
 }

@@ -12,11 +12,9 @@ export class Cube extends Entity {
     super();
   }
 
-  update(delta: number) {
-    // this.baseUpdate(delta);
-  }
+  update(_delta: number) {/* NO_OP */}
 
-  hit(ent: Entity, where: FaceLocater) {}
+  hit(_ent: Entity, _where: FaceLocater) {/* NO-OP */}
 
   isPointInsideMe(point: IDim) {
     return this.pos.data.every((ord, index) => {

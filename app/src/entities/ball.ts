@@ -1,4 +1,4 @@
-import { Entity, RenderType, FaceLocater } from "./entity";
+import { Entity, FaceLocater } from "./entity";
 import { IDim } from "../../types";
 import { Vector3D } from "../utils/vector";
 import { MovableEntity } from "./moveableEntity";

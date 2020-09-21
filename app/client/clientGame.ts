@@ -2,7 +2,7 @@ import { PlayerKeyboardController } from "./controllers/playerKeyboardController
 import { Camera } from "./cameras/camera";
 import { EntityCamera } from "./cameras/entityCamera";
 import { Game, ISerializedGame } from "../src/game";
-import { RenderType, Entity } from "../src/entities/entity";
+import { Entity } from "../src/entities/entity";
 import { SocketHandler } from "./socket";
 import { canvas } from "./canvas";
 import { IDim, IAction, IActionType } from "../types";

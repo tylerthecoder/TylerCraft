@@ -50,6 +50,7 @@ export class TerrainGenerator {
     // fixing will take some major engineering
     if (world.hasChunk(chunkPos)) {
       const chunk = world.getChunkFromPos(chunkPos);
+      if (!chunk) return;
       // we don't want this to be true
       chunk.addCube(cube)
     }
@@ -99,7 +100,7 @@ export class TerrainGenerator {
 
     const chunkString = chunkPos.toString();
     if (this.blocksToRender.has(chunkString)){
-      this.blocksToRender.get(chunkString).forEach(cube => {
+      this.blocksToRender.get(chunkString)!.forEach(cube => {
         chunk.addCube(cube);
       });
       this.blocksToRender.delete(chunkString);

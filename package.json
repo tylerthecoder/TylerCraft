@@ -1,10 +1,11 @@
 {
+  "license": "MIT",
   "scripts": {
-    "dev:server": "npm-run-all build:server --parallel wbuild:server wstart:server",
+    "dev:server": "npm-run-all --parallel wbuild:server wstart:server",
     "start:server": "node ./bin/server/server.js",
     "wstart:server": "nodemon ./bin/server/server.js",
-    "build:server": "tsc -p ./ts/server.tsconfig.json",
-    "wbuild:server": "tsc -w -p ./ts/server.tsconfig.json",
+    "build:server": "tsc -p ./app/server/tsconfig.json",
+    "wbuild:server": "tsc -w -p ./app/server/tsconfig.json",
     "build:client": "webpack --config webpack.config.js",
     "wbuild:client": "webpack --watch --config webpack.config.js",
     "clean": "rm -rf bin public node_modules"
@@ -25,7 +26,10 @@
     "@types/random": "^2.1.1",
     "@types/seedrandom": "^2.4.28",
     "@types/ws": "^6.0.1",
+    "@typescript-eslint/eslint-plugin": "^4.2.0",
+    "@typescript-eslint/parser": "^4.2.0",
     "copy-webpack-plugin": "^5.0.3",
+    "eslint": "^7.9.0",
     "html-webpack-plugin": "^3.2.0",
     "nodemon": "1.19.1",
     "npm-run-all": "4.1.5",

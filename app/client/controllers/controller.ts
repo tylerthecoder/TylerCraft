@@ -8,13 +8,9 @@ export type Controlled = Entity | Camera | ClientGame | Player;
 
 export abstract class Controller {
   keys = new Set();
-
   keysPressed = new Set();
 
-  constructor() {}
-
   abstract controlled: Controlled;
-
   abstract update(delta: number): void;
   abstract keysChange(): void;
 

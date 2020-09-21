@@ -41,7 +41,7 @@ module.exports = {
       test: /\.tsx?$/,
       loader: 'ts-loader',
       options: {
-        configFile: 'ts/client.tsconfig.json'
+        configFile: 'app/client/tsconfig.json'
       }
     }],
   },

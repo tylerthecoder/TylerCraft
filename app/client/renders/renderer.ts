@@ -1,7 +1,8 @@
 import { CanvasProgram, canvas } from "../canvas";
 import { Camera } from "../cameras/camera";
 import { arraySub } from "../../src/utils";
-declare var mat4: any;
+// import {mat4} from "gl-matrix";
+declare const mat4: any;
 
 export abstract class Renderer {
 
@@ -18,8 +19,6 @@ export abstract class Renderer {
   amount: number;
   transAmount: number;
 
-  constructor() {}
-
   protected setBuffers(
     positions: number[],
     indices: number[],
@@ -32,33 +31,33 @@ export abstract class Renderer {
 
     this.amount = indices.length;
 
-    this.posBuffer = gl.createBuffer();
+    this.posBuffer = gl.createBuffer()!;
     gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
 
-    this.indexBuffer = gl.createBuffer();
+    this.indexBuffer = gl.createBuffer()!;
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
     gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
 
-    this.textureBuffer = gl.createBuffer();
+    this.textureBuffer = gl.createBuffer()!;
     gl.bindBuffer(gl.ARRAY_BUFFER, this.textureBuffer);
     gl.bufferData( gl.ARRAY_BUFFER, new Float32Array(textureCords), gl.STATIC_DRAW);
 
     if (transPositions) {
-      this.transPosBuffer = gl.createBuffer();
+      this.transPosBuffer = gl.createBuffer()!;
       gl.bindBuffer(gl.ARRAY_BUFFER, this.transPosBuffer);
       gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(transPositions), gl.STATIC_DRAW);
     }
 
     if (transIndices) {
-      this.transIndexBuffer = gl.createBuffer();
+      this.transIndexBuffer = gl.createBuffer()!;
       this.transAmount = transIndices.length;
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.transIndexBuffer);
       gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(transIndices), gl.STATIC_DRAW);
     }
 
     if (transTextureCords) {
-      this.transTextureBuffer = gl.createBuffer();
+      this.transTextureBuffer = gl.createBuffer()!;
       gl.bindBuffer(gl.ARRAY_BUFFER, this.transTextureBuffer);
       gl.bufferData( gl.ARRAY_BUFFER, new Float32Array(transTextureCords), gl.STATIC_DRAW);
     }
@@ -135,7 +134,7 @@ export abstract class Renderer {
     mat4.translate(
       modelViewMatrix, // destination matrix
       modelViewMatrix, // matrix to translate
-      arraySub(pos, camera.pos.data)
+      new Float32Array(arraySub(pos, camera.pos.data))
     );
 
     this.bindCube(trans || false);

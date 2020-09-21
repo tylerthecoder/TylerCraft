@@ -1,7 +1,7 @@
 import { Renderer } from "./renderer";
 import { Camera } from "../cameras/camera";
 import { Entity } from "../../src/entities/entity";
-import { arrayMul, arrayAdd, arrayScalarMul } from "../../src/utils";
+import { arrayMul } from "../../src/utils";
 import TextureMapper from "../textureMapper";
 import { canvas } from "../canvas";
 
@@ -12,14 +12,14 @@ export class CubeRenderer extends Renderer {
     this.setup();
   }
 
-  render(camera: Camera) {
+  render(camera: Camera): void {
     this.renderObject(this.entity.pos.data, camera);
   }
 
   private setup() {
     const base = [0, 1, 2, 0, 2, 3];
     const facesToRender = [0, 1, 2, 3, 4, 5];
-    const textureCords = TextureMapper.getTextureCordsEntity(this.entity).flat();
+    const textureCords = TextureMapper.getTextureCordsEntity().flat();
 
     const positions = [];
     const indices = [];

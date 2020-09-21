@@ -1,11 +1,10 @@
 type IDim = [number, number, number];
 
-
-interface IItterable {
-  start: number;
-  end: number;
-  step?: number;
-}
+// interface IItterable {
+//   start: number;
+//   end: number;
+//   step?: number;
+// }
 
 export class Vector<T extends number[] = IDim> {
   static zero3D = new Vector([0,0,0]);
@@ -76,9 +75,9 @@ export class Vector<T extends number[] = IDim> {
   }
 
   // this might be hard
-  static itterable(itterators: IItterable[]) {
+  // static itterable(itterators: IItterable[]) {
 
-  }
+  // }
 
   constructor(
     public data: number[]
@@ -230,6 +229,6 @@ export class Vector<T extends number[] = IDim> {
 
 
 
-export class Vector2D extends Vector<[number, number]> {};
-export class Vector3D extends Vector<[number, number, number]> {};
+export class Vector2D extends Vector<[number, number]> {}
+export class Vector3D extends Vector<[number, number, number]> {}
 

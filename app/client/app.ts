@@ -2,15 +2,21 @@ import { ISerializedGame } from "../src/game";
 import { ClientDb } from "./clientdb";
 import { ClientGame } from "./clientGame";
 
+
+interface IExtendedWindow extends Window {
+  clientDb?: ClientDb;
+  game?: ClientGame
+}
+
 export const clientDb = new ClientDb();
-(window as any).clientDb = clientDb;
+(window as IExtendedWindow).clientDb = clientDb;
 
-const ePlayLocalButton = document.getElementById("playLocalButton")
-const ePlayOnlineButton = document.getElementById("playOnlineButton")
+const ePlayLocalButton = document.getElementById("playLocalButton")!;
+const ePlayOnlineButton = document.getElementById("playOnlineButton")!;
 
-const eStartMenu = document.getElementById("startMenu");
-const eGameTypeScreen = document.getElementById("pickGameTypeScreen");
-const ePickWorldScreen = document.getElementById("pickWorldScreen")
+const eStartMenu = document.getElementById("startMenu")!;
+const eGameTypeScreen = document.getElementById("pickGameTypeScreen")!;
+const ePickWorldScreen = document.getElementById("pickWorldScreen")!;
 
 ePlayLocalButton.addEventListener("click", () => {
   eGameTypeScreen.classList.add("fade");
@@ -18,7 +24,7 @@ ePlayLocalButton.addEventListener("click", () => {
 });
 
 ePlayOnlineButton.addEventListener("click", () => {
-
+  // TODO
 });
 
 async function showWorldPicker() {
@@ -67,7 +73,7 @@ async function showWorldPicker() {
 
 function startGame(game: ClientGame) {
   console.log("Starting game", game);
-  (window as any).game = game;
+  (window as IExtendedWindow).game = game;
   ePickWorldScreen.classList.add("fade");
   eStartMenu.classList.add("fade")
 }

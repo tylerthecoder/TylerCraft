@@ -12,12 +12,14 @@ export class ClientDb {
   async loadDb() {
     return new Promise((resolve, reject) => {
       const openRequest = window.indexedDB.open("TylerCraftDB", 4);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       openRequest.onerror = function(event: any) {
         // Do something with request.errorCode!
         console.log(event.target);
         console.error("Database error: " + event.target.errorCode);
         reject(event.target);
       };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       openRequest.onsuccess = (event: any) => {
         // Do something with request.result!
         this.db = event.target.result;
@@ -26,11 +28,11 @@ export class ClientDb {
       openRequest.onupgradeneeded = () => {
         console.log("Upgrading database");
         // Save the IDBDatabase interface
-        var db = openRequest.result;
+        const db = openRequest.result;
         // Create an objectStore for this database
         // world id will be the property on the world object used to identify the world
         if (!db.objectStoreNames.contains(this.WORLDS_OBS)) {
-          var objectStore = db.createObjectStore(this.WORLDS_OBS, { keyPath: "gameId", autoIncrement: true });
+          db.createObjectStore(this.WORLDS_OBS, { keyPath: "gameId", autoIncrement: true });
 
           // objectStore.createIndex("name", "name", { unique: false });
         }
@@ -50,7 +52,7 @@ export class ClientDb {
         reject(event);
       }
 
-      request.onsuccess = (event) => {
+      request.onsuccess = () => {
         resolve(request.result);
       }
     });
@@ -59,10 +61,10 @@ export class ClientDb {
   writeGameData(data: Game) {
     const transaction = this.db.transaction([this.WORLDS_OBS], "readwrite");
 
-    transaction.oncomplete = (event: any) => {
+    transaction.oncomplete = () => {
       console.log("All done!");
     };
-    transaction.onerror = (event: any) => {
+    transaction.onerror = () => {
       console.log("There was an error", event);
     }
     const objStore = transaction.objectStore("worlds");
@@ -74,9 +76,10 @@ export class ClientDb {
   deleteGame(gameId: string) {
     const transaction = this.db.transaction([this.WORLDS_OBS], "readwrite");
 
-    transaction.oncomplete = (event: any) => {
+    transaction.oncomplete = () => {
       console.log("All done!");
     };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     transaction.onerror = (event: any) => {
       console.log("There was an error", event);
     }

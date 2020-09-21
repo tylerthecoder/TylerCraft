@@ -1,5 +1,5 @@
 import { Camera } from "./camera";
-import { IAction, IDim } from "../../types";
+import { IDim } from "../../types";
 import { Vector3D } from "../../src/utils/vector";
 
 export class FixedCamera extends Camera {

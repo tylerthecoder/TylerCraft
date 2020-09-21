@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import { Renderer } from "./renderer";
 import { Camera } from "../cameras/camera";
 import { CanvasProgram } from "../canvas";

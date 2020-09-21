@@ -1,9 +1,16 @@
-import { Entity, FaceLocater, ISerializedEntity } from "./entity";
+import { Entity, FaceLocater, IEntityType } from "./entity";
 import { MovableEntity } from "./moveableEntity";
 import { IAction, IActionType, IDim } from "../../types";
 import { Vector3D } from "../utils/vector";
 import { Cube } from "./cube";
 import Random from "../utils/random";
+
+export interface ISerializedProjectile {
+  uid: string;
+  pos: IDim;
+  vel: IDim;
+  type: IEntityType;
+}
 
 export class Projectile extends MovableEntity {
   gravitable = false;
@@ -19,7 +26,7 @@ export class Projectile extends MovableEntity {
     this.uid = Random.randomString();
   }
 
-  static deserialize(data: ISerializedEntity): Projectile {
+  static deserialize(data: ISerializedProjectile): Projectile {
     const ent = new Projectile(
       new Vector3D(data.pos),
       new Vector3D(data.vel),
@@ -38,7 +45,7 @@ export class Projectile extends MovableEntity {
     return actions;
   }
 
-  hit(ent: Entity, where: FaceLocater) {
+  hit(ent: Entity, _where: FaceLocater) {
     // do damage or delete block
     if (ent instanceof Cube) {
       this.actions.push(

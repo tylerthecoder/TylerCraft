@@ -1,5 +1,4 @@
 import { Entity, FaceLocater } from "./entity";
-import { Game } from "../game";
 import { IDim, IAction, IActionType } from "../../types";
 import Random from "../utils/random";
 import { Vector } from "../utils/vector";
@@ -43,5 +42,5 @@ export class Spectator extends MovableEntity {
     this.baseUpdate(delta)
   }
 
-  hit(_entity: Entity, where: FaceLocater) { }
+  hit(_entity: Entity, _where: FaceLocater) {/* NO-OP */}
 }

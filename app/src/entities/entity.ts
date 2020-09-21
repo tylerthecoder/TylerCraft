@@ -1,7 +1,5 @@
 import { IDim, IAction } from "../../types";
 import { Vector3D } from "../utils/vector";
-import { Player } from "./player";
-// import { Projectile } from "./projectile";
 
 export enum RenderType {
   CUBE,
@@ -41,8 +39,6 @@ export abstract class Entity {
   pos: Vector3D = new Vector3D([0,0,0]);
   dim: IDim = [1, 1, 1];
   uid = "";
-
-  constructor() { }
 
   public serialize(type: IEntityType): ISerializedEntity {
     return {
@@ -103,7 +99,7 @@ export abstract class Entity {
       }
     }
 
-    const [_, i, dir] = min;
+    const [, i, dir] = min;
 
     const newPos = ent.pos.get(i) + ent.dim[i] * switchDir(dir) - this.dim[i] * dir;
 

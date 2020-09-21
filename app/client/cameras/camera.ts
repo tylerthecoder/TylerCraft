@@ -1,6 +1,5 @@
 import { Entity, FaceLocater } from "../../src/entities/entity";
 import { IDim } from "../../types";
-import { arrayDist, arrayMul } from "../../src/utils";
 import { Vector3D } from "../../src/utils/vector";
 import { MovableEntity } from "../../src/entities/moveableEntity";
 
@@ -14,9 +13,9 @@ export abstract class Camera extends MovableEntity {
     super();
   }
 
-  update(_delta: number) {}
-  render(_camera: Camera) {}
-  hit(ent: Entity, where: FaceLocater) {}
+  update(_delta: number) {/* NO-OP */}
+  render(_camera: Camera) {/* NO-OP */}
+  hit(_ent: Entity, _where: FaceLocater) {/* NO-OP */}
 
   abstract handleMouse(e: MouseEvent): void;
 }

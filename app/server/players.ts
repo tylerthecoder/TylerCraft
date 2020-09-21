@@ -9,7 +9,7 @@ export default class Players {
 
   constructor(public wss: SocketServer, public game: Game) {}
 
-  addPlayer(ws: wSocket) {
+  addPlayer(ws: wSocket): void {
     // generate a random ID for the new player
     const uid = `${Math.random()}${Math.random()}`;
 
@@ -43,25 +43,27 @@ export default class Players {
     console.log(`New player! ${this.game.players.length} players`);
   }
 
-  removePlayer(ws: wSocket) {
+  removePlayer(ws: wSocket): void {
+    const player = this.players.get(ws);
+
+    if (!player) {
+      return;
+    }
+
     // tell everyone about this tragedy
     const playerLeaveMessage: ISocketMessage = {
       type: ISocketMessageType.playerLeave,
       playerLeavePayload: {
-        uid: this.players.get(ws).uid
+        uid: player.uid
       }
     };
     this.wss.sendGlobal(playerLeaveMessage, ws);
 
     // FINISH THEM!
-    this.game.removeEntity(this.players.get(ws).uid);
+    this.game.removeEntity(player.uid);
     this.players.delete(ws);
 
     console.log(`Remove Player! ${this.game.players.length} players`);
   }
 
-  setPlayerPos() {}
-
-  onMessage(ws: wSocket, message: ISocketMessage) {
-  }
 }
