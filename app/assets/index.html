@@ -1,11 +1,26 @@
 <head>
   <script src="./js/m4.js"></script>
   <link rel="stylesheet" type="text/css" href="css/app.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&family=Roboto&display=swap" rel="stylesheet">
 </head>
 
 <body>
   <div>
+    <div id="startMenu">
+      <h1> Tyler Craft </h1>
+      <div id="pickGameTypeScreen">
+        <button id="playLocalButton"> Play locally </button> <br />
+        <button id="playOnlineButton"> Play online </button>
+      </div>
+
+      <template id="gameTemplate">
+        <div class="gameItem"></div>
+      </template>
+
+      <div id="pickWorldScreen"> </div>
+    </div>
+
     <canvas id="glCanvas" width="800" height="800"></canvas>
-    <canvas id="hudCanvas" width="800" height="800" style="position: absolute;left: 0px; top: 0px; z-index: 10;"></canvas>
+    <canvas id="hudCanvas" width="800" height="800"></canvas>
   </div>
 </body>

@@ -1,8 +1,8 @@
 import { IDim } from "../../types";
 import { CONFIG } from "../constants";
-import { arrayAdd, arrayMul, sphereToCartCords } from "../utils";
+import { arrayMul, sphereToCartCords } from "../utils";
 import { Vector, Vector3D } from "../utils/vector";
-import { Entity, MetaAction, IEntityData } from "./entity";
+import { Entity, IEntityType, ISerializedEntity, MetaAction } from "./entity";
 
 
 export abstract class MovableEntity extends Entity {
@@ -16,13 +16,12 @@ export abstract class MovableEntity extends Entity {
 
   metaActions = new Set<MetaAction>();
 
-  public serialize(): IEntityData {
+  public serialize(type: IEntityType): ISerializedEntity {
     return {
       uid: this.uid,
       pos: this.pos.data as IDim,
       vel: this.vel.data as IDim,
-      // change this when we have another entity type that we need to send
-      type: "projectile",
+      type: type,
     }
   }
 

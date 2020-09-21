@@ -1,4 +1,4 @@
-import { Entity, FaceLocater, MetaAction } from "./entity";
+import { Entity, FaceLocater, IEntityType, ISerializedEntity, MetaAction } from "./entity";
 import { arrayAdd, arrayScalarMul} from "../utils";
 import { IDim, IAction, IActionType } from "../../types";
 import { Vector, Vector3D } from "../utils/vector";
@@ -6,10 +6,16 @@ import { Projectile } from "./projectile";
 import { MovableEntity } from "./moveableEntity";
 import { CONFIG } from "../constants";
 
+
+export interface ISerializedPlayer extends ISerializedEntity{
+  isReal: boolean;
+}
+
 export class Player extends MovableEntity {
   // Entity overrides
   pos: Vector3D = new Vector3D([0, 10, 0]);
   dim: IDim = [.8, 2, .8];
+  rot: IDim = [Math.PI / 2, 0, 0];
 
   // Player Member Variables
   thirdPerson = false;
@@ -31,10 +37,30 @@ export class Player extends MovableEntity {
 
   creative = false;
 
-  constructor(public isReal: boolean) {
+  constructor(
+    public isReal: boolean
+  ) {
     super();
-
     this.setCreative(false);
+  }
+
+  serialize(type: IEntityType): ISerializedPlayer {
+    return {
+      uid: this.uid,
+      pos: this.pos.data as IDim,
+      vel: this.vel.data as IDim,
+      isReal: this.isReal,
+      type: type,
+    }
+  }
+
+  static deserialize(data: ISerializedPlayer): Player {
+    const player = new Player(data.isReal);
+    player.pos = new Vector3D(data.pos);
+    player.vel = new Vector3D(data.vel);
+    player.uid = data.uid;
+    player.isReal = data.isReal;
+    return player;
   }
 
   getActions(): IAction[] {
@@ -71,6 +97,7 @@ export class Player extends MovableEntity {
     }
 
     this.actions = [];
+
     return actions;
   }
 
@@ -107,7 +134,7 @@ export class Player extends MovableEntity {
     this.actions.push({
       type: IActionType.addEntity,
       addEntity: {
-        ent: ball.serialize(),
+        ent: ball.serialize(IEntityType.Projectile),
       }
     });
 

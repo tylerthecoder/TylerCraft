@@ -1,24 +1,60 @@
 import { Player } from "./entities/player";
-import { World } from "./world/world";
-import { Entity } from "./entities/entity";
-import { IDim, IAction, IActionType } from "../types";
+import { ISerializedWorld, World } from "./world/world";
+import { Entity, ISerializedEntity } from "./entities/entity";
+import { IAction, IActionType } from "../types";
 import { Cube } from "./entities/cube";
 import { Vector3D, Vector } from "./utils/vector";
-import { Projectile } from "./entities/projectile";
 import { MovableEntity } from "./entities/moveableEntity";
 import { ISocketMessage } from "../types/socket";
+import { CONFIG, IConfig } from "./constants";
+import { deserializeEntity, getEntityType } from "./serializer";
+
+export interface ISerializedGame {
+  config: IConfig;
+  entities: ISerializedEntity[];
+  world: ISerializedWorld;
+  mainPlayerUid: string;
+  gameId: string;
+  name: string;
+}
 
 export class Game {
+  protected gameId: string;
+  protected name: string;
   protected actions: IAction[] = [];
-
-  // TODO: change this to a map from uid to Entity
-  entities: Entity[] = [];
-  world = new World(this);
+  protected entities: Entity[] = []; // TODO: change this to a map from uid to Entity
+  public world: World;
   mainPlayer: Player;
-  multiPlayer = true;
+  multiPlayer = false;
 
-  setup() {
-    this.mainPlayer = this.addPlayer(true);
+  constructor(
+    data?: ISerializedGame,
+  ) {
+    if(data) {
+      this.world = new World(this, data.world);
+      this.entities = data.entities.map(deserializeEntity);
+      this.mainPlayer = this.findEntity(data.mainPlayerUid);
+      this.gameId = data.gameId;
+      this.name = data.name;
+    } else {
+      this.world = new World(this);
+      this.entities = [];
+      this.mainPlayer = new Player(true);
+      this.gameId = `${Math.random()}`;
+      this.name = "Game " + this.gameId;
+      this.addEntity(this.mainPlayer, false);
+    }
+  }
+
+  serialize(): ISerializedGame {
+    return {
+      config: CONFIG,
+      entities: this.entities.map(ent => ent.serialize(getEntityType(ent))),
+      world: this.world.serialize(),
+      mainPlayerUid: this.mainPlayer.uid,
+      gameId: this.gameId,
+      name: this.name,
+    };
   }
 
   get players() {
@@ -79,7 +115,6 @@ export class Game {
           }
         }
       // }
-
     }
   }
 
@@ -88,9 +123,8 @@ export class Game {
     switch(action.type) {
     case IActionType.addEntity: {
       const {ent} = action.addEntity;
-      if (ent.type === "projectile") {
-        this.addEntity(Projectile.deserialize(ent));
-      }
+      const entity = deserializeEntity(ent);
+      this.addEntity(entity);
       return;
     }
 
@@ -171,13 +205,13 @@ export class Game {
     return newPlayer;
   }
 
-  addEntity(entity: Entity) {
+  addEntity(entity: Entity, alert = true) {
     this.entities.push(entity);
-    this.onNewEntity(entity);
+    if (alert) this.onNewEntity(entity);
   }
 
-  findEntity(uid: string) {
-    return this.entities.find(ent => ent.uid === uid);
+  findEntity<T extends Entity>(uid: string): T {
+    return this.entities.find(ent => ent.uid === uid) as T;
   }
 
   removeEntity(uid: string) {

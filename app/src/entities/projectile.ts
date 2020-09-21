@@ -1,24 +1,14 @@
-import { Entity, FaceLocater, IEntityData, RenderType } from "./entity";
+import { Entity, FaceLocater, ISerializedEntity } from "./entity";
+import { MovableEntity } from "./moveableEntity";
 import { IAction, IActionType, IDim } from "../../types";
 import { Vector3D } from "../utils/vector";
 import { Cube } from "./cube";
 import Random from "../utils/random";
-import { MovableEntity } from "./moveableEntity";
 
 export class Projectile extends MovableEntity {
   gravitable = false;
-  renderType = RenderType.CUBE;
 
   private actions: IAction[] = [];
-
-  static deserialize(data: IEntityData): Entity {
-    const ent = new Projectile(
-      new Vector3D(data.pos),
-      new Vector3D(data.vel),
-    )
-
-    return ent;
-  }
 
   constructor(
     public pos: Vector3D,
@@ -27,6 +17,15 @@ export class Projectile extends MovableEntity {
   ) {
     super();
     this.uid = Random.randomString();
+  }
+
+  static deserialize(data: ISerializedEntity): Projectile {
+    const ent = new Projectile(
+      new Vector3D(data.pos),
+      new Vector3D(data.vel),
+    )
+
+    return ent;
   }
 
   update(delta: number) {

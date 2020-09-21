@@ -1,6 +1,5 @@
-import { deserializeChunk } from "../src/serializer";
 import { Vector, Vector2D } from "../src/utils/vector";
-import { IDim } from "../types";
+import { Chunk, ISerializedChunk } from "../src/world/chunk";
 import {
   ISocketMessage,
   ISocketMessageType,
@@ -64,7 +63,8 @@ export class SocketHandler {
           break;
         case ISocketMessageType.sendChunk:
           const payload = obj.sendChunkPayload;
-          const chunk = deserializeChunk(payload.data);
+          const chunkData = JSON.parse(payload.data) as ISerializedChunk;
+          const chunk = Chunk.deserialize(chunkData);
           const chunkPosVector = Vector.fromString(payload.pos) as Vector2D;
           this.client.world.setChunkAtPos(chunk, chunkPosVector)
 

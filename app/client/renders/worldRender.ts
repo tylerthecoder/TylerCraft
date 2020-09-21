@@ -5,7 +5,7 @@ import { ChunkRenderer } from "./chunkRender";
 import { HudRenderer } from "./hudRender";
 import { CubeRenderer } from "./cubeRender";
 import { ClientGame } from "../clientGame";
-import { Entity, RenderType } from "../../src/entities/entity";
+import { Entity } from "../../src/entities/entity";
 import { SphereRenderer } from "./sphereRender";
 import { CONFIG } from "../../src/constants";
 import { Vector, Vector2D, Vector3D } from "../../src/utils/vector";
@@ -14,14 +14,13 @@ import { Cube } from "../../src/entities/cube";
 import { Player } from "../../src/entities/player";
 import { Projectile } from "../../src/entities/projectile";
 import { Ball } from "../../src/entities/ball";
-import { BLOCKS, BLOCK_DATA } from "../../src/blockdata";
+import { BLOCKS } from "../../src/blockdata";
 
 export default class WorldRenderer {
   private renderers: Renderer[] = [];
   private entityRenderers: Map<string, Renderer> = new Map();
   private chunkRenderers: Map<string, ChunkRenderer> = new Map();
   shouldRenderMainPlayer = false;
-
 
   constructor(
     private world: World,

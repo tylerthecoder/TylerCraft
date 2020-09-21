@@ -1,4 +1,3 @@
-import * as http from "http";
 import * as fs from "fs";
 import * as path from "path";
 import express from "express";
@@ -35,4 +34,4 @@ const server = app.listen(port, () => console.log(`Server running on port:${port
 
 const wss = new SocketServer(server);
 
-const game = new ServerGame(wss);
+new ServerGame(wss);

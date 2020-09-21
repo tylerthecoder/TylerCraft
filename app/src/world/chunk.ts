@@ -4,13 +4,21 @@ import { IDim, IActionType, IAction } from "../../types";
 import { arrayMul, arrayAdd, arrayDot, arrayScalarMul, roundToNPlaces, arrayDistSquared } from "../utils";
 import { CONFIG } from "../constants";
 import { Vector3D, Vector, Vector2D } from "../utils/vector";
-import { BlockType, BLOCK_DATA } from "../blockdata";
-
+import { BLOCK_DATA } from "../blockdata";
+import { ISerializedCube, deserializeCube, serializeCube } from "../serializer";
 
 export interface ILookingAtData {
   newCubePos: Vector,
   entity: Entity,
   dist: number;
+}
+
+// type SerializedVisibleData = Array<[pos: string, visible: Array<IDim>]>;
+
+export interface ISerializedChunk {
+  chunkPos: string,
+  cubes: ISerializedCube[],
+  // vis: SerializedVisibleData,
 }
 
 export class Chunk {
@@ -34,6 +42,49 @@ export class Chunk {
       this.chunkPos.get(1) * CONFIG.terrain.chunkSize
     ]);
   }
+
+  serialize() {
+    const cubeData: ISerializedCube[] = [];
+    // const visibleData: SerializedVisibleData = [];
+
+    for (const [pos, cube] of this.cubes.entries()) {
+      cubeData.push(serializeCube(cube, pos));
+    }
+
+    // for (const visData of chunk.visibleCubesFaces) {
+    //   visibleData.push([visData.cube.pos.toString(), visData.faceVectors.map(d => d.data as IDim)]);
+    // }
+
+    return {
+      chunkPos: this.chunkPos.toString(),
+      cubes: cubeData,
+      // vis: visibleData,
+    }
+  }
+
+  static deserialize(chunkData: ISerializedChunk) {
+    const chunkPos = Vector.fromString(chunkData.chunkPos) as Vector2D;
+
+    const chunk = new Chunk(chunkPos);
+    chunk.cubes = new Map(
+      chunkData.cubes.map(data => {
+        return [
+          data[0],
+          deserializeCube(data)
+        ];
+      })
+    );
+
+    // this.visibleCubesFaces = chunkData.vis.map(data => {
+    //   return {
+    //     cube: this.cubes.get(data[0]),
+    //     faceVectors: data[1].map(d => new Vector(d))
+    //   }
+    // });
+
+    return chunk;
+  }
+
 
   circleIntersect(circlePos: Vector3D, radius: number): boolean {
     const testCords = circlePos.copy();

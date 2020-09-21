@@ -1,5 +1,5 @@
-import { Entity, IEntityData } from "../src/entities/entity";
 import { BLOCKS } from "../src/blockdata";
+import { ISerializedEntity } from "../src/entities/entity";
 
 export type IDim = [number, number, number];
 
@@ -51,7 +51,7 @@ export interface IAction {
     chunkId: string;
   };
   addEntity?: {
-    ent: IEntityData,
+    ent: ISerializedEntity,
   }
   removeEntity?: {
     uid: string;

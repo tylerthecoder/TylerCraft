@@ -1,6 +1,81 @@
+@keyframes lift {
+  0% {
+    box-shadow: 8px 8px 10px grey;
+  }
+  100% {
+    box-shadow: 15px 15px 10px grey;
+  }
+}
+
+@keyframes fade {
+  0% {
+    visibility: visible;
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    display: none;
+    visibility: hidden;
+  }
+}
+
 html,
 body {
   margin: 0px;
   padding: 0px;
   overflow: hidden;
+}
+
+#hudCanvas {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  z-index: 10;
+  pointer-events: none;
+}
+
+#startMenu {
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+h1 {
+  font-size: 5em;
+  font-family: 'Indie Flower', cursive;
+}
+
+button {
+  border: none;
+  padding: 10px 100px;
+  margin-bottom: 30px;
+  font-size: 3em;
+  font-family: 'Roboto', sans-serif;
+  cursor: pointer;
+  box-shadow: 8px 8px 10px grey;
+  border-radius: 10px;
+}
+
+button:hover {
+  box-shadow: 15px 15px 10px grey;
+  animation: lift .1s linear
+}
+
+.fade {
+  visibility: hidden;
+  animation: fade 1s linear
+}
+
+#pickWorld {
+  display: none;
+}
+
+.gameItem {
+  margin: 10px;
 }

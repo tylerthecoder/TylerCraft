@@ -4,17 +4,44 @@ import Random from "../utils/random";
 import { Chunk } from "./chunk";
 import { BLOCKS } from "../blockdata";
 import { Cube } from "../entities/cube";
-import { IDim } from "../../types";
-import { Game } from "../game";
 import { World } from "./world";
+import { serializeCube, deserializeCube, ISerializedCube } from "../serializer";
 
+
+export interface ISerializedTerrainGenerator {
+  blocksToRender: Array<{
+    chunkPos: string;
+    cubes: ISerializedCube[];
+  }>
+}
 
 export class TerrainGenerator {
-
-  // take a chunk pos string (1, 2) to a list of cubes that need to be added to it
-  // TODO put this in the game save data
-  blocksToRender: Map<string, Cube[]> = new Map();
   preRenderedChunks: Set<string> = new Set();
+
+  constructor(
+    // take a chunk pos string (1, 2) to a list of cubes that need to be added to it
+    private blocksToRender: Map<string, Cube[]> = new Map()
+  ) {}
+
+  serialize(): ISerializedTerrainGenerator {
+    return {
+      blocksToRender: Array.from(this.blocksToRender.entries()).map(([chunkPos, cubes]) => {
+        return {
+          chunkPos,
+          cubes: cubes.map(cube => serializeCube(cube))
+        }
+      }),
+    }
+  }
+
+  static deserialize(data: ISerializedTerrainGenerator): TerrainGenerator {
+    const blocksToRender = data.blocksToRender.map(({chunkPos, cubes}) => {
+      return [chunkPos, cubes.map(deserializeCube)] as [string, Cube[]];
+    });
+
+    const blocksToRenderMap = new Map(blocksToRender);
+    return new TerrainGenerator(blocksToRenderMap);
+  }
 
   addExtraBlock(cube: Cube, world: World) {
     const chunkPos = world.worldPosToChunkPos(cube.pos);
@@ -47,7 +74,7 @@ export class TerrainGenerator {
         this.preRenderNearbyChunks(chunkPos, world)
 
         // generate water
-        if (y < CONFIG.terrain.waterLever) {
+        if (y <= CONFIG.terrain.waterLever) {
          for (let k = y; k < 3; k++) {
           const cubePos = [x, k, z];
           const cube = new Cube(BLOCKS.water, new Vector3D(cubePos));
@@ -63,7 +90,7 @@ export class TerrainGenerator {
         }
 
         // add grass
-        if (Random.randomNum() > .99 && CONFIG.terrain.flowers) {
+        if (y >= CONFIG.terrain.waterLever && Random.randomNum() > .99 && CONFIG.terrain.flowers) {
           const cube = new Cube(BLOCKS.redFlower, new Vector3D([x,y+1,z]));
           chunk.addCube(cube);
         }
@@ -106,7 +133,7 @@ export class TerrainGenerator {
               worldPos.get(2) + l,
             ]);
 
-            if (Random.randomNum() > .99 && CONFIG.terrain.trees) {
+            if (y > CONFIG.terrain.waterLever && Random.randomNum() > .99 && CONFIG.terrain.trees) {
               const tree = this.generateTree(blockPos);
               for (const cube of tree) {
                 this.addExtraBlock(cube, world);

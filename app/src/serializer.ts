@@ -1,62 +1,38 @@
-import { IDim } from "../types";
 import { BLOCKS } from "./blockdata";
 import { Cube } from "./entities/cube";
-import { Vector, Vector2D } from "./utils/vector";
-import { Chunk } from "./world/chunk";
+import { Entity, IEntityType, ISerializedEntity } from "./entities/entity";
+import { MovableEntity } from "./entities/moveableEntity";
+import { ISerializedPlayer, Player } from "./entities/player";
+import { Projectile } from "./entities/projectile";
+import { Vector } from "./utils/vector";
 
+export type ISerializedCube = [pos: string, type: BLOCKS];
 
-type SerializedCubeData = Array<[pos: string, type: BLOCKS]>;
-type SerializedVisibleData = Array<[pos: string, visible: Array<IDim>]>;
-interface SerializedChunk {
-  chunkPos: string,
-  cubes: SerializedCubeData,
-  // vis: SerializedVisibleData,
+export function serializeCube(cube: Cube, pos: string = cube.pos.toString()): ISerializedCube {
+  return [pos.toString(), cube.type];
 }
 
-
-export function serializeChunk(chunk: Chunk): string {
-  const cubeData: SerializedCubeData = [];
-  // const visibleData: SerializedVisibleData = [];
-
-  for (const [pos, cube] of chunk.cubes.entries()) {
-    cubeData.push([pos, cube.type]);
-  }
-
-  // for (const visData of chunk.visibleCubesFaces) {
-  //   visibleData.push([visData.cube.pos.toString(), visData.faceVectors.map(d => d.data as IDim)]);
-  // }
-
-  const dataToSend: SerializedChunk = {
-    chunkPos: chunk.chunkPos.toString(),
-    cubes: cubeData,
-    // vis: visibleData,
-  }
-
-  return JSON.stringify(dataToSend);
-}
-
-export function deserializeChunk(data: string): Chunk {
-  const chunkData = JSON.parse(data) as SerializedChunk
-
-  const chunkPos = Vector.fromString(chunkData.chunkPos) as Vector2D;
-
-  const chunk = new Chunk(chunkPos);
-  chunk.cubes = new Map(
-    chunkData.cubes.map(data => {
-      const cube = new Cube(
-        data[1],
-        Vector.fromString(data[0]),
-      );
-      return [data[0], cube];
-    })
+export function deserializeCube(data: ISerializedCube): Cube {
+  const cube = new Cube(
+    data[1],
+    Vector.fromString(data[0]),
   );
+  return cube;
+}
 
-  // this.visibleCubesFaces = chunkData.vis.map(data => {
-  //   return {
-  //     cube: this.cubes.get(data[0]),
-  //     faceVectors: data[1].map(d => new Vector(d))
-  //   }
-  // });
+export function deserializeEntity(data: ISerializedEntity) {
+    switch (data.type) {
+    case IEntityType.Projectile:
+      return Projectile.deserialize(data)
+    case IEntityType.Player:
+      return Player.deserialize(data as ISerializedPlayer)
+    }
+}
 
-  return chunk;
+export function getEntityType(ent: Entity) {
+  if (ent instanceof Player) {
+    return IEntityType.Player;
+  } else if (ent instanceof Projectile) {
+    return IEntityType.Projectile;
+  }
 }

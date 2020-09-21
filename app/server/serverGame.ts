@@ -5,7 +5,6 @@ import { Game } from "../src/game";
 import { ISocketMessage, ISocketMessageType } from "../types/socket";
 import { IAction } from "../types";
 import { Vector, Vector2D } from "../src/utils/vector";
-import { serializeChunk } from "../src/serializer";
 
 export class ServerGame extends Game {
   clients: Players;
@@ -61,7 +60,7 @@ export class ServerGame extends Game {
   private sendChunkTo(chunkPosString: string, ws: wSocket) {
     const chunkPos = Vector.fromString(chunkPosString) as Vector2D;
     const chunk = this.world.getChunkFromPos(chunkPos, {generateIfNotFound: true});
-    const serializedData = serializeChunk(chunk);
+    const serializedData = JSON.stringify(chunk.serialize());
     this.wss.send(ws, {
       type: ISocketMessageType.sendChunk,
       sendChunkPayload: {

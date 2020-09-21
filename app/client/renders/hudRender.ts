@@ -2,7 +2,6 @@ import { Renderer } from "./renderer";
 import { Camera } from "../cameras/camera";
 import { CanvasProgram } from "../canvas";
 import { ClientGame } from "../clientGame";
-import { Vector3D, Vector2D } from "../../src/utils/vector";
 import { BLOCKS } from "../../src/blockdata";
 import TextureMapper from "../textureMapper";
 

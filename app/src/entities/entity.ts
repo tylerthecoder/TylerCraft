@@ -1,7 +1,7 @@
-import { IDim, IAction, IActionType } from "../../types";
-import { sphereToCartCords, arrayAdd, arrayMul, arrayCompare, arrayScalarMul } from "../utils";
-import { CONFIG } from "../constants";
+import { IDim, IAction } from "../../types";
 import { Vector3D } from "../utils/vector";
+import { Player } from "./player";
+// import { Projectile } from "./projectile";
 
 export enum RenderType {
   CUBE,
@@ -24,12 +24,18 @@ export enum MetaAction {
   fireball,
 }
 
-export interface IEntityData {
+export const enum IEntityType {
+  Player = 0,
+  Projectile = 1,
+}
+
+export interface ISerializedEntity {
   uid: string;
   pos: IDim;
   vel?: IDim;
-  type: "projectile";
+  type: IEntityType;
 }
+
 
 export abstract class Entity {
   pos: Vector3D = new Vector3D([0,0,0]);
@@ -38,18 +44,17 @@ export abstract class Entity {
 
   constructor() { }
 
-  public serialize(): IEntityData {
+  public serialize(type: IEntityType): ISerializedEntity {
     return {
       uid: this.uid,
       pos: this.pos.data as IDim,
       // change this when we have another entity type that we need to send
-      type: "projectile",
+      type,
     }
   }
 
   abstract update(delta: number): void;
   abstract hit(entity: Entity, where: FaceLocater): void;
-
 
   setUid(uid: string) {
     this.uid = uid;

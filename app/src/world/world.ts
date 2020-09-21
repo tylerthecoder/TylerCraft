@@ -1,20 +1,56 @@
 import { Cube } from "../entities/cube";
-import { Chunk, ILookingAtData } from "./chunk";
+import { Chunk, ILookingAtData, ISerializedChunk } from "./chunk";
 import { Entity } from "../entities/entity";
 import { Game } from "../game";
 import { IDim, IActionType } from "../../types";
 import { CONFIG } from "../constants";
 import { Vector, Vector3D, Vector2D } from "../utils/vector";
-import { TerrainGenerator } from "./terrainGenerator";
+import { ISerializedTerrainGenerator, TerrainGenerator } from "./terrainGenerator";
 import { ISocketMessageType } from "../../types/socket";
 
+export interface ISerializedWorld {
+  chunks: ISerializedChunk[];
+  tg: ISerializedTerrainGenerator;
+}
+
 export class World {
-  private chunks: Map<string, Chunk> = new Map();
-  private terrainGenerator = new TerrainGenerator();
+  private terrainGenerator: TerrainGenerator;
+  private chunks: Map<string, Chunk>;
   public loadingChunks = new Set<string>();
   public loadedChunks = new Set<string>();
 
-  constructor(private game: Game) { }
+  constructor(
+    private game: Game,
+    data?: ISerializedWorld,
+  ) {
+    if (data) {
+      this.terrainGenerator = TerrainGenerator.deserialize(data.tg);
+
+      const chunks = data.chunks.map(Chunk.deserialize);
+
+      const chunksMap = new Map();
+      for (const chunk of chunks) {
+        chunksMap.set(chunk.chunkPos.toString(), chunk);
+      }
+      this.chunks = chunksMap;
+
+      this.chunks.forEach(chunk => this.updateChunk(chunk.chunkPos));
+
+    } else {
+      this.terrainGenerator = new TerrainGenerator();
+      this.chunks = new Map();
+    }
+  }
+
+  // Serializing
+  serialize(): ISerializedWorld {
+    const serializedTG = this.terrainGenerator.serialize();
+    const serializedChunks = Array.from(this.chunks.values()).map(chunk => chunk.serialize());
+    return {
+      chunks: serializedChunks,
+      tg: serializedTG,
+    }
+  }
 
   getChunkFromPos(chunkPos: Vector2D, config?: {generateIfNotFound?: boolean, loadIfNotFound?: boolean}) {
     const chunk = this.chunks.get(chunkPos.toString());
@@ -108,7 +144,8 @@ export class World {
     for (let i = -CONFIG.loadDistance; i < CONFIG.loadDistance; i++) {
       for (let j = -CONFIG.loadDistance; j < CONFIG.loadDistance; j++) {
         const chunkPos = new Vector2D([i, j]);
-        this.loadChunk(chunkPos);
+        if (!this.hasChunk(chunkPos))
+          this.loadChunk(chunkPos);
       }
     }
   }
@@ -181,4 +218,7 @@ export class World {
 
     return closestCube;
   }
+
+
+
 }

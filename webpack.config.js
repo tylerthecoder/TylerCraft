@@ -3,7 +3,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyPlugin = require("copy-webpack-plugin");
 
 module.exports = {
-  entry: './app/client/clientGame.ts',
+  entry: './app/client/app.ts',
   mode: "development",
   devtool: 'inline-source-map',
   plugins: [

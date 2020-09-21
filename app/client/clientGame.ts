@@ -1,8 +1,7 @@
-import { Player } from "../src/entities/player";
 import { PlayerKeyboardController } from "./controllers/playerKeyboardController";
 import { Camera } from "./cameras/camera";
 import { EntityCamera } from "./cameras/entityCamera";
-import { Game } from "../src/game";
+import { Game, ISerializedGame } from "../src/game";
 import { RenderType, Entity } from "../src/entities/entity";
 import { SocketHandler } from "./socket";
 import { canvas } from "./canvas";
@@ -14,31 +13,35 @@ import { ControllerHolder } from "./controllerHolder";
 import { Spectator } from "../src/entities/spectator";
 import { Cube } from "../src/entities/cube";
 import { ISocketMessage, ISocketMessageType } from "../types/socket";
+import { clientDb } from "./app";
 
 export class ClientGame extends Game {
-  controllers = new ControllerHolder(this);
-  worldRenderer = new WorldRenderer(this.world, this);
-  saver = new GameSaver();
+  controllers: ControllerHolder;
+  worldRenderer: WorldRenderer;
+  saver: GameSaver;
   spectator: Spectator;
   camera: Camera;
   socket: SocketHandler;
   selectedBlock: BLOCKS = BLOCKS.stone;
   numOfBlocks = 7;
-
   totTime = 0;
   pastDeltas: number[] = [];
-  get frameRate() {
-    this.pastDeltas = this.pastDeltas.slice(-20);
-    const totTime = this.pastDeltas.reduce((acc, cur) => acc + cur, 0);
-    const averageMs = totTime / Math.min(this.pastDeltas.length, 20);
-    const fps = 1 / (averageMs / 1000);
-    return fps;
+
+  constructor(data?: ISerializedGame) {
+    super(data);
+    this.controllers = new ControllerHolder(this);
+    this.worldRenderer = new WorldRenderer(this.world, this);
+    this.saver = new GameSaver();
+
+    this.load();
   }
 
-  constructor() {
-    super();
-    this.load();
-    this.setup();
+  get frameRate() {
+    this.pastDeltas = this.pastDeltas.slice(-100);
+    const totTime = this.pastDeltas.reduce((acc, cur) => acc + cur, 0);
+    const averageMs = totTime / Math.min(this.pastDeltas.length, 100);
+    const fps = 1 / (averageMs / 1000);
+    return fps;
   }
 
   async load() {
@@ -100,10 +103,19 @@ export class ClientGame extends Game {
 
   onClick(e: MouseEvent) {
     const data = this.world.lookingAt(this.camera.pos, this.camera.rotCart.data as IDim);
-
     if (!data) return;
 
+    const cube = data.entity as Cube;
+
+
     if (e.which === 3) { // right click
+      // check to see if any entity is in block
+      for (const entity of this.entities) {
+        if (cube.isPointInsideMe(entity.pos.data as IDim)) {
+          return;
+        }
+      }
+
       this.actions.push({
         type: IActionType.playerPlaceBlock,
         playerPlaceBlock: {
@@ -142,6 +154,7 @@ export class ClientGame extends Game {
     const playerController = new PlayerKeyboardController(this.mainPlayer, this);
     this.controllers.add(playerController);
     this.camera = new EntityCamera(this.mainPlayer);
+    this.worldRenderer.addEntity(this.mainPlayer);
   }
 
   setUpSpectator() {
@@ -163,6 +176,7 @@ export class ClientGame extends Game {
 
   save() {
     this.saver.saveToServer(this);
+    clientDb.writeGameData(this);
   }
 
   sendMessageToServer(message: ISocketMessage) {
@@ -170,7 +184,3 @@ export class ClientGame extends Game {
   }
 }
 
-export const game = new ClientGame();
-
-// for debugging
-(window as any).game = game;

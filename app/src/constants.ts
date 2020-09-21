@@ -34,6 +34,8 @@ export const CONFIG = {
   }
 };
 
+export type IConfig = typeof CONFIG;
+
 // declare var window;
 
 // if (window)
