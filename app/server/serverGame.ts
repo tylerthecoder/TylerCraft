@@ -1,10 +1,11 @@
 import SocketServer from "./socket";
 import Players from "./players";
 import * as wSocket from "ws";
-import { Game } from "../src/game";
+import { Game, ISerializedGame } from "../src/game";
 import { ISocketMessage, ISocketMessageType } from "../types/socket";
 import { IAction } from "../types";
 import { Vector, Vector2D } from "../src/utils/vector";
+import { IChunkReader } from "../src/worldModel";
 
 export class ServerGame extends Game {
   clients: Players;
@@ -14,13 +15,11 @@ export class ServerGame extends Game {
     action: IAction
   }> = [];
 
-  constructor(public wss: SocketServer) {
-    super();
+  constructor(chunkReader: IChunkReader, public wss: SocketServer, serializedData?: ISerializedGame) {
+    super(chunkReader, serializedData);
 
     this.clients = new Players(wss, this);
-
     this.wss.listen(this.handleMessage.bind(this));
-
     this.loop();
   }
 
@@ -39,9 +38,9 @@ export class ServerGame extends Game {
       }
     });
 
-
+    // make sure we don't send actions back to the player who sent them
     for (const [ws, actions] of sortedActions) {
-      this.wss.sendGlobal({
+      this.clients.sendMessageToAll({
         type: ISocketMessageType.actions,
         actionPayload: actions,
       }, ws);
@@ -61,10 +60,10 @@ export class ServerGame extends Game {
     const chunkPos = Vector.fromString(chunkPosString) as Vector2D;
     const chunk = this.world.getChunkFromPos(chunkPos, {generateIfNotFound: true});
     if (!chunk) throw new Error("Chunk wasn't found");
-    const serializedData = JSON.stringify(chunk.serialize());
+    const serializedData = chunk.serialize();
     this.wss.send(ws, {
-      type: ISocketMessageType.sendChunk,
-      sendChunkPayload: {
+      type: ISocketMessageType.setChunk,
+      setChunkPayload: {
         pos: chunkPosString,
         data: serializedData,
       }
@@ -74,7 +73,7 @@ export class ServerGame extends Game {
   handleMessage(ws: wSocket): void {
     this.clients.addPlayer(ws);
 
-    this.wss.listenTo(ws, (ws: wSocket, message: ISocketMessage) => {
+    this.wss.listenTo(ws, (message: ISocketMessage) => {
       // console.log("Got Message", message);
       switch (message.type) {
       case ISocketMessageType.actions: {

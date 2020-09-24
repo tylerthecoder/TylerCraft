@@ -1,5 +1,5 @@
 import { ISerializedGame } from "../src/game";
-import { ClientDb } from "./clientdb";
+import { ClientDb } from "./savers/clientdb";
 import { ClientGame } from "./clientGame";
 
 

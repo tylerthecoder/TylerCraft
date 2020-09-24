@@ -14,6 +14,7 @@ import { Spectator } from "../src/entities/spectator";
 import { Cube } from "../src/entities/cube";
 import { ISocketMessage, ISocketMessageType } from "../types/socket";
 import { clientDb } from "./app";
+import { IChunkReader } from "../src/worldModel";
 
 export class ClientGame extends Game {
   controllers: ControllerHolder;
@@ -27,8 +28,8 @@ export class ClientGame extends Game {
   totTime = 0;
   pastDeltas: number[] = [];
 
-  constructor(data?: ISerializedGame) {
-    super(data);
+  constructor(chunkReader: IChunkReader, data?: ISerializedGame) {
+    super(chunkReader, data);
     this.controllers = new ControllerHolder(this);
     this.worldRenderer = new WorldRenderer(this.world, this);
     this.saver = new GameSaver();
@@ -176,7 +177,7 @@ export class ClientGame extends Game {
 
   save() {
     this.saver.saveToServer(this);
-    clientDb.writeGameData(this);
+    // clientDb.writeGameData(this);
   }
 
   sendMessageToServer(message: ISocketMessage) {

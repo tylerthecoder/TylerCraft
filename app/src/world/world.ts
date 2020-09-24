@@ -6,7 +6,7 @@ import { IDim, IActionType } from "../../types";
 import { CONFIG } from "../constants";
 import { Vector, Vector3D, Vector2D } from "../utils/vector";
 import { ISerializedTerrainGenerator, TerrainGenerator } from "./terrainGenerator";
-import { ISocketMessageType } from "../../types/socket";
+import { IChunkReader } from "../worldModel";
 
 export interface ISerializedWorld {
   chunks: ISerializedChunk[];
@@ -21,10 +21,11 @@ export class World {
 
   constructor(
     private game: Game,
+    private chunkReader: IChunkReader,
     data?: ISerializedWorld,
   ) {
     if (data) {
-      this.terrainGenerator = TerrainGenerator.deserialize(data.tg);
+      this.terrainGenerator = new TerrainGenerator(this, data.tg);
 
       const chunks = data.chunks.map(Chunk.deserialize);
 
@@ -37,12 +38,12 @@ export class World {
       this.chunks.forEach(chunk => this.updateChunk(chunk.chunkPos));
 
     } else {
-      this.terrainGenerator = new TerrainGenerator();
+      this.terrainGenerator = new TerrainGenerator(this);
       this.chunks = new Map();
     }
   }
 
-  // Serializing
+  // We just aren't going to serialize the terrain generator for now. Hopefully later we find a better way to do this
   serialize(): ISerializedWorld {
     const serializedTG = this.terrainGenerator.serialize();
     const serializedChunks = Array.from(this.chunks.values()).map(chunk => chunk.serialize());
@@ -93,20 +94,27 @@ export class World {
       return;
     }
     this.loadingChunks.add(chunkPos.toString());
-    if (this.game.multiPlayer) {
-      // ask server for chunk
-      this.game.sendMessageToServer({
-        type: ISocketMessageType.getChunk,
-        getChunkPayload: {
-          pos: chunkPos.toString(),
-        }
-      })
-    } else {
-      // ask terrain generator for chunk
-      // once terrainGenerator becomes async the chunk can be set somewhere else
-      const generatedChunk = this.terrainGenerator.generateChunk(chunkPos, this);
-      this.setChunkAtPos(generatedChunk, chunkPos);
-    }
+    this.chunkReader.getChunk(chunkPos.toString()).then(chunk => {
+      // this should only happen on the client side when single player
+      // and on the server side when multiplayer
+      if (!chunk) chunk = this.terrainGenerator.generateChunk(chunkPos);
+      this.setChunkAtPos(chunk, chunkPos);
+    })
+
+    // if (this.game.multiPlayer) {
+    //   // ask server for chunk
+    //   this.game.sendMessageToServer({
+    //     type: ISocketMessageType.getChunk,
+    //     getChunkPayload: {
+    //       pos: chunkPos.toString(),
+    //     }
+    //   })
+    // } else {
+    //   // ask terrain generator for chunk
+    //   // once terrainGenerator becomes async the chunk can be set somewhere else
+    //   const generatedChunk = this.terrainGenerator.generateChunk(chunkPos, this);
+    //   this.setChunkAtPos(generatedChunk, chunkPos);
+    // }
   }
 
   getChunkFromWorldPoint(pos: Vector3D) {
@@ -135,7 +143,7 @@ export class World {
   }
 
   private generateChunk(chunkPos: Vector2D) {
-    const generatedChunk = this.terrainGenerator.generateChunk(chunkPos, this);
+    const generatedChunk = this.terrainGenerator.generateChunk(chunkPos);
     this.setChunkAtPos(generatedChunk, chunkPos);
     return generatedChunk;
   }

@@ -1,17 +1,23 @@
 import { IAction } from ".";
+import { ISerializedEntity } from "../src/entities/entity";
+import { ISerializedChunk } from "../src/world/chunk";
 
 export const enum ISocketMessageType {
-  actions,
-  getChunk,
-  sendChunk,
+  // from client
+  getChunk, // server sends setChunk
+  joinGame, // server sends welcome
+  // from server
   welcome,
+  setChunk,
   newPlayer,
   playerLeave,
+  // both
+  actions,
 }
 
 export interface ISocketWelcomePayload {
   uid: string;
-  players: string[];
+  entities: ISerializedEntity[];
 }
 
 interface ISocketMessage {
@@ -28,8 +34,8 @@ interface ISocketMessage {
   getChunkPayload?: {
     pos: string,
   }
-  sendChunkPayload?: {
+  setChunkPayload?: {
     pos: string,
-    data: string,
+    data: ISerializedChunk,
   }
 }

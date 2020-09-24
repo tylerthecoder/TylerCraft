@@ -7,7 +7,6 @@ import { Cube } from "../entities/cube";
 import { World } from "./world";
 import { serializeCube, deserializeCube, ISerializedCube } from "../serializer";
 
-
 export interface ISerializedTerrainGenerator {
   blocksToRender: Array<{
     chunkPos: string;
@@ -16,12 +15,25 @@ export interface ISerializedTerrainGenerator {
 }
 
 export class TerrainGenerator {
+  private blocksToRender: Map<string, Cube[]>
   preRenderedChunks: Set<string> = new Set();
 
   constructor(
+    private world: World,
     // take a chunk pos string (1, 2) to a list of cubes that need to be added to it
-    private blocksToRender: Map<string, Cube[]> = new Map()
-  ) {}
+    serializedData?: ISerializedTerrainGenerator,
+  ) {
+    if (serializedData) {
+      const blocksToRender = serializedData.blocksToRender.map(({chunkPos, cubes}) => {
+        return [chunkPos, cubes.map(deserializeCube)] as [string, Cube[]];
+      });
+
+      this.blocksToRender = new Map(blocksToRender);
+    } else {
+      this.blocksToRender = new Map();
+    }
+
+  }
 
   serialize(): ISerializedTerrainGenerator {
     return {
@@ -34,16 +46,7 @@ export class TerrainGenerator {
     }
   }
 
-  static deserialize(data: ISerializedTerrainGenerator): TerrainGenerator {
-    const blocksToRender = data.blocksToRender.map(({chunkPos, cubes}) => {
-      return [chunkPos, cubes.map(deserializeCube)] as [string, Cube[]];
-    });
-
-    const blocksToRenderMap = new Map(blocksToRender);
-    return new TerrainGenerator(blocksToRenderMap);
-  }
-
-  addExtraBlock(cube: Cube, world: World) {
+  private addExtraBlock(cube: Cube, world: World) {
     const chunkPos = world.worldPosToChunkPos(cube.pos);
 
     // this is very strange because we are adding blocks after a chunk as been rendered
@@ -60,7 +63,7 @@ export class TerrainGenerator {
     this.blocksToRender.set(chunkPos.toString(), [...currentBlocks, cube]);
   }
 
-  generateChunk(chunkPos: Vector2D, world: World) {
+  generateChunk(chunkPos: Vector2D) {
     const chunk = new Chunk(chunkPos);
 
     const worldPos = chunk.pos.data;
@@ -72,7 +75,7 @@ export class TerrainGenerator {
         const y = CONFIG.terrain.flatWorld ? 0 :
           Math.floor(Random.noise(x, z) * CONFIG.terrain.maxHeight);
 
-        this.preRenderNearbyChunks(chunkPos, world)
+        this.preRenderNearbyChunks(chunkPos, this.world)
 
         // generate water
         if (y <= CONFIG.terrain.waterLever) {
@@ -110,7 +113,7 @@ export class TerrainGenerator {
   }
 
   // just go through and generate structures for chunks nearby
-  preRenderNearbyChunks(chunkPos: Vector2D, world: World) {
+  private preRenderNearbyChunks(chunkPos: Vector2D, world: World) {
     for (let i = -2; i <= 2; i++) {
       for (let j = -2; j <= 2; j++) {
         const indexVector = new Vector2D([i, j]);
@@ -156,7 +159,7 @@ export class TerrainGenerator {
     }
   }
 
-  generateTree(startingPos: Vector3D): Cube[] {
+  private generateTree(startingPos: Vector3D): Cube[] {
     const cubes = [];
 
     // trunk
@@ -189,7 +192,7 @@ export class TerrainGenerator {
     return cubes;
   }
 
-  generateCloud(startingPos: Vector3D): Cube[] {
+  private generateCloud(startingPos: Vector3D): Cube[] {
     startingPos.set(1, CONFIG.terrain.cloudLevel);
     const cubes = [];
 

@@ -1,15 +1,33 @@
-import { Game, ISerializedGame } from "../src/game";
+import { IGameMetadata, ISerializedGame } from "../../src/game";
+import { Chunk, ISerializedChunk } from "../../src/world/chunk";
+import { IChunkReader, IGameReader, WorldModel } from "../../src/worldModel";
 
-export class ClientDb {
+export class ClientChunkReader implements IChunkReader {
+
+  constructor(
+    private idbChunkReader?: IChunkReader,
+  ) {}
+
+  async getChunk(chunkPos: string) {
+    let chunk: Chunk|null = null;
+    if (this.idbChunkReader) {
+      chunk = await this.idbChunkReader.getChunk(chunkPos);
+    }
+    return chunk;
+  }
+}
+
+export class ClientDb extends WorldModel {
   private db: IDBDatabase;
 
   private WORLDS_OBS = "worlds";
 
   constructor() {
+    super();
     this.loadDb();
   }
 
-  async loadDb() {
+  private async loadDb() {
     return new Promise((resolve, reject) => {
       const openRequest = window.indexedDB.open("TylerCraftDB", 4);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -41,24 +59,65 @@ export class ClientDb {
     });
   }
 
-  getSavedGames(): Promise<ISerializedGame[]> {
-    return new Promise((resolve,reject) => {
+  getAllWorlds(): Promise<IGameMetadata[]> {
+    return new Promise((resolve) => {
       const transaction = this.db.transaction([this.WORLDS_OBS]);
       const objectStore = transaction.objectStore(this.WORLDS_OBS);
 
-      const request = objectStore.getAll();
+      const cursorRequest = objectStore.openCursor();
 
-      request.onerror = (event) => {
-        reject(event);
+      const worlds: IGameMetadata[] = [];
+
+      cursorRequest.onsuccess = (event: any) => {
+        if (event.target.result) {
+          const world = event.target.result as ISerializedGame;
+          worlds.push({
+            gameId: world.gameId,
+            name: world.name,
+          });
+        }
       }
 
-      request.onsuccess = () => {
-        resolve(request.result);
+      transaction.oncomplete = () => {
+        resolve(worlds);
       }
     });
   }
 
-  writeGameData(data: Game) {
+  async getWorld(worldId: string): Promise<IGameReader> {
+    const world: ISerializedGame = await new Promise((resolve) => {
+      const transaction = this.db.transaction([this.WORLDS_OBS]);
+      const objectStore = transaction.objectStore(this.WORLDS_OBS);
+
+      const request = objectStore.get(worldId);
+
+      request.onsuccess = (event: any) => {
+        const data = event.target.result as ISerializedGame;
+        resolve(data)
+      }
+    });
+
+    // later have an entire object store to keep chunks in.
+    const chunkMap = new Map<string, ISerializedChunk>();
+    for (const chunk of world.world.chunks) {
+      chunkMap.set(chunk.chunkPos, chunk);
+    }
+
+    const chunkReader: IChunkReader = {
+      getChunk: async (chunkPos: string) => {
+        const serializedChunk = chunkMap.get(chunkPos);
+        if (!serializedChunk) return null;
+        return Chunk.deserialize(serializedChunk);
+      }
+    };
+
+    return {
+      data: world,
+      chunkReader: new ClientChunkReader(chunkReader),
+    }
+  }
+
+  async saveWorld(data: ISerializedGame) {
     const transaction = this.db.transaction([this.WORLDS_OBS], "readwrite");
 
     transaction.oncomplete = () => {
@@ -68,12 +127,11 @@ export class ClientDb {
       console.log("There was an error", event);
     }
     const objStore = transaction.objectStore("worlds");
-    const worldData = data.serialize();
 
-    objStore.put(worldData);
+    objStore.put(data);
   }
 
-  deleteGame(gameId: string) {
+  async deleteWorld(gameId: string) {
     const transaction = this.db.transaction([this.WORLDS_OBS], "readwrite");
 
     transaction.oncomplete = () => {

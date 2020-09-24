@@ -8,12 +8,18 @@ import { MovableEntity } from "./entities/moveableEntity";
 import { ISocketMessage } from "../types/socket";
 import { CONFIG, IConfig } from "./constants";
 import { deserializeEntity, getEntityType } from "./serializer";
+import { IChunkReader } from "./worldModel";
 
 export interface ISerializedGame {
   config: IConfig;
   entities: ISerializedEntity[];
   world: ISerializedWorld;
   mainPlayerUid: string;
+  gameId: string;
+  name: string;
+}
+
+export interface IGameMetadata {
   gameId: string;
   name: string;
 }
@@ -28,16 +34,18 @@ export class Game {
   multiPlayer = false;
 
   constructor(
+    chunkReader: IChunkReader,
     data?: ISerializedGame,
   ) {
     if(data) {
-      this.world = new World(this, data.world);
+      this.world = new World(this, chunkReader, data.world);
       this.entities = data.entities.map(deserializeEntity);
+      // change this to look in local storage for my uid
       this.mainPlayer = this.findEntity(data.mainPlayerUid);
       this.gameId = data.gameId;
       this.name = data.name;
     } else {
-      this.world = new World(this);
+      this.world = new World(this, chunkReader);
       this.entities = [];
       this.mainPlayer = new Player(true);
       this.gameId = `${Math.random()}`;

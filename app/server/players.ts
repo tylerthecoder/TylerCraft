@@ -9,6 +9,13 @@ export default class Players {
 
   constructor(public wss: SocketServer, public game: Game) {}
 
+  sendMessageToAll(message: ISocketMessage, exclude?:wSocket) {
+    for (const socket of this.players.keys()) {
+      if (exclude && socket === exclude) continue;
+      this.wss.send(socket, message);
+    }
+  }
+
   addPlayer(ws: wSocket): void {
     // generate a random ID for the new player
     const uid = `${Math.random()}${Math.random()}`;
