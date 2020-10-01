@@ -1,11 +1,13 @@
-import SocketServer from "./socket";
 import Players from "./players";
 import * as wSocket from "ws";
 import { Game, ISerializedGame } from "../src/game";
 import { ISocketMessage, ISocketMessageType } from "../types/socket";
 import { IAction } from "../types";
 import { Vector, Vector2D } from "../src/utils/vector";
-import { IChunkReader } from "../src/worldModel";
+import { IChunkReader, WorldModel } from "../src/worldModel";
+import { ISerializedEntity } from "../src/entities/entity";
+import { getEntityType } from "../src/serializer";
+import { SocketInterface } from "./server";
 
 export class ServerGame extends Game {
   clients: Players;
@@ -15,11 +17,10 @@ export class ServerGame extends Game {
     action: IAction
   }> = [];
 
-  constructor(chunkReader: IChunkReader, public wss: SocketServer, serializedData?: ISerializedGame) {
-    super(chunkReader, serializedData);
+  constructor(worldModel: WorldModel, chunkReader: IChunkReader, serializedData?: ISerializedGame) {
+    super(worldModel, chunkReader, {data: serializedData, multiplayer: true});
 
-    this.clients = new Players(wss, this);
-    this.wss.listen(this.handleMessage.bind(this));
+    this.clients = new Players(this);
     this.loop();
   }
 
@@ -61,7 +62,7 @@ export class ServerGame extends Game {
     const chunk = this.world.getChunkFromPos(chunkPos, {generateIfNotFound: true});
     if (!chunk) throw new Error("Chunk wasn't found");
     const serializedData = chunk.serialize();
-    this.wss.send(ws, {
+    SocketInterface.send(ws, {
       type: ISocketMessageType.setChunk,
       setChunkPayload: {
         pos: chunkPosString,
@@ -70,11 +71,11 @@ export class ServerGame extends Game {
     });
   }
 
-  handleMessage(ws: wSocket): void {
-    this.clients.addPlayer(ws);
+  addSocket(uid: string, ws: wSocket): void {
+    this.clients.addPlayer(uid, ws);
 
-    this.wss.listenTo(ws, (message: ISocketMessage) => {
-      // console.log("Got Message", message);
+    SocketInterface.listenTo(ws, (message: ISocketMessage) => {
+      console.log("Got Message", message);
       switch (message.type) {
       case ISocketMessageType.actions: {
         const payload = message.actionPayload!;
@@ -90,10 +91,11 @@ export class ServerGame extends Game {
         const payload = message.getChunkPayload!;
         this.sendChunkTo(payload.pos, ws);
         break;
-      }
-      default:
-        throw new Error("Unexpected message type")
-      }
+      }}
     });
+  }
+
+  serializeEntities(): ISerializedEntity[] {
+    return this.entities.map(ent => ent.serialize(getEntityType(ent)!)) ;
   }
 }

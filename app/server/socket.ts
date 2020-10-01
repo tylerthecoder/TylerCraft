@@ -1,6 +1,6 @@
 import * as wSocket from "ws";
 import { Server } from "http";
-import { ISocketMessage, ISpecificSocketMessage } from "../types/socket";
+import { ISocketMessage } from "../types/socket";
 
 type ConnectionListener = (ws: wSocket) => void;
 type MessageListener = (message: ISocketMessage) => void;
@@ -17,7 +17,7 @@ export default class SocketServer {
     this.server.on("connection", this.newConnection.bind(this));
   }
 
-  listen(listener: ConnectionListener): void {
+  listenForConnection(listener: ConnectionListener): void {
     this.connectionListeners.push(listener);
   }
 
@@ -29,30 +29,22 @@ export default class SocketServer {
 
   listenTo(ws: wSocket, func: MessageListener): void {
     ws.on("message", (data: string) => {
-      try {
-        const message = JSON.parse(data) as ISpecificSocketMessage;
+      const message: ISocketMessage | undefined = (() => {
+        try {
+          return JSON.parse(data) as ISocketMessage;
+        } catch {
+          console.log("Error parsing JSON");
+        }
+      })();
+
+      if (message) {
         func(message);
-      } catch {
-        console.log("Error parsing JSON");
       }
+
     });
   }
 
   send(ws: wSocket, message: ISocketMessage): void {
     ws.send(JSON.stringify(message));
   }
-
-  sendMultiple(sockets: wSocket[], message: ISocketMessage, exclude?: wSocket): void {
-    sockets.forEach(socket => {
-      if (exclude && socket === exclude) return;
-      this.send(socket, message)
-    });
-  }
-
-  // sendGlobal(message: ISocketMessage, exclude?: wSocket): void {
-  //   this.server.clients.forEach(client => {
-  //     if (exclude && client === exclude) return;
-  //     this.send(client as wSocket, message);
-  //   });
-  // }
 }

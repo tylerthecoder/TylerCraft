@@ -1,24 +1,23 @@
-import SocketServer from "./socket";
 import * as wSocket from "ws";
-import { Game } from "../src/game";
 import { Player } from "../src/entities/player";
 import { ISocketMessage, ISocketMessageType } from "../types/socket";
+import { SocketInterface } from "./server";
+import { ServerGame } from "./serverGame";
 
 export default class Players {
   players: Map<wSocket, Player> = new Map();
 
-  constructor(public wss: SocketServer, public game: Game) {}
+  constructor(public game: ServerGame) {}
 
   sendMessageToAll(message: ISocketMessage, exclude?:wSocket) {
     for (const socket of this.players.keys()) {
       if (exclude && socket === exclude) continue;
-      this.wss.send(socket, message);
+      SocketInterface.send(socket, message);
     }
   }
 
-  addPlayer(ws: wSocket): void {
+  addPlayer(uid: string, ws: wSocket): void {
     // generate a random ID for the new player
-    const uid = `${Math.random()}${Math.random()}`;
 
     const player = this.game.addPlayer(true, uid);
 
@@ -27,10 +26,11 @@ export default class Players {
       type: ISocketMessageType.welcome,
       welcomePayload: {
         uid,
-        players: this.game.players.map(p => p.uid).filter(id => uid !== id)
+        worldId: this.game.gameId,
+        entities: this.game.serializeEntities(),
       }
     };
-    this.wss.send(ws, welcomeMessage);
+    SocketInterface.send(ws, welcomeMessage);
 
     // add them to the SYSTEM
     this.players.set(ws, player);
@@ -42,7 +42,7 @@ export default class Players {
         uid
       }
     };
-    this.wss.sendGlobal(newPlayerMessage, ws);
+    this.sendMessageToAll(newPlayerMessage, ws);
 
     // If they leave, KILL THEM
     ws.on("close", this.removePlayer.bind(this, ws));
@@ -64,7 +64,7 @@ export default class Players {
         uid: player.uid
       }
     };
-    this.wss.sendGlobal(playerLeaveMessage, ws);
+    this.sendMessageToAll(playerLeaveMessage, ws);
 
     // FINISH THEM!
     this.game.removeEntity(player.uid);
@@ -72,5 +72,4 @@ export default class Players {
 
     console.log(`Remove Player! ${this.game.players.length} players`);
   }
-
 }

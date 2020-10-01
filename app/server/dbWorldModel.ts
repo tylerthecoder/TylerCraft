@@ -1,8 +1,7 @@
-import { IGameMetadata, ISerializedGame } from "../src/game";
+import { Game, IGameMetadata, ISerializedGame } from "../src/game";
 import { Chunk, ISerializedChunk } from "../src/world/chunk";
-import { IChunkReader, WorldModel } from "../src/worldModel";
+import { IChunkReader, WorldModel,IEmptyWorld } from "../src/worldModel";
 import { db } from "./db";
-
 
 export class RamChunkReader implements IChunkReader {
   private chunkMap = new Map<string, ISerializedChunk>();
@@ -22,9 +21,15 @@ export class RamChunkReader implements IChunkReader {
   }
 }
 
-
 export class DbWorldModel extends WorldModel {
   private gameCollection = db.collection("games");
+
+  async createWorld(): Promise<IEmptyWorld> {
+    return {
+      worldId: Math.random() + "",
+      chunkReader: new RamChunkReader(),
+    }
+  }
 
   async getWorld(gameId: string) {
     const game = await this.gameCollection.findOne<ISerializedGame>({ gameId });
@@ -38,20 +43,25 @@ export class DbWorldModel extends WorldModel {
   }
 
   async getAllWorlds() {
-    const games: IGameMetadata[] = [];
-    await this.gameCollection.find<ISerializedGame>({}).forEach(game => {
-      games.push({
-        gameId: game.gameId,
-        name: game.name,
-      });
-    });
+    // const games: IGameMetadata[] = [];
+    const games: IGameMetadata[] = await this.gameCollection.find<ISerializedGame>(
+      {},
+      {
+        projection: {
+          gameId: 1,
+          name: 1,
+        }
+      }
+    ).toArray();
     return games;
   }
 
-  async saveWorld(gameData: ISerializedGame) {
+  async saveWorld(game: Game) {
+    console.log("Saving world");
+    const serializedWorld = game.serialize();
     await this.gameCollection.updateOne({
-      gameId: gameData.gameId,
-    }, gameData, {
+      gameId: game.gameId,
+    }, { $set: serializedWorld }, {
       upsert: true,
     });
   }

@@ -8,13 +8,12 @@ import { MovableEntity } from "./entities/moveableEntity";
 import { ISocketMessage } from "../types/socket";
 import { CONFIG, IConfig } from "./constants";
 import { deserializeEntity, getEntityType } from "./serializer";
-import { IChunkReader } from "./worldModel";
+import { IChunkReader, WorldModel } from "./worldModel";
 
 export interface ISerializedGame {
   config: IConfig;
   entities: ISerializedEntity[];
   world: ISerializedWorld;
-  mainPlayerUid: string;
   gameId: string;
   name: string;
 }
@@ -25,32 +24,32 @@ export interface IGameMetadata {
 }
 
 export class Game {
-  protected gameId: string;
-  protected name: string;
+  public gameId: string;
+  public name: string;
   protected actions: IAction[] = [];
   protected entities: Entity[] = []; // TODO: change this to a map from uid to Entity
   public world: World;
-  mainPlayer: Player;
-  multiPlayer = false;
+  multiPlayer: boolean;
 
   constructor(
+    private worldModel: WorldModel,
     chunkReader: IChunkReader,
-    data?: ISerializedGame,
+    {data, multiplayer}: {
+      data?: ISerializedGame,
+      multiplayer: boolean,
+    }
   ) {
+    this.multiPlayer = multiplayer;
     if(data) {
       this.world = new World(this, chunkReader, data.world);
       this.entities = data.entities.map(deserializeEntity);
-      // change this to look in local storage for my uid
-      this.mainPlayer = this.findEntity(data.mainPlayerUid);
       this.gameId = data.gameId;
       this.name = data.name;
     } else {
       this.world = new World(this, chunkReader);
       this.entities = [];
-      this.mainPlayer = new Player(true);
       this.gameId = `${Math.random()}`;
       this.name = "Game " + this.gameId;
-      this.addEntity(this.mainPlayer, false);
     }
   }
 
@@ -59,7 +58,6 @@ export class Game {
       config: CONFIG,
       entities: this.entities.map(ent => ent.serialize(getEntityType(ent)!)),
       world: this.world.serialize(),
-      mainPlayerUid: this.mainPlayer.uid,
       gameId: this.gameId,
       name: this.name,
     };
@@ -229,6 +227,10 @@ export class Game {
     this.entities = this.entities.filter(e => {
       return e.uid !== uid;
     });
+  }
+
+  save() {
+    this.worldModel.saveWorld(this);
   }
 
   // for the subclasses to override so they can "listen" to events

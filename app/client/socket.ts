@@ -1,10 +1,4 @@
-import { deserializeEntity } from "../src/serializer";
-import {
-  ISocketMessage,
-  ISocketMessageType,
-  ISocketWelcomePayload
-} from "../types/socket";
-import { ClientGame } from "./clientGame";
+import { ISocketMessage, } from "../types/socket";
 
 export type SocketListener = (message: ISocketMessage) => void;
 
@@ -12,8 +6,6 @@ export class SocketHandler {
   private socket: WebSocket;
   private socketUrl = `ws://${location.hostname}:3000`;
   private listeners: SocketListener[] = [];
-
-  constructor(public client: ClientGame) {}
 
   connect() {
     return new Promise(resolve => {
@@ -40,42 +32,19 @@ export class SocketHandler {
 
   startListening() {
     this.socket.onmessage = e => {
-      const data = e.data;
-      const obj = JSON.parse(data) as ISocketMessage;
+      const message = JSON.parse(e.data) as ISocketMessage;
       // console.log("Message from server", obj);
-      this.listeners.forEach(l => l(obj));
-      switch (obj.type) {
-        case ISocketMessageType.welcome:
-          this.welcome(obj.welcomePayload!);
-          break;
-        case ISocketMessageType.newPlayer:
-          this.addOtherPlayer(obj.newPlayerPayload!.uid);
-          break;
-        case ISocketMessageType.playerLeave:
-          this.client.removeEntity(obj.playerLeavePayload!.uid);
-          break;
-        case ISocketMessageType.actions:
-          obj.actionPayload!.forEach(a => a.isFromServer = true)
-          this.client.addActions(obj.actionPayload!);
-          break;
-        // case ISocketMessageType.sendChunk: {
-        //   const payload = obj.sendChunkPayload!;
-        //   const chunkData = payload.data as ISerializedChunk;
-        //   const chunk = Chunk.deserialize(chunkData);
-        //   const chunkPosVector = Vector.fromString(payload.pos) as Vector2D;
-        //   this.client.world.setChunkAtPos(chunk, chunkPosVector)
-        // }
-      }
+      this.listeners.forEach(l => l(message));
     };
   }
 
-  welcome(message: ISocketWelcomePayload) {
-    this.client.mainPlayer.setUid(message.uid);
-    const entities = message.entities.map(deserializeEntity);
-    entities.forEach(ent => this.client.addEntity(ent, false));
-  }
+  // welcome(message: ISocketWelcomePayload) {
+  //   this.client.mainPlayer.setUid(message.uid);
+  //   const entities = message.entities.map(deserializeEntity);
+  //   entities.forEach(ent => this.client.addEntity(ent, false));
+  // }
 
-  addOtherPlayer(uid: string) {
-    this.client.addPlayer(false, uid);
-  }
+  // addOtherPlayer(uid: string) {
+  //   this.client.addPlayer(false, uid);
+  // }
 }

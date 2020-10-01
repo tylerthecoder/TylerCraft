@@ -100,21 +100,6 @@ export class World {
       if (!chunk) chunk = this.terrainGenerator.generateChunk(chunkPos);
       this.setChunkAtPos(chunk, chunkPos);
     })
-
-    // if (this.game.multiPlayer) {
-    //   // ask server for chunk
-    //   this.game.sendMessageToServer({
-    //     type: ISocketMessageType.getChunk,
-    //     getChunkPayload: {
-    //       pos: chunkPos.toString(),
-    //     }
-    //   })
-    // } else {
-    //   // ask terrain generator for chunk
-    //   // once terrainGenerator becomes async the chunk can be set somewhere else
-    //   const generatedChunk = this.terrainGenerator.generateChunk(chunkPos, this);
-    //   this.setChunkAtPos(generatedChunk, chunkPos);
-    // }
   }
 
   getChunkFromWorldPoint(pos: Vector3D) {
@@ -143,6 +128,7 @@ export class World {
   }
 
   private generateChunk(chunkPos: Vector2D) {
+    console.log("Generating chunk", chunkPos, this.game.gameId);
     const generatedChunk = this.terrainGenerator.generateChunk(chunkPos);
     this.setChunkAtPos(generatedChunk, chunkPos);
     return generatedChunk;
@@ -190,6 +176,7 @@ export class World {
   }
 
   addBlock(cube: Cube) {
+    console.log("Adding block", cube, this.game.gameId);
     const chunk = this.getChunkFromWorldPoint(cube.pos);
     if (!chunk) return;
     chunk.addCube(cube);

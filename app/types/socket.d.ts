@@ -5,7 +5,10 @@ import { ISerializedChunk } from "../src/world/chunk";
 export const enum ISocketMessageType {
   // from client
   getChunk, // server sends setChunk
-  joinGame, // server sends welcome
+  newWorld, // server sends welcome
+  saveWorld,
+  // this could be for joining an existing world or starting up an old one
+  joinWorld, // server sends welcome
   // from server
   welcome,
   setChunk,
@@ -17,13 +20,28 @@ export const enum ISocketMessageType {
 
 export interface ISocketWelcomePayload {
   uid: string;
+  worldId: string;
   entities: ISerializedEntity[];
 }
 
 interface ISocketMessage {
   type: ISocketMessageType;
-  uid?: string;
-  actionPayload?: IAction[];
+  // from client
+  joinWorldPayload?: {
+    myUid: string;
+    worldId: string;
+  },
+  newWorldPayload?: {
+    myUid: string;
+  },
+  saveWorldPayload?: {
+    worldId: string;
+  },
+  getChunkPayload?: {
+    pos: string,
+  }
+
+  // from server
   welcomePayload?: ISocketWelcomePayload,
   newPlayerPayload?: {
     uid: string,
@@ -31,11 +49,11 @@ interface ISocketMessage {
   playerLeavePayload?: {
     uid: string,
   },
-  getChunkPayload?: {
-    pos: string,
-  }
   setChunkPayload?: {
     pos: string,
     data: ISerializedChunk,
   }
+
+  // from either
+  actionPayload?: IAction[];
 }

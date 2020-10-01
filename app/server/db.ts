@@ -7,7 +7,7 @@ export let db: Db;
 export async function connect() {
   const client = await MongoClient.connect(URI, {
     // useNewUrlParser: true,
-    // useUnifiedTopology: true,
+    useUnifiedTopology: true,
     // useCreateIndex: true,
     // useFindAndModify: true,
   });

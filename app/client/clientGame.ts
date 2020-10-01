@@ -3,36 +3,51 @@ import { Camera } from "./cameras/camera";
 import { EntityCamera } from "./cameras/entityCamera";
 import { Game, ISerializedGame } from "../src/game";
 import { Entity } from "../src/entities/entity";
-import { SocketHandler } from "./socket";
 import { canvas } from "./canvas";
 import { IDim, IAction, IActionType } from "../types";
 import WorldRenderer from "./renders/worldRender";
-import { GameSaver } from "./gameSaver";
 import { BLOCKS } from "../src/blockdata";
 import { ControllerHolder } from "./controllerHolder";
 import { Spectator } from "../src/entities/spectator";
 import { Cube } from "../src/entities/cube";
-import { ISocketMessage, ISocketMessageType } from "../types/socket";
-import { clientDb } from "./app";
-import { IChunkReader } from "../src/worldModel";
+import { ISocketMessageType } from "../types/socket";
+import { IChunkReader, WorldModel } from "../src/worldModel";
+import { GameSocketController } from "./controllers/gameSocketController";
+import { getMyUid, SocketInterface } from "./app";
+import { Player } from "../src/entities/player";
 
 export class ClientGame extends Game {
   controllers: ControllerHolder;
   worldRenderer: WorldRenderer;
-  saver: GameSaver;
   spectator: Spectator;
   camera: Camera;
-  socket: SocketHandler;
   selectedBlock: BLOCKS = BLOCKS.stone;
   numOfBlocks = 7;
   totTime = 0;
   pastDeltas: number[] = [];
+  mainPlayer: Player;
 
-  constructor(chunkReader: IChunkReader, data?: ISerializedGame) {
-    super(chunkReader, data);
+  constructor(
+    worldModel: WorldModel,
+    chunkReader: IChunkReader,
+    opts: {
+      data?: ISerializedGame,
+      multiplayer: boolean,
+    }
+  ) {
+    super(worldModel, chunkReader, opts)
     this.controllers = new ControllerHolder(this);
     this.worldRenderer = new WorldRenderer(this.world, this);
-    this.saver = new GameSaver();
+
+    if (opts.data) {
+      console.log("Loaded data", opts.data);
+      this.mainPlayer = this.findEntity(getMyUid());
+      if (!this.mainPlayer) throw new Error("Main player was not found");
+    } else {
+      this.mainPlayer = new Player(true);
+      this.mainPlayer.uid = getMyUid();
+      this.addEntity(this.mainPlayer, false);
+    }
 
     this.load();
   }
@@ -49,17 +64,14 @@ export class ClientGame extends Game {
     await canvas.loadProgram();
 
     if (this.multiPlayer) {
-      this.socket = new SocketHandler(this);
-      await this.socket.connect();
+      const socketController = new GameSocketController(this);
+      this.controllers.add(socketController);
     }
 
     this.setUpPlayer();
     // this.setUpSpectator();
 
     this.world.load();
-
-    // load the game from server
-    // await this.saver.load(this);
 
     requestAnimationFrame(this.loop.bind(this));
   }
@@ -95,7 +107,7 @@ export class ClientGame extends Game {
   // this will be called by the super class when actions are received
   onActions(actions: IAction[]) {
     if (this.multiPlayer && actions.length > 0) {
-      this.socket.send({
+      SocketInterface.send({
         type: ISocketMessageType.actions,
         actionPayload: actions.filter(a => !a.isFromServer)
       });
@@ -173,15 +185,6 @@ export class ClientGame extends Game {
     } else {
       this.mainPlayer.setCreative(true);
     }
-  }
-
-  save() {
-    this.saver.saveToServer(this);
-    // clientDb.writeGameData(this);
-  }
-
-  sendMessageToServer(message: ISocketMessage) {
-    this.socket.send(message);
   }
 }
 
