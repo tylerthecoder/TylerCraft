@@ -132,6 +132,7 @@ export class ClientDb extends WorldModel {
         name: world.name,
       },
       chunkReader: new ClientChunkReader(chunkReader),
+      activePlayers: [],
     }
   }
 

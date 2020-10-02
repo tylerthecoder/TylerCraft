@@ -23,13 +23,12 @@ export class NetworkWorldModel extends WorldModel {
     return welcomeMessage;
   }
 
-  private makeGameReader(welcomeMessage: ISocketWelcomePayload) {
+  private makeGameReader(welcomeMessage: ISocketWelcomePayload): IGameReader {
     return {
       data: {
         // send this over socket soon
         config: CONFIG,
         gameId: welcomeMessage.worldId,
-        mainPlayerUid: welcomeMessage.uid,
         entities: welcomeMessage.entities,
         name: "Something",
         // just an empty world (the chunk reader should fill it)
@@ -41,6 +40,7 @@ export class NetworkWorldModel extends WorldModel {
         }
       },
       chunkReader: new ServerGameReader(),
+      activePlayers: welcomeMessage.activePlayers,
     }
   }
 

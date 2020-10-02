@@ -39,10 +39,14 @@ export class Player extends MovableEntity {
   creative = false;
 
   constructor(
-    public isReal: boolean
+    public isReal: boolean,
+    uid?: string
   ) {
     super();
     this.setCreative(false);
+    if (uid) {
+      this.uid = uid;
+    }
   }
 
   serialize(type: IEntityType): ISerializedPlayer {

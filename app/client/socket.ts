@@ -33,18 +33,8 @@ export class SocketHandler {
   startListening() {
     this.socket.onmessage = e => {
       const message = JSON.parse(e.data) as ISocketMessage;
-      // console.log("Message from server", obj);
+      // console.log("Message from server", message);
       this.listeners.forEach(l => l(message));
     };
   }
-
-  // welcome(message: ISocketWelcomePayload) {
-  //   this.client.mainPlayer.setUid(message.uid);
-  //   const entities = message.entities.map(deserializeEntity);
-  //   entities.forEach(ent => this.client.addEntity(ent, false));
-  // }
-
-  // addOtherPlayer(uid: string) {
-  //   this.client.addPlayer(false, uid);
-  // }
 }

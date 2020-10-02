@@ -5,8 +5,6 @@ import { ISocketMessage, ISocketMessageType } from "../types/socket";
 import { IAction } from "../types";
 import { Vector, Vector2D } from "../src/utils/vector";
 import { IChunkReader, WorldModel } from "../src/worldModel";
-import { ISerializedEntity } from "../src/entities/entity";
-import { getEntityType } from "../src/serializer";
 import { SocketInterface } from "./server";
 
 export class ServerGame extends Game {
@@ -93,9 +91,5 @@ export class ServerGame extends Game {
         break;
       }}
     });
-  }
-
-  serializeEntities(): ISerializedEntity[] {
-    return this.entities.map(ent => ent.serialize(getEntityType(ent)!)) ;
   }
 }

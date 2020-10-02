@@ -9,6 +9,7 @@ export interface IChunkReader {
 export interface IGameReader {
   data: ISerializedGame;
   chunkReader: IChunkReader;
+  activePlayers: string[];
 }
 
 export interface IEmptyWorld {

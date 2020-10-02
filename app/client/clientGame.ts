@@ -33,20 +33,25 @@ export class ClientGame extends Game {
     opts: {
       data?: ISerializedGame,
       multiplayer: boolean,
+      activePlayers: string[],
     }
   ) {
     super(worldModel, chunkReader, opts)
     this.controllers = new ControllerHolder(this);
     this.worldRenderer = new WorldRenderer(this.world, this);
+    this.mainPlayer = this.entities.createOrGetPlayer(true, getMyUid());
 
-    if (opts.data) {
-      console.log("Loaded data", opts.data);
-      this.mainPlayer = this.findEntity(getMyUid());
-      if (!this.mainPlayer) throw new Error("Main player was not found");
-    } else {
-      this.mainPlayer = new Player(true);
-      this.mainPlayer.uid = getMyUid();
-      this.addEntity(this.mainPlayer, false);
+    if (!this.mainPlayer) throw new Error("Main player was not found");
+
+    // draw only the active players
+    for (const entity of this.entities.iterable()) {
+      // if an entity is a player but not active then don't render them
+      if (
+        entity instanceof Player &&
+        !opts.activePlayers.includes(entity.uid)
+      ) continue;
+      if (entity.uid === getMyUid()) continue; // don't render the main player
+      this.onNewEntity(entity);
     }
 
     this.load();
@@ -123,7 +128,7 @@ export class ClientGame extends Game {
 
     if (e.which === 3) { // right click
       // check to see if any entity is in block
-      for (const entity of this.entities) {
+      for (const entity of this.entities.iterable()) {
         if (cube.isPointInsideMe(entity.pos.data as IDim)) {
           return;
         }
@@ -151,7 +156,7 @@ export class ClientGame extends Game {
   }
 
   removeEntityFromGame(uid: string) {
-    const entity = this.findEntity(uid);
+    const entity = this.entities.get(uid)!;
     this.controllers.remove(entity);
     this.removeEntity(uid);
   }
@@ -172,7 +177,7 @@ export class ClientGame extends Game {
 
   setUpSpectator() {
     this.spectator = new Spectator();
-    this.addEntity(this.spectator);
+    this.entities.add(this.spectator);
     this.camera = new EntityCamera(this.spectator);
     const spectatorController = new PlayerKeyboardController(this.spectator, this);
     this.controllers.add(spectatorController);

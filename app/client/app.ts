@@ -79,7 +79,7 @@ async function showWorldPicker(worldModel: WorldModel, multiplayer: boolean) {
     ele.addEventListener("click", async () => {
       if (ele.id === "game-new") {
         const newWorld = await worldModel.createWorld();
-        const game = new ClientGame(worldModel, newWorld.chunkReader, {multiplayer});
+        const game = new ClientGame(worldModel, newWorld.chunkReader, {multiplayer, activePlayers: []});
         game.gameId = newWorld.worldId;
         startGame(game);
         return;
@@ -89,7 +89,11 @@ async function showWorldPicker(worldModel: WorldModel, multiplayer: boolean) {
       const serializedWorld = await worldModel.getWorld(worldId);
       console.log(serializedWorld);
       if (!serializedWorld) throw new Error("World wasn't found. Db must be effed up");
-      const clientGame = new ClientGame(worldModel, serializedWorld.chunkReader, {data: serializedWorld.data, multiplayer});
+      const clientGame = new ClientGame(
+        worldModel,
+        serializedWorld.chunkReader,
+        {data: serializedWorld.data, multiplayer, activePlayers: serializedWorld.activePlayers}
+      );
       startGame(clientGame);
     });
   });

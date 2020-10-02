@@ -37,7 +37,6 @@ export class WorldManager {
     });
   }
 
-
   async getWorld(worldId: string): Promise<ServerGame|null> {
     const world = this.worlds.get(worldId);
     if (world) {

@@ -3,9 +3,6 @@ import { SocketInterface } from "../app";
 import { ClientGame } from "../clientGame";
 import { Controller } from "./controller";
 
-
-
-
 export class GameSocketController extends Controller {
   constructor(
     public controlled: ClientGame
@@ -38,10 +35,4 @@ export class GameSocketController extends Controller {
       }
     }
   }
-
-
-
-
-
-
 }

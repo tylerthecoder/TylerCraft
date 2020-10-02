@@ -1,5 +1,5 @@
 import { IAction } from ".";
-import { ISerializedEntity } from "../src/entities/entity";
+import { ISerializedEntities } from "../src/entities/entityHolder";
 import { ISerializedChunk } from "../src/world/chunk";
 
 export const enum ISocketMessageType {
@@ -21,7 +21,8 @@ export const enum ISocketMessageType {
 export interface ISocketWelcomePayload {
   uid: string;
   worldId: string;
-  entities: ISerializedEntity[];
+  entities: ISerializedEntities;
+  activePlayers: string[];
 }
 
 interface ISocketMessage {

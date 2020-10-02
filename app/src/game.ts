@@ -1,18 +1,19 @@
 import { Player } from "./entities/player";
 import { ISerializedWorld, World } from "./world/world";
-import { Entity, ISerializedEntity } from "./entities/entity";
+import { Entity } from "./entities/entity";
 import { IAction, IActionType } from "../types";
 import { Cube } from "./entities/cube";
 import { Vector3D, Vector } from "./utils/vector";
 import { MovableEntity } from "./entities/moveableEntity";
 import { ISocketMessage } from "../types/socket";
 import { CONFIG, IConfig } from "./constants";
-import { deserializeEntity, getEntityType } from "./serializer";
+import { deserializeEntity } from "./serializer";
 import { IChunkReader, WorldModel } from "./worldModel";
+import { EntityHolder, ISerializedEntities } from "./entities/entityHolder";
 
 export interface ISerializedGame {
   config: IConfig;
-  entities: ISerializedEntity[];
+  entities: ISerializedEntities;
   world: ISerializedWorld;
   gameId: string;
   name: string;
@@ -27,7 +28,7 @@ export class Game {
   public gameId: string;
   public name: string;
   protected actions: IAction[] = [];
-  protected entities: Entity[] = []; // TODO: change this to a map from uid to Entity
+  public entities: EntityHolder;
   public world: World;
   multiPlayer: boolean;
 
@@ -42,12 +43,12 @@ export class Game {
     this.multiPlayer = multiplayer;
     if(data) {
       this.world = new World(this, chunkReader, data.world);
-      this.entities = data.entities.map(deserializeEntity);
+      this.entities = new EntityHolder(this, data.entities)
       this.gameId = data.gameId;
       this.name = data.name;
     } else {
       this.world = new World(this, chunkReader);
-      this.entities = [];
+      this.entities = new EntityHolder(this);
       this.gameId = `${Math.random()}`;
       this.name = "Game " + this.gameId;
     }
@@ -56,27 +57,19 @@ export class Game {
   serialize(): ISerializedGame {
     return {
       config: CONFIG,
-      entities: this.entities.map(ent => ent.serialize(getEntityType(ent)!)),
+      entities: this.entities.serialize(),
       world: this.world.serialize(),
       gameId: this.gameId,
       name: this.name,
     };
   }
 
-  get players() {
-    return this.entities.filter(ent => ent instanceof Player);
-  }
-
   update(delta: number) {
     // get all of the actions
     // there could also be actions that came from the socket
-    let myActions: IAction[] = [];
-    for (const entity of this.entities) {
-      const playerActions = entity.getActions();
-      myActions = myActions.concat(playerActions);
-    }
 
-    this.actions.push(...myActions);
+    const entityActions = this.entities.getActions();
+    this.actions.push(...entityActions);
 
     // send the actions to the subclass
     this.onActions(this.actions);
@@ -96,47 +89,30 @@ export class Game {
       failSafe++;
     }
 
-    if (failSafe > 100) {
-      throw new Error("Uh Oh");
-    }
-
+    if (failSafe > 100) throw new Error("Uh Oh");
 
     // delete all of the actions
     this.actions = [];
 
-    for (const entity of this.entities) {
-      entity.update(delta);
-    }
-
-    // move the entities out of the blocks
-    for (const entity of this.entities) {
-      // if (entity.tangible) {
-        this.world.pushOut(entity);
-
-        for (const e of this.entities) {
-          if (e === entity) continue;
-          const isCollide = e.isCollide(entity);
-          if (isCollide) {
-            entity.pushOut(e);
-          }
-        }
-      // }
-    }
+    this.entities.update(this.world, delta)
   }
 
   protected handleAction(action: IAction) {
     // console.log("Handling Action", action);
+
+    const findEntity = <T extends Entity>(uid: string) => this.entities.get(uid) as T|undefined;
+
     switch(action.type) {
     case IActionType.addEntity: {
       const {ent} = action.addEntity!;
       const entity = deserializeEntity(ent);
-      this.addEntity(entity);
+      this.entities.add(entity);
       return;
     }
 
     case IActionType.removeEntity: {
       const payload = action.removeEntity!;
-      const entity = this.findEntity(payload.uid);
+      const entity = findEntity(payload.uid);
       if (!entity) return;
       this.removeEntity(entity.uid);
       return;
@@ -157,16 +133,20 @@ export class Game {
 
     case IActionType.playerSetPos: {
       const payload = action.playerSetPos!;
-      const player = this.findEntity(payload.uid) as Player;
-      player.pos = new Vector(payload.pos);
+      const entity = findEntity<MovableEntity>(payload.uid);
+      if (!entity) {
+        console.log("Couldn't find entity", payload.uid);
+        return;
+      }
+      entity.pos = new Vector(payload.pos);
       return payload.uid;
     }
 
     case IActionType.setEntVel: {
       const payload = action.setEntVel!;
-      const entity = this.findEntity(payload.uid) as MovableEntity;
+      const entity = findEntity(payload.uid) as MovableEntity;
       if (!entity) {
-        console.log(payload.uid);
+        console.log("Couldn't find entity", payload.uid);
         return;
       }
       entity.vel = new Vector(payload.vel);
@@ -175,14 +155,14 @@ export class Game {
 
     case IActionType.playerFireball: {
       const payload = action.playerFireball!
-      const player = this.findEntity(payload.uid) as Player;
+      const player = findEntity(payload.uid) as Player;
       player.fireball();
       return payload.uid;
     }
 
     case IActionType.hurtEntity: {
       const payload = action.hurtEntity!;
-      const entity = this.findEntity(payload.uid) as Player;
+      const entity = findEntity(payload.uid) as Player;
       if (!entity) {
         console.log("Entity not found", payload.uid);
         return;
@@ -206,27 +186,13 @@ export class Game {
     this.actions.push(...actions);
   }
 
-  addPlayer(realness: boolean, uid?: string): Player {
-    const newPlayer = new Player(realness);
-    if (uid) newPlayer.setUid(uid);
-    this.addEntity(newPlayer);
-    return newPlayer;
-  }
-
-  addEntity(entity: Entity, alert = true) {
-    this.entities.push(entity);
-    if (alert) this.onNewEntity(entity);
-  }
-
-  findEntity<T extends Entity>(uid: string): T {
-    return this.entities.find(ent => ent.uid === uid) as T;
+  addPlayer(realness: boolean, uid: string): Player {
+    return this.entities.createOrGetPlayer(realness, uid);
   }
 
   removeEntity(uid: string) {
     this.onRemoveEntity(uid);
-    this.entities = this.entities.filter(e => {
-      return e.uid !== uid;
-    });
+    this.entities.remove(uid);
   }
 
   save() {

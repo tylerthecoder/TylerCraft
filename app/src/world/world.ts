@@ -145,6 +145,20 @@ export class World {
     }
   }
 
+  update(entities: Entity[]) {
+    for (const entity of entities) {
+      this.pushOut(entity);
+
+      for (const e of entities) {
+        if (e === entity) continue;
+        const isCollide = e.isCollide(entity);
+        if (isCollide) {
+          entity.pushOut(e);
+        }
+      }
+    }
+  }
+
   // soon only check chunks the entity is in
   pushOut(ent: Entity) {
     const inChunk = this.getChunkFromWorldPoint(ent.pos);

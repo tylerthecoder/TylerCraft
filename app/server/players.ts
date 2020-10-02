@@ -27,7 +27,8 @@ export default class Players {
       welcomePayload: {
         uid,
         worldId: this.game.gameId,
-        entities: this.game.serializeEntities(),
+        entities: this.game.entities.serialize(),
+        activePlayers: Array.from(this.players.values()).map(p => p.uid),
       }
     };
     SocketInterface.send(ws, welcomeMessage);
@@ -47,7 +48,7 @@ export default class Players {
     // If they leave, KILL THEM
     ws.on("close", this.removePlayer.bind(this, ws));
 
-    console.log(`New player! ${this.game.players.length} players`);
+    console.log(`New player! ${this.game.entities.getActivePlayers().length} players`);
   }
 
   removePlayer(ws: wSocket): void {
@@ -70,6 +71,6 @@ export default class Players {
     this.game.removeEntity(player.uid);
     this.players.delete(ws);
 
-    console.log(`Remove Player! ${this.game.players.length} players`);
+    console.log(`Remove Player! ${this.game.entities.getActivePlayers().length} players`);
   }
 }
