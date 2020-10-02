@@ -1,23 +1,48 @@
 import { IAction } from ".";
+import { ISerializedEntities } from "../src/entities/entityHolder";
+import { ISerializedChunk } from "../src/world/chunk";
 
 export const enum ISocketMessageType {
-  actions,
-  getChunk,
-  sendChunk,
+  // from client
+  getChunk, // server sends setChunk
+  newWorld, // server sends welcome
+  saveWorld,
+  // this could be for joining an existing world or starting up an old one
+  joinWorld, // server sends welcome
+  // from server
   welcome,
+  setChunk,
   newPlayer,
   playerLeave,
+  // both
+  actions,
 }
 
 export interface ISocketWelcomePayload {
   uid: string;
-  players: string[];
+  worldId: string;
+  entities: ISerializedEntities;
+  activePlayers: string[];
 }
 
 interface ISocketMessage {
   type: ISocketMessageType;
-  uid?: string;
-  actionPayload?: IAction[];
+  // from client
+  joinWorldPayload?: {
+    myUid: string;
+    worldId: string;
+  },
+  newWorldPayload?: {
+    myUid: string;
+  },
+  saveWorldPayload?: {
+    worldId: string;
+  },
+  getChunkPayload?: {
+    pos: string,
+  }
+
+  // from server
   welcomePayload?: ISocketWelcomePayload,
   newPlayerPayload?: {
     uid: string,
@@ -25,11 +50,11 @@ interface ISocketMessage {
   playerLeavePayload?: {
     uid: string,
   },
-  getChunkPayload?: {
+  setChunkPayload?: {
     pos: string,
+    data: ISerializedChunk,
   }
-  sendChunkPayload?: {
-    pos: string,
-    data: string,
-  }
+
+  // from either
+  actionPayload?: IAction[];
 }

@@ -1,37 +1,31 @@
-import * as fs from "fs";
 import * as path from "path";
 import express from "express";
-import bodyParser from "body-parser";
-import { ServerGame } from "./serverGame";
+import * as db from "./db";
 import SocketServer from "./socket";
+import { WorldManager } from "./worldManager";
 
 const port = 3000;
 const staticPath = "../../public";
+export const app = express();
 
-const app = express();
+app.use(express.urlencoded({ extended: false }))
+app.use(express.json({ limit: "50mb" }));
 
-app.use(bodyParser.urlencoded({ extended: false }))
-
-app.use(bodyParser.json({
-  limit: "50mb"
-}));
-
-app.post("/world", (req) => {
-  console.log("Saving the world");
-  const data = JSON.stringify(req.body);
-  fs.writeFileSync("/home/tyler/p/falling-blocks/worlds/world.json", data);
+app.get("/worlds", async (req, res) => {
+  const worlds = await worldManager.getAllWorlds();
+  res.send(worlds);
 });
-
-app.get("/world", (_req, res) => {
-  const data = fs.readFileSync("/home/tyler/p/falling-blocks/worlds/world.json");
-  res.send(data);
-});
-
 
 app.use(express.static(path.join(__dirname, staticPath)));
 
-const server = app.listen(port, () => console.log(`Server running on port:${port}`));
+export const server = app.listen(port, () => console.log(`Server running on port ${port}`));
 
-const wss = new SocketServer(server);
+export const SocketInterface = new SocketServer(server);
+let worldManager: WorldManager;
 
-new ServerGame(wss);
+async function main() {
+  await db.connect();
+  worldManager = new WorldManager();
+}
+
+main();

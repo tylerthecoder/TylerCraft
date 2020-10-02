@@ -1,6 +1,6 @@
 export const CONFIG = {
-  renderDistance: 4,
-  loadDistance: 4,
+  renderDistance: 2,
+  loadDistance: 2,
   seed: "bungus",
 
   transparency: true,
@@ -13,7 +13,7 @@ export const CONFIG = {
     jagFactor: 32,
     maxHeight: 12,
     cloudLevel: 30,
-    waterLever: 3,
+    waterLever: -1,
     chunkSize: 16,
     // chunkSize: 4,
     // flatWorld: true,

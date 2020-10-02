@@ -1,10 +1,11 @@
-import SocketServer from "./socket";
 import Players from "./players";
 import * as wSocket from "ws";
-import { Game } from "../src/game";
+import { Game, ISerializedGame } from "../src/game";
 import { ISocketMessage, ISocketMessageType } from "../types/socket";
 import { IAction } from "../types";
 import { Vector, Vector2D } from "../src/utils/vector";
+import { IChunkReader, WorldModel } from "../src/worldModel";
+import { SocketInterface } from "./server";
 
 export class ServerGame extends Game {
   clients: Players;
@@ -14,13 +15,10 @@ export class ServerGame extends Game {
     action: IAction
   }> = [];
 
-  constructor(public wss: SocketServer) {
-    super();
+  constructor(worldModel: WorldModel, chunkReader: IChunkReader, serializedData?: ISerializedGame) {
+    super(worldModel, chunkReader, {data: serializedData, multiplayer: true});
 
-    this.clients = new Players(wss, this);
-
-    this.wss.listen(this.handleMessage.bind(this));
-
+    this.clients = new Players(this);
     this.loop();
   }
 
@@ -39,9 +37,9 @@ export class ServerGame extends Game {
       }
     });
 
-
+    // make sure we don't send actions back to the player who sent them
     for (const [ws, actions] of sortedActions) {
-      this.wss.sendGlobal({
+      this.clients.sendMessageToAll({
         type: ISocketMessageType.actions,
         actionPayload: actions,
       }, ws);
@@ -61,21 +59,21 @@ export class ServerGame extends Game {
     const chunkPos = Vector.fromString(chunkPosString) as Vector2D;
     const chunk = this.world.getChunkFromPos(chunkPos, {generateIfNotFound: true});
     if (!chunk) throw new Error("Chunk wasn't found");
-    const serializedData = JSON.stringify(chunk.serialize());
-    this.wss.send(ws, {
-      type: ISocketMessageType.sendChunk,
-      sendChunkPayload: {
+    const serializedData = chunk.serialize();
+    SocketInterface.send(ws, {
+      type: ISocketMessageType.setChunk,
+      setChunkPayload: {
         pos: chunkPosString,
         data: serializedData,
       }
     });
   }
 
-  handleMessage(ws: wSocket): void {
-    this.clients.addPlayer(ws);
+  addSocket(uid: string, ws: wSocket): void {
+    this.clients.addPlayer(uid, ws);
 
-    this.wss.listenTo(ws, (ws: wSocket, message: ISocketMessage) => {
-      // console.log("Got Message", message);
+    SocketInterface.listenTo(ws, (message: ISocketMessage) => {
+      console.log("Got Message", message);
       switch (message.type) {
       case ISocketMessageType.actions: {
         const payload = message.actionPayload!;
@@ -91,10 +89,7 @@ export class ServerGame extends Game {
         const payload = message.getChunkPayload!;
         this.sendChunkTo(payload.pos, ws);
         break;
-      }
-      default:
-        throw new Error("Unexpected message type")
-      }
+      }}
     });
   }
 }

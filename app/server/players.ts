@@ -1,17 +1,23 @@
-import SocketServer from "./socket";
 import * as wSocket from "ws";
-import { Game } from "../src/game";
 import { Player } from "../src/entities/player";
 import { ISocketMessage, ISocketMessageType } from "../types/socket";
+import { SocketInterface } from "./server";
+import { ServerGame } from "./serverGame";
 
 export default class Players {
   players: Map<wSocket, Player> = new Map();
 
-  constructor(public wss: SocketServer, public game: Game) {}
+  constructor(public game: ServerGame) {}
 
-  addPlayer(ws: wSocket): void {
+  sendMessageToAll(message: ISocketMessage, exclude?:wSocket) {
+    for (const socket of this.players.keys()) {
+      if (exclude && socket === exclude) continue;
+      SocketInterface.send(socket, message);
+    }
+  }
+
+  addPlayer(uid: string, ws: wSocket): void {
     // generate a random ID for the new player
-    const uid = `${Math.random()}${Math.random()}`;
 
     const player = this.game.addPlayer(true, uid);
 
@@ -20,10 +26,12 @@ export default class Players {
       type: ISocketMessageType.welcome,
       welcomePayload: {
         uid,
-        players: this.game.players.map(p => p.uid).filter(id => uid !== id)
+        worldId: this.game.gameId,
+        entities: this.game.entities.serialize(),
+        activePlayers: Array.from(this.players.values()).map(p => p.uid),
       }
     };
-    this.wss.send(ws, welcomeMessage);
+    SocketInterface.send(ws, welcomeMessage);
 
     // add them to the SYSTEM
     this.players.set(ws, player);
@@ -35,12 +43,12 @@ export default class Players {
         uid
       }
     };
-    this.wss.sendGlobal(newPlayerMessage, ws);
+    this.sendMessageToAll(newPlayerMessage, ws);
 
     // If they leave, KILL THEM
     ws.on("close", this.removePlayer.bind(this, ws));
 
-    console.log(`New player! ${this.game.players.length} players`);
+    console.log(`New player! ${this.game.entities.getActivePlayers().length} players`);
   }
 
   removePlayer(ws: wSocket): void {
@@ -57,13 +65,12 @@ export default class Players {
         uid: player.uid
       }
     };
-    this.wss.sendGlobal(playerLeaveMessage, ws);
+    this.sendMessageToAll(playerLeaveMessage, ws);
 
     // FINISH THEM!
     this.game.removeEntity(player.uid);
     this.players.delete(ws);
 
-    console.log(`Remove Player! ${this.game.players.length} players`);
+    console.log(`Remove Player! ${this.game.entities.getActivePlayers().length} players`);
   }
-
 }
