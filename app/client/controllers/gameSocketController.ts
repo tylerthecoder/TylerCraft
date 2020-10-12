@@ -11,9 +11,8 @@ export class GameSocketController extends Controller {
     SocketInterface.addListener(this.onMessage.bind(this));
   }
 
-  keysChange() { /* NO-OP */ }
+  // maybe perform the actions in here so they aren't async
   update() { /* NO-OP */ }
-
 
   onMessage(message: ISocketMessage) {
     switch(message.type) {

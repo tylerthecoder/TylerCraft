@@ -70,7 +70,7 @@ export class Player extends MovableEntity {
 
   getActions(): IAction[] {
     if (!this.isReal) return [];
-    const actions = this.actions
+    const actions = this.actions;
 
     const addMoveAction = (vel: Vector3D) => {
       actions.push({
@@ -102,6 +102,8 @@ export class Player extends MovableEntity {
     }
 
     this.actions = [];
+
+    // this.metaActions.clear();
 
     return actions;
   }

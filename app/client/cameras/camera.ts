@@ -17,5 +17,5 @@ export abstract class Camera extends MovableEntity {
   render(_camera: Camera) {/* NO-OP */}
   hit(_ent: Entity, _where: FaceLocater) {/* NO-OP */}
 
-  abstract handleMouse(e: MouseEvent): void;
+  abstract rotateBy(x: number, y: number): void;
 }

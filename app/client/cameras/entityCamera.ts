@@ -1,7 +1,6 @@
 import { Camera } from "./camera";
 import { IDim } from "../../types";
 import { arrayAdd } from "../../src/utils";
-import { CONFIG } from "../../src/constants";
 import { Vector3D } from "../../src/utils/vector";
 import { MovableEntity } from "../../src/entities/moveableEntity";
 
@@ -15,19 +14,12 @@ export class EntityCamera extends Camera {
     this.rot = entity.rot.slice(0) as IDim;
   }
 
-  handleMouse(e: MouseEvent) {
-    const dx = e.movementX * CONFIG.player.rotSpeed;
-    const dy = e.movementY * CONFIG.player.rotSpeed;
-    this.entity.rotate([-dy, dx, 0]);
-
+  rotateBy(x: number, y: number) {
+    this.entity.rotate([-y, x, 0]);
     // set my rot as my entities rot
     this.rot = this.entity.rot.slice(0) as IDim;
     this.rotCart = this.entity.rotCart;
   }
-
-  // lookingAt(entities: Entity[]) {
-  //   return this.baseLookingAt(entities.filter(entity => entity !== this.entity));
-  // }
 
   get pos(): Vector3D {
     let offset: number[] = [];

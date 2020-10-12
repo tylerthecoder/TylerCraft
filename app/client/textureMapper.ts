@@ -42,12 +42,19 @@ class Textures {
   getBlockPreviewCords(type: BLOCKS, width: number, height: number) {
     const {offsetX, offsetY} = textureData.get(type)!;
 
-    const x = offsetX * xStepVal * width;
-    const y = offsetY * yStepVal * height;
-    const w = xStepVal * width;
-    const h = yStepVal * height;
+    return {
+      offset: {
+        x: offsetX,
+        y: offsetY,
+      },
+      cords: {
+        x1: offsetX * xStepVal * width,
+        x2: offsetX * (xStepVal+ .5) * width,
+        y1: offsetY * yStepVal * height,
+        y2: offsetY * (yStepVal + .5) * height,
+      }
 
-    return { x, y, w, h }
+    }
   }
 
   getTextureCordsEntity() {

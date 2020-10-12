@@ -1,4 +1,3 @@
-import { PlayerKeyboardController } from "./controllers/playerKeyboardController";
 import { Camera } from "./cameras/camera";
 import { EntityCamera } from "./cameras/entityCamera";
 import { Game, ISerializedGame } from "../src/game";
@@ -7,19 +6,22 @@ import { canvas } from "./canvas";
 import { IDim, IAction, IActionType } from "../types";
 import WorldRenderer from "./renders/worldRender";
 import { BLOCKS } from "../src/blockdata";
-import { ControllerHolder } from "./controllerHolder";
+import { ControllerHolder } from "./controllers/controllerHolder";
 import { Spectator } from "../src/entities/spectator";
 import { Cube } from "../src/entities/cube";
 import { ISocketMessageType } from "../types/socket";
 import { IChunkReader, WorldModel } from "../src/worldModel";
 import { GameSocketController } from "./controllers/gameSocketController";
-import { getMyUid, SocketInterface } from "./app";
+import { getMyUid, IS_MOBILE, SocketInterface } from "./app";
 import { Player } from "../src/entities/player";
+import { MobileController } from "./controllers/mobileController";
+import { GameController } from "./controllers/gameKeyboardController";
 
 export class ClientGame extends Game {
   controllers: ControllerHolder;
   worldRenderer: WorldRenderer;
   spectator: Spectator;
+  isSpectating = false;
   camera: Camera;
   selectedBlock: BLOCKS = BLOCKS.stone;
   numOfBlocks = 7;
@@ -37,9 +39,12 @@ export class ClientGame extends Game {
     }
   ) {
     super(worldModel, chunkReader, opts)
-    this.controllers = new ControllerHolder(this);
+    this.controllers = new ControllerHolder();
     this.worldRenderer = new WorldRenderer(this.world, this);
     this.mainPlayer = this.entities.createOrGetPlayer(true, getMyUid());
+
+    const gameController = IS_MOBILE ? new MobileController(this) : new GameController(this, canvas);
+    this.controllers.add(gameController);
 
     if (!this.mainPlayer) throw new Error("Main player was not found");
 
@@ -119,40 +124,38 @@ export class ClientGame extends Game {
     }
   }
 
-  onClick(e: MouseEvent) {
+  placeBlock() {
     const data = this.world.lookingAt(this.camera.pos, this.camera.rotCart.data as IDim);
     if (!data) return;
-
     const cube = data.entity as Cube;
 
-
-    if (e.which === 3) { // right click
-      // check to see if any entity is in block
-      for (const entity of this.entities.iterable()) {
-        if (cube.isPointInsideMe(entity.pos.data as IDim)) {
-          return;
-        }
+    // check to see if any entity is in block
+    for (const entity of this.entities.iterable()) {
+      if (cube.isPointInsideMe(entity.pos.data as IDim)) {
+        return;
       }
-
-      this.actions.push({
-        type: IActionType.playerPlaceBlock,
-        playerPlaceBlock: {
-          blockType: this.selectedBlock,
-          blockPos: data.newCubePos.data as IDim,
-        }
-      });
-    } else if (e.which === 1) { // left click
-      this.actions.push({
-        type: IActionType.removeBlock,
-        removeBlock: {
-          blockPos: (data.entity as Cube).pos.data as IDim,
-        }
-      });
     }
+
+    this.actions.push({
+      type: IActionType.playerPlaceBlock,
+      playerPlaceBlock: {
+        blockType: this.selectedBlock,
+        blockPos: data.newCubePos.data as IDim,
+      }
+    });
   }
 
-  onMouseMove(e: MouseEvent) {
-    this.camera.handleMouse(e);
+  removeBlock() {
+    const data = this.world.lookingAt(this.camera.pos, this.camera.rotCart.data as IDim);
+    if (!data) return;
+    const cube = data.entity as Cube;
+
+    this.actions.push({
+      type: IActionType.removeBlock,
+      removeBlock: {
+        blockPos: cube.pos.data as IDim,
+      }
+    });
   }
 
   removeEntityFromGame(uid: string) {
@@ -169,18 +172,16 @@ export class ClientGame extends Game {
   }
 
   setUpPlayer() {
-    const playerController = new PlayerKeyboardController(this.mainPlayer, this);
-    this.controllers.add(playerController);
+    this.isSpectating = false;
     this.camera = new EntityCamera(this.mainPlayer);
     this.worldRenderer.addEntity(this.mainPlayer);
   }
 
   setUpSpectator() {
+    this.isSpectating = true;
     this.spectator = new Spectator();
     this.entities.add(this.spectator);
     this.camera = new EntityCamera(this.spectator);
-    const spectatorController = new PlayerKeyboardController(this.spectator, this);
-    this.controllers.add(spectatorController);
     this.worldRenderer.shouldRenderMainPlayer = true;
   }
 
