@@ -1,5 +1,8 @@
 <head>
   <script src="./js/m4.js"></script>
+  <meta name='viewport'
+     content='width=device-width, initial-scale=1.0, maximum-scale=1.0,
+     user-scalable=0' >
   <link rel="stylesheet" type="text/css" href="css/app.css" />
   <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&family=Roboto&display=swap" rel="stylesheet">
 </head>
@@ -20,7 +23,50 @@
       <div id="pickWorldScreen"> </div>
     </div>
 
-    <canvas id="glCanvas" width="800" height="800"></canvas>
-    <canvas id="hudCanvas" width="800" height="800"></canvas>
+    <div id="canvasHolder">
+      <canvas id="glCanvas" width="800" height="800"></canvas>
+      <canvas id="hudCanvas" width="800" height="800"></canvas>
+      <div id="hud">
+        <div id="crosshairs">
+          <div id="verticalCrosshair"></div>
+          <div id="horizontalCrosshair"></div>
+        </div>
+
+        <p id="stats">
+          0,0,0 <br />
+          Fps:
+        </p>
+
+        <div id="toolbelt">
+          <div class="toolbelt-item" id="toolbelt-item-0"></div>
+          <div class="toolbelt-item" id="toolbelt-item-1"></div>
+          <div class="toolbelt-item" id="toolbelt-item-2"></div>
+          <div class="toolbelt-item" id="toolbelt-item-3"></div>
+          <div class="toolbelt-item" id="toolbelt-item-4"></div>
+          <div class="toolbelt-item" id="toolbelt-item-5"></div>
+          <div class="toolbelt-item" id="toolbelt-item-6"></div>
+          <div class="toolbelt-item" id="toolbelt-item-7"></div>
+          <div class="toolbelt-item" id="toolbelt-item-8"></div>
+          <div class="toolbelt-item" id="toolbelt-item-9"></div>
+        </div>
+
+
+
+        <div id="healthBarOutline">
+          <div id="healthBar"></div>
+        </div>
+        <div id="joyStickOutline">
+          <div id="joyStick"></div>
+        </div>
+        <div id="movementButtons">
+          <div id="forwardButton"></div>
+          <div id="jumpButton"></div>
+        </div>
+        <div id="useItemButton"></div>
+        <div id="useItemButton2"></div>
+
+      </div>
+      <div id="fullScreenButton"><p> FS </p></div>
+    </div>
   </div>
 </body>

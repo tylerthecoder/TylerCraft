@@ -18,20 +18,44 @@ export class CanvasProgram {
   textures: { [name: string]: WebGLTexture };
 
   constructor() {
-    this.gl = this.getCanvas();
+    // init hud canvas
+    this.hudCanvas = document.querySelector("#hudCanvas") as HTMLCanvasElement;
+    this.canvas = document.querySelector("#glCanvas") as HTMLCanvasElement;
 
-    this.setup();
+    document.querySelector("#fullScreenButton")?.addEventListener("click", () => {
+      console.log("Requesting full screen");
+      document.body.requestFullscreen()
+    });
 
-    this.textures = {
-      textureAtlas: this.loadTexture("./img/texture_map.png"),
-      checker: this.loadTexture("./img/checker.jpg")
-    };
+    // init gl canvas
+    const gl = this.canvas.getContext("webgl", {
+      // premultipliedAlpha: false,
+      // alpha: false,
+    });
 
-    this.clearCanvas();
-  }
 
-  setup() {
-    const gl = this.gl;
+    // Only continue if WebGL is available and working
+    if (gl === null) {
+      throw new Error(
+        "Unable to initialize WebGL. Your browser or machine may not support it."
+      );
+    }
+
+    this.gl = gl;
+
+    const getCanvasDimensions = () => {
+      this.hudCanvas.height = window.innerHeight;
+      this.hudCanvas.width = window.innerWidth;
+      this.canvas.height = window.innerHeight;
+      this.canvas.width = window.innerWidth;
+      this.gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+      if (this.program) this.createProjectionMatrix();
+
+    }
+    window.addEventListener("resize", getCanvasDimensions);
+    getCanvasDimensions();
+
+    this.hudCxt = this.hudCanvas.getContext("2d")!;
 
     gl.enable(gl.DEPTH_TEST); // Enable depth testing
     gl.depthFunc(gl.LEQUAL); // Near things obscure far things
@@ -44,38 +68,41 @@ export class CanvasProgram {
 
       this.gl.enable(this.gl.BLEND);
     }
+
+    this.textures = {
+      textureAtlas: this.loadTexture("./img/texture_map.png"),
+      checker: this.loadTexture("./img/checker.jpg")
+    };
+
+    this.clearCanvas();
+  }
+
+  private createProjectionMatrix() {
+    // Create a perspective matrix, a special matrix that is
+    // used to simulate the distortion of perspective in a camera.
+    // Our field of view is 45 degrees, with a width/height
+    // ratio that matches the display size of the canvas
+    // and we only want to see objects between 0.1 units
+    // and 100 units away from the camera.
+    const fieldOfView = CONFIG.glFov;
+    const canvasElement = this.gl.canvas as HTMLCanvasElement;
+    const aspect = canvasElement.clientWidth / canvasElement.clientHeight;
+    const zNear = 0.1;
+    const zFar = 100.0;
+    const projectionMatrix = mat4.create();
+    mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
+
+    this.gl.uniformMatrix4fv(
+      this.program.uniformLocations.projectionMatrix,
+      false,
+      projectionMatrix
+    );
   }
 
   clearCanvas() {
     this.gl.clearColor(0.0, 0.8, 1.0, 1.0);
     this.gl.clearDepth(1.0); // Clear everything
     this.gl.clear(this.gl.COLOR_BUFFER_BIT | this.gl.DEPTH_BUFFER_BIT);
-  }
-
-  getCanvas() {
-    // init hud canvas
-    this.hudCanvas = document.querySelector("#hudCanvas") as HTMLCanvasElement;
-    this.hudCanvas.height = window.innerHeight;
-    this.hudCanvas.width = window.innerWidth;
-    this.hudCxt = this.hudCanvas.getContext("2d")!;
-
-    // init gl canvas
-    this.canvas = document.querySelector("#glCanvas") as HTMLCanvasElement;
-    this.canvas.height = window.innerHeight;
-    this.canvas.width = window.innerWidth;
-    const gl = this.canvas.getContext("webgl", {
-      // premultipliedAlpha: false,
-      // alpha: false,
-    });
-
-    // Only continue if WebGL is available and working
-    if (gl === null) {
-      throw new Error(
-        "Unable to initialize WebGL. Your browser or machine may not support it."
-      );
-    }
-
-    return gl;
   }
 
   setColorFilter(color: Vector3D) {
@@ -88,7 +115,26 @@ export class CanvasProgram {
     const vsSource = await fetch("./shaders/vertex.glsl").then(x => x.text());
     const fsSource = await fetch("./shaders/fragment.glsl").then(x => x.text());
 
-    const shaderProgram = this.initShaderProgram(gl, vsSource, fsSource);
+    const vertexShader = this.loadShader(gl, gl.VERTEX_SHADER, vsSource);
+    const fragmentShader = this.loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
+
+    const shaderProgram = gl.createProgram();
+
+    if (!shaderProgram) {
+      throw new Error("Error loading shader program")
+    }
+
+    gl.attachShader(shaderProgram, vertexShader);
+    gl.attachShader(shaderProgram, fragmentShader);
+    gl.linkProgram(shaderProgram);
+
+    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+      console.log(
+        "Unable to initialize the shader program: " +
+          gl.getProgramInfoLog(shaderProgram)
+      );
+      throw new Error("Unable to init shader program")
+    }
 
     this.program = {
       program: shaderProgram,
@@ -114,59 +160,7 @@ export class CanvasProgram {
 
     // set the color filter
     this.setColorFilter(new Vector3D([0,0,0]));
-
-    // Create a perspective matrix, a special matrix that is
-    // used to simulate the distortion of perspective in a camera.
-    // Our field of view is 45 degrees, with a width/height
-    // ratio that matches the display size of the canvas
-    // and we only want to see objects between 0.1 units
-    // and 100 units away from the camera.
-    const fieldOfView = CONFIG.glFov;
-    const canvasElement = gl.canvas as HTMLCanvasElement;
-    const aspect = canvasElement.clientWidth / canvasElement.clientHeight;
-    const zNear = 0.1;
-    const zFar = 100.0;
-    const projectionMatrix = mat4.create();
-    mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
-
-    this.gl.uniformMatrix4fv(
-      this.program.uniformLocations.projectionMatrix,
-      false,
-      projectionMatrix
-    );
-  }
-
-  //
-  // Initialize a shader program, so WebGL knows how to draw our data
-  //
-  initShaderProgram(
-    gl: WebGLRenderingContext,
-    vsSource: string,
-    fsSource: string
-  ): WebGLProgram {
-    const vertexShader = this.loadShader(gl, gl.VERTEX_SHADER, vsSource);
-    const fragmentShader = this.loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
-
-    // Create the shader program
-    const shaderProgram = gl.createProgram();
-
-    if (!shaderProgram) {
-      throw new Error("Error loading shader program")
-    }
-
-    gl.attachShader(shaderProgram, vertexShader);
-    gl.attachShader(shaderProgram, fragmentShader);
-    gl.linkProgram(shaderProgram);
-
-    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-      console.log(
-        "Unable to initialize the shader program: " +
-          gl.getProgramInfoLog(shaderProgram)
-      );
-      throw new Error("Unable to init shader program")
-    }
-
-    return shaderProgram;
+    this.createProjectionMatrix();
   }
 
   //

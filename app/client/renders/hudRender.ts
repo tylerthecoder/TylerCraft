@@ -5,13 +5,20 @@ import { CanvasProgram } from "../canvas";
 import { ClientGame } from "../clientGame";
 import { BLOCKS } from "../../src/blockdata";
 import TextureMapper from "../textureMapper";
+import {IS_MOBILE} from "../app";
 
 
 export class HudRenderer extends Renderer {
-  sw = window.innerWidth;
-  sh = window.innerHeight;
-
   textureImg: HTMLImageElement;
+
+  private eToolbelt = document.getElementById("toolbelt") as HTMLDivElement;
+  private eHealthBar = document.getElementById("healthBar") as HTMLDivElement;
+  private eToolbeltItems = Array.from(document.querySelectorAll(".toolbelt-item")) as HTMLElement[];
+  private eStats = document.getElementById("eStats") as HTMLDivElement;
+  private eUseItemButton = document.getElementById("useItemButton")!;
+  private eUseItemButton2 = document.getElementById("useItemButton2")!;
+  private eForwardButton = document.getElementById("forwardButton")!;
+  private eJumpButton = document.getElementById("jumpButton")!;
 
   constructor(
     public canvas: CanvasProgram,
@@ -20,10 +27,25 @@ export class HudRenderer extends Renderer {
     super()
     this.textureImg = document.createElement("img");
     this.textureImg.src = "./img/texture_map.png";
+
+    const hudElement = document.getElementById("hud")!;
+    hudElement.style.visibility = "visible";
+
+    if (!IS_MOBILE) {
+      this.hideControls();
+    }
+
+
+    this.drawBelt();
+  }
+
+  private getScreenDim(): [sw: number, sh: number] {
+    return [window.innerWidth, window.innerHeight];
   }
 
   clearScreen() {
-    this.canvas.hudCxt.clearRect(0, 0, this.sw, this.sh);
+    const [sw, sh] = this.getScreenDim();
+    this.canvas.hudCxt.clearRect(0, 0, sw, sh);
   }
 
   drawRect(x: number, y: number, w: number, h: number) {
@@ -37,90 +59,89 @@ export class HudRenderer extends Renderer {
   drawText(str: string, x: number, y: number) {
     this.canvas.hudCxt.font = "40px sanserif"
     this.canvas.hudCxt.fillText(str, x, y);
+
   }
 
-  drawImg(x: number, y: number, w: number, h: number, type: BLOCKS) {
-    if (type > 6) return;
+  // drawImg(x: number, y: number, w: number, h: number, type: BLOCKS) {
+  //   if (type > 6) return;
 
-    const imgCords = TextureMapper.getBlockPreviewCords(type, this.textureImg.width, this.textureImg.height);
+  //   const imgCords = TextureMapper.getBlockPreviewCords(type, this.textureImg.width, this.textureImg.height);
 
-    this.canvas.hudCxt.drawImage(this.textureImg,
-      imgCords.x, imgCords.y, imgCords.w, imgCords.h,
-      x, y, w, h,
-    );
-  }
+  //   this.canvas.hudCxt.drawImage(this.textureImg,
+  //     imgCords.x, imgCords.y, imgCords.w, imgCords.h,
+  //     x, y, w, h,
+  //   );
+  // }
 
-
-  drawCrosshairs() {
-    this.canvas.hudCxt.fillStyle = "red";
-    const crossHairWidth = 3;
-    const crossHairHeight = 40;
-
-    // draw the vertical cross hair
-    this.drawRect(
-      (this.sw/2) - crossHairWidth / 2,
-      (this.sh /2) - crossHairHeight / 2,
-      crossHairWidth,
-      crossHairHeight
-    );
-
-    // draw the vertical cross hair
-    this.drawRect(
-      (this.sw/2) - crossHairHeight / 2,
-      (this.sh /2) -  crossHairWidth/ 2,
-      crossHairHeight,
-      crossHairWidth,
-    );
-  }
-
-  render(camera: Camera) {
-
-    this.clearScreen();
-
-    this.drawCrosshairs();
-
+  drawStats(camera: Camera) {
     const cameraPos = camera.pos.data.map(Math.floor).join(",")
-    this.drawText(cameraPos, 0, 30);
+
+    const statsElement = document.getElementById("stats")!;
+    statsElement.innerHTML = `
+      ${cameraPos}
+      Fps: ${this.game.frameRate.toFixed(0)}
+    `;
 
     // const rotVec = new Vector2D([camera.rot[0], camera.rot[1]]);
     // rotVec.data = rotVec.data.map(n => Math.floor(n * 100) / 100);
     // this.drawText(rotVec.toString(), 0, 70);
 
-    this.drawText(`FPS: ${this.game.frameRate.toFixed(2)}`, 0, 110);
+  }
 
+  drawBelt() {
+    this.eToolbeltItems.forEach((item, index) => (
+      item.innerHTML = `<h2>${index}</h2>`
+    ));
 
-    // draw selected items
-    const numOfBoxes = 10;
-    const boxDimension = 70;
-
-    for (let i = 0; i < numOfBoxes; i++) {
-      const x = (i - 5) * boxDimension + this.sw /2;
-      const y = this.sh - boxDimension - 10;
-      const w = boxDimension;
-      const h = boxDimension;
-
-      if (this.game.selectedBlock === i) {
-        this.canvas.hudCxt.lineWidth = 10;
-        this.canvas.hudCxt.strokeStyle = "red";
+    this.eToolbeltItems.forEach((item, index) => {
+      if (index === this.game.selectedBlock) {
+        item.classList.add("selected")
       } else {
-        this.canvas.hudCxt.lineWidth = 2;
-        this.canvas.hudCxt.strokeStyle = "white";
+        item.classList.remove("selected");
       }
+    });
 
+    const itemDim = this.eToolbeltItems[0].clientHeight;
 
-      this.drawImg(x, y, w, h, i as BLOCKS);
-      this.strokeRect(x, y, w, h)
+    // draw the icons
+    for (let i = 0; i < 10; i++) {
+      const {cords, offset} = TextureMapper.getBlockPreviewCords(1, itemDim, itemDim);
+      this.eToolbeltItems[i].style.clipPath = `polygon(${cords.x1} ${cords.y1} ${cords.x2} ${cords.y2})`;
     }
 
-    // draw health bar
+  }
 
-    const healthBarWidth = 400;
-    const healthBarHeight = 30;
-    const healthBarY = 100;
-    this.canvas.hudCxt.strokeStyle = "black";
-    this.strokeRect((this.sw / 2) - healthBarWidth / 2, this.sh - (healthBarY + healthBarHeight), healthBarWidth, healthBarHeight)
-    this.canvas.hudCxt.fillStyle = "red";
-    this.drawRect((this.sw / 2) - healthBarWidth / 2, this.sh - (healthBarY + healthBarHeight), healthBarWidth * this.game.mainPlayer.health.current / this.game.mainPlayer.health.max, healthBarHeight);
+  drawHealthBar() {
+    const {current, max} = this.game.mainPlayer.health;
+    const healthPercent = current / max;
+    this.eHealthBar.style.width = `${healthPercent * 100}%`;
+  }
+
+  hideControls() {
+    function hide(e: HTMLElement) {
+      e.style.display = "none";
+    }
+    hide(this.eForwardButton);
+    hide(this.eJumpButton);
+    hide(this.eUseItemButton);
+    hide(this.eUseItemButton2);
+  }
+
+  private lastSelected = -1;
+
+  render(camera: Camera) {
+    this.clearScreen();
+
+    this.drawStats(camera);
+
+    if (this.lastSelected !== this.game.selectedBlock) {
+      this.drawBelt();
+      this.lastSelected = this.game.selectedBlock;
+    }
+
+    // draw selected items
+
+    this.drawHealthBar()
 
   }
 

@@ -10,6 +10,10 @@ interface IExtendedWindow extends Window {
   game?: ClientGame
 }
 
+export const IS_MOBILE = /Mobi/.test(window.navigator.userAgent);
+
+console.log("Is Mobile: ", IS_MOBILE)
+
 
 // generate your unique id
 // kind of bad to do this client side, but I can make it better later

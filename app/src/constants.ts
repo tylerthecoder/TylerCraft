@@ -13,7 +13,7 @@ export const CONFIG = {
     jagFactor: 32,
     maxHeight: 12,
     cloudLevel: 30,
-    waterLever: -1,
+    waterLever: 3,
     chunkSize: 16,
     // chunkSize: 4,
     // flatWorld: true,
@@ -29,8 +29,9 @@ export const CONFIG = {
   player: {
     speed: .2,
     reach: 10,
-    jumpSpeed: 0.16,
-    rotSpeed: 0.002,
+    // jumpSpeed: 0.16,
+    jumpSpeed: 0.25,
+    mouseRotSpeed: 0.002,
   }
 };
 
