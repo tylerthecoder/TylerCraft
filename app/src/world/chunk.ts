@@ -6,6 +6,7 @@ import { CONFIG } from "../constants";
 import { Vector3D, Vector, Vector2D } from "../utils/vector";
 import { BLOCK_DATA } from "../blockdata";
 import { ISerializedCube, deserializeCube, serializeCube } from "../serializer";
+import { Camera } from "../../client/cameras/camera";
 
 export interface ILookingAtData {
   newCubePos: Vector,
@@ -156,8 +157,11 @@ export class Chunk {
     return scaledPos[0] === this.chunkPos.get(0) && scaledPos[2] === this.chunkPos.get(1);
   }
 
-  lookingAt(cameraPos: IDim, cameraDir: IDim): ILookingAtData | false {
+  lookingAt(camera: Camera): ILookingAtData | false {
     let firstIntersection: IDim;
+
+    const cameraPos = camera.pos.data;
+    const cameraDir = camera.rotCart.multiply(new Vector3D([1,-1,1])).data;
 
     // [dist, faceVector( a vector, when added to the cubes pos, gives you the pos of a new cube if placed on this block)]
     const defaultBest: [number, IDim, Cube?] = [Infinity, [-1, -1, -1]];
@@ -186,7 +190,7 @@ export class Chunk {
         const mx = arrayScalarMul(cameraDir, t);
         const intersection = arrayAdd(mx, cameraPos);
 
-        // we here make the arbutairy decision that the game will have 5 points of persision when rounding
+        // we here make the arbitrary decision that the game will have 5 points of precision when rounding
         const roundedIntersection = intersection.map(num => roundToNPlaces(num, 5)) as IDim;
 
         if (!firstIntersection) {

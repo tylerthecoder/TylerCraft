@@ -1,45 +1,51 @@
 import { Camera } from "./camera";
-import { IDim } from "../../types";
-import { arrayAdd } from "../../src/utils";
-import { Vector3D } from "../../src/utils/vector";
+import { Vector, Vector3D } from "../../src/utils/vector";
 import { MovableEntity } from "../../src/entities/moveableEntity";
+import { CONFIG } from "../../src/constants";
 
 export class EntityCamera extends Camera {
   thirdPerson = false;
-  offset: IDim = [0, 0, 0];
-  rot: IDim;
+  offset: Vector3D = Vector.zero3D;
+  rot: Vector3D;
 
   constructor(public entity: MovableEntity) {
     super();
-    this.rot = entity.rot.slice(0) as IDim;
+    this.rot = entity.rot.copy();
   }
 
   rotateBy(x: number, y: number) {
-    this.entity.rotate([-y, x, 0]);
+    this.entity.rotate(new Vector([1, x, y]));
     // set my rot as my entities rot
-    this.rot = this.entity.rot.slice(0) as IDim;
-    this.rotCart = this.entity.rotCart;
+    this.rot = this.entity.rot.copy();
+    this.rotCart = this.entity.rotCart.copy();
   }
 
   get pos(): Vector3D {
-    let offset: number[] = [];
+    let offset = Vector.zero3D;
+
     if (this.thirdPerson) {
-      // offset = [
-      //   -Math.sin(this.entity.rot[1]) * 7,
-      //   Math.cos(this.entity.rot[0]) * 7 + 2,
-      //   Math.cos(this.entity.rot[1]) * 7
-      // ];
-      offset = [
-        2, 3, 2
-      ];
+      // A vector to represent the sphere rotation of the entity
+      offset = this.entity.rot
+        .add(
+          new Vector3D([CONFIG.player.thirdPersonCamDist, 0, 0])
+        )
+        .toCartesianCoords()
+        .multiply(
+          new Vector3D([1,-1,1])
+        )
+
+    // First Person
     } else {
       offset = this.offset;
     }
 
-    // center the camera position
-    offset = arrayAdd(offset, [this.entity.dim[0] / 2, this.entity.dim[1] * (9/10), this.entity.dim[2] / 2]);
+    offset = offset.add(new Vector3D([
+      this.entity.dim[0] / 2,
+      this.entity.dim[1] * (9/10),
+      this.entity.dim[2] / 2
+    ]));
 
-    return new Vector3D(arrayAdd(this.entity.pos.data, offset));
+    return offset.add(this.entity.pos);
   }
 
   set pos(_pos: Vector3D) {/* NO-OP */}

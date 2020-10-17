@@ -6,8 +6,7 @@ import { Projectile } from "./projectile";
 import { MovableEntity } from "./moveableEntity";
 import { CONFIG } from "../constants";
 
-
-export interface ISerializedPlayer extends ISerializedEntity{
+export interface ISerializedPlayer extends ISerializedEntity {
   vel: IDim;
   isReal: boolean;
 }
@@ -16,7 +15,7 @@ export class Player extends MovableEntity {
   // Entity overrides
   pos: Vector3D = new Vector3D([0, 10, 0]);
   dim: IDim = [.8, 2, .8];
-  rot: IDim = [Math.PI / 2, 0, 0];
+  rot = new Vector3D([0, 0, Math.PI / 2]);
 
   // Player Member Variables
   thirdPerson = false;

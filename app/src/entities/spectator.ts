@@ -8,7 +8,6 @@ export class Spectator extends MovableEntity {
   // Entity overrides
   pos = new Vector([0, 5, 0]);
   dim: IDim = [1, 2, 1];
-  rot: IDim = [0, 0, 0];
   gravitable = false;
   tangible = false;
 

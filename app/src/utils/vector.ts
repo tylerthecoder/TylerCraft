@@ -202,9 +202,9 @@ export class Vector<T extends number[] = IDim> {
     const p = this.data[2];
 
     const cords = [
-      r * Math.sin(p) * Math.sin(t),
-      r * Math.cos(p),
-      r * Math.sin(p) * Math.cos(t),
+      r * Math.sin(p) * Math.cos(t), // x
+      r * Math.cos(p), // y
+      r * Math.sin(p) * Math.sin(t), // z
     ];
 
     return new Vector<T>(cords);

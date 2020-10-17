@@ -8,6 +8,17 @@ export function roundToNPlaces(num: number, n: number) {
   return parseFloat(num.toFixed(n));
 }
 
+export function bindValue(number: number, min: number, max: number, wrap?: boolean) {
+  if (wrap) {
+    if (number > max) return number - max;
+    if (number < min) return number + max;
+  } else {
+    if (number > max) return max;
+    if (number < min) return min;
+  }
+  return number;
+}
+
 export function arrayAdd<T extends number[]>(arr1: T, arr2: T): T {
   const newArray: number[] = [];
   for (let i = 0; i < arr1.length; i++) {

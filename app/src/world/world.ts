@@ -2,11 +2,12 @@ import { Cube } from "../entities/cube";
 import { Chunk, ILookingAtData, ISerializedChunk } from "./chunk";
 import { Entity } from "../entities/entity";
 import { Game } from "../game";
-import { IDim, IActionType } from "../../types";
+import { IActionType } from "../../types";
 import { CONFIG } from "../constants";
 import { Vector, Vector3D, Vector2D } from "../utils/vector";
 import { ISerializedTerrainGenerator, TerrainGenerator } from "./terrainGenerator";
 import { IChunkReader } from "../worldModel";
+import { Camera } from "../../client/cameras/camera";
 
 export interface ISerializedWorld {
   chunks: ISerializedChunk[];
@@ -206,16 +207,16 @@ export class World {
     this.game.addAction(chunk.getBlockUpdateAction());
   }
 
-  lookingAt(cameraPos: Vector3D, cameraDir: IDim): ILookingAtData | null {
+  lookingAt(camera: Camera): ILookingAtData | null {
     let closestDist = Infinity;
     let closestCube: ILookingAtData|null = null;
 
     // loop over all chunks and then check if they are reachable
     for (const chunk of this.chunks.values()) {
-      const isReachable = chunk.circleIntersect(cameraPos, CONFIG.player.reach)
+      const isReachable = chunk.circleIntersect(camera.pos, CONFIG.player.reach)
       if (!isReachable) continue;
 
-      const cubeData = chunk.lookingAt(cameraPos.data as IDim, cameraDir);
+      const cubeData = chunk.lookingAt(camera);
       if (cubeData && closestDist > cubeData.dist && cubeData.dist < CONFIG.player.reach) {
         closestDist = cubeData.dist;
         closestCube = cubeData;

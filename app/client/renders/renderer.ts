@@ -127,8 +127,8 @@ export abstract class Renderer {
     // Set the drawing position to the "identity" point, which is
     // the center of the scene.
     const modelViewMatrix = mat4.create();
-    mat4.rotate(modelViewMatrix, modelViewMatrix, Math.PI / 2 - camera.rot[0], [1,0,0]);
-    mat4.rotate(modelViewMatrix, modelViewMatrix, camera.rot[1], [0, 1, 0]);
+    mat4.rotate(modelViewMatrix, modelViewMatrix, camera.rot.get(2) - Math.PI / 2, [1, 0, 0]);
+    mat4.rotate(modelViewMatrix, modelViewMatrix, camera.rot.get(1) - Math.PI / 2, [0, 1, 0]);
 
     // Now move the drawing position to where we want to start drawing the square.
     mat4.translate(

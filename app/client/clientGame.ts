@@ -125,7 +125,7 @@ export class ClientGame extends Game {
   }
 
   placeBlock() {
-    const data = this.world.lookingAt(this.camera.pos, this.camera.rotCart.data as IDim);
+    const data = this.world.lookingAt(this.camera);
     if (!data) return;
     const cube = data.entity as Cube;
 
@@ -146,7 +146,7 @@ export class ClientGame extends Game {
   }
 
   removeBlock() {
-    const data = this.world.lookingAt(this.camera.pos, this.camera.rotCart.data as IDim);
+    const data = this.world.lookingAt(this.camera);
     if (!data) return;
     const cube = data.entity as Cube;
 

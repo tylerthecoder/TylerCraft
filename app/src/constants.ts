@@ -13,15 +13,15 @@ export const CONFIG = {
     jagFactor: 32,
     maxHeight: 12,
     cloudLevel: 30,
-    waterLever: 3,
+    waterLever: -1,
     chunkSize: 16,
     // chunkSize: 4,
+    flatWorld: true,
     // flatWorld: true,
-    flatWorld: false,
-    trees: true,
-    // trees: false,
-    flowers: true,
-    // flowers: false,
+    // trees: true,
+    trees: false,
+    // flowers: true,
+    flowers: false,
   },
 
   gravity: -0.013,
@@ -32,6 +32,7 @@ export const CONFIG = {
     // jumpSpeed: 0.16,
     jumpSpeed: 0.25,
     mouseRotSpeed: 0.002,
+    thirdPersonCamDist: 6,
   }
 };
 

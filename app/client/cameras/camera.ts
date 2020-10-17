@@ -1,13 +1,12 @@
 import { Entity, FaceLocater } from "../../src/entities/entity";
-import { IDim } from "../../types";
 import { Vector3D } from "../../src/utils/vector";
 import { MovableEntity } from "../../src/entities/moveableEntity";
 
 export abstract class Camera extends MovableEntity {
   // (x, y, z)
   abstract pos: Vector3D;
-  // (phi[0, pi], theata[0, pi], null)
-  abstract rot: IDim;
+  // (dist, theta: [0, 2pi], phi: [0, pi])
+  abstract rot: Vector3D;
 
   constructor() {
     super();

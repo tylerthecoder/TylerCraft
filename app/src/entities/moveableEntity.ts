@@ -1,14 +1,15 @@
 import { IDim } from "../../types";
 import { CONFIG } from "../constants";
-import { arrayMul, sphereToCartCords } from "../utils";
+import { bindValue } from "../utils";
 import { Vector, Vector3D } from "../utils/vector";
 import { Entity, IEntityType, ISerializedEntity, MetaAction } from "./entity";
 
 
 export abstract class MovableEntity extends Entity {
   vel = Vector.zero3D;
-  rot: IDim = [0, 0, 0];
-  rotCart: Vector3D = new Vector3D(this.rot).toCartesianCoords();
+  // (radius, theta: [0, 2pi], phi: [0, pi])
+  rot: Vector3D = Vector.zero3D;
+  rotCart: Vector3D = this.rot.toCartesianCoords();
 
   onGround = false;
   gravitable = true;
@@ -41,30 +42,21 @@ export abstract class MovableEntity extends Entity {
     this.hit(entity, where);
   }
 
-  move(p: IDim) {
-    for (let i = 0; i < p.length; i++) {
-      this.pos.data[i] += p[i];
-    }
-  }
-
-  static gravityVector = new Vector3D([0, CONFIG.gravity, 0]);
+  private static gravityVector = new Vector3D([0, CONFIG.gravity, 0]);
   gravity() {
     this.vel.addTo(MovableEntity.gravityVector);
   }
 
-  rotate(r: number[]) {
-    for (let i = 0; i < r.length; i++) {
-      this.rot[i] += r[i];
-    }
+  rotate(r: Vector3D) {
+    this.rot = this.rot.add(r);
 
     // bound the rot to ([0, pi], [0, 2 * pi])
-    if (this.rot[0] < 0) this.rot[0] = 0;
-    if (this.rot[0] > Math.PI) this.rot[0] = Math.PI;
-    if (this.rot[1] < 0) this.rot[1] = this.rot[1] + 2 * Math.PI;
-    if (this.rot[1] > 2 * Math.PI) this.rot[1] = this.rot[1] - 2 * Math.PI;
+    this.rot.set(0, 1);
+    this.rot.set(1, bindValue(this.rot.get(1), 0, 2 * Math.PI, true));
+    this.rot.set(2, bindValue(this.rot.get(2), 0, Math.PI));
 
     // idk where this equation comes from. Need to look into why this is
-    this.rotCart = new Vector3D(arrayMul(sphereToCartCords(1, this.rot[1], this.rot[0]), [-1, 1, 1]))
+    this.rotCart = this.rot.toCartesianCoords();
   }
 
   getWasdVel() {
@@ -73,19 +65,19 @@ export abstract class MovableEntity extends Entity {
       switch (metaAction) {
         case MetaAction.forward:
           return new Vector3D([
-            -baseSpeed, -this.rot[1], Math.PI / 2
+            -baseSpeed, this.rot.get(1), Math.PI / 2,
           ]).toCartesianCoords();
         case MetaAction.backward:
           return new Vector3D([
-            baseSpeed, -this.rot[1], Math.PI / 2
+            baseSpeed, this.rot.get(1), Math.PI / 2,
           ]).toCartesianCoords();
         case MetaAction.left:
           return new Vector3D([
-            baseSpeed, -this.rot[1] - Math.PI / 2, Math.PI / 2
+            baseSpeed, this.rot.get(1) + Math.PI / 2, Math.PI / 2
           ]).toCartesianCoords();
         case MetaAction.right:
           return new Vector3D([
-            baseSpeed, -this.rot[1] + Math.PI / 2, Math.PI / 2
+            baseSpeed, this.rot.get(1) - Math.PI / 2, Math.PI / 2
           ]).toCartesianCoords();
       }
     }
