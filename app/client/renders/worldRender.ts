@@ -15,6 +15,7 @@ import { Player } from "../../src/entities/player";
 import { Projectile } from "../../src/entities/projectile";
 import { Ball } from "../../src/entities/ball";
 import { BLOCKS } from "../../src/blockdata";
+import { PlayerRenderer } from "./playerRender";
 
 export default class WorldRenderer {
   private renderers: Renderer[] = [];
@@ -46,9 +47,11 @@ export default class WorldRenderer {
   }
 
   addEntity(entity: Entity) {
-    if (
+    if (entity instanceof Player) {
+      const renderer = new PlayerRenderer(entity);
+      this.entityRenderers.set(entity.uid, renderer);
+    } else if (
       entity instanceof Cube ||
-      entity instanceof Player ||
       entity instanceof Projectile
     ) {
       const renderer = new CubeRenderer(entity);
@@ -112,8 +115,8 @@ export default class WorldRenderer {
     }
 
     for (const entityRenderer of this.entityRenderers.values()) {
-      if (entityRenderer instanceof CubeRenderer) {
-        const isMainPlayer = entityRenderer.entity === game.mainPlayer;
+      if (entityRenderer instanceof PlayerRenderer) {
+        const isMainPlayer = entityRenderer.player === game.mainPlayer;
 
         if (isMainPlayer && !this.shouldRenderMainPlayer) {
           continue;

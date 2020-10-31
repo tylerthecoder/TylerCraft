@@ -166,8 +166,7 @@ export class ClientGame extends Game {
 
   toggleThirdPerson() {
     if (this.camera instanceof EntityCamera) {
-      this.camera.thirdPerson = !this.camera.thirdPerson;
-      this.worldRenderer.shouldRenderMainPlayer = !this.worldRenderer.shouldRenderMainPlayer;
+      this.worldRenderer.shouldRenderMainPlayer = this.camera.togglePerspective();
     }
   }
 

@@ -6,6 +6,8 @@ type IDim = [number, number, number];
 //   step?: number;
 // }
 
+type VectorLike<T extends number[]> = Vector<T> | T;
+
 export class Vector<T extends number[] = IDim> {
   static zero3D = new Vector([0,0,0]);
 
@@ -83,6 +85,11 @@ export class Vector<T extends number[] = IDim> {
     public data: number[]
   ) { }
 
+  private getVecData(vec: VectorLike<T>): Vector<T> {
+    if (vec instanceof Vector) return vec;
+    return new Vector<T>(vec);
+  }
+
   // if we update the string then this caching wont work :(
   str: string;
   toString(): string {
@@ -118,7 +125,8 @@ export class Vector<T extends number[] = IDim> {
   private _add(vec: Vector<T>): T {
     return this.data.map( (num, index) => num + vec.get(index)) as T;
   }
-  add(vec: Vector<T>): Vector<T> {
+  add(vec: VectorLike<T>): Vector<T> {
+    vec = this.getVecData(vec);
     return new Vector(this._add(vec));
   }
   addTo(vec: Vector<T>) {
@@ -138,7 +146,8 @@ export class Vector<T extends number[] = IDim> {
   private _mul(vec: Vector<T>): T {
     return this.data.map((num, index) => num * vec.get(index)) as T;
   }
-  multiply(vec: Vector<T>): Vector<T> {
+  multiply(vec: VectorLike<T>): Vector<T> {
+    vec = this.getVecData(vec);
     return new Vector(this._mul(vec));
   }
   multiplyTo(vec: Vector<T>) {
@@ -185,6 +194,10 @@ export class Vector<T extends number[] = IDim> {
     return mults.sumOfComponents();
   }
 
+  /*================
+      3D Stuff
+  ================*/
+
   getSphereAngles() {
     const x = this.data[0];
     const y = this.data[1];
@@ -210,11 +223,36 @@ export class Vector<T extends number[] = IDim> {
     return new Vector<T>(cords);
   }
 
+  rotateY(angle: number) {
+    const x = this.data[0];
+    const y = this.data[1];
+    const z = this.data[2];
+    return new Vector3D(
+      [
+        x * Math.cos(angle) - z * Math.sin(angle),
+        y,
+        x * Math.sin(angle) + z * Math.cos(angle),
+      ]
+    )
+  }
+
+  rotateZ(angle: number) {
+    const x = this.data[0];
+    const y = this.data[1];
+    const z = this.data[2];
+    return new Vector3D(
+      [
+        x * Math.cos(angle) - y * Math.sin(angle),
+        x * Math.sin(angle) + y * Math.cos(angle),
+        z
+      ]
+    )
+  }
+
   normalize() {
     const length = Math.sqrt(this.data.reduce((acc, cur) => acc + cur ** 2, 0));
     return this.scalarMultiply(1 / length);
   }
-
 
 // export function arrayCross(arr1: IDim, arr2: IDim): IDim {
 //   return [
@@ -223,12 +261,9 @@ export class Vector<T extends number[] = IDim> {
 //     arr1[0] * arr2[1] - arr1[1] * arr2[0],
 //   ]
 // }
-
-
 }
 
 
-
 export class Vector2D extends Vector<[number, number]> {}
-export class Vector3D extends Vector<[number, number, number]> {}
+export class Vector3D extends Vector<[number, number, number]> { }
 

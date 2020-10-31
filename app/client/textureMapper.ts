@@ -1,7 +1,9 @@
+import { MaxKey } from "mongodb";
+import { bool } from "random";
 import { BLOCKS } from "../src/blockdata";
 
 const TEXTURE_ATLAS_WIDTH = 3;
-const TEXTURE_ATLAS_HEIGHT = 3;
+const TEXTURE_ATLAS_HEIGHT = 4;
 
 const xStepVal = 1 / TEXTURE_ATLAS_WIDTH;
 const yStepVal = 1 / TEXTURE_ATLAS_HEIGHT;
@@ -57,8 +59,113 @@ class Textures {
     }
   }
 
+  private getRect(startX: number, startY: number, endX: number, endY: number) {
+    startX = startX * xStepVal;
+    startY = startY * yStepVal;
+    endX = endX * xStepVal;
+    endY = endY * yStepVal;
+
+    return [
+      startX, startY,
+      startX, endY,
+      endX, endY,
+      endX, startY,
+    ]
+  }
+
+  private rotateRect(rect: number[], times: number) {
+    rect = [...rect];
+    for (let i = 0; i < times; i++) {
+      const x = rect[0];
+      const y = rect[1];
+      rect.push(x,y);
+      rect.shift();
+      rect.shift();
+    }
+    return rect;
+  }
+
+  getPlayerTextureCoords() {
+    // head
+    const getHeadCords = () => {
+      const front = this.rotateRect(this.getRect(0, 3, .5, 3.5), 2);
+      const top = this.getRect(0, 3.5, .5, 4);
+      const side = this.getRect(.5, 3, 1, 3.5);
+      const bottom = this.getRect(1.5, 3.5, 2, 4);
+
+      return [
+        ...this.rotateRect(side, 2),
+        ...front,
+        ...top,
+        ...bottom,
+        ...this.rotateRect(side, 1),
+        ...this.rotateRect(side, 1),
+      ];
+    }
+
+    // body
+    const getBodyCords = () => {
+      const front = this.rotateRect(this.getRect(1, 3, 1.5, 3.75), 2);
+      const back = this.getRect(2.25, 3, 2.5, 3.5);
+      const top = this.getRect(1, 3.75, 1.5, 3.875);
+      const side = this.getRect(2, 3, 2.25, 3.5);
+
+      return [
+        ...back,
+        ...front,
+        ...top,
+        ...top,
+        ...side,
+        ...side,
+      ];
+    }
+
+    const makeArm = () => {
+      const front = this.getRect(1.5, 3, 1.75, 3.5);
+      const top = this.getRect(1.75, 3, 2, 3.25);
+      const bottom = this.getRect(1.75, 3.25, 2, 3.5);
+
+      return [
+        ...this.rotateRect(front, 2),
+        ...this.rotateRect(front, 2),
+        ...top,
+        ...bottom,
+        ...this.rotateRect(front, 1),
+        ...this.rotateRect(front, 1),
+      ]
+    }
+
+    const makeLeg = () => {
+      const front = this.getRect(.5, 3.5, .75, 4);
+      const top = this.getRect(.75, 3.5, 1, 3.75);
+      const bottom = this.getRect(.75, 3.75, 1, 4);
+
+      return [
+        ...this.rotateRect(front, 2),
+        ...this.rotateRect(front, 2),
+        ...top,
+        ...bottom,
+        ...this.rotateRect(front, 1),
+        ...this.rotateRect(front, 1),
+      ]
+    }
+
+
+    return [
+      ...getHeadCords(),
+      ...getBodyCords(),
+      ...makeLeg(),
+      ...makeLeg(),
+      ...makeArm(),
+      ...makeArm(),
+    ]
+
+
+  }
+
   getTextureCordsEntity() {
     // if (ent instanceof Player) {
+
 
       // top and bottom face face
       let startYVal = yStepVal * 2.5;
@@ -66,20 +173,15 @@ class Textures {
       let startXVal = 0;
       let endXVal = xStepVal;
 
-      const top = [
-        startXVal, startYVal,
-        startXVal, endYVal,
-        endXVal / 2, endYVal,
-        endXVal / 2, startYVal,
-      ];
+      // const top = [
+      //   startXVal, startYVal,
+      //   startXVal, endYVal,
+      //   endXVal / 2, endYVal,
+      //   endXVal / 2, startYVal,
+      // ];
 
-
-      const bottom = [
-        endXVal /2, startYVal,
-        endXVal /2, endYVal,
-        endXVal, endYVal,
-        endXVal, startYVal
-      ]
+    const top = this.getRect(0, 2.5, .5, 3);
+    const bottom = this.getRect(.5, 2.5, 1, 3);
 
       // front faces
 

@@ -3,8 +3,14 @@ import { Vector, Vector3D } from "../../src/utils/vector";
 import { MovableEntity } from "../../src/entities/moveableEntity";
 import { CONFIG } from "../../src/constants";
 
+export enum PlayerPerspective {
+  FirstPerson,
+  ThirdPersonBack,
+  ThirdPersonFront,
+}
+
 export class EntityCamera extends Camera {
-  thirdPerson = false;
+  private perspective = PlayerPerspective.FirstPerson;
   offset: Vector3D = Vector.zero3D;
   rot: Vector3D;
 
@@ -13,18 +19,33 @@ export class EntityCamera extends Camera {
     this.rot = entity.rot.copy();
   }
 
+  // cycles through player perspectives. Returns weather the player should be rendered or not
+  public togglePerspective(): boolean {
+    this.perspective =
+      this.perspective === PlayerPerspective.FirstPerson ?
+         PlayerPerspective.ThirdPersonBack :
+      this.perspective === PlayerPerspective.ThirdPersonBack ?
+        PlayerPerspective.ThirdPersonFront : PlayerPerspective.FirstPerson
+
+    return this.perspective !== PlayerPerspective.FirstPerson;
+  }
+
   rotateBy(x: number, y: number) {
     this.entity.rotate(new Vector([1, x, y]));
     // set my rot as my entities rot
-    this.rot = this.entity.rot.copy();
-    this.rotCart = this.entity.rotCart.copy();
+    if (this.perspective === PlayerPerspective.ThirdPersonFront) {
+      this.rot = this.entity.rot.add(new Vector3D([0, Math.PI, 0]));
+      this.rotCart = this.rot.toCartesianCoords();
+    } else {
+      this.rot = this.entity.rot.copy();
+      this.rotCart = this.entity.rotCart.copy();
+    }
   }
 
   get pos(): Vector3D {
     let offset = Vector.zero3D;
 
-    if (this.thirdPerson) {
-      // A vector to represent the sphere rotation of the entity
+    if (this.perspective === PlayerPerspective.ThirdPersonBack) {
       offset = this.entity.rot
         .add(
           new Vector3D([CONFIG.player.thirdPersonCamDist, 0, 0])
@@ -33,8 +54,16 @@ export class EntityCamera extends Camera {
         .multiply(
           new Vector3D([1,-1,1])
         )
-
-    // First Person
+    } else if (this.perspective === PlayerPerspective.ThirdPersonFront) {
+      this.rot = this.entity.rot.add(new Vector3D([0, Math.PI, 0]));
+      offset = this.entity.rot
+        .add(
+          new Vector3D([CONFIG.player.thirdPersonCamDist, Math.PI, 0])
+        )
+        .toCartesianCoords()
+        .multiply(
+          new Vector3D([1,-1,1])
+        )
     } else {
       offset = this.offset;
     }

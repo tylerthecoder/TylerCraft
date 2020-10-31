@@ -21,6 +21,7 @@ export class Player extends MovableEntity {
   thirdPerson = false;
   onGround = false;
   jumpCount = 0;
+  distanceMoved = 0; // used for animating the arms and legs. Reset to zero when not moving
 
   health = {
     current: 100,
@@ -119,6 +120,15 @@ export class Player extends MovableEntity {
   update(delta: number) {
     this.onGround = false;
     if (this.fire.count > 0 && !this.fire.holding) this.fire.count--;
+
+    const moveDist = Math.abs(this.vel.get(0)) + Math.abs(this.vel.get(2));
+
+    if (moveDist > 0) {
+      this.distanceMoved += moveDist;
+    } else {
+      this.distanceMoved = 0;
+    }
+
     this.baseUpdate(delta);
   }
 
