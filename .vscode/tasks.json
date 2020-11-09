@@ -1,0 +1,23 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "dev:server",
+      "label": "Server Dev",
+      "problemMatcher": [
+        "$tsc-watch"
+      ],
+      "isBackground": true
+    },
+    {
+      "type": "npm",
+      "script": "wbuild:client",
+      "label": "Client Dev",
+      "problemMatcher": [
+        "$tsc-watch"
+      ],
+      "isBackground": true
+    }
+  ]
+}

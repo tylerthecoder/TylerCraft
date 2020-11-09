@@ -8,7 +8,7 @@
   ],
   "typescript.tsdk": "./node_modules/typescript/lib",
   "files.exclude": {
-    "bin/": true
+    // "bin/": true
   },
   "search.exclude": {
     "**/node_modules": true,
