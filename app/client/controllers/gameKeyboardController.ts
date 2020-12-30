@@ -5,12 +5,19 @@ import { CanvasProgram } from "../canvas";
 import { MetaAction } from "../../src/entities/entity";
 import { IActionType, IDim } from "../../types";
 import { MovableEntity } from "../../src/entities/moveableEntity";
-import { CONFIG } from "../../src/constants";
+import { CONFIG } from "../../src/config";
 
 export class GameController extends Controller {
   private keys = new Set();
   private keysPressed = new Set();
   private numOfUpdates = 0;
+
+  private fullScreenButton = document.getElementById("fullScreenButton")!;
+  private exitMenuButton = document.getElementById("exitMenuButton")!;
+  private menuButton = document.getElementById("menuIcon")!;
+  private gameMenu = document.getElementById("gameMenu")!;
+  private eGameNameInput = document.getElementById("gameNameInput") as HTMLInputElement;
+  private eSaveButton = document.getElementById("saveButton") as HTMLButtonElement;
 
   constructor(public controlled: ClientGame, canvas: CanvasProgram) {
     super();
@@ -25,21 +32,30 @@ export class GameController extends Controller {
     });
 
     window.addEventListener("mousedown", (e: MouseEvent) => {
-      if (document.pointerLockElement !== canvas.canvas) {
-        canvas.canvas.requestPointerLock();
+      // make sure we are clicking the hud
+      // I don't remember why I did this but it was causing problems
+      // if (e.target !== canvas.eHud) {
+      //   e.stopPropagation();
+      //   console.log("Didn't hit HUD");
+      //   return;
+      // }
+
+      if (document.pointerLockElement !== canvas.eCanvas) {
+        canvas.eCanvas.requestPointerLock();
         return;
       }
+
 
       if (e.which === 3) { // right click
         this.controlled.placeBlock();
       } else if (e.which === 1) { // left click
         this.controlled.removeBlock();
       }
-
+      e.preventDefault();
     });
 
     window.addEventListener("mousemove", (e: MouseEvent) => {
-      if (document.pointerLockElement === canvas.canvas) {
+      if (document.pointerLockElement === canvas.eCanvas) {
         const moveX = e.movementX * CONFIG.player.mouseRotSpeed;
         const moveY = e.movementY * CONFIG.player.mouseRotSpeed;
 
@@ -55,6 +71,33 @@ export class GameController extends Controller {
       if (e.deltaY < 0) {
         this.controlled.selectedBlock = ((this.controlled.selectedBlock - 1) + this.controlled.numOfBlocks) % this.controlled.numOfBlocks;
       }
+    })
+
+    this.fullScreenButton.addEventListener("click", () => {
+      console.log("Toggling full screen");
+      if (document.fullscreenElement) {
+        document.exitFullscreen();
+      } else {
+        document.body.requestFullscreen();
+      }
+    });
+
+    this.menuButton.addEventListener("click", () => {
+      this.gameMenu.style.display = "block";
+    });
+
+    this.exitMenuButton.addEventListener("click", () => {
+      this.gameMenu.style.display = "none";
+    });
+
+    this.eGameNameInput.value = controlled.name;
+    this.eGameNameInput.addEventListener("change", (e: KeyboardEvent) => {
+      if (!e.target) return;
+      controlled.name = (e.target as HTMLInputElement).value;
+    });
+
+    this.eSaveButton.addEventListener("click", () => {
+      this.controlled.save();
     })
   }
 

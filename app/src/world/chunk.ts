@@ -2,7 +2,7 @@ import { Cube } from "../entities/cube";
 import { Entity } from "../entities/entity";
 import { IDim, IActionType, IAction } from "../../types";
 import { arrayMul, arrayAdd, arrayDot, arrayScalarMul, roundToNPlaces, arrayDistSquared } from "../utils";
-import { CONFIG } from "../constants";
+import { CONFIG } from "../config";
 import { Vector3D, Vector, Vector2D } from "../utils/vector";
 import { BLOCK_DATA } from "../blockdata";
 import { ISerializedCube, deserializeCube, serializeCube } from "../serializer";
@@ -161,7 +161,7 @@ export class Chunk {
     let firstIntersection: IDim;
 
     const cameraPos = camera.pos.data;
-    const cameraDir = camera.rotCart.multiply(new Vector3D([1,-1,1])).data;
+    const cameraDir = camera.rotCart.multiply(new Vector3D([1, -1, 1])).data;
 
     // [dist, faceVector( a vector, when added to the cubes pos, gives you the pos of a new cube if placed on this block)]
     const defaultBest: [number, IDim, Cube?] = [Infinity, [-1, -1, -1]];
@@ -224,7 +224,7 @@ export class Chunk {
     // }, defaultBest)
 
     // this means we didn't find a block
-    if (newCubePosData[0] === Infinity)  {
+    if (newCubePosData[0] === Infinity) {
       return false;
     }
 
@@ -235,7 +235,7 @@ export class Chunk {
     }
   }
 
-  getCube(pos: Vector3D): Cube|null {
+  getCube(pos: Vector3D): Cube | null {
     const cube = this.cubes.get(pos.toString());
     if (!cube) return null;
     return cube;

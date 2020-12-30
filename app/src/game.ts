@@ -6,7 +6,7 @@ import { Cube } from "./entities/cube";
 import { Vector3D, Vector } from "./utils/vector";
 import { MovableEntity } from "./entities/moveableEntity";
 import { ISocketMessage } from "../types/socket";
-import { CONFIG, IConfig } from "./constants";
+import { CONFIG, IConfig } from "./config";
 import { deserializeEntity } from "./serializer";
 import { IChunkReader, WorldModel } from "./worldModel";
 import { EntityHolder, ISerializedEntities } from "./entities/entityHolder";
@@ -35,13 +35,13 @@ export class Game {
   constructor(
     private worldModel: WorldModel,
     chunkReader: IChunkReader,
-    {data, multiplayer}: {
+    { data, multiplayer }: {
       data?: ISerializedGame,
       multiplayer: boolean,
     }
   ) {
     this.multiPlayer = multiplayer;
-    if(data) {
+    if (data) {
       this.world = new World(this, chunkReader, data.world);
       this.entities = new EntityHolder(this, data.entities)
       this.gameId = data.gameId;
@@ -100,79 +100,79 @@ export class Game {
   protected handleAction(action: IAction) {
     // console.log("Handling Action", action);
 
-    const findEntity = <T extends Entity>(uid: string) => this.entities.get(uid) as T|undefined;
+    const findEntity = <T extends Entity>(uid: string) => this.entities.get(uid) as T | undefined;
 
-    switch(action.type) {
-    case IActionType.addEntity: {
-      const {ent} = action.addEntity!;
-      const entity = deserializeEntity(ent);
-      this.entities.add(entity);
-      return;
-    }
-
-    case IActionType.removeEntity: {
-      const payload = action.removeEntity!;
-      const entity = findEntity(payload.uid);
-      if (!entity) return;
-      this.removeEntity(entity.uid);
-      return;
-    }
-
-    case IActionType.playerPlaceBlock: {
-      const payload = action.playerPlaceBlock!;
-      const newCube = new Cube( payload.blockType, new Vector3D(payload.blockPos));
-      this.world.addBlock(newCube);
-      return;
-    }
-
-    case IActionType.removeBlock: {
-      const payload = action.removeBlock!
-      this.world.removeBlock(new Vector3D(payload.blockPos));
-      break;
-    }
-
-    case IActionType.playerSetPos: {
-      const payload = action.playerSetPos!;
-      const entity = findEntity<MovableEntity>(payload.uid);
-      if (!entity) {
-        console.log("Couldn't find entity", payload.uid);
+    switch (action.type) {
+      case IActionType.addEntity: {
+        const { ent } = action.addEntity!;
+        const entity = deserializeEntity(ent);
+        this.entities.add(entity);
         return;
       }
-      entity.pos = new Vector(payload.pos);
-      return payload.uid;
-    }
 
-    case IActionType.setEntVel: {
-      const payload = action.setEntVel!;
-      const entity = findEntity(payload.uid) as MovableEntity;
-      if (!entity) {
-        console.log("Couldn't find entity", payload.uid);
+      case IActionType.removeEntity: {
+        const payload = action.removeEntity!;
+        const entity = findEntity(payload.uid);
+        if (!entity) return;
+        this.removeEntity(entity.uid);
         return;
       }
-      entity.vel = new Vector(payload.vel);
-      return payload.uid;
-    }
 
-    case IActionType.playerFireball: {
-      const payload = action.playerFireball!
-      const player = findEntity(payload.uid) as Player;
-      player.fireball();
-      return payload.uid;
-    }
-
-    case IActionType.hurtEntity: {
-      const payload = action.hurtEntity!;
-      const entity = findEntity(payload.uid) as Player;
-      if (!entity) {
-        console.log("Entity not found", payload.uid);
+      case IActionType.playerPlaceBlock: {
+        const payload = action.playerPlaceBlock!;
+        const newCube = new Cube(payload.blockType, new Vector3D(payload.blockPos));
+        this.world.addBlock(newCube);
         return;
       }
-      entity.hurt(payload.amount);
-      break;
-    }
 
-    default:
-      return false;
+      case IActionType.removeBlock: {
+        const payload = action.removeBlock!
+        this.world.removeBlock(new Vector3D(payload.blockPos));
+        break;
+      }
+
+      case IActionType.playerSetPos: {
+        const payload = action.playerSetPos!;
+        const entity = findEntity<MovableEntity>(payload.uid);
+        if (!entity) {
+          console.log("Couldn't find entity", payload.uid);
+          return;
+        }
+        entity.pos = new Vector(payload.pos);
+        return payload.uid;
+      }
+
+      case IActionType.setEntVel: {
+        const payload = action.setEntVel!;
+        const entity = findEntity(payload.uid) as MovableEntity;
+        if (!entity) {
+          console.log("Couldn't find entity", payload.uid);
+          return;
+        }
+        entity.vel = new Vector(payload.vel);
+        return payload.uid;
+      }
+
+      case IActionType.playerFireball: {
+        const payload = action.playerFireball!
+        const player = findEntity(payload.uid) as Player;
+        player.fireball();
+        return payload.uid;
+      }
+
+      case IActionType.hurtEntity: {
+        const payload = action.hurtEntity!;
+        const entity = findEntity(payload.uid) as Player;
+        if (!entity) {
+          console.log("Entity not found", payload.uid);
+          return;
+        }
+        entity.hurt(payload.amount);
+        break;
+      }
+
+      default:
+        return false;
     }
 
     return true;
@@ -200,10 +200,10 @@ export class Game {
   }
 
   // for the subclasses to override so they can "listen" to events
-  onNewEntity(_entity: Entity) {/* NO-OP */}
-  onRemoveEntity(_uid: string) {/* NO-OP */}
-  onActions(_actions: IAction[]) {/* NO-OP */}
+  onNewEntity(_entity: Entity) {/* NO-OP */ }
+  onRemoveEntity(_uid: string) {/* NO-OP */ }
+  onActions(_actions: IAction[]) {/* NO-OP */ }
   // these are just actions that can be handled by the client (related to rendering and such)
-  clientActionListener(_action: IAction) {/* NO-OP */}
-  sendMessageToServer(_message: ISocketMessage) {/* NO-OP */}
+  clientActionListener(_action: IAction) {/* NO-OP */ }
+  sendMessageToServer(_message: ISocketMessage) {/* NO-OP */ }
 }

@@ -1,7 +1,7 @@
 import { Camera } from "./camera";
 import { Vector, Vector3D } from "../../src/utils/vector";
 import { MovableEntity } from "../../src/entities/moveableEntity";
-import { CONFIG } from "../../src/constants";
+import { CONFIG } from "../../src/config";
 
 export enum PlayerPerspective {
   FirstPerson,
@@ -23,9 +23,9 @@ export class EntityCamera extends Camera {
   public togglePerspective(): boolean {
     this.perspective =
       this.perspective === PlayerPerspective.FirstPerson ?
-         PlayerPerspective.ThirdPersonBack :
-      this.perspective === PlayerPerspective.ThirdPersonBack ?
-        PlayerPerspective.ThirdPersonFront : PlayerPerspective.FirstPerson
+        PlayerPerspective.ThirdPersonBack :
+        this.perspective === PlayerPerspective.ThirdPersonBack ?
+          PlayerPerspective.ThirdPersonFront : PlayerPerspective.FirstPerson
 
     return this.perspective !== PlayerPerspective.FirstPerson;
   }
@@ -52,7 +52,7 @@ export class EntityCamera extends Camera {
         )
         .toCartesianCoords()
         .multiply(
-          new Vector3D([1,-1,1])
+          new Vector3D([1, -1, 1])
         )
     } else if (this.perspective === PlayerPerspective.ThirdPersonFront) {
       this.rot = this.entity.rot.add(new Vector3D([0, Math.PI, 0]));
@@ -62,7 +62,7 @@ export class EntityCamera extends Camera {
         )
         .toCartesianCoords()
         .multiply(
-          new Vector3D([1,-1,1])
+          new Vector3D([1, -1, 1])
         )
     } else {
       offset = this.offset;
@@ -70,12 +70,12 @@ export class EntityCamera extends Camera {
 
     offset = offset.add(new Vector3D([
       this.entity.dim[0] / 2,
-      this.entity.dim[1] * (9/10),
+      this.entity.dim[1] * (9 / 10),
       this.entity.dim[2] / 2
     ]));
 
     return offset.add(this.entity.pos);
   }
 
-  set pos(_pos: Vector3D) {/* NO-OP */}
+  set pos(_pos: Vector3D) {/* NO-OP */ }
 }

@@ -1,7 +1,7 @@
-import { CONFIG } from "../../src/constants";
+import { CONFIG } from "../../src/config";
 import { IGameMetadata, Game } from "../../src/game";
 import { Chunk, } from "../../src/world/chunk";
-import { IChunkReader,  IEmptyWorld,  IGameReader,  WorldModel } from "../../src/worldModel";
+import { IChunkReader, IEmptyWorld, IGameReader, WorldModel } from "../../src/worldModel";
 import { ISocketMessage, ISocketMessageType, ISocketWelcomePayload } from "../../types/socket";
 import { getMyUid, SocketInterface } from "../app";
 import { SocketListener } from "../socket";
@@ -10,7 +10,7 @@ export class NetworkWorldModel extends WorldModel {
   private serverURL = `${location.href}`;
 
   private async waitForWelcomeMessage() {
-    let listener: SocketListener|null = null;
+    let listener: SocketListener | null = null;
     const welcomeMessage: ISocketWelcomePayload = await new Promise((resolve) => {
       listener = (message: ISocketMessage) => {
         if (message.type === ISocketMessageType.welcome) {
@@ -65,7 +65,7 @@ export class NetworkWorldModel extends WorldModel {
     }
   }
 
-  public async getWorld(worldId: string): Promise<IGameReader|null> {
+  public async getWorld(worldId: string): Promise<IGameReader | null> {
     SocketInterface.send({
       type: ISocketMessageType.joinWorld,
       joinWorldPayload: {
@@ -113,7 +113,7 @@ class ServerGameReader implements IChunkReader {
       },
     });
 
-    let listener: SocketListener|null = null;
+    let listener: SocketListener | null = null;
     const chunk: Chunk = await new Promise((resolve) => {
       listener = (message: ISocketMessage) => {
         if (message.type === ISocketMessageType.setChunk) {

@@ -1,7 +1,8 @@
-export const CONFIG = {
+export const BASE_CONFIG = {
+  seed: "bungus",
+
   renderDistance: 2,
   loadDistance: 2,
-  seed: "bungus",
 
   transparency: true,
 
@@ -36,7 +37,13 @@ export const CONFIG = {
   }
 };
 
+export let CONFIG = BASE_CONFIG;
+
 export type IConfig = typeof CONFIG;
+
+export function setConfig(config: IConfig) {
+  CONFIG = { ...config };
+}
 
 // declare var window;
 

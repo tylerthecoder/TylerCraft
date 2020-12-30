@@ -3,7 +3,7 @@ import { Chunk, ILookingAtData, ISerializedChunk } from "./chunk";
 import { Entity } from "../entities/entity";
 import { Game } from "../game";
 import { IActionType } from "../../types";
-import { CONFIG } from "../constants";
+import { CONFIG } from "../config";
 import { Vector, Vector3D, Vector2D } from "../utils/vector";
 import { ISerializedTerrainGenerator, TerrainGenerator } from "./terrainGenerator";
 import { IChunkReader } from "../worldModel";
@@ -54,7 +54,7 @@ export class World {
     }
   }
 
-  getChunkFromPos(chunkPos: Vector2D, config?: {generateIfNotFound?: boolean, loadIfNotFound?: boolean}) {
+  getChunkFromPos(chunkPos: Vector2D, config?: { generateIfNotFound?: boolean, loadIfNotFound?: boolean }) {
     const chunk = this.chunks.get(chunkPos.toString());
     if (!chunk && config?.loadIfNotFound) this.loadChunk(chunkPos);
     if (!chunk && config?.generateIfNotFound) return this.generateChunk(chunkPos);
@@ -209,7 +209,7 @@ export class World {
 
   lookingAt(camera: Camera): ILookingAtData | null {
     let closestDist = Infinity;
-    let closestCube: ILookingAtData|null = null;
+    let closestCube: ILookingAtData | null = null;
 
     // loop over all chunks and then check if they are reachable
     for (const chunk of this.chunks.values()) {

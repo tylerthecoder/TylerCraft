@@ -1,8 +1,7 @@
 <head>
   <script src="./js/m4.js"></script>
-  <meta name='viewport'
-     content='width=device-width, initial-scale=1.0, maximum-scale=1.0,
-     user-scalable=0' >
+  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0,
+     user-scalable=0'>
   <link rel="stylesheet" type="text/css" href="css/app.css" />
   <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&family=Roboto&display=swap" rel="stylesheet">
 </head>
@@ -20,13 +19,41 @@
         <div class="gameItem"></div>
       </template>
 
-      <div id="pickWorldScreen"> </div>
+      <div id="pickWorldScreen"></div>
+
+      <div id="worldOptionsScreen">
+
+        <form id="configForm" pa>
+          <div class="container">
+            <div class="form-row">
+              <label>Name: </label>
+              <input type="text" name="name" />
+            </div>
+            <div id="configFormExtra"></div>
+          </div>
+        </form>
+        <button id="configFormStartButton"> Start </button>
+      </div>
     </div>
 
     <div id="canvasHolder">
       <canvas id="glCanvas" width="800" height="800"></canvas>
       <canvas id="hudCanvas" width="800" height="800"></canvas>
       <div id="hud">
+        <div id="menuIcon">Menu</div>
+
+        <div id="gameMenu">
+          <div class="container">
+            <div>
+              <p> Game Name: </p>
+              <input type="text" id="gameNameInput" />
+            </div>
+            <button id="fullScreenButton"> Full Screen </button>
+            <button id="saveButton"> Save </button>
+            <button id="exitMenuButton"> Exit </button>
+          </div>
+        </div>
+
         <div id="crosshairs">
           <div id="verticalCrosshair"></div>
           <div id="horizontalCrosshair"></div>
@@ -66,7 +93,6 @@
         <div id="useItemButton2"></div>
 
       </div>
-      <div id="fullScreenButton"><p> FS </p></div>
     </div>
   </div>
 </body>

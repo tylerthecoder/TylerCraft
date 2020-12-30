@@ -1,6 +1,6 @@
 import seedrandom from "seedrandom";
 import random from "random";
-import { CONFIG } from "../constants";
+import { CONFIG } from "../config";
 import simplexNoise from "simplex-noise";
 
 class RandomClass {
@@ -32,7 +32,7 @@ class RandomClass {
   }
 
   randomString() {
-    return random.float(0,1).toString();
+    return random.float(0, 1).toString();
   }
 }
 

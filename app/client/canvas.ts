@@ -1,34 +1,25 @@
-import { CONFIG } from "../src/constants";
+import { CONFIG } from "../src/config";
 import { Vector3D } from "../src/utils/vector";
 declare const mat4: any;
 // import {mat4} from "gl-matrix";
 
-
 export class CanvasProgram {
-  canvas: HTMLCanvasElement;
-  hudCanvas: HTMLCanvasElement;
+  eCanvas = document.getElementById("glCanvas") as HTMLCanvasElement;
+  eHudCanvas = document.getElementById("hudCanvas") as HTMLCanvasElement;
+  eHud = document.getElementById("hud") as HTMLCanvasElement;
   gl: WebGLRenderingContext;
   hudCxt: CanvasRenderingContext2D;
   program: {
     program: WebGLProgram,
-    attribLocations: {[name: string]: number},
-    uniformLocations: {[name: string]: WebGLUniformLocation},
+    attribLocations: { [name: string]: number },
+    uniformLocations: { [name: string]: WebGLUniformLocation },
   };
 
   textures: { [name: string]: WebGLTexture };
 
   constructor() {
-    // init hud canvas
-    this.hudCanvas = document.querySelector("#hudCanvas") as HTMLCanvasElement;
-    this.canvas = document.querySelector("#glCanvas") as HTMLCanvasElement;
-
-    document.querySelector("#fullScreenButton")?.addEventListener("click", () => {
-      console.log("Requesting full screen");
-      document.body.requestFullscreen()
-    });
-
-    // init gl canvas
-    const gl = this.canvas.getContext("webgl", {
+    // init gl eCanvas
+    const gl = this.eCanvas.getContext("webgl", {
       // premultipliedAlpha: false,
       // alpha: false,
     });
@@ -44,10 +35,10 @@ export class CanvasProgram {
     this.gl = gl;
 
     const getCanvasDimensions = () => {
-      this.hudCanvas.height = window.innerHeight;
-      this.hudCanvas.width = window.innerWidth;
-      this.canvas.height = window.innerHeight;
-      this.canvas.width = window.innerWidth;
+      this.eHudCanvas.height = window.innerHeight;
+      this.eHudCanvas.width = window.innerWidth;
+      this.eCanvas.height = window.innerHeight;
+      this.eCanvas.width = window.innerWidth;
       this.gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
       if (this.program) this.createProjectionMatrix();
 
@@ -55,7 +46,7 @@ export class CanvasProgram {
     window.addEventListener("resize", getCanvasDimensions);
     getCanvasDimensions();
 
-    this.hudCxt = this.hudCanvas.getContext("2d")!;
+    this.hudCxt = this.eHudCanvas.getContext("2d")!;
 
     gl.enable(gl.DEPTH_TEST); // Enable depth testing
     gl.depthFunc(gl.LEQUAL); // Near things obscure far things
@@ -81,12 +72,12 @@ export class CanvasProgram {
     // Create a perspective matrix, a special matrix that is
     // used to simulate the distortion of perspective in a camera.
     // Our field of view is 45 degrees, with a width/height
-    // ratio that matches the display size of the canvas
+    // ratio that matches the display size of the eCanvas
     // and we only want to see objects between 0.1 units
     // and 100 units away from the camera.
     const fieldOfView = CONFIG.glFov;
-    const canvasElement = this.gl.canvas as HTMLCanvasElement;
-    const aspect = canvasElement.clientWidth / canvasElement.clientHeight;
+    const eCanvasElement = this.gl.canvas as HTMLCanvasElement;
+    const aspect = eCanvasElement.clientWidth / eCanvasElement.clientHeight;
     const zNear = 0.1;
     const zFar = 100.0;
     const projectionMatrix = mat4.create();
@@ -131,7 +122,7 @@ export class CanvasProgram {
     if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
       console.log(
         "Unable to initialize the shader program: " +
-          gl.getProgramInfoLog(shaderProgram)
+        gl.getProgramInfoLog(shaderProgram)
       );
       throw new Error("Unable to init shader program")
     }
@@ -139,12 +130,12 @@ export class CanvasProgram {
     this.program = {
       program: shaderProgram,
       attribLocations: {
-        vertexPosition: gl.getAttribLocation( shaderProgram, "aVertexPosition"),
+        vertexPosition: gl.getAttribLocation(shaderProgram, "aVertexPosition"),
         textureCord: gl.getAttribLocation(shaderProgram, "aTextureCord"),
       },
       uniformLocations: {
-        projectionMatrix: gl.getUniformLocation( shaderProgram, "uProjectionMatrix")!,
-        modelViewMatrix: gl.getUniformLocation( shaderProgram, "uModelViewMatrix")!,
+        projectionMatrix: gl.getUniformLocation(shaderProgram, "uProjectionMatrix")!,
+        modelViewMatrix: gl.getUniformLocation(shaderProgram, "uModelViewMatrix")!,
         uSampler: gl.getUniformLocation(shaderProgram, "uSampler")!,
         uFilter: gl.getUniformLocation(shaderProgram, "uFilter")!,
       }
@@ -159,7 +150,7 @@ export class CanvasProgram {
     gl.uniform1i(this.program.uniformLocations.uSampler, 0);
 
     // set the color filter
-    this.setColorFilter(new Vector3D([0,0,0]));
+    this.setColorFilter(new Vector3D([0, 0, 0]));
     this.createProjectionMatrix();
   }
 
@@ -228,7 +219,7 @@ export class CanvasProgram {
     );
 
     const image = new Image();
-    image.onload = function() {
+    image.onload = function () {
       gl.bindTexture(gl.TEXTURE_2D, texture);
       gl.texImage2D(
         gl.TEXTURE_2D,

@@ -3,11 +3,12 @@ import { Renderer } from "./renderer";
 import { Camera } from "../cameras/camera";
 import { CanvasProgram } from "../canvas";
 import { ClientGame } from "../clientGame";
-import { BLOCKS } from "../../src/blockdata";
 import TextureMapper from "../textureMapper";
-import {IS_MOBILE} from "../app";
+import { IS_MOBILE } from "../app";
 
-
+function hide(e: HTMLElement) {
+  e.style.display = "none";
+}
 export class HudRenderer extends Renderer {
   textureImg: HTMLImageElement;
 
@@ -19,6 +20,7 @@ export class HudRenderer extends Renderer {
   private eUseItemButton2 = document.getElementById("useItemButton2")!;
   private eForwardButton = document.getElementById("forwardButton")!;
   private eJumpButton = document.getElementById("jumpButton")!;
+
 
   constructor(
     public canvas: CanvasProgram,
@@ -49,11 +51,11 @@ export class HudRenderer extends Renderer {
   }
 
   drawRect(x: number, y: number, w: number, h: number) {
-    this.canvas.hudCxt.fillRect(x,y,w,h)
+    this.canvas.hudCxt.fillRect(x, y, w, h)
   }
 
   strokeRect(x: number, y: number, w: number, h: number) {
-    this.canvas.hudCxt.strokeRect(x,y,w,h)
+    this.canvas.hudCxt.strokeRect(x, y, w, h)
   }
 
   drawText(str: string, x: number, y: number) {
@@ -73,15 +75,19 @@ export class HudRenderer extends Renderer {
   //   );
   // }
 
+  private lastStats = "";
   drawStats(camera: Camera) {
     const cameraPos = camera.pos.data.map(Math.floor).join(",")
 
     const statsElement = document.getElementById("stats")!;
-    statsElement.innerHTML = `
+    const statsString = `
       ${cameraPos}
       Fps: ${this.game.frameRate.toFixed(0)}
     `;
-
+    if (this.lastStats !== statsString) {
+      statsElement.innerHTML = statsString;
+      this.lastStats = statsString;
+    }
     // const rotVec = new Vector2D([camera.rot[0], camera.rot[1]]);
     // rotVec.data = rotVec.data.map(n => Math.floor(n * 100) / 100);
     // this.drawText(rotVec.toString(), 0, 70);
@@ -105,22 +111,19 @@ export class HudRenderer extends Renderer {
 
     // draw the icons
     for (let i = 0; i < 10; i++) {
-      const {cords, offset} = TextureMapper.getBlockPreviewCords(1, itemDim, itemDim);
+      const { cords } = TextureMapper.getBlockPreviewCords(1, itemDim, itemDim);
       this.eToolbeltItems[i].style.clipPath = `polygon(${cords.x1} ${cords.y1} ${cords.x2} ${cords.y2})`;
     }
 
   }
 
   drawHealthBar() {
-    const {current, max} = this.game.mainPlayer.health;
+    const { current, max } = this.game.mainPlayer.health;
     const healthPercent = current / max;
     this.eHealthBar.style.width = `${healthPercent * 100}%`;
   }
 
   hideControls() {
-    function hide(e: HTMLElement) {
-      e.style.display = "none";
-    }
     hide(this.eForwardButton);
     hide(this.eJumpButton);
     hide(this.eUseItemButton);
@@ -140,9 +143,7 @@ export class HudRenderer extends Renderer {
     }
 
     // draw selected items
-
     this.drawHealthBar()
-
   }
 
 }

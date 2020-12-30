@@ -1,5 +1,5 @@
 import { IDim } from "../../types";
-import { CONFIG } from "../constants";
+import { CONFIG } from "../config";
 import { bindValue } from "../utils";
 import { Vector, Vector3D } from "../utils/vector";
 import { Entity, IEntityType, ISerializedEntity, MetaAction } from "./entity";
@@ -81,7 +81,7 @@ export abstract class MovableEntity extends Entity {
           ]).toCartesianCoords();
       }
     }
-    return new Vector3D([0,0,0]);
+    return new Vector3D([0, 0, 0]);
   }
 
   getVerticalVel() {
@@ -89,13 +89,13 @@ export abstract class MovableEntity extends Entity {
       const baseSpeed = CONFIG.player.speed;
       switch (metaAction) {
         case MetaAction.up:
-          return new Vector3D([0,baseSpeed, 0]);
+          return new Vector3D([0, baseSpeed, 0]);
         case MetaAction.down:
-          return new Vector3D([0,-baseSpeed, 0]);
+          return new Vector3D([0, -baseSpeed, 0]);
       }
     }
 
-    return new Vector3D([0,0,0]);
+    return new Vector3D([0, 0, 0]);
   }
 
   getJumpVel(): Vector3D {

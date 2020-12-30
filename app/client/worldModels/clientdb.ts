@@ -1,4 +1,4 @@
-import { CONFIG } from "../../src/constants";
+import { CONFIG } from "../../src/config";
 import { Game, IGameMetadata, ISerializedGame } from "../../src/game";
 import { Chunk, ISerializedChunk } from "../../src/world/chunk";
 import { IChunkReader, IGameReader, WorldModel, IEmptyWorld } from "../../src/worldModel";
@@ -7,10 +7,10 @@ export class ClientChunkReader implements IChunkReader {
 
   constructor(
     private idbChunkReader?: IChunkReader,
-  ) {}
+  ) { }
 
   async getChunk(chunkPos: string) {
-    let chunk: Chunk|null = null;
+    let chunk: Chunk | null = null;
     // console.log("Reading Chunk: ", chunkPos)
     if (this.idbChunkReader) {
       chunk = await this.idbChunkReader.getChunk(chunkPos);
@@ -32,7 +32,7 @@ export class ClientDb extends WorldModel {
     return new Promise((resolve, reject) => {
       const openRequest = window.indexedDB.open("TylerCraftDB", 4);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      openRequest.onerror = function(event: any) {
+      openRequest.onerror = function (event: any) {
         // Do something with request.errorCode!
         console.log(event.target);
         console.error("Database error: " + event.target.errorCode);
@@ -121,7 +121,7 @@ export class ClientDb extends WorldModel {
     return {
       data: {
         gameId: world.gameId,
-        config: CONFIG,
+        config: world.config,
         entities: world.entities,
         world: {
           chunks: [],

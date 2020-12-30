@@ -108,7 +108,7 @@ export class ClientGame extends Game {
     this.worldRenderer.removeEntity(uid);
   }
 
-  clientActionListener (action: IAction) {
+  clientActionListener(action: IAction) {
     if (action.blockUpdate) {
       this.worldRenderer.blockUpdate(action.blockUpdate.chunkId)
     }

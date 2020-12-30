@@ -33,7 +33,6 @@ body {
   --button-size: 50px;
 }
 
-
 #hudCanvas {
   position: absolute;
   left: 0px;
@@ -164,11 +163,38 @@ body {
   height: var(--button-size);
 }
 
+#hud #menuIcon {
+  position: absolute;
+  right: 5px;
+  top: 5px;
+  background-color: wheat;
+}
 
-#fullScreenButton {
-  position: fixed;
-  bottom: 10px;
-  right: 10px;
+#gameMenu {
+  display: none;
+  background-color: white;
+  border-radius: 30px;
+  position: absolute;
+  width: 90%;
+  height: 90%;
+  top: 5%;
+  left: 5%;
+  opacity: 0.9;
+  padding: 30px;
+  box-sizing: border-box;
+}
+
+#gameMenu .container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  flex-direction: column;
+}
+
+#gameMenu button {
+  display: block;
 }
 
 #startMenu {
@@ -185,7 +211,7 @@ body {
 
 h1 {
   font-size: 5em;
-  font-family: 'Indie Flower', cursive;
+  font-family: "Indie Flower", cursive;
 }
 
 button {
@@ -193,7 +219,7 @@ button {
   padding: 10px 100px;
   margin-bottom: 30px;
   font-size: 3em;
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
   cursor: pointer;
   box-shadow: 8px 8px 10px grey;
   border-radius: 10px;
@@ -201,18 +227,53 @@ button {
 
 button:hover {
   box-shadow: 15px 15px 10px grey;
-  animation: lift .1s linear
+  animation: lift 0.1s linear;
 }
 
 .fade {
   visibility: hidden;
-  animation: fade 1s linear
+  animation: fade 1s linear;
 }
 
-#pickWorld {
+#pickWorldScreen {
   display: none;
+}
+
+#worldOptionsScreen {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .gameItem {
   margin: 10px;
+}
+
+#configForm .container {
+  margin-bottom: 10px;
+  border-radius: 10px;
+  padding: 10px;
+  background-color: #efefef;
+}
+
+.form-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.form-row input {
+  background-color: transparent;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  border-bottom: 1px black solid;
+  margin-left: 5px;
+  text-align: center;
+  width: 181px;
+}
+
+.form-row label {
+  font-weight: 550;
+  font-family: "Roboto";
 }

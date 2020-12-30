@@ -1,5 +1,5 @@
 import { Vector2D, Vector3D, Vector } from "../utils/vector";
-import { CONFIG } from "../constants";
+import { CONFIG } from "../config";
 import Random from "../utils/random";
 import { Chunk } from "./chunk";
 import { BLOCKS } from "../blockdata";
@@ -24,7 +24,7 @@ export class TerrainGenerator {
     serializedData?: ISerializedTerrainGenerator,
   ) {
     if (serializedData) {
-      const blocksToRender = serializedData.blocksToRender.map(({chunkPos, cubes}) => {
+      const blocksToRender = serializedData.blocksToRender.map(({ chunkPos, cubes }) => {
         return [chunkPos, cubes.map(deserializeCube)] as [string, Cube[]];
       });
 
@@ -79,11 +79,11 @@ export class TerrainGenerator {
 
         // generate water
         if (y <= CONFIG.terrain.waterLever) {
-         for (let k = y; k < 3; k++) {
-          const cubePos = [x, k, z];
-          const cube = new Cube(BLOCKS.water, new Vector3D(cubePos));
-          chunk.addCube(cube);
-         }
+          for (let k = y; k < 3; k++) {
+            const cubePos = [x, k, z];
+            const cube = new Cube(BLOCKS.water, new Vector3D(cubePos));
+            chunk.addCube(cube);
+          }
         }
 
         for (let k = 0; k <= y; k++) {
@@ -95,14 +95,14 @@ export class TerrainGenerator {
 
         // add grass
         if (y >= CONFIG.terrain.waterLever && Random.randomNum() > .99 && CONFIG.terrain.flowers) {
-          const cube = new Cube(BLOCKS.redFlower, new Vector3D([x,y+1,z]));
+          const cube = new Cube(BLOCKS.redFlower, new Vector3D([x, y + 1, z]));
           chunk.addCube(cube);
         }
       }
     }
 
     const chunkString = chunkPos.toString();
-    if (this.blocksToRender.has(chunkString)){
+    if (this.blocksToRender.has(chunkString)) {
       this.blocksToRender.get(chunkString)!.forEach(cube => {
         chunk.addCube(cube);
       });
@@ -164,13 +164,13 @@ export class TerrainGenerator {
 
     // trunk
     for (let i = 1; i <= 5; i++) {
-      const newCubePos = startingPos.add(new Vector3D([0,i,0]));
+      const newCubePos = startingPos.add(new Vector3D([0, i, 0]));
       const cube = new Cube(BLOCKS.wood, newCubePos);
       cubes.push(cube);
     }
 
     // leafs
-    const top = startingPos.add(new Vector3D([0,5,0]));
+    const top = startingPos.add(new Vector3D([0, 5, 0]));
     for (let i = -1; i <= 1; i++) {
       for (let j = -1; j <= 1; j++) {
         for (let k = -1; k <= 1; k++) {

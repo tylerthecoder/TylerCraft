@@ -1,10 +1,10 @@
 import { Entity, FaceLocater, IEntityType, ISerializedEntity, MetaAction } from "./entity";
-import { arrayAdd, arrayScalarMul} from "../utils";
+import { arrayAdd, arrayScalarMul } from "../utils";
 import { IDim, IAction, IActionType } from "../../types";
 import { Vector, Vector3D } from "../utils/vector";
 import { Projectile } from "./projectile";
 import { MovableEntity } from "./moveableEntity";
-import { CONFIG } from "../constants";
+import { CONFIG } from "../config";
 
 export interface ISerializedPlayer extends ISerializedEntity {
   vel: IDim;
@@ -144,7 +144,7 @@ export class Player extends MovableEntity {
     if (this.fire.count > 0) return;
 
     const vel = this.rotCart.scalarMultiply(-.4).data as IDim;
-    const pos = arrayAdd(arrayAdd(this.pos.data, arrayScalarMul(vel, 4)), [.5,2,.5]) as IDim;
+    const pos = arrayAdd(arrayAdd(this.pos.data, arrayScalarMul(vel, 4)), [.5, 2, .5]) as IDim;
     const ball = new Projectile(new Vector(pos), new Vector(vel));
 
     this.actions.push({

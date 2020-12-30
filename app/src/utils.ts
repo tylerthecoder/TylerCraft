@@ -19,6 +19,12 @@ export function bindValue(number: number, min: number, max: number, wrap?: boole
   return number;
 }
 
+export function camelCaseToNormalCase(str: string) {
+  return str
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/^./, str => str.toUpperCase())
+}
+
 export function arrayAdd<T extends number[]>(arr1: T, arr2: T): T {
   const newArray: number[] = [];
   for (let i = 0; i < arr1.length; i++) {
@@ -27,7 +33,7 @@ export function arrayAdd<T extends number[]>(arr1: T, arr2: T): T {
   return newArray as T;
 }
 
-export function arrayMul<T extends number[]>(arr1: T, arr2: T): T{
+export function arrayMul<T extends number[]>(arr1: T, arr2: T): T {
   const newArray: number[] = [];
   for (let i = 0; i < arr1.length; i++) {
     newArray[i] = arr1[i] * arr2[i];
@@ -80,7 +86,7 @@ export function sphereToCartCords(r: number, t: number, p: number): IDim {
 
 export function normalize<T extends number[]>(arr: T) {
   // find the length of the vec, if 0 then return 1
-  const length = Math.sqrt(arr.reduce((acc, cur) => acc + cur ** 2, 0) );
+  const length = Math.sqrt(arr.reduce((acc, cur) => acc + cur ** 2, 0));
   return arrayScalarMul(arr, 1 / length);
 }
 

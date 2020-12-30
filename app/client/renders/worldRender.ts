@@ -7,7 +7,7 @@ import { CubeRenderer } from "./cubeRender";
 import { ClientGame } from "../clientGame";
 import { Entity } from "../../src/entities/entity";
 import { SphereRenderer } from "./sphereRender";
-import { CONFIG } from "../../src/constants";
+import { CONFIG } from "../../src/config";
 import { Vector, Vector2D, Vector3D } from "../../src/utils/vector";
 import { Camera } from "../cameras/camera";
 import { Cube } from "../../src/entities/cube";
@@ -40,7 +40,7 @@ export default class WorldRenderer {
     const block = this.world.getBlockFromWorldPoint(camera.pos);
 
     if (block?.type === BLOCKS.water) {
-      return new Vector3D([0,.3,1]);
+      return new Vector3D([0, .3, 1]);
     } else {
       return Vector.zero3D;
     }
@@ -69,7 +69,7 @@ export default class WorldRenderer {
   }
 
   renderChunk(chunkPos: Vector2D, camera: Camera, renderedSet: Set<ChunkRenderer>) {
-    const chunk = this.world.getChunkFromPos(chunkPos, {loadIfNotFound: true});
+    const chunk = this.world.getChunkFromPos(chunkPos, { loadIfNotFound: true });
 
     if (!chunk) {
       // console.log("Chunk not found, loading");
@@ -83,10 +83,10 @@ export default class WorldRenderer {
 
       // not ideal but it is what needs to be done to make sure that the visible faces are rendered correctly
       // maybe put on another thread later.
-      this.blockUpdate(chunkPos.add(new Vector2D([0,1])).toString());
-      this.blockUpdate(chunkPos.add(new Vector2D([1,0])).toString());
-      this.blockUpdate(chunkPos.add(new Vector2D([0,-1])).toString());
-      this.blockUpdate(chunkPos.add(new Vector2D([-1,0])).toString());
+      this.blockUpdate(chunkPos.add(new Vector2D([0, 1])).toString());
+      this.blockUpdate(chunkPos.add(new Vector2D([1, 0])).toString());
+      this.blockUpdate(chunkPos.add(new Vector2D([0, -1])).toString());
+      this.blockUpdate(chunkPos.add(new Vector2D([-1, 0])).toString());
 
       chunkRenderer = new ChunkRenderer(chunk, this.world);
       this.chunkRenderers.set(chunkPos.toString(), chunkRenderer);
