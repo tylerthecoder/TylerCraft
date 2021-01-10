@@ -1,4 +1,5 @@
-import { ISocketMessage, ISocketMessageType } from "../../types/socket";
+import { ISocketMessage, ISocketMessageType } from "../../src/types";
+import { IAction } from "../../src/types";
 import { SocketInterface } from "../app";
 import { ClientGame } from "../clientGame";
 import { Controller } from "./controller";
@@ -15,7 +16,7 @@ export class GameSocketController extends Controller {
   update() { /* NO-OP */ }
 
   onMessage(message: ISocketMessage) {
-    switch(message.type) {
+    switch (message.type) {
       case ISocketMessageType.newPlayer: {
         const payload = message.newPlayerPayload!;
         this.controlled.addPlayer(false, payload.uid);
@@ -28,7 +29,7 @@ export class GameSocketController extends Controller {
       }
       case ISocketMessageType.actions: {
         const payload = message.actionPayload!;
-        payload.forEach(action => action.isFromServer = true);
+        payload.forEach((action: IAction) => action.isFromServer = true);
         this.controlled.addActions(payload);
         break;
       }

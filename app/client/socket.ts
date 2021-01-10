@@ -1,14 +1,14 @@
-import { ISocketMessage, } from "../types/socket";
+import { ISocketMessage, } from "../src/types";
 
 export type SocketListener = (message: ISocketMessage) => void;
 
 export class SocketHandler {
   private socket: WebSocket;
-  private socketUrl = `ws://${location.hostname}:3000`;
+  private socketUrl = process.env.SOCKET_SERVER_URL as string;
   private listeners: SocketListener[] = [];
 
   connect() {
-    return new Promise(resolve => {
+    return new Promise<void>(resolve => {
       this.socket = new WebSocket(this.socketUrl);
       this.socket.onopen = () => {
         console.log("Socket Connected");

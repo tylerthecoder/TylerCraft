@@ -1,7 +1,7 @@
 import { Game, IGameMetadata, ISerializedGame } from "../src/game";
 import { Chunk, ISerializedChunk } from "../src/world/chunk";
-import { IChunkReader, WorldModel,IEmptyWorld, IGameReader } from "../src/worldModel";
-import { db } from "./db";
+import { IChunkReader, WorldModel, IEmptyWorld, IGameReader } from "../src/worldModel";
+import { db } from "./app";
 
 export class RamChunkReader implements IChunkReader {
   private chunkMap = new Map<string, ISerializedChunk>();
@@ -31,7 +31,7 @@ export class DbWorldModel extends WorldModel {
     }
   }
 
-  async getWorld(gameId: string): Promise<IGameReader|null> {
+  async getWorld(gameId: string): Promise<IGameReader | null> {
     const game = await this.gameCollection.findOne<ISerializedGame>({ gameId });
 
     if (!game) return null;
@@ -68,7 +68,7 @@ export class DbWorldModel extends WorldModel {
   }
 
   async deleteWorld(worldId: string) {
-    await this.gameCollection.deleteOne({gameId: worldId});
+    await this.gameCollection.deleteOne({ gameId: worldId });
   }
 }
 

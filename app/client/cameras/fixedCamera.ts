@@ -1,4 +1,4 @@
-import { Camera } from "./camera";
+import { Camera } from "../../src/camera";
 import { Vector3D } from "../../src/utils/vector";
 
 export class FixedCamera extends Camera {

@@ -1,11 +1,10 @@
 import Players from "./players";
 import * as wSocket from "ws";
 import { Game, ISerializedGame } from "../src/game";
-import { ISocketMessage, ISocketMessageType } from "../types/socket";
-import { IAction } from "../types";
+import { IAction, ISocketMessage, ISocketMessageType } from "../src/types";
 import { Vector, Vector2D } from "../src/utils/vector";
 import { IChunkReader, WorldModel } from "../src/worldModel";
-import { SocketInterface } from "./server";
+import { SocketInterface } from "./app";
 
 export class ServerGame extends Game {
   clients: Players;
@@ -16,7 +15,7 @@ export class ServerGame extends Game {
   }> = [];
 
   constructor(worldModel: WorldModel, chunkReader: IChunkReader, serializedData?: ISerializedGame) {
-    super(worldModel, chunkReader, {data: serializedData, multiplayer: true});
+    super(worldModel, chunkReader, { data: serializedData, multiplayer: true });
 
     this.clients = new Players(this);
     this.loop();
@@ -28,8 +27,8 @@ export class ServerGame extends Game {
       throw new Error("BAD")
     }
 
-    const sortedActions: Map<wSocket,IAction[]> = new Map();
-    this.actionQueue.forEach(({action, from}) => {
+    const sortedActions: Map<wSocket, IAction[]> = new Map();
+    this.actionQueue.forEach(({ action, from }) => {
       if (sortedActions.has(from)) {
         sortedActions.get(from)!.push(action);
       } else {
@@ -46,7 +45,7 @@ export class ServerGame extends Game {
     }
 
     // handle the actions
-    this.actionQueue.forEach(({action}) => {
+    this.actionQueue.forEach(({ action }) => {
       this.handleAction(action);
     });
 
@@ -57,7 +56,7 @@ export class ServerGame extends Game {
 
   private sendChunkTo(chunkPosString: string, ws: wSocket) {
     const chunkPos = Vector.fromString(chunkPosString) as Vector2D;
-    const chunk = this.world.getChunkFromPos(chunkPos, {generateIfNotFound: true});
+    const chunk = this.world.getChunkFromPos(chunkPos, { generateIfNotFound: true });
     if (!chunk) throw new Error("Chunk wasn't found");
     const serializedData = chunk.serialize();
     SocketInterface.send(ws, {
@@ -75,21 +74,22 @@ export class ServerGame extends Game {
     SocketInterface.listenTo(ws, (message: ISocketMessage) => {
       console.log("Got Message", message);
       switch (message.type) {
-      case ISocketMessageType.actions: {
-        const payload = message.actionPayload!;
-        this.actionQueue.push(...payload.map(
-          a => ({
-            action: a,
-            from: ws
-          })
-        ));
-        break;
+        case ISocketMessageType.actions: {
+          const payload = message.actionPayload!;
+          this.actionQueue.push(...payload.map(
+            a => ({
+              action: a,
+              from: ws
+            })
+          ));
+          break;
+        }
+        case ISocketMessageType.getChunk: {
+          const payload = message.getChunkPayload!;
+          this.sendChunkTo(payload.pos, ws);
+          break;
+        }
       }
-      case ISocketMessageType.getChunk: {
-        const payload = message.getChunkPayload!;
-        this.sendChunkTo(payload.pos, ws);
-        break;
-      }}
     });
   }
 }

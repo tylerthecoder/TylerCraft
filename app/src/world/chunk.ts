@@ -1,12 +1,12 @@
 import { Cube } from "../entities/cube";
 import { Entity } from "../entities/entity";
-import { IDim, IActionType, IAction } from "../../types";
+import { IDim, IActionType, IAction } from "../types";
 import { arrayMul, arrayAdd, arrayDot, arrayScalarMul, roundToNPlaces, arrayDistSquared } from "../utils";
 import { CONFIG } from "../config";
 import { Vector3D, Vector, Vector2D } from "../utils/vector";
 import { BLOCK_DATA } from "../blockdata";
 import { ISerializedCube, deserializeCube, serializeCube } from "../serializer";
-import { Camera } from "../../client/cameras/camera";
+import { Camera } from "../camera";
 
 export interface ILookingAtData {
   newCubePos: Vector,

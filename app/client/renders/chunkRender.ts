@@ -1,6 +1,6 @@
 import { Renderer } from "./renderer";
 import { canvas } from "../canvas";
-import { Camera } from "../cameras/camera";
+import { Camera } from "../../src/camera";
 import { Chunk } from "../../src/world/chunk";
 import { arrayMul, arrayAdd, arraySub } from "../../src/utils";
 import TextureMapper from "../textureMapper";
@@ -10,7 +10,7 @@ import { World } from "../../src/world/world";
 import { BLOCK_DATA, BlockType } from "../../src/blockdata";
 
 
-type IVisibleFaceMap = Map<string, {cube: Cube, faceVectors: Vector3D[]}>;
+type IVisibleFaceMap = Map<string, { cube: Cube, faceVectors: Vector3D[] }>;
 
 export class ChunkRenderer extends Renderer {
   constructor(public chunk: Chunk, world: World) {
@@ -63,111 +63,109 @@ export class ChunkRenderer extends Renderer {
     faceMap.set(cube.pos.toString(), visibleCubePos);
   }
 
-  private getDataForBlock(cube: Cube, offset: number, world: World, visibleFaceMap: IVisibleFaceMap):
-  {addToOffset: number, positions: number[], indices: number[], textureCords: number[]}
-  {
-      const blockData = BLOCK_DATA.get(cube.type)!;
-      const relativePos = arraySub(cube.pos.data, this.chunk.pos.data);
-      const texturePos = TextureMapper.getTextureCords(cube.type);
-      const positions: number[] = [];
-      const indices: number[] = [];
-      const textureCords: number[] = [];
-      if (blockData.blockType === BlockType.cube || blockData.blockType === BlockType.fluid) {
+  private getDataForBlock(cube: Cube, offset: number, world: World, visibleFaceMap: IVisibleFaceMap): { addToOffset: number, positions: number[], indices: number[], textureCords: number[] } {
+    const blockData = BLOCK_DATA.get(cube.type)!;
+    const relativePos = arraySub(cube.pos.data, this.chunk.pos.data);
+    const texturePos = TextureMapper.getTextureCords(cube.type);
+    const positions: number[] = [];
+    const indices: number[] = [];
+    const textureCords: number[] = [];
+    if (blockData.blockType === BlockType.cube || blockData.blockType === BlockType.fluid) {
 
-        // loop through all the faces to get their cords
-        let count = 0;
-        for (const face of [0, 1, 2, 3, 4, 5]) {
-          // check to see if there is a cube touching me on this face
-          const directionVector = Vector.unitVectors3D[face];
-          const nearbyCube = this.isCube(cube.pos.add(directionVector), world, cube);
-          // skkkkkip
-          if (nearbyCube) {
-            continue;
-          }
-
-          // add the face to the list of visible faces on the chunk
-          this.addVisibleFace(visibleFaceMap, cube, directionVector);
-
-          // get the dimension of the face i.e. x, y, z
-          const dim = face >> 1;
-
-          // get the direction of the face. In or out
-          const dir = face % 2 === 0 ? 1 : 0;
-
-          // four corners of a square, centered at origin
-          const square = [[0, 0], [1, 0], [1, 1], [0, 1]];
-
-          // get a flattened array of the positions
-          const vertices = square
-            .map(edge => {
-              // add the 3 dimension to the square
-              edge.splice(dim, 0, dir);
-
-              const size = cube.dim;
-
-              // multiply edges by dimensions
-              const cords = arrayMul(edge, size);
-
-              // move the vertices by the cube's relative position in the chunk
-              const adjustedCords = arrayAdd(cords, relativePos);
-
-              return adjustedCords;
-            })
-            .flat();
-
-          // get triangle indices
-          const triIndices = [0, 1, 2, 0, 2, 3].map(x => x + count + offset);
-
-          // increase the count
-          count += 4;
-
-          const textureCord = texturePos[face];
-
-          positions.push(...vertices);
-          indices.push(...triIndices);
-          textureCords.push(...textureCord);
+      // loop through all the faces to get their cords
+      let count = 0;
+      for (const face of [0, 1, 2, 3, 4, 5]) {
+        // check to see if there is a cube touching me on this face
+        const directionVector = Vector.unitVectors3D[face];
+        const nearbyCube = this.isCube(cube.pos.add(directionVector), world, cube);
+        // skkkkkip
+        if (nearbyCube) {
+          continue;
         }
 
-        return {
-          addToOffset: count,
-          positions,
-          indices,
-          textureCords,
-        }
-      } else if (blockData.blockType === BlockType.x) {
+        // add the face to the list of visible faces on the chunk
+        this.addVisibleFace(visibleFaceMap, cube, directionVector);
 
-        const adjustedCords = Vector.xVectors.
-          map(v => arrayAdd(v, relativePos)).
-          flat();
+        // get the dimension of the face i.e. x, y, z
+        const dim = face >> 1;
 
+        // get the direction of the face. In or out
+        const dir = face % 2 === 0 ? 1 : 0;
 
-        const triIndices = [0, 1, 2, 0, 2, 3].map(x => x + offset);
-        const secondTriIndices = [0, 1, 2, 0, 2, 3].map(x => x + offset + 4);
+        // four corners of a square, centered at origin
+        const square = [[0, 0], [1, 0], [1, 1], [0, 1]];
 
-        positions.push(...adjustedCords);
-        indices.push(...triIndices, ...secondTriIndices);
-        textureCords.push(...texturePos[0], ...texturePos[1]);
+        // get a flattened array of the positions
+        const vertices = square
+          .map(edge => {
+            // add the 3 dimension to the square
+            edge.splice(dim, 0, dir);
 
-        // make a flower still "hittable"
-        for (const directionVector of Vector.unitVectors3D) {
-          this.addVisibleFace(visibleFaceMap, cube, directionVector);
-        }
+            const size = cube.dim;
 
-        return {
-          addToOffset: 8,
-          positions,
-          indices,
-          textureCords,
-        }
-      } else {
-        throw new Error("")
+            // multiply edges by dimensions
+            const cords = arrayMul(edge, size);
+
+            // move the vertices by the cube's relative position in the chunk
+            const adjustedCords = arrayAdd(cords, relativePos);
+
+            return adjustedCords;
+          })
+          .flat();
+
+        // get triangle indices
+        const triIndices = [0, 1, 2, 0, 2, 3].map(x => x + count + offset);
+
+        // increase the count
+        count += 4;
+
+        const textureCord = texturePos[face];
+
+        positions.push(...vertices);
+        indices.push(...triIndices);
+        textureCords.push(...textureCord);
       }
+
+      return {
+        addToOffset: count,
+        positions,
+        indices,
+        textureCords,
+      }
+    } else if (blockData.blockType === BlockType.x) {
+
+      const adjustedCords = Vector.xVectors.
+        map(v => arrayAdd(v, relativePos)).
+        flat();
+
+
+      const triIndices = [0, 1, 2, 0, 2, 3].map(x => x + offset);
+      const secondTriIndices = [0, 1, 2, 0, 2, 3].map(x => x + offset + 4);
+
+      positions.push(...adjustedCords);
+      indices.push(...triIndices, ...secondTriIndices);
+      textureCords.push(...texturePos[0], ...texturePos[1]);
+
+      // make a flower still "hittable"
+      for (const directionVector of Vector.unitVectors3D) {
+        this.addVisibleFace(visibleFaceMap, cube, directionVector);
+      }
+
+      return {
+        addToOffset: 8,
+        positions,
+        indices,
+        textureCords,
+      }
+    } else {
+      throw new Error("")
+    }
   }
 
   // have an options to launch this on a worker thread (maybe always have it on a different thread)
   getBufferData(world: World): void {
     // console.log("Chunk update");
-    const visibleCubePosMap = new Map<string, {cube: Cube, faceVectors: Vector3D[]}>();
+    const visibleCubePosMap = new Map<string, { cube: Cube, faceVectors: Vector3D[] }>();
 
     // const addVisibleFace = (cube: Cube, directionVector: Vector3D) => {
     //   let visibleCubePos = visibleCubePosMap.get(cube.pos.toString());

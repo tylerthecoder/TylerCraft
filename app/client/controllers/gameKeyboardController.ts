@@ -3,7 +3,7 @@ import { ClientGame } from "../clientGame";
 import { BLOCKS } from "../../src/blockdata";
 import { CanvasProgram } from "../canvas";
 import { MetaAction } from "../../src/entities/entity";
-import { IActionType, IDim } from "../../types";
+import { IActionType, IDim } from "../../src/types";
 import { MovableEntity } from "../../src/entities/moveableEntity";
 import { CONFIG } from "../../src/config";
 

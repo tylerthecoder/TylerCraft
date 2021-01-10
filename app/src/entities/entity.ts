@@ -1,4 +1,4 @@
-import { IDim, IAction } from "../../types";
+import { IDim, IAction } from "../types";
 import { Vector3D } from "../utils/vector";
 
 export enum RenderType {
@@ -36,7 +36,7 @@ export interface ISerializedEntity {
 
 
 export abstract class Entity {
-  pos: Vector3D = new Vector3D([0,0,0]);
+  pos: Vector3D = new Vector3D([0, 0, 0]);
   dim: IDim = [1, 1, 1];
   uid = "";
 
@@ -84,10 +84,10 @@ export abstract class Entity {
     let min = [Infinity];
 
     // 0 -> 1, 1 -> 0
-    const switchDir = (dir: number) => (dir+1) % 2;
+    const switchDir = (dir: number) => (dir + 1) % 2;
 
     for (let i = 0; i < 3; i++) {
-      for (let dir = 0; dir <= 1; dir ++) {
+      for (let dir = 0; dir <= 1; dir++) {
         // calculate the distance from a face on the player to a face on the ent
         const p = this.pos.get(i) + this.dim[i] * dir;
         const c = ent.pos.get(i) + ent.dim[i] * switchDir(dir);

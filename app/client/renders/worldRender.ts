@@ -9,7 +9,7 @@ import { Entity } from "../../src/entities/entity";
 import { SphereRenderer } from "./sphereRender";
 import { CONFIG } from "../../src/config";
 import { Vector, Vector2D, Vector3D } from "../../src/utils/vector";
-import { Camera } from "../cameras/camera";
+import { Camera } from "../../src/camera";
 import { Cube } from "../../src/entities/cube";
 import { Player } from "../../src/entities/player";
 import { Projectile } from "../../src/entities/projectile";

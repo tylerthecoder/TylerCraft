@@ -1,4 +1,4 @@
-import { IDim } from "../../types";
+import { IDim } from "../types";
 import { CONFIG } from "../config";
 import { bindValue } from "../utils";
 import { Vector, Vector3D } from "../utils/vector";

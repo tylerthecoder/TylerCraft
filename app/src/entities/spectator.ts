@@ -1,5 +1,5 @@
 import { Entity, FaceLocater } from "./entity";
-import { IDim, IAction, IActionType } from "../../types";
+import { IDim, IAction, IActionType } from "../types";
 import Random from "../utils/random";
 import { Vector } from "../utils/vector";
 import { MovableEntity } from "./moveableEntity";
@@ -25,7 +25,7 @@ export class Spectator extends MovableEntity {
     const totVel = wasdVel.add(vertVel);
 
     if (!totVel.equals(this.vel)) {
-      actions.push( {
+      actions.push({
         type: IActionType.setEntVel,
         setEntVel: {
           vel: totVel.data as IDim,
@@ -41,5 +41,5 @@ export class Spectator extends MovableEntity {
     this.baseUpdate(delta)
   }
 
-  hit(_entity: Entity, _where: FaceLocater) {/* NO-OP */}
+  hit(_entity: Entity, _where: FaceLocater) {/* NO-OP */ }
 }

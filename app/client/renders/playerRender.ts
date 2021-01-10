@@ -1,5 +1,5 @@
 import { Player } from "../../src/entities/player";
-import { Camera } from "../cameras/camera";
+import { Camera } from "../../src/camera";
 import TextureMapper from "../textureMapper";
 import { Renderer } from "./renderer";
 import { canvas } from "../canvas";
@@ -90,60 +90,60 @@ export class PlayerRenderer extends Renderer {
     // draw head
     count = this.drawBox(edge => {
       return edge
-            .multiply(headSize)
-            .sub(halfHeadSize)
-            .rotateZ(-phi)
-            .rotateY(theta + rightLegRot)
-            .add(headPos)
+        .multiply(headSize)
+        .sub(halfHeadSize)
+        .rotateZ(-phi)
+        .rotateY(theta + rightLegRot)
+        .add(headPos)
     }, positions, indices, count);
 
     // draw body
     count = this.drawBox(edge => {
       return edge
-            .multiply(bodySize)
-            .sub(bodyOrigin)
-            .rotateY(theta)
-            .add(bodyPos)
+        .multiply(bodySize)
+        .sub(bodyOrigin)
+        .rotateY(theta)
+        .add(bodyPos)
     }, positions, indices, count);
 
     // draw right leg
     count = this.drawBox(edge => {
       return edge
-            .multiply(legSize)
-            .sub(legOrigin)
-            .rotateZ(rightLegRot)
-            .rotateY(theta)
-            .add(rightLegPos)
+        .multiply(legSize)
+        .sub(legOrigin)
+        .rotateZ(rightLegRot)
+        .rotateY(theta)
+        .add(rightLegPos)
     }, positions, indices, count);
 
     // draw left leg
     count = this.drawBox(edge => {
       return edge
-            .multiply(legSize)
-            .sub(legOrigin)
-            .rotateZ(leftLegRot)
-            .rotateY(theta)
-            .add(leftLegPos)
+        .multiply(legSize)
+        .sub(legOrigin)
+        .rotateZ(leftLegRot)
+        .rotateY(theta)
+        .add(leftLegPos)
     }, positions, indices, count);
 
     // draw right arm
     count = this.drawBox(edge => {
       return edge
-            .multiply(armSize)
-            .sub(armOrigin)
-            .rotateZ(rightArmRot)
-            .rotateY(theta)
-            .add(rightArmPos)
+        .multiply(armSize)
+        .sub(armOrigin)
+        .rotateZ(rightArmRot)
+        .rotateY(theta)
+        .add(rightArmPos)
     }, positions, indices, count);
 
     // draw left arm
     this.drawBox(edge => {
       return edge
-            .multiply(armSize)
-            .sub(armOrigin)
-            .rotateZ(leftArmRot)
-            .rotateY(theta)
-            .add(leftArmPos)
+        .multiply(armSize)
+        .sub(armOrigin)
+        .rotateZ(leftArmRot)
+        .rotateY(theta)
+        .add(leftArmPos)
     }, positions, indices, count);
 
     this.setBuffers(positions, indices, textureCords);

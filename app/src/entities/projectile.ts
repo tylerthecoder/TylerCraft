@@ -1,6 +1,6 @@
 import { Entity, FaceLocater, IEntityType } from "./entity";
 import { MovableEntity } from "./moveableEntity";
-import { IAction, IActionType, IDim } from "../../types";
+import { IAction, IActionType, IDim } from "../types";
 import { Vector3D } from "../utils/vector";
 import { Cube } from "./cube";
 import Random from "../utils/random";

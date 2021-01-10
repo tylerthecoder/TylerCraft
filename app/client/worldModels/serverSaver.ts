@@ -2,7 +2,7 @@ import { CONFIG } from "../../src/config";
 import { IGameMetadata, Game } from "../../src/game";
 import { Chunk, } from "../../src/world/chunk";
 import { IChunkReader, IEmptyWorld, IGameReader, WorldModel } from "../../src/worldModel";
-import { ISocketMessage, ISocketMessageType, ISocketWelcomePayload } from "../../types/socket";
+import { ISocketMessage, ISocketMessageType, ISocketWelcomePayload } from "../../src/types";
 import { getMyUid, SocketInterface } from "../app";
 import { SocketListener } from "../socket";
 

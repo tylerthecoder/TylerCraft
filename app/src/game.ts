@@ -1,11 +1,10 @@
 import { Player } from "./entities/player";
 import { ISerializedWorld, World } from "./world/world";
 import { Entity } from "./entities/entity";
-import { IAction, IActionType } from "../types";
 import { Cube } from "./entities/cube";
 import { Vector3D, Vector } from "./utils/vector";
 import { MovableEntity } from "./entities/moveableEntity";
-import { ISocketMessage } from "../types/socket";
+import { IAction, IActionType, ISocketMessage } from "./types";
 import { CONFIG, IConfig } from "./config";
 import { deserializeEntity } from "./serializer";
 import { IChunkReader, WorldModel } from "./worldModel";

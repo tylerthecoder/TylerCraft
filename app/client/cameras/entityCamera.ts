@@ -1,4 +1,4 @@
-import { Camera } from "./camera";
+import { Camera } from "../../src/camera";
 import { Vector, Vector3D } from "../../src/utils/vector";
 import { MovableEntity } from "../../src/entities/moveableEntity";
 import { CONFIG } from "../../src/config";

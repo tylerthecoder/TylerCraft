@@ -1,8 +1,8 @@
 import { DbWorldModel } from "./dbWorldModel";
 import { ServerGame } from "./serverGame";
-import { ISocketMessage, ISocketMessageType } from "../types/socket";
+import { ISocketMessage, ISocketMessageType } from "../src/types";
 import * as wSocket from "ws";
-import { SocketInterface } from "./server";
+import { SocketInterface } from "./app";
 
 export class WorldManager {
   private worlds: Map<string, ServerGame> = new Map();
@@ -13,7 +13,7 @@ export class WorldManager {
       SocketInterface.listenTo(ws, async (message: ISocketMessage) => {
         // console.log(message);
         if (message.type === ISocketMessageType.joinWorld) {
-          const {worldId, myUid} = message.joinWorldPayload!;
+          const { worldId, myUid } = message.joinWorldPayload!;
           const world = await this.getWorld(worldId);
           if (world) {
             // this function sends a welcome message to the client
@@ -37,7 +37,7 @@ export class WorldManager {
     });
   }
 
-  async getWorld(worldId: string): Promise<ServerGame|null> {
+  async getWorld(worldId: string): Promise<ServerGame | null> {
     const world = this.worlds.get(worldId);
     if (world) {
       return world;

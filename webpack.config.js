@@ -1,6 +1,8 @@
 // const CleanWebpackPlugin = require('clean-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyPlugin = require("copy-webpack-plugin");
+const DotenvPlugin = require('dotenv-webpack');
+
 
 module.exports = {
   entry: './app/client/app.ts',
@@ -13,24 +15,27 @@ module.exports = {
       filename: "index.html",
     }),
     new CopyPlugin([{
-        from: "app/assets/shaders",
-        to: "shaders/",
-      }, {
-        from: "app/assets/img",
-        to: "img/",
-      },
-      {
-        from: "app/assets/js",
-        to: "js/",
-      },
-      {
-        from: "app/assets/css",
-        to: "css/",
-      }
+      from: "app/assets/shaders",
+      to: "shaders/",
+    }, {
+      from: "app/assets/img",
+      to: "img/",
+    },
+    {
+      from: "app/assets/js",
+      to: "js/",
+    },
+    {
+      from: "app/assets/css",
+      to: "css/",
+    },
     ]),
+    new DotenvPlugin({
+      path: process.env.DOTENV_CONFIG_PATH,
+    }),
   ],
   output: {
-    path: __dirname + '/public',
+    path: __dirname + '/dist/public',
     filename: 'main.js',
   },
   resolve: {

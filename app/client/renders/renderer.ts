@@ -1,5 +1,5 @@
 import { CanvasProgram, canvas } from "../canvas";
-import { Camera } from "../cameras/camera";
+import { Camera } from "../../src/camera";
 import { arraySub } from "../../src/utils";
 // import {mat4} from "gl-matrix";
 declare const mat4: any;
@@ -37,11 +37,11 @@ export abstract class Renderer {
 
     this.indexBuffer = gl.createBuffer()!;
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-    gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
 
     this.textureBuffer = gl.createBuffer()!;
     gl.bindBuffer(gl.ARRAY_BUFFER, this.textureBuffer);
-    gl.bufferData( gl.ARRAY_BUFFER, new Float32Array(textureCords), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCords), gl.STATIC_DRAW);
 
     if (transPositions) {
       this.transPosBuffer = gl.createBuffer()!;
@@ -53,13 +53,13 @@ export abstract class Renderer {
       this.transIndexBuffer = gl.createBuffer()!;
       this.transAmount = transIndices.length;
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.transIndexBuffer);
-      gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(transIndices), gl.STATIC_DRAW);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(transIndices), gl.STATIC_DRAW);
     }
 
     if (transTextureCords) {
       this.transTextureBuffer = gl.createBuffer()!;
       gl.bindBuffer(gl.ARRAY_BUFFER, this.transTextureBuffer);
-      gl.bufferData( gl.ARRAY_BUFFER, new Float32Array(transTextureCords), gl.STATIC_DRAW);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(transTextureCords), gl.STATIC_DRAW);
     }
 
   }

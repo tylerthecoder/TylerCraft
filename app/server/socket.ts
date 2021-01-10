@@ -1,19 +1,15 @@
 import * as wSocket from "ws";
-import { Server } from "http";
-import { ISocketMessage } from "../types/socket";
+import { ISocketMessage } from "../src/types";
 
 type ConnectionListener = (ws: wSocket) => void;
 type MessageListener = (message: ISocketMessage) => void;
 
 export default class SocketServer {
-  server: wSocket.Server;
-
   connectionListeners: ConnectionListener[] = [];
 
-  constructor(server: Server) {
-    this.server = new wSocket.Server({
-      server
-    });
+  constructor(
+    private server: wSocket.Server
+  ) {
     this.server.on("connection", this.newConnection.bind(this));
   }
 
@@ -21,7 +17,7 @@ export default class SocketServer {
     this.connectionListeners.push(listener);
   }
 
-  newConnection(ws: wSocket):void  {
+  newConnection(ws: wSocket): void {
     this.connectionListeners.forEach(func => {
       func(ws);
     });

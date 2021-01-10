@@ -1,4 +1,4 @@
-import { IAction } from "../../types";
+import { IAction } from "../types";
 import { Game } from "../game";
 import { deserializeEntity, getEntityType } from "../serializer";
 import { World } from "../world/world";
@@ -93,7 +93,7 @@ export class EntityHolder {
   }
 
   getActivePlayers() {
-     return Array.from(this.players.values());
+    return Array.from(this.players.values());
   }
 
   iterable() {

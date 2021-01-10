@@ -1,6 +1,6 @@
 import { Entity, FaceLocater, IEntityType, ISerializedEntity, MetaAction } from "./entity";
 import { arrayAdd, arrayScalarMul } from "../utils";
-import { IDim, IAction, IActionType } from "../../types";
+import { IDim, IAction, IActionType } from "../types";
 import { Vector, Vector3D } from "../utils/vector";
 import { Projectile } from "./projectile";
 import { MovableEntity } from "./moveableEntity";

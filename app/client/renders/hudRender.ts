@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import { Renderer } from "./renderer";
-import { Camera } from "../cameras/camera";
+import { Camera } from "../../src/camera";
 import { CanvasProgram } from "../canvas";
 import { ClientGame } from "../clientGame";
 import TextureMapper from "../textureMapper";

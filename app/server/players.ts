@@ -1,15 +1,15 @@
 import * as wSocket from "ws";
 import { Player } from "../src/entities/player";
-import { ISocketMessage, ISocketMessageType } from "../types/socket";
-import { SocketInterface } from "./server";
+import { ISocketMessage, ISocketMessageType } from "../src/types";
+import { SocketInterface } from "./app";
 import { ServerGame } from "./serverGame";
 
 export default class Players {
   players: Map<wSocket, Player> = new Map();
 
-  constructor(public game: ServerGame) {}
+  constructor(public game: ServerGame) { }
 
-  sendMessageToAll(message: ISocketMessage, exclude?:wSocket) {
+  sendMessageToAll(message: ISocketMessage, exclude?: wSocket) {
     for (const socket of this.players.keys()) {
       if (exclude && socket === exclude) continue;
       SocketInterface.send(socket, message);

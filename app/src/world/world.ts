@@ -2,12 +2,12 @@ import { Cube } from "../entities/cube";
 import { Chunk, ILookingAtData, ISerializedChunk } from "./chunk";
 import { Entity } from "../entities/entity";
 import { Game } from "../game";
-import { IActionType } from "../../types";
+import { IActionType } from "../types";
 import { CONFIG } from "../config";
 import { Vector, Vector3D, Vector2D } from "../utils/vector";
 import { ISerializedTerrainGenerator, TerrainGenerator } from "./terrainGenerator";
 import { IChunkReader } from "../worldModel";
-import { Camera } from "../../client/cameras/camera";
+import { Camera } from "../camera";
 
 export interface ISerializedWorld {
   chunks: ISerializedChunk[];

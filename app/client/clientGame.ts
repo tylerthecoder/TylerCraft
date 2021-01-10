@@ -1,15 +1,14 @@
-import { Camera } from "./cameras/camera";
+import { Camera } from "../src/camera";
 import { EntityCamera } from "./cameras/entityCamera";
 import { Game, ISerializedGame } from "../src/game";
 import { Entity } from "../src/entities/entity";
 import { canvas } from "./canvas";
-import { IDim, IAction, IActionType } from "../types";
+import { IDim, IAction, IActionType, ISocketMessageType } from "../src/types";
 import WorldRenderer from "./renders/worldRender";
 import { BLOCKS } from "../src/blockdata";
 import { ControllerHolder } from "./controllers/controllerHolder";
 import { Spectator } from "../src/entities/spectator";
 import { Cube } from "../src/entities/cube";
-import { ISocketMessageType } from "../types/socket";
 import { IChunkReader, WorldModel } from "../src/worldModel";
 import { GameSocketController } from "./controllers/gameSocketController";
 import { getMyUid, IS_MOBILE, SocketInterface } from "./app";

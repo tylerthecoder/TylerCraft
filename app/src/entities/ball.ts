@@ -1,5 +1,5 @@
 import { Entity, FaceLocater } from "./entity";
-import { IDim } from "../../types";
+import { IDim } from "../types";
 import { Vector3D } from "../utils/vector";
 import { MovableEntity } from "./moveableEntity";
 

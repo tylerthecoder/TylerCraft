@@ -1,5 +1,5 @@
 import { Renderer } from "./renderer";
-import { Camera } from "../cameras/camera";
+import { Camera } from "../../src/camera";
 import { Entity } from "../../src/entities/entity";
 import { arrayMul } from "../../src/utils";
 import TextureMapper from "../textureMapper";
