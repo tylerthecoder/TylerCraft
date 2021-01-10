@@ -1,7 +1,7 @@
 {
   "name": "tylercraft",
   "license": "MIT",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "TylerCraft, My version of a web based MineCraft",
   "main": "dist/server/app.js",
   "types": "dist/server/app.d.ts",
@@ -10,6 +10,9 @@
     "type": "git",
     "url": "git+https://github.com/tylerthecoder/TylerCraft"
   },
+  "files": [
+    "dist/**/*"
+  ],
   "scripts": {
     "dev:server": "DOTENV_CONFIG_PATH=env/local.env npm-run-all --parallel wbuild:server wstart:server",
     "start:server": "node -r dotenv/config ./dist/server/server.js",
@@ -20,7 +23,6 @@
     "dev:client": "DOTENV_CONFIG_PATH=env/local.env npm-run-all --parallel ",
     "build:client": "DOTENV_CONFIG_PATH=env/local.env webpack --config webpack.config.js",
     "wbuild:client": "webpack --watch --config webpack.config.js",
-    "clean": "rm -rf bin public node_modules",
     "prepare": "npm run build:server && npm run build:client"
   },
   "dependencies": {
