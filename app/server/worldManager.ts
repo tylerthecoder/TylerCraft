@@ -2,13 +2,15 @@ import { DbWorldModel } from "./dbWorldModel";
 import { ServerGame } from "./serverGame";
 import { ISocketMessage, ISocketMessageType } from "../src/types";
 import * as wSocket from "ws";
-import { SocketInterface } from "./app";
+import SocketServer from "./socket";
 
 export class WorldManager {
   private worlds: Map<string, ServerGame> = new Map();
   private worldModel = new DbWorldModel();
 
-  constructor() {
+  constructor(
+    private SocketInterface: SocketServer
+  ) {
     SocketInterface.listenForConnection((ws: wSocket) => {
       SocketInterface.listenTo(ws, async (message: ISocketMessage) => {
         // console.log(message);
@@ -49,6 +51,7 @@ export class WorldManager {
     if (loadedWorld) {
       // add the world to our local list
       const world = new ServerGame(
+        this.SocketInterface,
         this.worldModel,
         loadedWorld.chunkReader,
         loadedWorld.data
@@ -72,6 +75,7 @@ export class WorldManager {
     const worldId = worldData.worldId;
 
     const newWorld = new ServerGame(
+      this.SocketInterface,
       this.worldModel,
       worldData.chunkReader,
     );

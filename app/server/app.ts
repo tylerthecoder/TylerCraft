@@ -5,7 +5,6 @@ import * as wSocket from "ws";
 import { Db, MongoClient } from "mongodb";
 
 let worldManager: WorldManager;
-export let SocketInterface: SocketServer;
 export let db: Db;
 
 const addRoutes = (app: Application) => {
@@ -15,20 +14,16 @@ const addRoutes = (app: Application) => {
   });
 }
 
-const setupSocketServer = (wss: wSocket.Server) => {
-  SocketInterface = new SocketServer(wss);
-}
-
-const main = async (client: MongoClient) => {
+const main = async (client: MongoClient, wss: wSocket.Server) => {
   db = client.db("games");
 
   console.log("Database Connected");
-  worldManager = new WorldManager();
+  const SocketInterface = new SocketServer(wss);
+  worldManager = new WorldManager(SocketInterface);
 }
 
 const TylerCraftApp = {
   main,
-  setupSocketServer,
   addRoutes,
 }
 

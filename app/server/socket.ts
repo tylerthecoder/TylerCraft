@@ -1,5 +1,8 @@
 import * as wSocket from "ws";
 import { ISocketMessage } from "../src/types";
+import { IncomingMessage } from "http";
+import URL from "url";
+import { APP_NAME } from "../src/config";
 
 type ConnectionListener = (ws: wSocket) => void;
 type MessageListener = (message: ISocketMessage) => void;
@@ -17,7 +20,16 @@ export default class SocketServer {
     this.connectionListeners.push(listener);
   }
 
-  newConnection(ws: wSocket): void {
+  newConnection(ws: wSocket, request: IncomingMessage): void {
+    const queryParams = URL.parse(request.url!, true).query;
+
+    // only accept socket connections if they were meant for me
+    if (queryParams["app"] !== APP_NAME) {
+      return;
+    }
+
+    console.log("Tylercraft socket connection");
+
     this.connectionListeners.forEach(func => {
       func(ws);
     });

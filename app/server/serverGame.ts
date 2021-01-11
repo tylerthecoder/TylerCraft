@@ -4,7 +4,7 @@ import { Game, ISerializedGame } from "../src/game";
 import { IAction, ISocketMessage, ISocketMessageType } from "../src/types";
 import { Vector, Vector2D } from "../src/utils/vector";
 import { IChunkReader, WorldModel } from "../src/worldModel";
-import { SocketInterface } from "./app";
+import SocketServer from "./socket";
 
 export class ServerGame extends Game {
   clients: Players;
@@ -14,10 +14,15 @@ export class ServerGame extends Game {
     action: IAction
   }> = [];
 
-  constructor(worldModel: WorldModel, chunkReader: IChunkReader, serializedData?: ISerializedGame) {
+  constructor(
+    private SocketInterface: SocketServer,
+    worldModel: WorldModel,
+    chunkReader: IChunkReader,
+    serializedData?: ISerializedGame
+  ) {
     super(worldModel, chunkReader, { data: serializedData, multiplayer: true });
 
-    this.clients = new Players(this);
+    this.clients = new Players(this, SocketInterface);
     this.loop();
   }
 
@@ -59,7 +64,7 @@ export class ServerGame extends Game {
     const chunk = this.world.getChunkFromPos(chunkPos, { generateIfNotFound: true });
     if (!chunk) throw new Error("Chunk wasn't found");
     const serializedData = chunk.serialize();
-    SocketInterface.send(ws, {
+    this.SocketInterface.send(ws, {
       type: ISocketMessageType.setChunk,
       setChunkPayload: {
         pos: chunkPosString,
@@ -71,7 +76,7 @@ export class ServerGame extends Game {
   addSocket(uid: string, ws: wSocket): void {
     this.clients.addPlayer(uid, ws);
 
-    SocketInterface.listenTo(ws, (message: ISocketMessage) => {
+    this.SocketInterface.listenTo(ws, (message: ISocketMessage) => {
       console.log("Got Message", message);
       switch (message.type) {
         case ISocketMessageType.actions: {

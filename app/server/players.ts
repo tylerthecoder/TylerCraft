@@ -1,18 +1,21 @@
 import * as wSocket from "ws";
 import { Player } from "../src/entities/player";
 import { ISocketMessage, ISocketMessageType } from "../src/types";
-import { SocketInterface } from "./app";
 import { ServerGame } from "./serverGame";
+import SocketServer from "./socket";
 
 export default class Players {
   players: Map<wSocket, Player> = new Map();
 
-  constructor(public game: ServerGame) { }
+  constructor(
+    public game: ServerGame,
+    private SocketInterface: SocketServer,
+  ) { }
 
   sendMessageToAll(message: ISocketMessage, exclude?: wSocket) {
     for (const socket of this.players.keys()) {
       if (exclude && socket === exclude) continue;
-      SocketInterface.send(socket, message);
+      this.SocketInterface.send(socket, message);
     }
   }
 
@@ -31,7 +34,7 @@ export default class Players {
         activePlayers: Array.from(this.players.values()).map(p => p.uid),
       }
     };
-    SocketInterface.send(ws, welcomeMessage);
+    this.SocketInterface.send(ws, welcomeMessage);
 
     // add them to the SYSTEM
     this.players.set(ws, player);

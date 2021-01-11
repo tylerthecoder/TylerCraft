@@ -15,8 +15,6 @@ export const server = app.listen(port, () => console.log(`Server running on port
 
 const wss = new wSocket.Server({ server });
 
-TylerCraftApp.setupSocketServer(wss);
-
 const start = async () => {
   const URI = process.env.DB_URL as string;
   // create the mongo client
@@ -27,7 +25,7 @@ const start = async () => {
     // useFindAndModify: true,
   });
 
-  TylerCraftApp.main(client);
+  TylerCraftApp.main(client, wss);
 }
 
 
