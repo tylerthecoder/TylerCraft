@@ -1,10 +1,11 @@
-import { CONFIG, SERVER_URL } from "../../src/config";
+import { CONFIG } from "../../src/config";
 import { IGameMetadata, Game } from "../../src/game";
 import { Chunk, } from "../../src/world/chunk";
 import { IChunkReader, IEmptyWorld, IGameReader, WorldModel } from "../../src/worldModel";
 import { ISocketMessage, ISocketMessageType, ISocketWelcomePayload } from "../../src/types";
 import { getMyUid, SocketInterface } from "../app";
 import { SocketListener } from "../socket";
+import { SERVER_URL } from "../clientConfig";
 
 export class NetworkWorldModel extends WorldModel {
   private async waitForWelcomeMessage() {

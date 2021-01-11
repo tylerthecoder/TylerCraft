@@ -16,7 +16,6 @@ const addRoutes = (app: Application) => {
 
 const main = async (client: MongoClient, wss: wSocket.Server) => {
   db = client.db("games");
-
   console.log("Database Connected");
   const SocketInterface = new SocketServer(wss);
   worldManager = new WorldManager(SocketInterface);

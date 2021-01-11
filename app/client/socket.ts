@@ -1,4 +1,4 @@
-import { SOCKET_SERVER_URL } from "../src/config";
+import { SOCKET_SERVER_URL } from "./clientConfig";
 import { ISocketMessage, } from "../src/types";
 
 export type SocketListener = (message: ISocketMessage) => void;

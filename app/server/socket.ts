@@ -2,7 +2,6 @@ import * as wSocket from "ws";
 import { ISocketMessage } from "../src/types";
 import { IncomingMessage } from "http";
 import URL from "url";
-import { APP_NAME } from "../src/config";
 
 type ConnectionListener = (ws: wSocket) => void;
 type MessageListener = (message: ISocketMessage) => void;
@@ -24,7 +23,7 @@ export default class SocketServer {
     const queryParams = URL.parse(request.url!, true).query;
 
     // only accept socket connections if they were meant for me
-    if (queryParams["app"] !== APP_NAME) {
+    if (queryParams["app"] !== "tylercraft") {
       return;
     }
 

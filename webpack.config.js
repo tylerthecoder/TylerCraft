@@ -1,15 +1,12 @@
-// const CleanWebpackPlugin = require('clean-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyPlugin = require("copy-webpack-plugin");
-const DotenvPlugin = require('dotenv-webpack');
-
+const webpack = require("webpack");
 
 module.exports = {
   entry: './app/client/app.ts',
   mode: "development",
   devtool: 'inline-source-map',
   plugins: [
-    // new CleanWebpackPlugin(['public/build']),
     new HtmlWebpackPlugin({
       template: 'app/assets/index.html',
       filename: "index.html",
@@ -30,8 +27,9 @@ module.exports = {
       to: "css/",
     },
     ]),
-    new DotenvPlugin({
-      path: process.env.DOTENV_CONFIG_PATH,
+    new webpack.EnvironmentPlugin({
+      SOCKET_SERVER_URL: "ws://localhost:3000/",
+      SERVER_URL: "http://localhost:3000/",
     }),
   ],
   output: {

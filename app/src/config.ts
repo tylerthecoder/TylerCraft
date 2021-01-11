@@ -45,10 +45,6 @@ export function setConfig(config: IConfig) {
   CONFIG = { ...config };
 }
 
-export const APP_NAME = "tylercraft";
-export const SOCKET_SERVER_URL = `${process.env.SOCKET_SERVER_URL}?app=${APP_NAME}`;
-export const SERVER_URL = process.env.SERVER_URL;
-
 // declare var window;
 
 // if (window)
