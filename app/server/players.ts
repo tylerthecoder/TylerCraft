@@ -1,4 +1,5 @@
 import * as wSocket from "ws";
+import { CONFIG } from "../src/config";
 import { Player } from "../src/entities/player";
 import { ISocketMessage, ISocketMessageType } from "../src/types";
 import { ServerGame } from "./serverGame";
@@ -32,6 +33,8 @@ export default class Players {
         worldId: this.game.gameId,
         entities: this.game.entities.serialize(),
         activePlayers: Array.from(this.players.values()).map(p => p.uid),
+        config: CONFIG,
+        name: this.game.name,
       }
     };
     this.SocketInterface.send(ws, welcomeMessage);

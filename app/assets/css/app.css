@@ -235,14 +235,26 @@ button:hover {
   animation: fade 1s linear;
 }
 
-#pickWorldScreen {
+#pickWorldScreen.hidden {
   display: none;
 }
 
-#worldOptionsScreen {
+#pickWorldScreen.shown {
+  display: flex;
+  flex-direction: column;
+}
+
+#worldOptionsScreen.hidden {
   display: none;
+}
+
+#worldOptionsScreen.shown {
   flex-direction: column;
   justify-content: center;
+}
+
+#configFormStartButton {
+  width: 100%;
 }
 
 .gameItem {

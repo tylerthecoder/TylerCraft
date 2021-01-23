@@ -1,8 +1,7 @@
 import { CONFIG } from "../../src/config";
 import { IGameMetadata, Game } from "../../src/game";
 import { Chunk, } from "../../src/world/chunk";
-import { IChunkReader, IEmptyWorld, IGameReader, WorldModel } from "../../src/worldModel";
-import { ISocketMessage, ISocketMessageType, ISocketWelcomePayload } from "../../src/types";
+import { ICreateWorldOptions, ISocketMessage, ISocketMessageType, ISocketWelcomePayload, IWorldData, WorldModel, IChunkReader } from "../../src/types";
 import { getMyUid, SocketInterface } from "../app";
 import { SocketListener } from "../socket";
 import { SERVER_URL } from "../clientConfig";
@@ -22,7 +21,7 @@ export class NetworkWorldModel extends WorldModel {
     return welcomeMessage;
   }
 
-  private makeGameReader(welcomeMessage: ISocketWelcomePayload): IGameReader {
+  private makeGameReader(welcomeMessage: ISocketWelcomePayload): IWorldData {
     return {
       data: {
         // send this over socket soon
@@ -40,15 +39,20 @@ export class NetworkWorldModel extends WorldModel {
       },
       chunkReader: new ServerGameReader(),
       activePlayers: welcomeMessage.activePlayers,
+      worldId: welcomeMessage.worldId,
+      config: welcomeMessage.config,
+      name: welcomeMessage.name,
+      multiplayer: true,
     }
   }
 
 
-  public async createWorld(): Promise<IEmptyWorld> {
+  public async createWorld(createWorldOptions: ICreateWorldOptions): Promise<IWorldData> {
     SocketInterface.send({
       type: ISocketMessageType.newWorld,
       newWorldPayload: {
         myUid: getMyUid(),
+        ...createWorldOptions,
       }
     });
 
@@ -61,10 +65,13 @@ export class NetworkWorldModel extends WorldModel {
     return {
       worldId: welcomeMessage.worldId,
       chunkReader: new ServerGameReader(),
+      name: createWorldOptions.gameName,
+      config: createWorldOptions.config,
+      multiplayer: true,
     }
   }
 
-  public async getWorld(worldId: string): Promise<IGameReader | null> {
+  public async getWorld(worldId: string): Promise<IWorldData | null> {
     SocketInterface.send({
       type: ISocketMessageType.joinWorld,
       joinWorldPayload: {

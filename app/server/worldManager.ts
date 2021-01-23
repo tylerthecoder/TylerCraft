@@ -1,6 +1,6 @@
 import { DbWorldModel } from "./dbWorldModel";
 import { ServerGame } from "./serverGame";
-import { ISocketMessage, ISocketMessageType } from "../src/types";
+import { ICreateWorldOptions, ISocketMessage, ISocketMessageType } from "../src/types";
 import * as wSocket from "ws";
 import SocketServer from "./socket";
 
@@ -23,7 +23,7 @@ export class WorldManager {
           }
         } else if (message.type === ISocketMessageType.newWorld) {
           const payload = message.newWorldPayload!;
-          const world = await this.createWorld();
+          const world = await this.createWorld(payload);
           console.log("Create Id: ", world.gameId);
           world.addSocket(payload.myUid, ws);
         } else if (message.type === ISocketMessageType.saveWorld) {
@@ -46,43 +46,39 @@ export class WorldManager {
     }
 
     // we don't have the world, time to fetch it
-    const loadedWorld = await this.worldModel.getWorld(worldId);
+    const loadedWorldData = await this.worldModel.getWorld(worldId);
 
-    if (loadedWorld) {
-      // add the world to our local list
-      const world = new ServerGame(
-        this.SocketInterface,
-        this.worldModel,
-        loadedWorld.chunkReader,
-        loadedWorld.data
-      );
-      this.worlds.set(
-        worldId,
-        world,
-      );
-      return world;
-    }
+    if (!loadedWorldData) return null;
 
-    return null;
+    // add the world to our local list
+    const serverWorld = new ServerGame(
+      this.SocketInterface,
+      this.worldModel,
+      loadedWorldData,
+    );
+    this.worlds.set(
+      worldId,
+      serverWorld,
+    );
+    return serverWorld;
   }
 
   async getAllWorlds() {
     return this.worldModel.getAllWorlds();
   }
 
-  async createWorld(): Promise<ServerGame> {
-    const worldData = await this.worldModel.createWorld();
-    const worldId = worldData.worldId;
+  async createWorld(createWorldOptions: ICreateWorldOptions): Promise<ServerGame> {
+    console.log(createWorldOptions);
+    const worldData = await this.worldModel.createWorld(createWorldOptions);
 
     const newWorld = new ServerGame(
       this.SocketInterface,
       this.worldModel,
-      worldData.chunkReader,
+      worldData,
     );
-    newWorld.gameId = worldId;
 
     this.worlds.set(
-      worldId,
+      worldData.worldId,
       newWorld,
     );
 

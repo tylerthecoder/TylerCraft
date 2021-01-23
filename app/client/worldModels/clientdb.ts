@@ -1,7 +1,6 @@
-import { CONFIG } from "../../src/config";
 import { Game, IGameMetadata, ISerializedGame } from "../../src/game";
+import { IChunkReader, ICreateWorldOptions, IWorldData, WorldModel } from "../../src/types";
 import { Chunk, ISerializedChunk } from "../../src/world/chunk";
-import { IChunkReader, IGameReader, WorldModel, IEmptyWorld } from "../../src/worldModel";
 
 export class ClientChunkReader implements IChunkReader {
 
@@ -29,7 +28,7 @@ export class ClientDb extends WorldModel {
   }
 
   async loadDb() {
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       const openRequest = window.indexedDB.open("TylerCraftDB", 4);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       openRequest.onerror = function (event: any) {
@@ -60,11 +59,13 @@ export class ClientDb extends WorldModel {
     });
   }
 
-  async createWorld(): Promise<IEmptyWorld> {
+  async createWorld(createWorldOptions: ICreateWorldOptions): Promise<IWorldData> {
     const worldId = Math.random() + "";
     return {
       worldId,
+      name: createWorldOptions.gameName,
       chunkReader: new ClientChunkReader(),
+      config: createWorldOptions.config,
     }
   }
 
@@ -90,7 +91,7 @@ export class ClientDb extends WorldModel {
     });
   }
 
-  async getWorld(worldId: string): Promise<IGameReader> {
+  async getWorld(worldId: string): Promise<IWorldData> {
     const world: ISerializedGame = await new Promise((resolve) => {
       const transaction = this.db.transaction([this.WORLDS_OBS]);
       const objectStore = transaction.objectStore(this.WORLDS_OBS);
@@ -131,8 +132,11 @@ export class ClientDb extends WorldModel {
         },
         name: world.name,
       },
+      config: world.config,
       chunkReader: new ClientChunkReader(chunkReader),
       activePlayers: [],
+      worldId,
+      name: world.name,
     }
   }
 

@@ -1,15 +1,14 @@
 import { Camera } from "../src/camera";
 import { EntityCamera } from "./cameras/entityCamera";
-import { Game, ISerializedGame } from "../src/game";
+import { Game } from "../src/game";
 import { Entity } from "../src/entities/entity";
 import { canvas } from "./canvas";
-import { IDim, IAction, IActionType, ISocketMessageType } from "../src/types";
+import { IDim, IAction, IActionType, ISocketMessageType, WorldModel, IWorldData } from "../src/types";
 import WorldRenderer from "./renders/worldRender";
 import { BLOCKS } from "../src/blockdata";
 import { ControllerHolder } from "./controllers/controllerHolder";
 import { Spectator } from "../src/entities/spectator";
 import { Cube } from "../src/entities/cube";
-import { IChunkReader, WorldModel } from "../src/worldModel";
 import { GameSocketController } from "./controllers/gameSocketController";
 import { getMyUid, IS_MOBILE, SocketInterface } from "./app";
 import { Player } from "../src/entities/player";
@@ -30,14 +29,9 @@ export class ClientGame extends Game {
 
   constructor(
     worldModel: WorldModel,
-    chunkReader: IChunkReader,
-    opts: {
-      data?: ISerializedGame,
-      multiplayer: boolean,
-      activePlayers: string[],
-    }
+    worldData: IWorldData
   ) {
-    super(worldModel, chunkReader, opts)
+    super(worldModel, worldData);
     this.controllers = new ControllerHolder();
     this.worldRenderer = new WorldRenderer(this.world, this);
     this.mainPlayer = this.entities.createOrGetPlayer(true, getMyUid());
@@ -47,12 +41,13 @@ export class ClientGame extends Game {
 
     if (!this.mainPlayer) throw new Error("Main player was not found");
 
+    const activePlayers = worldData.activePlayers ?? [];
     // draw only the active players
     for (const entity of this.entities.iterable()) {
       // if an entity is a player but not active then don't render them
       if (
         entity instanceof Player &&
-        !opts.activePlayers.includes(entity.uid)
+        activePlayers.includes(entity.uid)
       ) continue;
       if (entity.uid === getMyUid()) continue; // don't render the main player
       this.onNewEntity(entity);

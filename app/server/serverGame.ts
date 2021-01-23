@@ -1,9 +1,8 @@
 import Players from "./players";
 import * as wSocket from "ws";
-import { Game, ISerializedGame } from "../src/game";
-import { IAction, ISocketMessage, ISocketMessageType } from "../src/types";
+import { Game } from "../src/game";
+import { IAction, ISocketMessage, ISocketMessageType, IWorldData, WorldModel } from "../src/types";
 import { Vector, Vector2D } from "../src/utils/vector";
-import { IChunkReader, WorldModel } from "../src/worldModel";
 import SocketServer from "./socket";
 
 export class ServerGame extends Game {
@@ -17,10 +16,9 @@ export class ServerGame extends Game {
   constructor(
     private SocketInterface: SocketServer,
     worldModel: WorldModel,
-    chunkReader: IChunkReader,
-    serializedData?: ISerializedGame
+    worldData: IWorldData
   ) {
-    super(worldModel, chunkReader, { data: serializedData, multiplayer: true });
+    super(worldModel, worldData);
 
     this.clients = new Players(this, SocketInterface);
     this.loop();

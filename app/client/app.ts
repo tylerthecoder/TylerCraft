@@ -2,10 +2,10 @@ import { IGameMetadata } from "../src/game";
 import { ClientDb } from "./worldModels/clientdb";
 import { NetworkWorldModel } from "./worldModels/serverSaver";
 import { ClientGame } from "./clientGame";
-import { WorldModel } from "../src/worldModel";
 import { SocketHandler } from "./socket";
 import { CONFIG, setConfig } from "../src/config";
 import { camelCaseToNormalCase } from "../src/utils";
+import { WorldModel } from "../src/types";
 
 interface IExtendedWindow extends Window {
   clientDb?: ClientDb;
@@ -15,6 +15,17 @@ interface IExtendedWindow extends Window {
 export const IS_MOBILE = /Mobi/.test(window.navigator.userAgent);
 
 console.log("Is Mobile: ", IS_MOBILE)
+
+// helper functions
+function showElement(e: HTMLElement) {
+  e.classList.remove("hidden");
+  e.classList.add("shown");
+}
+
+function hideElement(e: HTMLElement) {
+  e.classList.add("hidden");
+  e.classList.remove("shown");
+}
 
 
 // generate your unique id
@@ -42,7 +53,7 @@ ePlayLocalButton.addEventListener("click", async () => {
   const clientDb = new ClientDb();
   await clientDb.loadDb();
   (window as IExtendedWindow).clientDb = clientDb;
-  showWorldPicker(clientDb, false);
+  showWorldPicker(clientDb);
 });
 
 export const SocketInterface = new SocketHandler();
@@ -50,11 +61,11 @@ export const SocketInterface = new SocketHandler();
 ePlayOnlineButton.addEventListener("click", async () => {
   const serverWorldModel = new NetworkWorldModel();
   await SocketInterface.connect();
-  showWorldPicker(serverWorldModel, true);
+  showWorldPicker(serverWorldModel);
 });
 
-async function showWorldPicker(worldModel: WorldModel, multiplayer: boolean) {
-  ePickWorldScreen.style.display = "block";
+async function showWorldPicker(worldModel: WorldModel) {
+  showElement(ePickWorldScreen);
   eGameTypeScreen.style.display = "none";
 
   // get all the saved worlds
@@ -87,26 +98,19 @@ async function showWorldPicker(worldModel: WorldModel, multiplayer: boolean) {
     ele.addEventListener("click", async () => {
       if (ele.id === "game-new") {
         console.log("new World");
-        showWorldOptionsScreen(worldModel, multiplayer);
+        showWorldOptionsScreen(worldModel);
         return;
       }
 
       const worldId = ele.id.substr(5);
-      const serializedWorld = await worldModel.getWorld(worldId);
-      if (!serializedWorld) throw new Error("World wasn't found. Db must be effed up");
-
-      console.log(serializedWorld.data.config);
-
-      setConfig({
-        ...CONFIG,
-        ...serializedWorld.data.config,
-      });
+      const worldData = await worldModel.getWorld(worldId);
+      if (!worldData) throw new Error("World wasn't found. Db must be effed up");
 
       const clientGame = new ClientGame(
         worldModel,
-        serializedWorld.chunkReader,
-        { data: serializedWorld.data, multiplayer, activePlayers: serializedWorld.activePlayers }
+        worldData,
       );
+
       startGame(clientGame);
     });
   });
@@ -162,9 +166,9 @@ function createConfigHtml(
   return "";
 }
 
-function showWorldOptionsScreen(worldModel: WorldModel, multiplayer: boolean) {
-  eWorldOptionsScreen.style.display = "flex"
-  ePickWorldScreen.style.display = "none";
+function showWorldOptionsScreen(worldModel: WorldModel) {
+  showElement(eWorldOptionsScreen);
+  hideElement(ePickWorldScreen);
 
   // Goal:
   // Make a way to extract all of the properties from the CONFIG and make
@@ -211,10 +215,15 @@ function showWorldOptionsScreen(worldModel: WorldModel, multiplayer: boolean) {
 
     assignValuesToConfigObject("", CONFIG);
 
-    const newWorld = await worldModel.createWorld();
-    const game = new ClientGame(worldModel, newWorld.chunkReader, { multiplayer, activePlayers: [] });
-    game.gameId = newWorld.worldId;
-    game.name = formData.get("name") as string;
+    const newWorldData = await worldModel.createWorld({
+      config: CONFIG,
+      gameName: formData.get("name") as string,
+    });
+
+    const game = new ClientGame(
+      worldModel,
+      newWorldData,
+    );
 
     startGame(game);
   });
@@ -224,5 +233,5 @@ function startGame(game: ClientGame) {
   console.log("Starting game", game);
   (window as IExtendedWindow).game = game;
   ePickWorldScreen.classList.add("fade");
-  eStartMenu.classList.add("fade")
+  eStartMenu.classList.add("fade");
 }

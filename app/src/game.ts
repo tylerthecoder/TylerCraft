@@ -4,10 +4,9 @@ import { Entity } from "./entities/entity";
 import { Cube } from "./entities/cube";
 import { Vector3D, Vector } from "./utils/vector";
 import { MovableEntity } from "./entities/moveableEntity";
-import { IAction, IActionType, ISocketMessage } from "./types";
-import { CONFIG, IConfig } from "./config";
+import { IAction, IActionType, ISocketMessage, IWorldData, WorldModel } from "./types";
+import { CONFIG, IConfig, setConfig } from "./config";
 import { deserializeEntity } from "./serializer";
-import { IChunkReader, WorldModel } from "./worldModel";
 import { EntityHolder, ISerializedEntities } from "./entities/entityHolder";
 
 export interface ISerializedGame {
@@ -33,24 +32,42 @@ export class Game {
 
   constructor(
     private worldModel: WorldModel,
-    chunkReader: IChunkReader,
-    { data, multiplayer }: {
-      data?: ISerializedGame,
-      multiplayer: boolean,
-    }
+    worldData: IWorldData,
   ) {
-    this.multiPlayer = multiplayer;
-    if (data) {
-      this.world = new World(this, chunkReader, data.world);
-      this.entities = new EntityHolder(this, data.entities)
-      this.gameId = data.gameId;
-      this.name = data.name;
-    } else {
-      this.world = new World(this, chunkReader);
-      this.entities = new EntityHolder(this);
-      this.gameId = `${Math.random()}`;
-      this.name = "Game " + this.gameId;
+    this.multiPlayer = Boolean(worldData.multiplayer);
+
+    this.world = worldData.data ?
+      new World(
+        this,
+        worldData.chunkReader,
+        worldData.data.world
+      )
+      :
+      new World(
+        this,
+        worldData.chunkReader
+      );
+
+    this.entities = worldData.data ?
+      new EntityHolder(
+        this,
+        worldData.data.entities
+      )
+      :
+      new EntityHolder(
+        this
+      );
+
+    this.gameId = worldData.worldId;
+    this.name = worldData.name;
+
+    if (worldData.config) {
+      setConfig({
+        ...CONFIG,
+        ...worldData.config,
+      });
     }
+
   }
 
   serialize(): ISerializedGame {

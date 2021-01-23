@@ -1,7 +1,9 @@
 import { BLOCKS } from "../src/blockdata";
 import { ISerializedEntity } from "../src/entities/entity";
+import { IConfig } from "./config";
 import { ISerializedEntities } from "./entities/entityHolder";
-import { ISerializedChunk } from "./world/chunk";
+import { Game, IGameMetadata, ISerializedGame } from "./game";
+import { Chunk, ISerializedChunk } from "./world/chunk";
 
 export type IDim = [number, number, number];
 
@@ -64,6 +66,33 @@ export interface IAction {
   }
 }
 
+export interface ICreateWorldOptions {
+  gameName: string;
+  config: IConfig;
+}
+
+export interface IChunkReader {
+  getChunk(chunkPos: string): Promise<Chunk | null>;
+}
+
+export interface IWorldData {
+  chunkReader: IChunkReader;
+  worldId: string;
+  name: string;
+  config: IConfig;
+  activePlayers?: string[];
+  data?: ISerializedGame;
+  multiplayer?: boolean;
+}
+
+export abstract class WorldModel {
+  abstract createWorld(createWorldOptions: ICreateWorldOptions): Promise<IWorldData>;
+  abstract getWorld(worldId: string): Promise<IWorldData | null>;
+  abstract saveWorld(data: Game): Promise<void>;
+  abstract getAllWorlds(): Promise<IGameMetadata[]>;
+  abstract deleteWorld(worldId: string): Promise<void>;
+}
+
 export const enum ISocketMessageType {
   // from client
   getChunk, // server sends setChunk
@@ -85,6 +114,8 @@ export interface ISocketWelcomePayload {
   worldId: string;
   entities: ISerializedEntities;
   activePlayers: string[];
+  config: IConfig;
+  name: string;
 }
 
 export interface ISocketMessage {
@@ -96,6 +127,8 @@ export interface ISocketMessage {
   },
   newWorldPayload?: {
     myUid: string;
+    config: IConfig;
+    gameName: string;
   },
   saveWorldPayload?: {
     worldId: string;
