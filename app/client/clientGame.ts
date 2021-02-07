@@ -66,6 +66,7 @@ export class ClientGame extends Game {
 
   async load() {
     await canvas.loadProgram();
+    await this.world.load();
 
     if (this.multiPlayer) {
       const socketController = new GameSocketController(this);
@@ -74,8 +75,6 @@ export class ClientGame extends Game {
 
     this.setUpPlayer();
     // this.setUpSpectator();
-
-    this.world.load();
 
     requestAnimationFrame(this.loop.bind(this));
   }

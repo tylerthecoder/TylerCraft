@@ -7,10 +7,10 @@ class RandomClass {
   private _rndNoise: simplexNoise;
   private jagFactor = CONFIG.terrain.jagFactor;
 
-  constructor() {
-    random.use(seedrandom(CONFIG.seed));
-
-    this._rndNoise = new simplexNoise(CONFIG.seed);
+  setSeed(seed: string) {
+    console.log("Setting random seed", seed);
+    random.use(seedrandom(seed));
+    this._rndNoise = new simplexNoise(seed);
   }
 
   // returns random number from [0,1]

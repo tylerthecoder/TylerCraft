@@ -8,6 +8,7 @@ import { IAction, IActionType, ISocketMessage, IWorldData, WorldModel } from "./
 import { CONFIG, IConfig, setConfig } from "./config";
 import { deserializeEntity } from "./serializer";
 import { EntityHolder, ISerializedEntities } from "./entities/entityHolder";
+import Random from "./utils/random";
 
 export interface ISerializedGame {
   config: IConfig;
@@ -34,6 +35,8 @@ export class Game {
     private worldModel: WorldModel,
     worldData: IWorldData,
   ) {
+    Random.setSeed(worldData.config.seed);
+
     this.multiPlayer = Boolean(worldData.multiplayer);
 
     this.world = worldData.data ?

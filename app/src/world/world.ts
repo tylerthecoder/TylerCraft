@@ -88,18 +88,21 @@ export class World {
     ]);
   }
 
-  loadChunk(chunkPos: Vector2D) {
+  async loadChunk(chunkPos: Vector2D): Promise<void> {
     // no repeat loading
     if (this.loadingChunks.has(chunkPos.toString())) {
       return;
     }
     this.loadingChunks.add(chunkPos.toString());
-    this.chunkReader.getChunk(chunkPos.toString()).then(chunk => {
-      // this should only happen on the client side when single player
-      // and on the server side when multiplayer
-      if (!chunk) chunk = this.terrainGenerator.generateChunk(chunkPos);
-      this.setChunkAtPos(chunk, chunkPos);
-    })
+    return new Promise(resolve => {
+      this.chunkReader.getChunk(chunkPos.toString()).then(chunk => {
+        // this should only happen on the client side when single player
+        // and on the server side when multiplayer
+        if (!chunk) chunk = this.terrainGenerator.generateChunk(chunkPos);
+        this.setChunkAtPos(chunk, chunkPos);
+        resolve();
+      })
+    });
   }
 
   getChunkFromWorldPoint(pos: Vector3D) {
@@ -135,14 +138,18 @@ export class World {
   }
 
   // load the starting chunks
-  load() {
+  async load() {
+    const loadPromises: Promise<void>[] = [];
     for (let i = -CONFIG.loadDistance; i < CONFIG.loadDistance; i++) {
       for (let j = -CONFIG.loadDistance; j < CONFIG.loadDistance; j++) {
         const chunkPos = new Vector2D([i, j]);
-        if (!this.hasChunk(chunkPos))
-          this.loadChunk(chunkPos);
+        if (!this.hasChunk(chunkPos)) {
+          const loadPromise = this.loadChunk(chunkPos);
+          loadPromises.push(loadPromise);
+        }
       }
     }
+    await Promise.all(loadPromises);
   }
 
   update(entities: Entity[]) {
