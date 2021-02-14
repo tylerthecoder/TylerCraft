@@ -90,7 +90,7 @@ export class HudRenderer extends Renderer {
     }
     // const rotVec = new Vector2D([camera.rot[0], camera.rot[1]]);
     // rotVec.data = rotVec.data.map(n => Math.floor(n * 100) / 100);
-    // this.drawText(rotVec.toString(), 0, 70);
+    // this.drawText(rotVec.toIndex(), 0, 70);
 
   }
 

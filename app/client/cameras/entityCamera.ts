@@ -11,7 +11,7 @@ export enum PlayerPerspective {
 
 export class EntityCamera extends Camera {
   private perspective = PlayerPerspective.FirstPerson;
-  offset: Vector3D = Vector.zero3D;
+  offset: Vector3D = Vector3D.zero;
   rot: Vector3D;
 
   constructor(public entity: MovableEntity) {
@@ -31,7 +31,7 @@ export class EntityCamera extends Camera {
   }
 
   rotateBy(x: number, y: number) {
-    this.entity.rotate(new Vector([1, x, y]));
+    this.entity.rotate(new Vector3D([1, x, y]));
     // set my rot as my entities rot
     if (this.perspective === PlayerPerspective.ThirdPersonFront) {
       this.rot = this.entity.rot.add(new Vector3D([0, Math.PI, 0]));
@@ -43,7 +43,7 @@ export class EntityCamera extends Camera {
   }
 
   get pos(): Vector3D {
-    let offset = Vector.zero3D;
+    let offset = Vector3D.zero;
 
     if (this.perspective === PlayerPerspective.ThirdPersonBack) {
       offset = this.entity.rot

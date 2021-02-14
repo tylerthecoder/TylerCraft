@@ -36,7 +36,7 @@ export class Chunk {
   constructor(
     public chunkPos: Vector2D,
   ) {
-    this.uid = this.chunkPos.toString();
+    this.uid = this.chunkPos.toIndex();
     this.pos = new Vector3D([
       this.chunkPos.get(0) * CONFIG.terrain.chunkSize,
       0,
@@ -53,18 +53,18 @@ export class Chunk {
     }
 
     // for (const visData of chunk.visibleCubesFaces) {
-    //   visibleData.push([visData.cube.pos.toString(), visData.faceVectors.map(d => d.data as IDim)]);
+    //   visibleData.push([visData.cube.pos.toIndex(), visData.faceVectors.map(d => d.data as IDim)]);
     // }
 
     return {
-      chunkPos: this.chunkPos.toString(),
+      chunkPos: this.chunkPos.toIndex(),
       cubes: cubeData,
       // vis: visibleData,
     }
   }
 
   static deserialize(chunkData: ISerializedChunk) {
-    const chunkPos = Vector.fromString(chunkData.chunkPos) as Vector2D;
+    const chunkPos = Vector2D.fromIndex(chunkData.chunkPos);
 
     const chunk = new Chunk(chunkPos);
     chunk.cubes = new Map(
@@ -111,7 +111,7 @@ export class Chunk {
     const ifCubeExistThenPushOut = (pos: Vector3D) => {
       pos.data = pos.data.map(Math.floor);
 
-      const cube = this.cubes.get(pos.toString());
+      const cube = this.cubes.get(pos.toIndex());
       if (!cube) return;
 
       const cubeData = BLOCK_DATA.get(cube.type)!;
@@ -129,20 +129,20 @@ export class Chunk {
         const centerY = y + .5;
         for (let z = 0; z < ent.dim[2]; z++) {
           const centerZ = z + .5;
-          const center = ent.pos.add(new Vector([centerX, centerY, centerZ]));
+          const center = ent.pos.add(new Vector3D([centerX, centerY, centerZ]));
 
           // check the unit vectors first
-          for (const vec of Vector.unitVectors3D) {
+          for (const vec of Vector3D.unitVectors) {
             const checkingPos = center.add(vec);
             ifCubeExistThenPushOut(checkingPos);
           }
 
-          for (const vec of Vector.edgeVectors3D) {
+          for (const vec of Vector3D.edgeVectors) {
             const checkingPos = center.add(vec);
             ifCubeExistThenPushOut(checkingPos);
           }
 
-          for (const vec of Vector.cornerVectors3D) {
+          for (const vec of Vector3D.cornerVectors) {
             const checkingPos = center.add(vec);
             ifCubeExistThenPushOut(checkingPos);
           }
@@ -236,7 +236,7 @@ export class Chunk {
   }
 
   getCube(pos: Vector3D): Cube | null {
-    const cube = this.cubes.get(pos.toString());
+    const cube = this.cubes.get(pos.toIndex());
     if (!cube) return null;
     return cube;
   }
@@ -246,11 +246,11 @@ export class Chunk {
   }
 
   addCube(cube: Cube) {
-    this.cubes.set(cube.pos.toString(), cube);
+    this.cubes.set(cube.pos.toIndex(), cube);
   }
 
   removeCube(cubePos: Vector3D) {
-    this.cubes.delete(cubePos.toString());
+    this.cubes.delete(cubePos.toIndex());
   }
 
   getBlockUpdateAction(): IAction {

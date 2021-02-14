@@ -1,12 +1,12 @@
 import { Entity, FaceLocater } from "./entity";
 import { IDim, IAction, IActionType } from "../types";
 import Random from "../utils/random";
-import { Vector } from "../utils/vector";
+import { Vector3D } from "../utils/vector";
 import { MovableEntity } from "./moveableEntity";
 
 export class Spectator extends MovableEntity {
   // Entity overrides
-  pos = new Vector([0, 5, 0]);
+  pos = new Vector3D([0, 5, 0]);
   dim: IDim = [1, 2, 1];
   gravitable = false;
   tangible = false;

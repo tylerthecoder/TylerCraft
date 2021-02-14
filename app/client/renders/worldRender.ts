@@ -16,6 +16,7 @@ import { Projectile } from "../../src/entities/projectile";
 import { Ball } from "../../src/entities/ball";
 import { BLOCKS } from "../../src/blockdata";
 import { PlayerRenderer } from "./playerRender";
+import { Chunk } from "../../src/world/chunk";
 
 export default class WorldRenderer {
   private renderers: Renderer[] = [];
@@ -42,7 +43,7 @@ export default class WorldRenderer {
     if (block?.type === BLOCKS.water) {
       return new Vector3D([0, .3, 1]);
     } else {
-      return Vector.zero3D;
+      return Vector3D.zero;
     }
   }
 
@@ -76,20 +77,20 @@ export default class WorldRenderer {
       return;
     }
 
-    let chunkRenderer = this.chunkRenderers.get(chunkPos.toString());
+    let chunkRenderer = this.chunkRenderers.get(chunkPos.toIndex());
 
     // this is a new chunk we haven't seen yet
     if (!chunkRenderer) {
 
       // not ideal but it is what needs to be done to make sure that the visible faces are rendered correctly
       // maybe put on another thread later.
-      this.blockUpdate(chunkPos.add(new Vector2D([0, 1])).toString());
-      this.blockUpdate(chunkPos.add(new Vector2D([1, 0])).toString());
-      this.blockUpdate(chunkPos.add(new Vector2D([0, -1])).toString());
-      this.blockUpdate(chunkPos.add(new Vector2D([-1, 0])).toString());
+      this.blockUpdate(chunkPos.add(new Vector2D([0, 1])).toIndex());
+      this.blockUpdate(chunkPos.add(new Vector2D([1, 0])).toIndex());
+      this.blockUpdate(chunkPos.add(new Vector2D([0, -1])).toIndex());
+      this.blockUpdate(chunkPos.add(new Vector2D([-1, 0])).toIndex());
 
       chunkRenderer = new ChunkRenderer(chunk, this.world);
-      this.chunkRenderers.set(chunkPos.toString(), chunkRenderer);
+      this.chunkRenderers.set(chunkPos.toIndex(), chunkRenderer);
     }
 
     renderedSet.add(chunkRenderer);
@@ -106,6 +107,19 @@ export default class WorldRenderer {
       canvas.setColorFilter(filter);
     }
 
+    // Debug, render biome centers
+    this.world.terrainGenerator.biomeGenerator.biomeGrid.forEach(biomeGridSection => {
+      if (biomeGridSection.hasBiome) {
+        const cubeToRender = new Cube(
+          BLOCKS.cloud,
+          biomeGridSection.worldPos.insert(2, 1)
+        );
+
+        const cubeRenderer = new CubeRenderer(cubeToRender);
+
+        cubeRenderer.render(camera);
+      }
+    });
 
     const renderedChunks = new Set<ChunkRenderer>();
 
@@ -155,7 +169,7 @@ export default class WorldRenderer {
         }
 
         // check if you are facing that right way to see the chunk
-        const diffChunkCamera = camera.pos.sub(chunkWorldPos).normalize();
+        const diffChunkCamera = camera.pos.sub(chunkWorldPos).normalize()
         const dist = diffChunkCamera.distFrom(cameraRotNorm);
 
         if (dist > CONFIG.fovFactor) {
@@ -164,7 +178,7 @@ export default class WorldRenderer {
           continue;
         }
 
-        renderedSet.add(chunkPos.toString());
+        renderedSet.add(chunkPos.toIndex());
 
         this.renderChunk(chunkPos, camera, renderedChunks);
       }
@@ -180,7 +194,7 @@ export default class WorldRenderer {
         for (let l = -1; l <= 1; l += 1) {
           const indexVec = new Vector2D([k, l]);
           const chunkPosToCheck = chunkPos.add(indexVec);
-          if (renderedSet.has(chunkPosToCheck.toString())) {
+          if (renderedSet.has(chunkPosToCheck.toIndex())) {
             stillShouldntRender = false;
           }
         }
@@ -198,7 +212,7 @@ export default class WorldRenderer {
       for (let l = -1; l <= 1; l += 1) {
         const indexVec = new Vector2D([k, l]);
         const chunkPos = cameraChunkPos.add(indexVec);
-        if (!renderedSet.has(chunkPos.toString()))
+        if (!renderedSet.has(chunkPos.toIndex()))
           this.renderChunk(chunkPos, camera, renderedChunks);
       }
     }

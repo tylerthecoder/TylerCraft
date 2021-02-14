@@ -31,8 +31,17 @@ class RandomClass {
     return random.int(min, max);
   }
 
+  randomFloat(min: number, max: number) {
+    return random.float(min, max);
+  }
+
   randomString() {
     return random.float(0, 1).toString();
+  }
+
+  randomElement<T>(data: T[]) {
+    const rndIndex = this.randomInt(0, data.length - 1);
+    return data[rndIndex];
   }
 }
 

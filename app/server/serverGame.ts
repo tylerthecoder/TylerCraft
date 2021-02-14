@@ -2,7 +2,7 @@ import Players from "./players";
 import * as wSocket from "ws";
 import { Game } from "../src/game";
 import { IAction, ISocketMessage, ISocketMessageType, IWorldData, WorldModel } from "../src/types";
-import { Vector, Vector2D } from "../src/utils/vector";
+import { Vector, Vector2D, Vector3D } from "../src/utils/vector";
 import SocketServer from "./socket";
 
 export class ServerGame extends Game {
@@ -58,7 +58,7 @@ export class ServerGame extends Game {
   }
 
   private sendChunkTo(chunkPosString: string, ws: wSocket) {
-    const chunkPos = Vector.fromString(chunkPosString) as Vector2D;
+    const chunkPos = Vector2D.fromIndex(chunkPosString);
     const chunk = this.world.getChunkFromPos(chunkPos, { generateIfNotFound: true });
     if (!chunk) throw new Error("Chunk wasn't found");
     const serializedData = chunk.serialize();

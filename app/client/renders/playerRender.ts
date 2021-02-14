@@ -72,11 +72,11 @@ export class PlayerRenderer extends Renderer {
     const halfPlayerSize = playerDimVec.scalarMultiply(.5);
     const bodyOrigin = bodySize.scalarMultiply(.5);
     const halfHeadSize = headSize.scalarMultiply(0.5);
-    const armOrigin = armSize.multiply([.5, 1, .5]);
-    const legOrigin = legSize.multiply([.5, 1, .5]);
+    const armOrigin = armSize.multiply(new Vector3D([.5, 1, .5]));
+    const legOrigin = legSize.multiply(new Vector3D([.5, 1, .5]));
 
-    const headPos = halfPlayerSize.add([0, .9, 0]);
-    const bodyPos = halfPlayerSize.add([0, .2, 0]);
+    const headPos = halfPlayerSize.add(new Vector3D([0, .9, 0]));
+    const bodyPos = halfPlayerSize.add(new Vector3D([0, .2, 0]));
     const leftArmPos = halfPlayerSize.add(new Vector3D([0, .6, .55]).rotateY(theta));
     const rightArmPos = halfPlayerSize.add(new Vector3D([0, .6, -.55]).rotateY(theta));
     const rightLegPos = halfPlayerSize.add(new Vector3D([0, -.2, 0.2]).rotateY(theta));

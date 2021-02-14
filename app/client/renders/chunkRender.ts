@@ -52,7 +52,7 @@ export class ChunkRenderer extends Renderer {
   }
 
   private addVisibleFace(faceMap: IVisibleFaceMap, cube: Cube, directionVector: Vector3D) {
-    let visibleCubePos = faceMap.get(cube.pos.toString());
+    let visibleCubePos = faceMap.get(cube.pos.toIndex());
     if (!visibleCubePos) {
       visibleCubePos = {
         cube: cube,
@@ -60,7 +60,7 @@ export class ChunkRenderer extends Renderer {
       }
     }
     visibleCubePos.faceVectors.push(directionVector);
-    faceMap.set(cube.pos.toString(), visibleCubePos);
+    faceMap.set(cube.pos.toIndex(), visibleCubePos);
   }
 
   private getDataForBlock(cube: Cube, offset: number, world: World, visibleFaceMap: IVisibleFaceMap): { addToOffset: number, positions: number[], indices: number[], textureCords: number[] } {
@@ -76,7 +76,7 @@ export class ChunkRenderer extends Renderer {
       let count = 0;
       for (const face of [0, 1, 2, 3, 4, 5]) {
         // check to see if there is a cube touching me on this face
-        const directionVector = Vector.unitVectors3D[face];
+        const directionVector = Vector3D.unitVectors[face];
         const nearbyCube = this.isCube(cube.pos.add(directionVector), world, cube);
         // skkkkkip
         if (nearbyCube) {
@@ -147,7 +147,7 @@ export class ChunkRenderer extends Renderer {
       textureCords.push(...texturePos[0], ...texturePos[1]);
 
       // make a flower still "hittable"
-      for (const directionVector of Vector.unitVectors3D) {
+      for (const directionVector of Vector3D.unitVectors) {
         this.addVisibleFace(visibleFaceMap, cube, directionVector);
       }
 
@@ -168,7 +168,7 @@ export class ChunkRenderer extends Renderer {
     const visibleCubePosMap = new Map<string, { cube: Cube, faceVectors: Vector3D[] }>();
 
     // const addVisibleFace = (cube: Cube, directionVector: Vector3D) => {
-    //   let visibleCubePos = visibleCubePosMap.get(cube.pos.toString());
+    //   let visibleCubePos = visibleCubePosMap.get(cube.pos.toIndex());
     //   if (!visibleCubePos) {
     //     visibleCubePos = {
     //       cube: cube,
@@ -176,7 +176,7 @@ export class ChunkRenderer extends Renderer {
     //     }
     //   }
     //   visibleCubePos.faceVectors.push(directionVector);
-    //   visibleCubePosMap.set(cube.pos.toString(), visibleCubePos);
+    //   visibleCubePosMap.set(cube.pos.toIndex(), visibleCubePos);
     // }
 
 

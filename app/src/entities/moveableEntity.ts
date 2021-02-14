@@ -6,9 +6,9 @@ import { Entity, IEntityType, ISerializedEntity, MetaAction } from "./entity";
 
 
 export abstract class MovableEntity extends Entity {
-  vel = Vector.zero3D;
+  vel = Vector3D.zero;
   // (radius, theta: [0, 2pi], phi: [0, pi])
-  rot: Vector3D = Vector.zero3D;
+  rot = Vector3D.zero;
   rotCart: Vector3D = this.rot.toCartesianCoords();
 
   onGround = false;
@@ -34,7 +34,7 @@ export abstract class MovableEntity extends Entity {
     const scaleFactor = delta > 100 ? 0 : delta / 16;
     const scaledVel = this.vel.scalarMultiply(scaleFactor);
 
-    this.pos.addTo(scaledVel);
+    this.pos = this.pos.add(scaledVel);
   }
 
   baseHit(entity: Entity) {
@@ -44,7 +44,8 @@ export abstract class MovableEntity extends Entity {
 
   private static gravityVector = new Vector3D([0, CONFIG.gravity, 0]);
   gravity() {
-    this.vel.addTo(MovableEntity.gravityVector);
+    if (this.vel.magnitude() > 5) return; // set a terminal velocity
+    this.vel = this.vel.add(MovableEntity.gravityVector);
   }
 
   rotate(r: Vector3D) {
@@ -106,7 +107,7 @@ export abstract class MovableEntity extends Entity {
         0
       ]);
     }
-    return Vector.zero3D;
+    return Vector3D.zero;
   }
 
 }

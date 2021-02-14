@@ -157,7 +157,7 @@ export class Game {
           console.log("Couldn't find entity", payload.uid);
           return;
         }
-        entity.pos = new Vector(payload.pos);
+        entity.pos = new Vector3D(payload.pos);
         return payload.uid;
       }
 
@@ -168,7 +168,7 @@ export class Game {
           console.log("Couldn't find entity", payload.uid);
           return;
         }
-        entity.vel = new Vector(payload.vel);
+        entity.vel = new Vector3D(payload.vel);
         return payload.uid;
       }
 

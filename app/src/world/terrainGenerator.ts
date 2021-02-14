@@ -6,6 +6,7 @@ import { BLOCKS } from "../blockdata";
 import { Cube } from "../entities/cube";
 import { World } from "./world";
 import { serializeCube, deserializeCube, ISerializedCube } from "../serializer";
+import { BiomeGenerator, Biome, GetBiomeInfo } from "./biome";
 
 export interface ISerializedTerrainGenerator {
   blocksToRender: Array<{
@@ -16,6 +17,7 @@ export interface ISerializedTerrainGenerator {
 
 export class TerrainGenerator {
   private blocksToRender: Map<string, Cube[]>
+  public biomeGenerator = new BiomeGenerator();
   preRenderedChunks: Set<string> = new Set();
 
   constructor(
@@ -58,9 +60,16 @@ export class TerrainGenerator {
       chunk.addCube(cube)
     }
 
+    const currentBlocks = this.blocksToRender.get(chunkPos.toIndex()) || [];
+    this.blocksToRender.set(chunkPos.toIndex(), [...currentBlocks, cube]);
+  }
 
-    const currentBlocks = this.blocksToRender.get(chunkPos.toString()) || [];
-    this.blocksToRender.set(chunkPos.toString(), [...currentBlocks, cube]);
+  private getHeightFromPos(pos: Vector2D): number {
+    const biomeHeight = this.biomeGenerator.getBiomeHeightForWorldPos(pos);
+
+    if (CONFIG.terrain.flatWorld) return 0
+
+    return Math.floor(Random.noise(pos.data[0], pos.data[1]) * biomeHeight);
   }
 
   generateChunk(chunkPos: Vector2D) {
@@ -68,14 +77,20 @@ export class TerrainGenerator {
 
     const worldPos = chunk.pos.data;
 
+    // we need to make this into phases more
+    // Phase 1, Generate bare terrain
+
     for (let i = 0; i < CONFIG.terrain.chunkSize; i++) {
       for (let j = 0; j < CONFIG.terrain.chunkSize; j++) {
         const x = worldPos[0] + i;
         const z = worldPos[2] + j;
-        const y = CONFIG.terrain.flatWorld ? 0 :
-          Math.floor(Random.noise(x, z) * CONFIG.terrain.maxHeight);
 
-        this.preRenderNearbyChunks(chunkPos, this.world)
+        const pos = new Vector2D([x, z]);
+
+        const y = this.getHeightFromPos(pos);
+        const biome = this.biomeGenerator.getBiomeFromWorldPos(pos);
+
+        this.preRenderNearbyChunks(chunkPos, this.world);
 
         // generate water
         if (y <= CONFIG.terrain.waterLever) {
@@ -88,7 +103,11 @@ export class TerrainGenerator {
 
         for (let k = 0; k <= y; k++) {
           const cubePos = [x, k, z];
-          const blockType = k === y ? BLOCKS.grass : Random.randomNum() > .9 ? BLOCKS.gold : BLOCKS.stone;
+          const topBlock = biome === Biome.Forest ? BLOCKS.wood :
+            biome === Biome.Mountain ? BLOCKS.stone :
+              biome === Biome.Plains ? BLOCKS.grass : BLOCKS.gold;
+
+          const blockType = k === y ? topBlock : Random.randomNum() > .9 ? BLOCKS.gold : BLOCKS.stone;
           const cube = new Cube(blockType, new Vector3D(cubePos));
           chunk.addCube(cube);
         }
@@ -101,7 +120,7 @@ export class TerrainGenerator {
       }
     }
 
-    const chunkString = chunkPos.toString();
+    const chunkString = chunkPos.toIndex();
     if (this.blocksToRender.has(chunkString)) {
       this.blocksToRender.get(chunkString)!.forEach(cube => {
         chunk.addCube(cube);
@@ -119,7 +138,8 @@ export class TerrainGenerator {
         const indexVector = new Vector2D([i, j]);
         const checkingChunkPos = chunkPos.add(indexVector);
         const worldPos = world.chunkPosToWorldPos(checkingChunkPos);
-        if (this.preRenderedChunks.has(checkingChunkPos.toString())) {
+
+        if (this.preRenderedChunks.has(checkingChunkPos.toIndex())) {
           continue;
         }
 
@@ -129,21 +149,45 @@ export class TerrainGenerator {
 
         for (let k = 0; k < CONFIG.terrain.chunkSize; k++) {
           for (let l = 0; l < CONFIG.terrain.chunkSize; l++) {
-            const y = CONFIG.terrain.flatWorld ? 0 :
-              Math.floor(Random.noise(worldPos.get(0) + k, worldPos.get(2) + l) * CONFIG.terrain.maxHeight);
+            const pos = new Vector2D([k, l]);
+
+            const y = this.getHeightFromPos(pos);
+
             const blockPos = new Vector3D([
               worldPos.get(0) + k,
               y,
               worldPos.get(2) + l,
             ]);
 
-            if (y > CONFIG.terrain.waterLever && Random.randomNum() > .99 && CONFIG.terrain.trees) {
-              const tree = this.generateTree(blockPos);
-              for (const cube of tree) {
-                this.addExtraBlock(cube, world);
-              }
+            const biome = this.biomeGenerator.getBiomeFromWorldPos(blockPos.stripY());
+
+            // Tree logic
+            switch (biome) {
+              case Biome.Forest:
+                // Make tress very likely
+                if (Random.randomNum() > .95 && CONFIG.terrain.trees) {
+                  const tree = this.generateTree(blockPos);
+                  for (const cube of tree) {
+                    this.addExtraBlock(cube, world);
+                  }
+                }
+                break;
+              case Biome.Mountain:
+
+                break;
+
+              case Biome.Plains:
+                if (y > CONFIG.terrain.waterLever && Random.randomNum() > .999 && CONFIG.terrain.trees) {
+                  const tree = this.generateTree(blockPos);
+                  for (const cube of tree) {
+                    this.addExtraBlock(cube, world);
+                  }
+                }
+
+                break;
             }
 
+            // Cloud Logic
             if (Random.randomNum() > .999) {
               const cloud = this.generateCloud(blockPos);
               for (const cube of cloud) {
@@ -153,7 +197,7 @@ export class TerrainGenerator {
           }
         }
 
-        this.preRenderedChunks.add(checkingChunkPos.toString())
+        this.preRenderedChunks.add(checkingChunkPos.toIndex())
 
       }
     }
@@ -209,7 +253,7 @@ export class TerrainGenerator {
         }
 
         for (let k = 0; k <= y; k++) {
-          const newCubePos = cubePos.add(new Vector([0, k, 0]));
+          const newCubePos = cubePos.add(new Vector3D([0, k, 0]));
           const cube = new Cube(BLOCKS.cloud, newCubePos);
           cubes.push(cube);
         }

@@ -1,8 +1,8 @@
 export const BASE_CONFIG = {
   seed: "bungus",
 
-  renderDistance: 2,
-  loadDistance: 2,
+  renderDistance: 1,
+  loadDistance: 1,
 
   transparency: true,
 
@@ -17,10 +17,10 @@ export const BASE_CONFIG = {
     waterLever: -1,
     chunkSize: 16,
     // chunkSize: 4,
-    flatWorld: true,
+    flatWorld: false,
     // flatWorld: true,
-    // trees: true,
-    trees: false,
+    trees: true,
+    // trees: false,
     // flowers: true,
     flowers: false,
   },

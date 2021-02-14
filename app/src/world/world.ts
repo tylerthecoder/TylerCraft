@@ -14,7 +14,7 @@ export interface ISerializedWorld {
 }
 
 export class World {
-  private terrainGenerator: TerrainGenerator;
+  public terrainGenerator: TerrainGenerator;
   private chunks: Map<string, Chunk>;
   public loadingChunks = new Set<string>();
   public loadedChunks = new Set<string>();
@@ -31,7 +31,7 @@ export class World {
 
       const chunksMap = new Map();
       for (const chunk of chunks) {
-        chunksMap.set(chunk.chunkPos.toString(), chunk);
+        chunksMap.set(chunk.chunkPos.toIndex(), chunk);
       }
       this.chunks = chunksMap;
 
@@ -54,15 +54,15 @@ export class World {
   }
 
   getChunkFromPos(chunkPos: Vector2D, config?: { generateIfNotFound?: boolean, loadIfNotFound?: boolean }) {
-    const chunk = this.chunks.get(chunkPos.toString());
+    const chunk = this.chunks.get(chunkPos.toIndex());
     if (!chunk && config?.loadIfNotFound) this.loadChunk(chunkPos);
     if (!chunk && config?.generateIfNotFound) return this.generateChunk(chunkPos);
     return chunk;
   }
 
   setChunkAtPos(chunk: Chunk, chunkPos: Vector2D) {
-    this.chunks.set(chunkPos.toString(), chunk);
-    this.loadedChunks.add(chunkPos.toString());
+    this.chunks.set(chunkPos.toIndex(), chunk);
+    this.loadedChunks.add(chunkPos.toIndex());
   }
 
   getChunks(): IterableIterator<Chunk> {
@@ -70,7 +70,7 @@ export class World {
   }
 
   hasChunk(chunkPos: Vector2D): boolean {
-    return this.chunks.has(chunkPos.toString());
+    return this.chunks.has(chunkPos.toIndex());
   }
 
   worldPosToChunkPos(pos: Vector3D): Vector2D {
@@ -90,12 +90,12 @@ export class World {
 
   async loadChunk(chunkPos: Vector2D): Promise<void> {
     // no repeat loading
-    if (this.loadingChunks.has(chunkPos.toString())) {
+    if (this.loadingChunks.has(chunkPos.toIndex())) {
       return;
     }
-    this.loadingChunks.add(chunkPos.toString());
+    this.loadingChunks.add(chunkPos.toIndex());
     return new Promise(resolve => {
-      this.chunkReader.getChunk(chunkPos.toString()).then(chunk => {
+      this.chunkReader.getChunk(chunkPos.toIndex()).then(chunk => {
         // this should only happen on the client side when single player
         // and on the server side when multiplayer
         if (!chunk) chunk = this.terrainGenerator.generateChunk(chunkPos);
@@ -113,18 +113,18 @@ export class World {
   getBlockFromWorldPoint(pos: Vector3D): Cube | null {
     const chunk = this.getChunkFromWorldPoint(pos);
     if (!chunk) return null;
-    const cube = chunk.cubes.get(pos.floor().toString());
+    const cube = chunk.cubes.get(pos.floor().toIndex());
     if (cube) return cube;
     return null;
   }
 
   updateChunk(chunkPos: Vector2D) {
-    const chunkToUpdate = this.chunks.get(chunkPos.add(new Vector2D([0, 1])).toString());
+    const chunkToUpdate = this.chunks.get(chunkPos.add(new Vector2D([0, 1])).toIndex());
     if (chunkToUpdate) {
       this.game.addAction({
         type: IActionType.blockUpdate,
         blockUpdate: {
-          chunkId: chunkToUpdate.chunkPos.toString(),
+          chunkId: chunkToUpdate.chunkPos.toIndex(),
         }
       });
     }
@@ -173,7 +173,7 @@ export class World {
 
     const chunksToCheck: Chunk[] = [inChunk];
 
-    Vector.unitVectors2D.forEach(unitDir => {
+    Vector2D.unitVectors.forEach(unitDir => {
       const otherChunkPos = inChunk.chunkPos.add(unitDir);
       const otherChunk = this.getChunkFromPos(otherChunkPos);
       if (otherChunk) chunksToCheck.push(otherChunk);
@@ -185,7 +185,7 @@ export class World {
   }
 
   private checkSurroundingChunkForUpdate(chunk: Chunk, pos: Vector3D) {
-    Vector.unitVectors2DIn3D.forEach(indexVec => {
+    Vector3D.edgeVectorsStripY.forEach(indexVec => {
       const checkCubePos = pos.add(indexVec);
       const otherChunk = this.getChunkFromWorldPoint(checkCubePos);
 

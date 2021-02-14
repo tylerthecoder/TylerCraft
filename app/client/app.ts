@@ -145,7 +145,7 @@ function createConfigHtml(
       return `
       <div class="form-row">
         <label> ${label}: </label>
-        <input type="checkbox" checked=${configValue} name="${prefix + configKey}" />
+        <input type="checkbox" ${configValue && "checked"} name="${prefix + configKey}" />
       </div>
     `;
     case "string":

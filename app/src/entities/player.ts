@@ -13,7 +13,7 @@ export interface ISerializedPlayer extends ISerializedEntity {
 
 export class Player extends MovableEntity {
   // Entity overrides
-  pos: Vector3D = new Vector3D([0, 10, 0]);
+  pos: Vector3D = new Vector3D([0, 50, 0]);
   dim: IDim = [.8, 2, .8];
   rot = new Vector3D([0, 0, Math.PI / 2]);
 
@@ -82,10 +82,10 @@ export class Player extends MovableEntity {
       });
     }
 
-    const totVel = this.getWasdVel();
+    let totVel = this.getWasdVel();
 
     if (this.creative) {
-      totVel.addTo(this.getVerticalVel());
+      totVel = totVel.add(this.getVerticalVel());
       if (!totVel.equals(this.vel)) {
         addMoveAction(totVel);
       }
@@ -145,7 +145,7 @@ export class Player extends MovableEntity {
 
     const vel = this.rotCart.scalarMultiply(-.4).data as IDim;
     const pos = arrayAdd(arrayAdd(this.pos.data, arrayScalarMul(vel, 4)), [.5, 2, .5]) as IDim;
-    const ball = new Projectile(new Vector(pos), new Vector(vel));
+    const ball = new Projectile(new Vector3D(pos), new Vector3D(vel));
 
     this.actions.push({
       type: IActionType.addEntity,
