@@ -25,7 +25,7 @@ export class World {
     data?: ISerializedWorld,
   ) {
     if (data) {
-      this.terrainGenerator = new TerrainGenerator(this, data.tg);
+      this.terrainGenerator = new TerrainGenerator(this.hasChunk.bind(this), this.getChunkFromPos.bind(this), data.tg);
 
       const chunks = data.chunks.map(Chunk.deserialize);
 
@@ -38,7 +38,7 @@ export class World {
       this.chunks.forEach(chunk => this.updateChunk(chunk.chunkPos));
 
     } else {
-      this.terrainGenerator = new TerrainGenerator(this);
+      this.terrainGenerator = new TerrainGenerator(this.hasChunk.bind(this), this.getChunkFromPos.bind(this));
       this.chunks = new Map();
     }
   }
@@ -52,6 +52,23 @@ export class World {
       tg: serializedTG,
     }
   }
+
+  // Helper static methods
+  static worldPosToChunkPos(pos: Vector3D): Vector2D {
+    return new Vector2D([
+      Math.floor(pos.get(0) / CONFIG.terrain.chunkSize),
+      Math.floor(pos.get(2) / CONFIG.terrain.chunkSize),
+    ]);
+  }
+
+  static chunkPosToWorldPos(pos: Vector2D, center = false): Vector3D {
+    return new Vector3D([
+      pos.get(0) * CONFIG.terrain.chunkSize + (center ? CONFIG.terrain.chunkSize / 2 : 0),
+      0,
+      pos.get(1) * CONFIG.terrain.chunkSize + (center ? CONFIG.terrain.chunkSize / 2 : 0),
+    ]);
+  }
+
 
   getChunkFromPos(chunkPos: Vector2D, config?: { generateIfNotFound?: boolean, loadIfNotFound?: boolean }) {
     const chunk = this.chunks.get(chunkPos.toIndex());
@@ -73,21 +90,6 @@ export class World {
     return this.chunks.has(chunkPos.toIndex());
   }
 
-  worldPosToChunkPos(pos: Vector3D): Vector2D {
-    return new Vector2D([
-      Math.floor(pos.get(0) / CONFIG.terrain.chunkSize),
-      Math.floor(pos.get(2) / CONFIG.terrain.chunkSize),
-    ]);
-  }
-
-  chunkPosToWorldPos(pos: Vector2D, center = false): Vector3D {
-    return new Vector3D([
-      pos.get(0) * CONFIG.terrain.chunkSize + (center ? CONFIG.terrain.chunkSize / 2 : 0),
-      0,
-      pos.get(1) * CONFIG.terrain.chunkSize + (center ? CONFIG.terrain.chunkSize / 2 : 0),
-    ]);
-  }
-
   async loadChunk(chunkPos: Vector2D): Promise<void> {
     // no repeat loading
     if (this.loadingChunks.has(chunkPos.toIndex())) {
@@ -106,7 +108,7 @@ export class World {
   }
 
   getChunkFromWorldPoint(pos: Vector3D) {
-    const chunkPos = this.worldPosToChunkPos(pos);
+    const chunkPos = World.worldPosToChunkPos(pos);
     return this.getChunkFromPos(chunkPos);
   }
 

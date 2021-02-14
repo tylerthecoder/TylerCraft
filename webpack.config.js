@@ -3,13 +3,22 @@ const CopyPlugin = require("copy-webpack-plugin");
 const webpack = require("webpack");
 
 module.exports = {
-  entry: './app/client/app.ts',
+  entry: {
+    index: './app/client/app.ts',
+    terrain: './app/terrainClient/terrainApp.ts'
+  },
   mode: "development",
   devtool: 'inline-source-map',
   plugins: [
     new HtmlWebpackPlugin({
       template: 'app/assets/index.html',
+      chunks: ["index"],
       filename: "index.html",
+    }),
+    new HtmlWebpackPlugin({
+      template: 'app/assets/terrain.html',
+      chunks: ["terrain"],
+      filename: "terrain.html",
     }),
     new CopyPlugin([{
       from: "app/assets/shaders",
@@ -34,7 +43,7 @@ module.exports = {
   ],
   output: {
     path: __dirname + '/dist/public',
-    filename: 'main.js',
+    filename: '[name].js',
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js'],

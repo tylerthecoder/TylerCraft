@@ -1,4 +1,4 @@
-import { Vector2D, Vector3D, Vector } from "../utils/vector";
+import { Vector2D, Vector3D } from "../utils/vector";
 import { CONFIG } from "../config";
 import Random from "../utils/random";
 import { Chunk } from "./chunk";
@@ -6,7 +6,7 @@ import { BLOCKS } from "../blockdata";
 import { Cube } from "../entities/cube";
 import { World } from "./world";
 import { serializeCube, deserializeCube, ISerializedCube } from "../serializer";
-import { BiomeGenerator, Biome, GetBiomeInfo } from "./biome";
+import { BiomeGenerator, Biome } from "./biome";
 
 export interface ISerializedTerrainGenerator {
   blocksToRender: Array<{
@@ -21,7 +21,8 @@ export class TerrainGenerator {
   preRenderedChunks: Set<string> = new Set();
 
   constructor(
-    private world: World,
+    private worldHasChunk: (chunkPos: Vector2D) => boolean,
+    private worldGetChunk: (chunkPos: Vector2D) => Chunk | undefined,
     // take a chunk pos string (1, 2) to a list of cubes that need to be added to it
     serializedData?: ISerializedTerrainGenerator,
   ) {
@@ -48,13 +49,13 @@ export class TerrainGenerator {
     }
   }
 
-  private addExtraBlock(cube: Cube, world: World) {
-    const chunkPos = world.worldPosToChunkPos(cube.pos);
+  private addExtraBlock(cube: Cube) {
+    const chunkPos = World.worldPosToChunkPos(cube.pos);
 
     // this is very strange because we are adding blocks after a chunk as been rendered
     // fixing will take some major engineering
-    if (world.hasChunk(chunkPos)) {
-      const chunk = world.getChunkFromPos(chunkPos);
+    if (this.worldHasChunk(chunkPos)) {
+      const chunk = this.worldGetChunk(chunkPos);
       if (!chunk) return;
       // we don't want this to be true
       chunk.addCube(cube)
@@ -72,7 +73,7 @@ export class TerrainGenerator {
     return Math.floor(Random.noise(pos.data[0], pos.data[1]) * biomeHeight);
   }
 
-  generateChunk(chunkPos: Vector2D) {
+  generateChunk(chunkPos: Vector2D): Chunk {
     const chunk = new Chunk(chunkPos);
 
     const worldPos = chunk.pos.data;
@@ -90,7 +91,7 @@ export class TerrainGenerator {
         const y = this.getHeightFromPos(pos);
         const biome = this.biomeGenerator.getBiomeFromWorldPos(pos);
 
-        this.preRenderNearbyChunks(chunkPos, this.world);
+        this.preRenderNearbyChunks(chunkPos);
 
         // generate water
         if (y <= CONFIG.terrain.waterLever) {
@@ -132,18 +133,18 @@ export class TerrainGenerator {
   }
 
   // just go through and generate structures for chunks nearby
-  private preRenderNearbyChunks(chunkPos: Vector2D, world: World) {
+  private preRenderNearbyChunks(chunkPos: Vector2D) {
     for (let i = -2; i <= 2; i++) {
       for (let j = -2; j <= 2; j++) {
         const indexVector = new Vector2D([i, j]);
         const checkingChunkPos = chunkPos.add(indexVector);
-        const worldPos = world.chunkPosToWorldPos(checkingChunkPos);
+        const worldPos = World.chunkPosToWorldPos(checkingChunkPos);
 
         if (this.preRenderedChunks.has(checkingChunkPos.toIndex())) {
           continue;
         }
 
-        if (world.hasChunk(checkingChunkPos)) {
+        if (this.worldHasChunk(checkingChunkPos)) {
           continue;
         }
 
@@ -168,7 +169,7 @@ export class TerrainGenerator {
                 if (Random.randomNum() > .95 && CONFIG.terrain.trees) {
                   const tree = this.generateTree(blockPos);
                   for (const cube of tree) {
-                    this.addExtraBlock(cube, world);
+                    this.addExtraBlock(cube);
                   }
                 }
                 break;
@@ -180,7 +181,7 @@ export class TerrainGenerator {
                 if (y > CONFIG.terrain.waterLever && Random.randomNum() > .999 && CONFIG.terrain.trees) {
                   const tree = this.generateTree(blockPos);
                   for (const cube of tree) {
-                    this.addExtraBlock(cube, world);
+                    this.addExtraBlock(cube);
                   }
                 }
 
@@ -191,7 +192,7 @@ export class TerrainGenerator {
             if (Random.randomNum() > .999) {
               const cloud = this.generateCloud(blockPos);
               for (const cube of cloud) {
-                this.addExtraBlock(cube, world);
+                this.addExtraBlock(cube);
               }
             }
           }

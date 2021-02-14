@@ -41,8 +41,8 @@ export class CanvasProgram {
       this.eCanvas.width = window.innerWidth;
       this.gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
       if (this.program) this.createProjectionMatrix();
-
     }
+
     window.addEventListener("resize", getCanvasDimensions);
     getCanvasDimensions();
 

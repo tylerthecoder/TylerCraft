@@ -36,44 +36,46 @@ export function GetBiomeInfo(biome: Biome): IBiomeInfo {
   return biomeInfo;
 }
 
-
 interface BiomeGridSectionWithBiome {
   hasBiome: true;
-  biomePos: Vector2D;
-  worldPos: Vector2D;
+  sectionPos: Vector2D;
   biome: Biome;
+  biomeWorldPos: Vector2D;
 }
 
 interface BiomeGridSectionWithoutBiome {
   hasBiome: false;
-  biomePos: Vector2D;
+  sectionPos: Vector2D;
 }
+
 
 type BiomeGridSection = BiomeGridSectionWithBiome | BiomeGridSectionWithoutBiome;
 
-// Config vars needed
-// BIOME_SIZE
-// SAMPLE_AMOUNT
 
-const BIOME_SIZE = 30;
-// const SAMPLE_AMOUNT = 30;
+export const BIOME_SIZE = 60;
+// This should be a function of the heights of the two biomes
+const BIOME_EASE_FACTOR = 10;
 const SAMPLE_AMOUNT = 3;
+
 
 export class BiomeGenerator {
   public biomeGrid: BiomeGridSection[] = [];
 
   private biomeMap: Map<VectorIndex, BiomeGridSection> = new Map();
 
+  public fringeBlocks = new Set<string>();
+  public fringeNum = new Map<string, number>();
+  public fringeHeight = new Map<string, number>();
+
   constructor() {
     const startingBiome: BiomeGridSection = {
       hasBiome: true,
-      worldPos: new Vector2D([0, 0]),
-      biomePos: new Vector2D([0, 0]),
-      // active: true,
-      biome: this.getRandomBiome(),
+      sectionPos: new Vector2D([0, 0]),
+      biome: BiomeGenerator.getRandomBiome(),
+      biomeWorldPos: new Vector2D([0, 0]),
     };
     this.biomeGrid.push(startingBiome);
-    this.biomeMap.set(startingBiome.biomePos.toIndex(), startingBiome);
+    this.biomeMap.set(startingBiome.sectionPos.toIndex(), startingBiome);
   }
 
   public getBiomeFromWorldPos(worldPos: Vector2D): Biome {
@@ -86,23 +88,26 @@ export class BiomeGenerator {
   }
 
   public getBiomeHeightForWorldPos(worldPos: Vector2D): number {
+    const inSection = this.getSectionFromSectionPos(BiomeGenerator.getSectionPosFromWorldPos(worldPos));
     const mainSection = this.getClosestSectionWithBiomeForWorldPos(worldPos);
+
     // Default to plains
-    if (!mainSection) {
-      return this.getBiomeInfoForBiome(Biome.Plains).maxHeight
-    }
+    if (!mainSection) return this.getBiomeInfoForBiome(Biome.Plains).maxHeight
+
     const mainBiomeInfo = this.getBiomeInfoForBiome(mainSection.biome);
-    const mainBiomeWorldDist = mainSection.biomePos.distFrom(worldPos);
+    const mainBiomeWorldDist = mainSection.biomeWorldPos.distFrom(worldPos) // * mainBiomeInfo.sizeFactor;
 
-    const BIOME_EASE_FACTOR = 5;
-
-    let biomeHeightsSum = 0;
+    // Set the starting values
+    let biomeHeightsSum = mainBiomeInfo.maxHeight;
     let allBiomeHeights = mainBiomeInfo.maxHeight;
 
     // Check all nearby biomes to see if we should "ease" this biomes height to fit in more
-    Vector2D.edgeVectors.forEach(edge => {
-      const checkingPos = mainSection.biomePos.add(edge);
-      const checkingSection = this.getBiomeDataForPoint(checkingPos);
+    Vector2D.squareVectors.forEach(edge => {
+      const checkingPos = inSection.sectionPos.add(edge);
+      const checkingSection = this.getSectionFromSectionPos(checkingPos);
+
+      // don't check myself
+      if (checkingSection === mainSection) return;
 
       // Skip since there isn't a biome
       if (!checkingSection.hasBiome) {
@@ -110,9 +115,12 @@ export class BiomeGenerator {
       }
 
       const checkingBiomeInfo = this.getBiomeInfoForBiome(checkingSection.biome);
-      const checkingBiomeWorldDist = checkingSection.biomePos.distFrom(worldPos);
+      const checkingBiomeWorldDist = checkingSection.biomeWorldPos.distFrom(worldPos) //* checkingBiomeInfo.sizeFactor;
 
-      if (checkingBiomeWorldDist - mainBiomeWorldDist > BIOME_EASE_FACTOR) return;
+      if (Math.abs(checkingBiomeWorldDist - mainBiomeWorldDist) > BIOME_EASE_FACTOR) return;
+
+      this.fringeBlocks.add(worldPos.toIndex());
+      this.fringeNum.set(worldPos.toIndex(), (this.fringeNum.get(worldPos.toIndex()) ?? 1) + 1);
 
       // We are on the border of two biomes. Lets do a weighted average of their heights
       const normalizedDistFactor = mainBiomeWorldDist / (checkingBiomeWorldDist + mainBiomeWorldDist);
@@ -123,13 +131,26 @@ export class BiomeGenerator {
       const avgBiomeHeight = (normalizedDistFactor * Math.abs(checkingBiomeInfo.maxHeight - mainBiomeInfo.maxHeight)) + minBiomeHeight;
 
       biomeHeightsSum += avgBiomeHeight;
-      allBiomeHeights += mainBiomeInfo.maxHeight;
+      allBiomeHeights += checkingBiomeInfo.maxHeight;
     });
 
-    return (biomeHeightsSum / allBiomeHeights) * mainBiomeInfo.maxHeight;
+
+    // This shouldn't be needed
+    if (biomeHeightsSum === 0) {
+      this.fringeHeight.set(worldPos.toIndex(), Math.floor(mainBiomeInfo.maxHeight));
+      return mainBiomeInfo.maxHeight;
+    }
+
+
+
+    const height = (allBiomeHeights / biomeHeightsSum) * mainBiomeInfo.maxHeight;
+    this.fringeHeight.set(worldPos.toIndex(), Math.floor(height));
+    return height;
   }
 
-  private getRandomBiome(): Biome {
+  // Static Helpers
+
+  static getRandomBiome(): Biome {
     return Random.randomElement(
       [
         Biome.Forest,
@@ -139,27 +160,32 @@ export class BiomeGenerator {
     )
   }
 
-  private getClosestSectionWithBiomeForWorldPos(worldPos: Vector2D): BiomeGridSectionWithBiome | undefined {
-    const biomePos = this.getBiomePosFromWorldPos(worldPos)
-    const gridSection = this.getBiomeDataForPoint(biomePos)
+  static getSectionPosFromWorldPos(worldPos: Vector2D) {
+    return new Vector2D([
+      Math.floor(worldPos.data[0] / BIOME_SIZE),
+      Math.floor(worldPos.data[1] / BIOME_SIZE),
+    ]);
+  }
 
-    if (gridSection.hasBiome) {
-      return gridSection;
-    }
+  // This returns the section with the biome closest to the world point
+  private getClosestSectionWithBiomeForWorldPos(worldPos: Vector2D): BiomeGridSectionWithBiome | undefined {
+    const sectionPos = BiomeGenerator.getSectionPosFromWorldPos(worldPos)
 
     let minDist = Infinity;
     let closestGridSection: BiomeGridSectionWithBiome | undefined = undefined;
 
     // Check all surrounding biome plots to find which biome is closest to the point
     Vector2D.squareVectors.forEach(edge => {
-      const checkingPos = biomePos.add(edge);
-      const checkingSection = this.getBiomeDataForPoint(checkingPos);
-      if (!checkingSection.hasBiome) return;
-      const checkingBiomeInfo = this.getBiomeInfoForBiome(checkingSection.biome);
+      const checkingPos = sectionPos.add(edge);
+      const checkingSection = this.getSectionFromSectionPos(checkingPos);
 
-      // This is our "Crazy distance formula"
+      // Doesn't have a biome so don't consider it
+      if (!checkingSection.hasBiome) return;
+
+      // const checkingBiomeInfo = this.getBiomeInfoForBiome(checkingSection.biome);
+
       // Size factor allows for some biomes to be bigger than other
-      const dist = worldPos.distFrom(checkingSection.worldPos) + checkingBiomeInfo.sizeFactor;
+      const dist = worldPos.distFrom(checkingSection.biomeWorldPos); // * checkingBiomeInfo.sizeFactor;
 
       if (dist < minDist) {
         minDist = dist;
@@ -170,15 +196,8 @@ export class BiomeGenerator {
     return closestGridSection;
   }
 
-  private getBiomePosFromWorldPos(worldPos: Vector2D) {
-    return new Vector2D([
-      Math.floor(worldPos.data[0] / BIOME_SIZE),
-      Math.floor(worldPos.data[1] / BIOME_SIZE),
-    ]);
-  }
-
-  private getBiomeDataForPoint(pos: Vector2D) {
-    const biomeGridData = this.biomeMap.get(pos.toIndex());
+  private getSectionFromSectionPos(sectionPos: Vector2D) {
+    const biomeGridData = this.biomeMap.get(sectionPos.toIndex());
 
     // We have already loaded this point! Hooray!
     if (biomeGridData) {
@@ -187,13 +206,13 @@ export class BiomeGenerator {
 
     // We need load this section
 
-    console.log("Didn't find data for", pos, "Generating");
+    console.log("Didn't find data for", sectionPos, "Generating");
 
-    this.genBiomeForPoint(pos);
+    this.genBiomeForSection(sectionPos);
 
     // now try again to get it
     // (I'm pretty sure it will always be there after you generate it, but these is a chance the above function doesn't work. We are working with randomness here so who knows?)
-    const loadedBiomeGridData = this.biomeMap.get(pos.toIndex());
+    const loadedBiomeGridData = this.biomeMap.get(sectionPos.toIndex());
 
     if (!loadedBiomeGridData) {
       console.log("Something went terribly wrong. Maybe it doesn't matter though");
@@ -211,16 +230,16 @@ export class BiomeGenerator {
   }
 
 
-  private genBiomeForPoint(biomePos: Vector2D) {
+  private genBiomeForSection(sectionPos: Vector2D) {
     // Generate a random point in this square SAMPLE AMOUNT times to see if there is anywhere I can place it
     // if not then mark it inactive and move on
     for (let i = 0; i < SAMPLE_AMOUNT; i++) {
       const x = Random.randomInt(0, BIOME_SIZE);
       const z = Random.randomInt(0, BIOME_SIZE);
-      const newBiomeWorldPos = biomePos.scalarMultiply(BIOME_SIZE).add(new Vector2D([x, z]));
+      const newBiomeWorldPos = sectionPos.scalarMultiply(BIOME_SIZE).add(new Vector2D([x, z]));
 
       const tooClose = Vector2D.squareVectors.some(edge => {
-        const checkingPos = biomePos.add(edge);
+        const checkingPos = sectionPos.add(edge);
         const checkingBiomeData = this.biomeMap.get(checkingPos.toIndex());
 
         if (
@@ -229,7 +248,7 @@ export class BiomeGenerator {
         ) return false;
 
 
-        const dist = newBiomeWorldPos.distFrom(checkingBiomeData.worldPos);
+        const dist = newBiomeWorldPos.distFrom(checkingBiomeData.biomeWorldPos);
 
         if (dist < BIOME_SIZE) return true;
 
@@ -240,13 +259,13 @@ export class BiomeGenerator {
 
       const biomeGridSection: BiomeGridSectionWithBiome = {
         // active: true,
-        biome: this.getRandomBiome(),
-        worldPos: newBiomeWorldPos,
-        biomePos,
+        biome: BiomeGenerator.getRandomBiome(),
+        biomeWorldPos: newBiomeWorldPos,
+        sectionPos,
         hasBiome: true,
       };
 
-      this.biomeMap.set(biomePos.toIndex(), biomeGridSection);
+      this.biomeMap.set(sectionPos.toIndex(), biomeGridSection);
       this.biomeGrid.push(biomeGridSection);
 
       return;
@@ -254,11 +273,11 @@ export class BiomeGenerator {
 
     // We didn't generate a biome, so add an empty grid section
     const emptyBiomeGridData: BiomeGridSectionWithoutBiome = {
-      biomePos,
+      sectionPos,
       hasBiome: false,
     }
 
-    this.biomeMap.set(biomePos.toIndex(), emptyBiomeGridData);
+    this.biomeMap.set(sectionPos.toIndex(), emptyBiomeGridData);
     this.biomeGrid.push(emptyBiomeGridData);
   }
 

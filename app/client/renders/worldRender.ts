@@ -112,7 +112,7 @@ export default class WorldRenderer {
       if (biomeGridSection.hasBiome) {
         const cubeToRender = new Cube(
           BLOCKS.cloud,
-          biomeGridSection.worldPos.insert(2, 1)
+          biomeGridSection.biomeWorldPos.insert(2, 1)
         );
 
         const cubeRenderer = new CubeRenderer(cubeToRender);
@@ -146,7 +146,7 @@ export default class WorldRenderer {
     ]);
 
     const realRenderDistance = CONFIG.terrain.chunkSize * CONFIG.renderDistance;
-    const cameraChunkPos = this.world.worldPosToChunkPos(camera.pos);
+    const cameraChunkPos = World.worldPosToChunkPos(camera.pos);
 
     const cameraRotNorm = camera.rotCart.normalize();
 
@@ -159,7 +159,7 @@ export default class WorldRenderer {
       for (let j = - CONFIG.renderDistance; j <= CONFIG.renderDistance; j++) {
         const indexVec = new Vector2D([i, j]);
         const chunkPos = cameraChunkPos.add(indexVec);
-        const chunkWorldPos = this.world.chunkPosToWorldPos(chunkPos, true);
+        const chunkWorldPos = World.chunkPosToWorldPos(chunkPos, true);
         const chunkXYPos = new Vector2D([chunkWorldPos.get(0), chunkWorldPos.get(2)]);
         const distAway = cameraXYPos.distFrom(chunkXYPos);
 

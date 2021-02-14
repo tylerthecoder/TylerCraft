@@ -29,7 +29,7 @@ export class ChunkRenderer extends Renderer {
     // if it isn't in the cube map, see if the world contains it
     if (pos.get(1) === -1) { return true; }
     if (!cube) {
-      const chunkPos = world.worldPosToChunkPos(pos);
+      const chunkPos = World.worldPosToChunkPos(pos);
       const chunk = world.getChunkFromPos(chunkPos);
       if (!chunk) return true;
       cube = chunk.getCube(pos);
