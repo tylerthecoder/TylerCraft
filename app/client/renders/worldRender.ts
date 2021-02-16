@@ -8,7 +8,7 @@ import { ClientGame } from "../clientGame";
 import { Entity } from "../../src/entities/entity";
 import { SphereRenderer } from "./sphereRender";
 import { CONFIG } from "../../src/config";
-import { Vector, Vector2D, Vector3D } from "../../src/utils/vector";
+import { Vector2D, Vector3D } from "../../src/utils/vector";
 import { Camera } from "../../src/camera";
 import { Cube } from "../../src/entities/cube";
 import { Player } from "../../src/entities/player";
@@ -16,7 +16,6 @@ import { Projectile } from "../../src/entities/projectile";
 import { Ball } from "../../src/entities/ball";
 import { BLOCKS } from "../../src/blockdata";
 import { PlayerRenderer } from "./playerRender";
-import { Chunk } from "../../src/world/chunk";
 
 export default class WorldRenderer {
   private renderers: Renderer[] = [];
@@ -107,22 +106,7 @@ export default class WorldRenderer {
       canvas.setColorFilter(filter);
     }
 
-    // Debug, render biome centers
-    this.world.terrainGenerator.biomeGenerator.biomeGrid.forEach(biomeGridSection => {
-      if (biomeGridSection.hasBiome) {
-        const cubeToRender = new Cube(
-          BLOCKS.cloud,
-          biomeGridSection.biomeWorldPos.insert(2, 1)
-        );
-
-        const cubeRenderer = new CubeRenderer(cubeToRender);
-
-        cubeRenderer.render(camera);
-      }
-    });
-
     const renderedChunks = new Set<ChunkRenderer>();
-
 
     for (const renderer of this.renderers) {
       renderer.render(camera);

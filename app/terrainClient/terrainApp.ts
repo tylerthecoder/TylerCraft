@@ -115,13 +115,13 @@ export class TerrainApp {
           let blockPos = worldPos.add(new Vector3D([i, 0, j]));
 
           // Keep moving up until we find the top block
-          while (chunk.cubes.has(blockPos.toIndex())) {
+          while (chunk.blocks.has(blockPos)) {
             blockPos = blockPos.add(new Vector3D([0, 1, 0]));
           }
           // go down one
           blockPos = blockPos.add(new Vector3D([0, -1, 0]));
 
-          const cube = chunk.cubes.get(blockPos.toIndex());
+          const cube = chunk.blocks.get(blockPos);
           if (!cube) {
             console.log("Something went wrong");
             return;

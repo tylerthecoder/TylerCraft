@@ -58,7 +58,7 @@ export class TerrainGenerator {
       const chunk = this.worldGetChunk(chunkPos);
       if (!chunk) return;
       // we don't want this to be true
-      chunk.addCube(cube)
+      chunk.blocks.add(cube)
     }
 
     const currentBlocks = this.blocksToRender.get(chunkPos.toIndex()) || [];
@@ -98,7 +98,7 @@ export class TerrainGenerator {
           for (let k = y; k < 3; k++) {
             const cubePos = [x, k, z];
             const cube = new Cube(BLOCKS.water, new Vector3D(cubePos));
-            chunk.addCube(cube);
+            chunk.blocks.add(cube);
           }
         }
 
@@ -110,13 +110,13 @@ export class TerrainGenerator {
 
           const blockType = k === y ? topBlock : Random.randomNum() > .9 ? BLOCKS.gold : BLOCKS.stone;
           const cube = new Cube(blockType, new Vector3D(cubePos));
-          chunk.addCube(cube);
+          chunk.blocks.add(cube);
         }
 
         // add grass
         if (y >= CONFIG.terrain.waterLever && Random.randomNum() > .99 && CONFIG.terrain.flowers) {
           const cube = new Cube(BLOCKS.redFlower, new Vector3D([x, y + 1, z]));
-          chunk.addCube(cube);
+          chunk.blocks.add(cube);
         }
       }
     }
@@ -124,7 +124,7 @@ export class TerrainGenerator {
     const chunkString = chunkPos.toIndex();
     if (this.blocksToRender.has(chunkString)) {
       this.blocksToRender.get(chunkString)!.forEach(cube => {
-        chunk.addCube(cube);
+        chunk.blocks.add(cube);
       });
       this.blocksToRender.delete(chunkString);
     }

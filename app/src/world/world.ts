@@ -115,7 +115,7 @@ export class World {
   getBlockFromWorldPoint(pos: Vector3D): Cube | null {
     const chunk = this.getChunkFromWorldPoint(pos);
     if (!chunk) return null;
-    const cube = chunk.cubes.get(pos.floor().toIndex());
+    const cube = chunk.blocks.get(pos.floor());
     if (cube) return cube;
     return null;
   }
@@ -202,7 +202,7 @@ export class World {
     console.log("Adding block", cube, this.game.gameId);
     const chunk = this.getChunkFromWorldPoint(cube.pos);
     if (!chunk) return;
-    chunk.addCube(cube);
+    chunk.blocks.add(cube);
     this.game.addAction(chunk.getBlockUpdateAction());
     this.checkSurroundingChunkForUpdate(chunk, cube.pos);
   }
@@ -211,7 +211,7 @@ export class World {
     const chunk = this.getChunkFromWorldPoint(cubePos);
     if (!chunk) return;
     this.checkSurroundingChunkForUpdate(chunk, cubePos);
-    chunk.removeCube(cubePos)
+    chunk.blocks.remove(cubePos)
     this.game.addAction(chunk.getBlockUpdateAction());
   }
 

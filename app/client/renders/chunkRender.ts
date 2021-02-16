@@ -25,18 +25,26 @@ export class ChunkRenderer extends Renderer {
 
   // return if there is a cube (or void) at this position
   private isCube(pos: Vector3D, world: World, currentCube: Cube) {
-    let cube = this.chunk.getCube(pos);
+
+
     // if it isn't in the cube map, see if the world contains it
     if (pos.get(1) === -1) { return true; }
-    if (!cube) {
+
+
+    if (!this.chunk.containsWorldPos(pos)) {
       const chunkPos = World.worldPosToChunkPos(pos);
       const chunk = world.getChunkFromPos(chunkPos);
       if (!chunk) return true;
-      cube = chunk.getCube(pos);
+      const cube = chunk.blocks.get(pos);
       if (!cube) {
         return false;
       }
     }
+
+    const cube = this.chunk.blocks.get(pos);
+
+    if (cube == null) return false;
+
     const blockData = BLOCK_DATA.get(cube.type)!;
     const currentCubeBlockData = BLOCK_DATA.get(currentCube.type)!;
 
@@ -189,9 +197,9 @@ export class ChunkRenderer extends Renderer {
     const transIndices: number[] = [];
     const transTextureCords: number[] = [];
     let transOffset = 0;
-    for (const cube of this.chunk.getCubesIterable()) {
-      const blockData = BLOCK_DATA.get(cube.type)!;
 
+    this.chunk.blocks.iterate(cube => {
+      const blockData = BLOCK_DATA.get(cube.type)!;
 
       if (blockData.transparent) {
         const {
@@ -210,7 +218,8 @@ export class ChunkRenderer extends Renderer {
         indices.push(...i);
         textureCords.push(...t);
       }
-    }
+    })
+
     this.chunk.visibleCubesFaces = Array.from(visibleCubePosMap.values());
     this.setBuffers(positions, indices, textureCords, transPositions, transIndices, transTextureCords);
   }

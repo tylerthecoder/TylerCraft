@@ -7,6 +7,7 @@ import { Vector3D, Vector, Vector2D } from "../utils/vector";
 import { BLOCK_DATA } from "../blockdata";
 import { ISerializedCube, deserializeCube, serializeCube } from "../serializer";
 import { Camera } from "../camera";
+import { BlockHolder } from "./blockHolder";
 
 export interface ILookingAtData {
   newCubePos: Vector,
@@ -23,12 +24,13 @@ export interface ISerializedChunk {
 }
 
 export class Chunk {
-  cubes: Map<string, Cube> = new Map();
+  blocks = new BlockHolder();
   // this is set by the client
   visibleCubesFaces: Array<{
     cube: Cube,
     faceVectors: Vector3D[],
   }>
+
 
   uid: string;
   pos: Vector3D;
@@ -45,21 +47,9 @@ export class Chunk {
   }
 
   serialize() {
-    const cubeData: ISerializedCube[] = [];
-    // const visibleData: SerializedVisibleData = [];
-
-    for (const [pos, cube] of this.cubes.entries()) {
-      cubeData.push(serializeCube(cube, pos));
-    }
-
-    // for (const visData of chunk.visibleCubesFaces) {
-    //   visibleData.push([visData.cube.pos.toIndex(), visData.faceVectors.map(d => d.data as IDim)]);
-    // }
-
     return {
       chunkPos: this.chunkPos.toIndex(),
-      cubes: cubeData,
-      // vis: visibleData,
+      cubes: this.blocks.serialize(),
     }
   }
 
@@ -67,21 +57,8 @@ export class Chunk {
     const chunkPos = Vector2D.fromIndex(chunkData.chunkPos);
 
     const chunk = new Chunk(chunkPos);
-    chunk.cubes = new Map(
-      chunkData.cubes.map(data => {
-        return [
-          data[0],
-          deserializeCube(data)
-        ];
-      })
-    );
 
-    // this.visibleCubesFaces = chunkData.vis.map(data => {
-    //   return {
-    //     cube: this.cubes.get(data[0]),
-    //     faceVectors: data[1].map(d => new Vector(d))
-    //   }
-    // });
+    chunk.blocks = BlockHolder.deserialize(chunkData.cubes);
 
     return chunk;
   }
@@ -111,7 +88,7 @@ export class Chunk {
     const ifCubeExistThenPushOut = (pos: Vector3D) => {
       pos.data = pos.data.map(Math.floor);
 
-      const cube = this.cubes.get(pos.toIndex());
+      const cube = this.blocks.get(pos);
       if (!cube) return;
 
       const cubeData = BLOCK_DATA.get(cube.type)!;
@@ -151,9 +128,9 @@ export class Chunk {
     }
   }
 
-  containsCube(cube: Cube) {
+  containsWorldPos(worldPos: Vector3D) {
     // scale cubes position by chunk size
-    const scaledPos = cube.pos.data.map(dim => Math.floor(dim / CONFIG.terrain.chunkSize));
+    const scaledPos = worldPos.data.map(dim => Math.floor(dim / CONFIG.terrain.chunkSize));
     return scaledPos[0] === this.chunkPos.get(0) && scaledPos[2] === this.chunkPos.get(1);
   }
 
@@ -233,24 +210,6 @@ export class Chunk {
       entity: newCubePosData[2],
       dist: newCubePosData[0],
     }
-  }
-
-  getCube(pos: Vector3D): Cube | null {
-    const cube = this.cubes.get(pos.toIndex());
-    if (!cube) return null;
-    return cube;
-  }
-
-  getCubesIterable(): Cube[] {
-    return Array.from(this.cubes.values());
-  }
-
-  addCube(cube: Cube) {
-    this.cubes.set(cube.pos.toIndex(), cube);
-  }
-
-  removeCube(cubePos: Vector3D) {
-    this.cubes.delete(cubePos.toIndex());
   }
 
   getBlockUpdateAction(): IAction {
