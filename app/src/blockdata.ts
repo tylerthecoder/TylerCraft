@@ -1,6 +1,6 @@
 
 export enum BLOCKS {
-  grass = 0,
+  void = 0,
   stone = 1,
   wood = 2,
   leaf = 3,
@@ -8,7 +8,7 @@ export enum BLOCKS {
   gold = 5,
   redFlower = 6,
   water = 7,
-  void = 8,
+  grass = 8,
 }
 
 export enum BlockType {

@@ -123,8 +123,6 @@ export class TerrainApp {
 
           const cube = chunk.blocks.get(blockPos);
           if (!cube) {
-            console.log("Something went wrong", blockPos, chunk, chunk.blocks.convertWorldPosToRelativePos(blockPos));
-
             return;
           }
 

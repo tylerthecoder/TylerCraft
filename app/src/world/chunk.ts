@@ -50,8 +50,7 @@ export class Chunk {
   serialize() {
     return {
       chunkPos: this.chunkPos.toIndex(),
-      // cubes: this.blocks.serialize(),
-      cubes: []
+      cubes: this.blocks.serialize(),
     }
   }
 
@@ -59,7 +58,7 @@ export class Chunk {
     const chunkPos = Vector2D.fromIndex(chunkData.chunkPos);
 
     const chunk = new Chunk(chunkPos);
-    // chunk.blocks = BlockHolder.deserialize(chunkData.cubes);
+    chunk.blocks = BlockHolder.deserialize(chunkData.cubes, chunk);
 
     return chunk;
   }

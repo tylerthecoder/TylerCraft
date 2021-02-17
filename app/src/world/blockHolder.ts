@@ -1,110 +1,98 @@
-import { ChangeEvent } from "mongodb";
 import { BLOCKS } from "../blockdata";
 import { Cube } from "../entities/cube";
 import { deserializeCube, ISerializedCube, serializeCube } from "../serializer";
-import { Vector2D, Vector3D } from "../utils/vector";
+import { Vector3D } from "../utils/vector";
 import { Chunk } from "./chunk";
 
 export type ISerializedBlockerHolder = ISerializedCube[]
 
 export class BlockHolder {
   // private blocks: Map<string, Cube> = new Map();
-
-  private blocks: Array<Array<Uint8Array>>;
+  // private blocks: Array<Array<Uint8Array>>;
+  private blocks: Uint8Array;
 
   constructor(
     private chunk: Chunk
   ) {
-    this.blocks = [];
-    for (let i = 0; i < 16; i++) {
-      this.blocks[i] = [];
-      for (let j = 0; j < 64; j++) {
-        this.blocks[i][j] = new Uint8Array(new ArrayBuffer(16));
-        for (let k = 0; k < 16; k++) {
-          this.blocks[i][j][k] = BLOCKS.void;
-        }
-      }
-    }
+    this.blocks = new Uint8Array(new ArrayBuffer(16 * 64 * 16));
   }
 
-  static isInBounds(pos: Vector3D) {
-    return !(pos.get(0) >= 16 || pos.get(0) < 0 || pos.get(1) >= 64 || pos.get(1) < 0 || pos.get(2) >= 16 || pos.get(2) < 0)
+  serialize(): ISerializedBlockerHolder {
+    const blockData: ISerializedCube[] = [];
+
+    this.iterate(cube => {
+      blockData.push(serializeCube(cube, cube.pos.toIndex()));
+    });
+
+    return blockData;
   }
 
+  static deserialize(blockData: ISerializedBlockerHolder, chunk: Chunk): BlockHolder {
+    const blockHolder = new BlockHolder(chunk);
 
+    blockData.forEach(cubeData => {
+      const cube = deserializeCube(cubeData);
+      blockHolder.add(cube);
+    });
 
-  // serialize(): ISerializedBlockerHolder {
-  //   const blockData: ISerializedCube[] = [];
-  //   for (const [pos, cube] of this.blocks.entries()) {
-  //     blockData.push(serializeCube(cube, pos));
-  //   }
-  //   return blockData;
-  // }
+    return blockHolder;
+  }
 
-  // static deserialize(blockData: ISerializedBlockerHolder): BlockHolder {
-  //   const blockHolder = new BlockHolder();
+  private worldPosToIndex(pos: Vector3D) {
+    const adjustedX = ((pos.get(0) % 16) + 16) % 16;
+    const adjustedZ = ((pos.get(2) % 16) + 16) % 16;
+    const part1 = adjustedX << (4 + 6);
+    const part2 = pos.get(1) << 4;
+    const part3 = adjustedZ;
+    return part1 + part2 + part3;
+  }
 
-  //   blockHolder.blocks = new Map(
-  //     blockData.map(data => {
-  //       return [
-  //         data[0],
-  //         deserializeCube(data)
-  //       ];
-  //     })
-  //   );
-
-  //   return blockHolder;
-  // }
-
-
-  convertWorldPosToRelativePos(worldPos: Vector3D): Vector3D {
-    // const x = worldPos.get(0);
-    const adjustedX = ((worldPos.get(0) % 16) + 16) % 16;
-    const adjustedZ = ((worldPos.get(2) % 16) + 16) % 16;
-    return new Vector3D([adjustedX, worldPos.get(1), adjustedZ]);
+  private indexToWorldPos(index: number) {
+    const part1 = index >> (4 + 6);
+    const part2 = (index - (part1 << (4 + 6))) >> 4;
+    const part3 = index - ((part1 << (4 + 6)) + (part2 << 4));
+    return new Vector3D([part1, part2, part3])
+      .add(this.chunk.pos);
   }
 
   get(worldPos: Vector3D): Cube | null {
     if (!this.chunk.containsWorldPos(worldPos)) return null; // DEV ONLY
-    const relPos = this.convertWorldPosToRelativePos(worldPos);
-    try {
-      const block = this.blocks[relPos.get(0)][relPos.get(1)][relPos.get(2)];
-      if (block === undefined || block === BLOCKS.void) return null;
-      return new Cube(block, worldPos);
-    } catch {
-      return null;
-    }
+    const index = this.worldPosToIndex(worldPos);
+    const block = this.blocks[index];
+    if (block === BLOCKS.void) return null;
+    return new Cube(block, worldPos);
   }
 
   add(cube: Cube): void {
-    const relPos = this.convertWorldPosToRelativePos(cube.pos);
-
-    if (this.has(cube.pos)) {
-      // console.log("Overriding cubes");
-    }
-
-    this.blocks[relPos.get(0)][relPos.get(1)][relPos.get(2)] = cube.type;
+    const index = this.worldPosToIndex(cube.pos);
+    this.blocks[index] = cube.type;
   }
 
   remove(worldPos: Vector3D): void {
-    const relPos = this.convertWorldPosToRelativePos(worldPos);
-    this.blocks[relPos.get(0)][relPos.get(1)][relPos.get(2)] = BLOCKS.void;
+    const index = this.worldPosToIndex(worldPos);
+    this.blocks[index] = BLOCKS.void;
   }
 
   iterate(predicate: (cube: Cube) => void): void {
-    this.blocks.forEach((arr, i) => arr.forEach((arr2, j) => {
-      arr2.forEach((blockType, k) => {
-        if (blockType === BLOCKS.void) return; // remove air
-        const translated = this.chunk.pos.add(new Vector3D([i, j, k]));
-        const cube = new Cube(blockType, translated);
-        predicate(cube);
-      });
-    }));
+    this.blocks.forEach((blockType, index) => {
+      if (blockType === BLOCKS.void) return;
+      const blockPos = this.indexToWorldPos(index);
+      const cube = new Cube(blockType, blockPos);
+      predicate(cube);
+    });
+  }
+
+  iterate2(predicate: (cube: Cube, index: number) => void): void {
+    this.blocks.forEach((blockType, index) => {
+      if (blockType === BLOCKS.void) return;
+      const blockPos = this.indexToWorldPos(index);
+      const cube = new Cube(blockType, blockPos);
+      predicate(cube, index);
+    });
   }
 
   has(worldPos: Vector3D): boolean {
-    // check that this world pos is in thi
-    const relPos = this.convertWorldPosToRelativePos(worldPos);
-    return this.blocks[relPos.get(0)][relPos.get(1)][relPos.get(2)] !== BLOCKS.void;
+    const index = this.worldPosToIndex(worldPos);
+    return this.blocks[index] !== BLOCKS.void;
   }
 }
