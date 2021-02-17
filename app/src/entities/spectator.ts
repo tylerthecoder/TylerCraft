@@ -9,7 +9,7 @@ export class Spectator extends MovableEntity {
   pos = new Vector3D([0, 5, 0]);
   dim: IDim = [1, 2, 1];
   gravitable = false;
-  tangible = false;
+  intangible = true;
 
   constructor() {
     super();

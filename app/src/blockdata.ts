@@ -8,6 +8,7 @@ export enum BLOCKS {
   gold = 5,
   redFlower = 6,
   water = 7,
+  void = 8,
 }
 
 export enum BlockType {
@@ -23,7 +24,7 @@ interface BlockData {
   intangible?: boolean;
 }
 
-export const BLOCK_DATA: Map<BLOCKS, BlockData> = new Map( )
+export const BLOCK_DATA: Map<BLOCKS, BlockData> = new Map()
 BLOCK_DATA.set(BLOCKS.grass, {
   gravitable: false,
   blockType: BlockType.cube,

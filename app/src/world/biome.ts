@@ -206,8 +206,6 @@ export class BiomeGenerator {
 
     // We need load this section
 
-    console.log("Didn't find data for", sectionPos, "Generating");
-
     this.genBiomeForSection(sectionPos);
 
     // now try again to get it

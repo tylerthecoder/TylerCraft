@@ -7,6 +7,7 @@ import { CONFIG } from "../config";
 import { Vector, Vector3D, Vector2D } from "../utils/vector";
 import { ISerializedTerrainGenerator, TerrainGenerator } from "./terrainGenerator";
 import { Camera } from "../camera";
+import { Spectator } from "../entities/spectator";
 
 export interface ISerializedWorld {
   chunks: ISerializedChunk[];
@@ -156,6 +157,8 @@ export class World {
 
   update(entities: Entity[]) {
     for (const entity of entities) {
+      if ((entity as Spectator).intangible) return;
+
       this.pushOut(entity);
 
       for (const e of entities) {

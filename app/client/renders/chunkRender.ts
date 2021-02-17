@@ -26,24 +26,12 @@ export class ChunkRenderer extends Renderer {
   // return if there is a cube (or void) at this position
   private isCube(pos: Vector3D, world: World, currentCube: Cube) {
 
+    // This is outside of the world, so we don't have to show this face
+    if (pos.get(1) < 0) return true;
 
-    // if it isn't in the cube map, see if the world contains it
-    if (pos.get(1) === -1) { return true; }
+    const cube = world.getBlockFromWorldPoint(pos);
+    if (cube === null) return false;
 
-
-    if (!this.chunk.containsWorldPos(pos)) {
-      const chunkPos = World.worldPosToChunkPos(pos);
-      const chunk = world.getChunkFromPos(chunkPos);
-      if (!chunk) return true;
-      const cube = chunk.blocks.get(pos);
-      if (!cube) {
-        return false;
-      }
-    }
-
-    const cube = this.chunk.blocks.get(pos);
-
-    if (cube == null) return false;
 
     const blockData = BLOCK_DATA.get(cube.type)!;
     const currentCubeBlockData = BLOCK_DATA.get(currentCube.type)!;
@@ -200,6 +188,10 @@ export class ChunkRenderer extends Renderer {
 
     this.chunk.blocks.iterate(cube => {
       const blockData = BLOCK_DATA.get(cube.type)!;
+
+      if (!blockData) {
+        console.log(cube);
+      }
 
       if (blockData.transparent) {
         const {

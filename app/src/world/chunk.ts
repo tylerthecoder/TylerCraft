@@ -24,7 +24,7 @@ export interface ISerializedChunk {
 }
 
 export class Chunk {
-  blocks = new BlockHolder();
+  blocks: BlockHolder;
   // this is set by the client
   visibleCubesFaces: Array<{
     cube: Cube,
@@ -39,6 +39,7 @@ export class Chunk {
     public chunkPos: Vector2D,
   ) {
     this.uid = this.chunkPos.toIndex();
+    this.blocks = new BlockHolder(this);
     this.pos = new Vector3D([
       this.chunkPos.get(0) * CONFIG.terrain.chunkSize,
       0,
@@ -49,7 +50,8 @@ export class Chunk {
   serialize() {
     return {
       chunkPos: this.chunkPos.toIndex(),
-      cubes: this.blocks.serialize(),
+      // cubes: this.blocks.serialize(),
+      cubes: []
     }
   }
 
@@ -57,8 +59,7 @@ export class Chunk {
     const chunkPos = Vector2D.fromIndex(chunkData.chunkPos);
 
     const chunk = new Chunk(chunkPos);
-
-    chunk.blocks = BlockHolder.deserialize(chunkData.cubes);
+    // chunk.blocks = BlockHolder.deserialize(chunkData.cubes);
 
     return chunk;
   }

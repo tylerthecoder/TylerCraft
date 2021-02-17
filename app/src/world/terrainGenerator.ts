@@ -129,6 +129,11 @@ export class TerrainGenerator {
       this.blocksToRender.delete(chunkString);
     }
 
+    chunk.blocks.add(new Cube(BLOCKS.cloud, new Vector3D([0, 0, 0])));
+    chunk.blocks.add(new Cube(BLOCKS.cloud, new Vector3D([0, 0, 15])));
+    chunk.blocks.add(new Cube(BLOCKS.cloud, new Vector3D([15, 0, 15])));
+    chunk.blocks.add(new Cube(BLOCKS.cloud, new Vector3D([15, 0, 0])));
+
     return chunk;
   }
 

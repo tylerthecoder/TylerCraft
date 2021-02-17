@@ -44,7 +44,7 @@ export abstract class MovableEntity extends Entity {
 
   private static gravityVector = new Vector3D([0, CONFIG.gravity, 0]);
   gravity() {
-    if (this.vel.magnitude() > 5) return; // set a terminal velocity
+    if (this.vel.magnitude() > .9) return; // set a terminal velocity
     this.vel = this.vel.add(MovableEntity.gravityVector);
   }
 

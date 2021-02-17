@@ -13,8 +13,8 @@ import { TerrainGenerator } from "../src/world/terrainGenerator";
 import { World } from "../src/world/world";
 
 
-const LOAD_DIST = 5;
-const SCALE_FACTOR = 15;
+const LOAD_DIST = 6;
+const SCALE_FACTOR = 10;
 
 // generate the world
 
@@ -123,7 +123,8 @@ export class TerrainApp {
 
           const cube = chunk.blocks.get(blockPos);
           if (!cube) {
-            console.log("Something went wrong");
+            console.log("Something went wrong", blockPos, chunk, chunk.blocks.convertWorldPosToRelativePos(blockPos));
+
             return;
           }
 
