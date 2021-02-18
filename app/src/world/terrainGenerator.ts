@@ -73,6 +73,23 @@ export class TerrainGenerator {
     return Math.floor(Random.noise(pos.data[0], pos.data[1]) * biomeHeight);
   }
 
+  private getTopBlock(biome: Biome): BLOCKS {
+    if (biome === Biome.Forest) {
+      return BLOCKS.grass;
+    }
+    if (biome === Biome.Mountain) {
+      if (Random.randomFloat(0, 1) > .5) {
+        return BLOCKS.stone;
+      } else {
+        return BLOCKS.grass;
+      }
+    }
+    if (biome === Biome.Plains) {
+      return BLOCKS.grass;
+    }
+    return BLOCKS.grass;
+  }
+
   generateChunk(chunkPos: Vector2D): Chunk {
     const chunk = new Chunk(chunkPos);
 
@@ -104,9 +121,8 @@ export class TerrainGenerator {
 
         for (let k = 0; k <= y; k++) {
           const cubePos = [x, k, z];
-          const topBlock = biome === Biome.Forest ? BLOCKS.wood :
-            biome === Biome.Mountain ? BLOCKS.stone :
-              biome === Biome.Plains ? BLOCKS.grass : BLOCKS.gold;
+
+          const topBlock = this.getTopBlock(biome);
 
           const blockType = k === y ? topBlock : Random.randomNum() > .9 ? BLOCKS.gold : BLOCKS.stone;
           const cube = new Cube(blockType, new Vector3D(cubePos));
