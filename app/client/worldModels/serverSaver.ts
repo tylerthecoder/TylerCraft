@@ -32,9 +32,9 @@ export class NetworkWorldModel extends WorldModel {
         // just an empty world (the chunk reader should fill it)
         world: {
           chunks: [],
-          tg: {
-            blocksToRender: [],
-          }
+          // tg: {
+          //   blocksToRender: [],
+          // }
         }
       },
       chunkReader: new ServerGameReader(),

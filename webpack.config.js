@@ -2,6 +2,8 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyPlugin = require("copy-webpack-plugin");
 const webpack = require("webpack");
 
+
+
 module.exports = {
   entry: {
     index: './app/client/app.ts',
@@ -40,6 +42,7 @@ module.exports = {
       SOCKET_SERVER_URL: "ws://localhost:3000/",
       SERVER_URL: "http://localhost:3000/",
     }),
+
   ],
   output: {
     path: __dirname + '/dist/public',
@@ -49,12 +52,19 @@ module.exports = {
     extensions: ['.ts', '.tsx', '.js'],
   },
   module: {
-    rules: [{
-      test: /\.tsx?$/,
-      loader: 'ts-loader',
-      options: {
-        configFile: 'app/client/tsconfig.json'
-      }
-    }],
+    rules: [
+      // Handle Typescript
+      {
+        test: /\.tsx?$/,
+        loader: 'ts-loader',
+        options: {
+          configFile: 'app/client/tsconfig.json'
+        }
+      },
+      {
+        test: /\.worker\.js$/,
+        use: { loader: "worker-loader" },
+      },
+    ],
   },
 };

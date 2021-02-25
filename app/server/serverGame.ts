@@ -59,7 +59,7 @@ export class ServerGame extends Game {
 
   private sendChunkTo(chunkPosString: string, ws: wSocket) {
     const chunkPos = Vector2D.fromIndex(chunkPosString);
-    const chunk = this.world.getChunkFromPos(chunkPos, { generateIfNotFound: true });
+    const chunk = this.world.getChunkFromPos(chunkPos);
     if (!chunk) throw new Error("Chunk wasn't found");
     const serializedData = chunk.serialize();
     this.SocketInterface.send(ws, {

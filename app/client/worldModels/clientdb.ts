@@ -1,30 +1,20 @@
 import { Game, IGameMetadata, ISerializedGame } from "../../src/game";
-import { IChunkReader, ICreateWorldOptions, IWorldData, WorldModel } from "../../src/types";
+import { ICreateWorldOptions, INullableChunkReader, IWorldData, WorldModel } from "../../src/types";
 import { Chunk, ISerializedChunk } from "../../src/world/chunk";
-
-export class ClientChunkReader implements IChunkReader {
-
-  constructor(
-    private idbChunkReader?: IChunkReader,
-  ) { }
-
-  async getChunk(chunkPos: string) {
-    let chunk: Chunk | null = null;
-    // console.log("Reading Chunk: ", chunkPos)
-    if (this.idbChunkReader) {
-      chunk = await this.idbChunkReader.getChunk(chunkPos);
-    }
-    return chunk;
-  }
-}
+import { ChunkReader } from "../../src/world/chunkReader";
+import TerrainWorker from "worker-loader!../../terrain-generation/terrain.worker";
+import { Vector2D } from "../../src/utils/vector";
 
 export class ClientDb extends WorldModel {
   private db: IDBDatabase;
+
+  private terrainWorker: TerrainWorker;
 
   private WORLDS_OBS = "worlds";
 
   constructor() {
     super();
+    this.terrainWorker = new TerrainWorker();
   }
 
   async loadDb() {
@@ -61,10 +51,26 @@ export class ClientDb extends WorldModel {
 
   async createWorld(createWorldOptions: ICreateWorldOptions): Promise<IWorldData> {
     const worldId = Math.random() + "";
+
+    const chunkReader: INullableChunkReader = {
+      getChunk: async (chunkPos: string) => {
+        const terrainVector = Vector2D.fromIndex(chunkPos);
+        this.terrainWorker.postMessage({
+          x: terrainVector.data[0],
+          y: terrainVector.data[1],
+        });
+        return new Promise(resolve => {
+          this.terrainWorker.addEventListener("message", (data: { data: ISerializedChunk }) => {
+            console.log("Got message from worker", data.data);
+            resolve(Chunk.deserialize(data.data));
+          })
+        });
+      }
+    };
     return {
       worldId,
       name: createWorldOptions.gameName,
-      chunkReader: new ClientChunkReader(),
+      chunkReader: new ChunkReader(chunkReader),
       config: createWorldOptions.config,
     }
   }
@@ -111,11 +117,21 @@ export class ClientDb extends WorldModel {
       chunkMap.set(chunk.chunkPos, chunk);
     }
 
-    const chunkReader: IChunkReader = {
+    const chunkReader: INullableChunkReader = {
       getChunk: async (chunkPos: string) => {
         const serializedChunk = chunkMap.get(chunkPos);
-        if (!serializedChunk) return null;
-        return Chunk.deserialize(serializedChunk);
+        if (serializedChunk) return Chunk.deserialize(serializedChunk);
+
+        const terrainVector = Vector2D.fromIndex(chunkPos);
+        this.terrainWorker.postMessage({
+          x: terrainVector.data[0],
+          y: terrainVector.data[1],
+        });
+        return new Promise(resolve => {
+          this.terrainWorker.addEventListener("message", (data: { data: ISerializedChunk }) => {
+            resolve(Chunk.deserialize(data.data));
+          })
+        });
       }
     };
 
@@ -126,14 +142,14 @@ export class ClientDb extends WorldModel {
         entities: world.entities,
         world: {
           chunks: [],
-          tg: {
-            blocksToRender: []
-          }
+          // tg: {
+          //   blocksToRender: []
+          // }
         },
         name: world.name,
       },
       config: world.config,
-      chunkReader: new ClientChunkReader(chunkReader),
+      chunkReader: new ChunkReader(chunkReader),
       activePlayers: [],
       worldId,
       name: world.name,

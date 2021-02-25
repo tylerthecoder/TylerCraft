@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "../../dist",
-    "lib": ["es2019", "dom", "WebWorker"]
+    "lib": ["esnext", "WebWorker"]
   },
   "include": ["./**/*.ts"]
 }

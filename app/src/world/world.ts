@@ -11,11 +11,11 @@ import { Spectator } from "../entities/spectator";
 
 export interface ISerializedWorld {
   chunks: ISerializedChunk[];
-  tg: ISerializedTerrainGenerator;
+  // tg: ISerializedTerrainGenerator;
 }
 
 export class World {
-  public terrainGenerator: TerrainGenerator;
+  // public terrainGenerator: TerrainGenerator;
   private chunks: Map<string, Chunk>;
   public loadingChunks = new Set<string>();
   public loadedChunks = new Set<string>();
@@ -26,7 +26,7 @@ export class World {
     data?: ISerializedWorld,
   ) {
     if (data) {
-      this.terrainGenerator = new TerrainGenerator(this.hasChunk.bind(this), this.getChunkFromPos.bind(this), data.tg);
+      // this.terrainGenerator = new TerrainGenerator(this.hasChunk.bind(this), this.getChunkFromPos.bind(this), data.tg);
 
       const chunks = data.chunks.map(Chunk.deserialize);
 
@@ -39,18 +39,18 @@ export class World {
       this.chunks.forEach(chunk => this.updateChunk(chunk.chunkPos));
 
     } else {
-      this.terrainGenerator = new TerrainGenerator(this.hasChunk.bind(this), this.getChunkFromPos.bind(this));
+      // this.terrainGenerator = new TerrainGenerator(this.hasChunk.bind(this), this.getChunkFromPos.bind(this));
       this.chunks = new Map();
     }
   }
 
   // We just aren't going to serialize the terrain generator for now. Hopefully later we find a better way to do this
   serialize(): ISerializedWorld {
-    const serializedTG = this.terrainGenerator.serialize();
+    // const serializedTG = this.terrainGenerator.serialize();
     const serializedChunks = Array.from(this.chunks.values()).map(chunk => chunk.serialize());
     return {
       chunks: serializedChunks,
-      tg: serializedTG,
+      // tg: serializedTG,
     }
   }
 
@@ -71,10 +71,10 @@ export class World {
   }
 
 
-  getChunkFromPos(chunkPos: Vector2D, config?: { generateIfNotFound?: boolean, loadIfNotFound?: boolean }) {
+  getChunkFromPos(chunkPos: Vector2D, config?: { loadIfNotFound?: boolean }) {
     const chunk = this.chunks.get(chunkPos.toIndex());
     if (!chunk && config?.loadIfNotFound) this.loadChunk(chunkPos);
-    if (!chunk && config?.generateIfNotFound) return this.generateChunk(chunkPos);
+    // if (!chunk && config?.generateIfNotFound) return this.generateChunk(chunkPos);
     return chunk;
   }
 
@@ -101,7 +101,7 @@ export class World {
       this.chunkReader.getChunk(chunkPos.toIndex()).then(chunk => {
         // this should only happen on the client side when single player
         // and on the server side when multiplayer
-        if (!chunk) chunk = this.terrainGenerator.generateChunk(chunkPos);
+        // if (!chunk) chunk = this.terrainGenerator.generateChunk(chunkPos);
         this.setChunkAtPos(chunk, chunkPos);
         resolve();
       })
@@ -133,12 +133,12 @@ export class World {
     }
   }
 
-  private generateChunk(chunkPos: Vector2D) {
-    console.log("Generating chunk", chunkPos, this.game.gameId);
-    const generatedChunk = this.terrainGenerator.generateChunk(chunkPos);
-    this.setChunkAtPos(generatedChunk, chunkPos);
-    return generatedChunk;
-  }
+  // private generateChunk(chunkPos: Vector2D) {
+  //   console.log("Generating chunk", chunkPos, this.game.gameId);
+  //   const generatedChunk = this.terrainGenerator.generateChunk(chunkPos);
+  //   this.setChunkAtPos(generatedChunk, chunkPos);
+  //   return generatedChunk;
+  // }
 
   // load the starting chunks
   async load() {

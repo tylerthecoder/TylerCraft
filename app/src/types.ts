@@ -72,7 +72,11 @@ export interface ICreateWorldOptions {
 }
 
 export interface IChunkReader {
-  getChunk(chunkPos: string): Promise<Chunk | null>;
+  getChunk(chunkPos: string): Promise<Chunk>;
+}
+
+export interface INullableChunkReader {
+  getChunk(chunkPos: string): Promise<Chunk|null>;
 }
 
 export interface IWorldData {
