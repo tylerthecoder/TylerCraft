@@ -52,19 +52,37 @@ export class ClientDb extends WorldModel {
   async createWorld(createWorldOptions: ICreateWorldOptions): Promise<IWorldData> {
     const worldId = Math.random() + "";
 
+    const chunkPromises: { [chunkPos: string]: Promise<Chunk> } = {};
+
+    this.terrainWorker.postMessage({
+      type: "setConfig",
+      config: createWorldOptions.config,
+    });
+
     const chunkReader: INullableChunkReader = {
       getChunk: async (chunkPos: string) => {
+        let chunkPromise = chunkPromises[chunkPos];
+        if (chunkPromise) return chunkPromise;
+
         const terrainVector = Vector2D.fromIndex(chunkPos);
         this.terrainWorker.postMessage({
+          type: "getChunk",
           x: terrainVector.data[0],
           y: terrainVector.data[1],
         });
-        return new Promise(resolve => {
-          this.terrainWorker.addEventListener("message", (data: { data: ISerializedChunk }) => {
-            console.log("Got message from worker", data.data);
+
+        chunkPromise = new Promise<Chunk>(resolve => {
+          const onTerrainMessage = (data: { data: ISerializedChunk }) => {
+            if (data.data.chunkPos !== chunkPos) return;
             resolve(Chunk.deserialize(data.data));
-          })
+            this.terrainWorker.removeEventListener("message", onTerrainMessage);
+          }
+
+          this.terrainWorker.addEventListener("message", onTerrainMessage);
         });
+        chunkPromises[chunkPos] = chunkPromise;
+
+        return chunkPromise;
       }
     };
     return {

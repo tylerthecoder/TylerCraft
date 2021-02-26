@@ -1,22 +1,30 @@
+import { IConfig, setConfig } from "../src/config";
 import Random from "../src/utils/random";
-import { Vector, Vector2D } from "../src/utils/vector";
+import { Vector2D } from "../src/utils/vector";
 import { Chunk, ISerializedChunk } from "../src/world/chunk";
 import { TerrainGenerator } from "../src/world/terrainGenerator";
 // import terrainService from "./build/terrain2.js";
 
-let terrainServiceInstance: any;
+// let terrainServiceInstance: any;
+
+interface IGetChunkMessage {
+  type: "getChunk";
+  x: number;
+  y: number;
+}
+
+interface ISetConfigMessage {
+  type: "setConfig";
+  config: IConfig;
+}
 
 interface IWorkerMessage {
-  data: {
-    messageType: "getChunk";
-    x: number;
-    y: number;
-  }
+  data: IGetChunkMessage | ISetConfigMessage;
 }
 
-interface IWorkerResponse {
-  data: Uint8Array;
-}
+// interface IWorkerResponse {
+//   data: Uint8Array;
+// }
 
 // declare var onmessage: (e: IWorkerMessage) => void;
 // declare var postMessage: (e: IWorkerResponse) => void;
@@ -29,21 +37,25 @@ interface IWorkerResponse {
 const ctx: Worker = self as any;
 
 ctx.onmessage = function (e: IWorkerMessage) {
-  console.log("Received message", e.data);
 
-  const chunk = getChunk2(e.data.x, e.data.y);
+  if (e.data.type === "getChunk") {
+    const chunk = getChunk2(e.data.x, e.data.y);
 
-  postMessage(
-    chunk,
-    null
-  );
+    postMessage(
+      chunk,
+    );
+
+  } else if (e.data.type === "setConfig") {
+    setConfig(e.data.config);
+  }
+
 }
 
 // terrainService().then((instance: any) => {
 //   terrainServiceInstance = instance;
 // });
 
-const CHUNK_DATA_LENGTH = 16 * 16 * 64;
+// const CHUNK_DATA_LENGTH = 16 * 16 * 64;
 
 const chunks = new Map<string, Chunk>();
 
@@ -61,8 +73,6 @@ const getChunk2 = (x: number, y: number): ISerializedChunk => {
   const chunk = terrainGenerator.generateChunk(pos);
 
   chunks.set(chunk.chunkPos.toIndex(), chunk);
-
-  console.log(chunk);
 
   return chunk.serialize();
 }

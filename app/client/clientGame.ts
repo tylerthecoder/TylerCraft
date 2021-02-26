@@ -68,6 +68,8 @@ export class ClientGame extends Game {
     await canvas.loadProgram();
     await this.world.load();
 
+    console.log("World Loaded");
+
     if (this.multiPlayer) {
       const socketController = new GameSocketController(this);
       this.controllers.add(socketController);
