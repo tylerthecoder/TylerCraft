@@ -27,7 +27,7 @@ export class ServerGame extends Game {
   loop(): void {
     if (this.actionQueue.length > 100) {
       console.log(this.actionQueue);
-      throw new Error("BAD")
+      throw new Error("To Many actions")
     }
 
     const sortedActions: Map<wSocket, IAction[]> = new Map();
@@ -57,9 +57,13 @@ export class ServerGame extends Game {
     setTimeout(this.loop.bind(this), 1000 / 60);
   }
 
-  private sendChunkTo(chunkPosString: string, ws: wSocket) {
+  private async sendChunkTo(chunkPosString: string, ws: wSocket) {
     const chunkPos = Vector2D.fromIndex(chunkPosString);
-    const chunk = this.world.getChunkFromPos(chunkPos);
+    let chunk = this.world.getChunkFromPos(chunkPos);
+    if (!chunk) {
+      await this.world.loadChunk(chunkPos);
+      chunk = this.world.getChunkFromPos(chunkPos);
+    }
     if (!chunk) throw new Error("Chunk wasn't found");
     const serializedData = chunk.serialize();
     this.SocketInterface.send(ws, {

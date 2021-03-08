@@ -36,19 +36,25 @@ export class ClientGame extends Game {
     this.worldRenderer = new WorldRenderer(this.world, this);
     this.mainPlayer = this.entities.createOrGetPlayer(true, getMyUid());
 
-    const gameController = IS_MOBILE ? new MobileController(this) : new GameController(this, canvas);
-    this.controllers.add(gameController);
+    console.log("My UID", getMyUid());
 
     if (!this.mainPlayer) throw new Error("Main player was not found");
 
     const activePlayers = worldData.activePlayers ?? [];
     // draw only the active players
     for (const entity of this.entities.iterable()) {
+
+      // We don't want to be able to control players that we do not own
+      if (entity instanceof Player && entity.uid !== getMyUid()) {
+        entity.isReal = false;
+      }
+
       // if an entity is a player but not active then don't render them
       if (
         entity instanceof Player &&
-        activePlayers.includes(entity.uid)
+        !activePlayers.includes(entity.uid)
       ) continue;
+
       if (entity.uid === getMyUid()) continue; // don't render the main player
       this.onNewEntity(entity);
     }
@@ -67,6 +73,9 @@ export class ClientGame extends Game {
   async load() {
     await canvas.loadProgram();
     await this.world.load();
+
+    const gameController = IS_MOBILE ? new MobileController(this) : new GameController(this, canvas);
+    this.controllers.add(gameController);
 
     console.log("World Loaded");
 
@@ -114,6 +123,7 @@ export class ClientGame extends Game {
     if (this.multiPlayer && actions.length > 0) {
       SocketInterface.send({
         type: ISocketMessageType.actions,
+        // filter out actions that we received from the server
         actionPayload: actions.filter(a => !a.isFromServer)
       });
     }

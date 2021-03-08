@@ -1,13 +1,21 @@
 import { Game, IGameMetadata, ISerializedGame } from "../src/game";
 import { IChunkReader, ICreateWorldOptions, IWorldData, WorldModel } from "../src/types";
+import { Vector2D } from "../src/utils/vector";
 import { Chunk, ISerializedChunk } from "../src/world/chunk";
+import { TerrainGenerator } from "../src/world/terrainGenerator";
 import { db } from "./app";
 
 export class RamChunkReader implements IChunkReader {
   private chunkMap = new Map<string, ISerializedChunk>();
+  private terrainGenerator: TerrainGenerator;
+
   constructor(
-    serializedGame?: ISerializedGame
+    serializedGame?: ISerializedGame,
   ) {
+    this.terrainGenerator = new TerrainGenerator(
+      (chunkPos) => this.chunkMap.has(chunkPos.toIndex()),
+      (chunkPos) => Chunk.deserialize(this.chunkMap.get(chunkPos.toIndex())!),
+    );
     if (!serializedGame) return;
     for (const chunk of serializedGame.world.chunks) {
       this.chunkMap.set(chunk.chunkPos, chunk);
@@ -16,7 +24,7 @@ export class RamChunkReader implements IChunkReader {
 
   async getChunk(chunkPos: string) {
     const serializedChunk = this.chunkMap.get(chunkPos);
-    if (!serializedChunk) return null;
+    if (!serializedChunk) return this.terrainGenerator.generateChunk(Vector2D.fromIndex(chunkPos));
     return Chunk.deserialize(serializedChunk);
   }
 }

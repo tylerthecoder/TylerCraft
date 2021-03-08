@@ -13,13 +13,40 @@ import { BLOCK_DATA, BlockType } from "../../src/blockdata";
 type IVisibleFaceMap = Map<string, { cube: Cube, faceVectors: Vector3D[] }>;
 
 export class ChunkRenderer extends Renderer {
+
+  private isLoaded = false;
+
   constructor(public chunk: Chunk, world: World) {
     super();
     this.setActiveTexture(canvas.textures.textureAtlas);
     this.getBufferData(world);
+
+    // const chunkRendererWorker = new ChunkRendererWorker();
+
+    // // get the surrounding chunks
+    // const surroundingChunks = Vector2D.edgeVectors
+    //   .map((dir) => world.getChunkFromPos(chunk.chunkPos.add(dir)))
+    //   .filter(chunk => Boolean(chunk))
+    //   .map(chunk => chunk?.serialize()) as ISerializedChunk[];
+
+    // chunkRendererWorker.postMessage({
+    //   chunk: chunk.serialize(),
+    //   surroundingChunks,
+    // });
+
+    // chunkRendererWorker.onmessage = (message: MessageEvent<IWorkerResponse>) => {
+    //   console.log(message);
+    //   const { positions, indices, textureCords, transIndices, transPositions, transTextureCords } = message.data;
+    //   this.isLoaded = true;
+    //   this.setBuffersData(positions, indices, textureCords, transPositions, transIndices, transTextureCords)
+    // }
+
+    // this.getBufferData(world);
+
   }
 
   render(camera: Camera, trans?: boolean): void {
+    // if (!this.isLoaded) return;
     this.renderObject(this.chunk.pos.data, camera, trans);
   }
 
@@ -160,6 +187,9 @@ export class ChunkRenderer extends Renderer {
 
   // have an options to launch this on a worker thread (maybe always have it on a different thread)
   getBufferData(world: World): void {
+
+
+
     // console.log("Chunk update");
     const visibleCubePosMap = new Map<string, { cube: Cube, faceVectors: Vector3D[] }>();
 

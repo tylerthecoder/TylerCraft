@@ -4,8 +4,7 @@ import { Entity } from "../entities/entity";
 import { Game } from "../game";
 import { IActionType, IChunkReader } from "../types";
 import { CONFIG } from "../config";
-import { Vector, Vector3D, Vector2D } from "../utils/vector";
-import { ISerializedTerrainGenerator, TerrainGenerator } from "./terrainGenerator";
+import { Vector3D, Vector2D } from "../utils/vector";
 import { Camera } from "../camera";
 import { Spectator } from "../entities/spectator";
 

@@ -94,6 +94,7 @@ export class Chunk {
       const cubeData = BLOCK_DATA.get(cube.type)!;
 
       if (!cube.isCollide(ent)) return;
+      if (!cubeData) return;
       if (cubeData.intangible) return;
 
       ent.pushOut(cube);
