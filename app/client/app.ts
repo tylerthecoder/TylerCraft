@@ -41,36 +41,92 @@ export function getMyUid() {
   return uid;
 }
 
+// Get all of the elements
 const ePlayLocalButton = document.getElementById("playLocalButton")!;
 const ePlayOnlineButton = document.getElementById("playOnlineButton")!;
-
 const eStartMenu = document.getElementById("startMenu")!;
 const eGameTypeScreen = document.getElementById("pickGameTypeScreen")!;
 const ePickWorldScreen = document.getElementById("pickWorldScreen")!;
+const eBackButton = document.getElementById("backButton")!;
+const eWorldOptionsScreen = document.getElementById("worldOptionsScreen")!;
+const eConfigForm = document.getElementById("configForm") as HTMLFormElement;
+const eConfigFormExtra = document.getElementById("configFormExtra")!;
+const eConfigFormStartButton = document.getElementById("configFormStartButton") as HTMLButtonElement;
 
-ePlayLocalButton.addEventListener("click", async () => {
-  eGameTypeScreen.classList.add("fade");
-  const clientDb = new ClientDb();
-  await clientDb.loadDb();
-  (window as IExtendedWindow).clientDb = clientDb;
-  showWorldPicker(clientDb);
-});
+// Add listeners
+ePlayLocalButton.addEventListener("click", showLocalWorldPicker);
+ePlayOnlineButton.addEventListener("click", showOnlineWorldPicker);
 
 export const SocketInterface = new SocketHandler();
 
-ePlayOnlineButton.addEventListener("click", async () => {
+// Screens:
+
+// Start
+// Choose Local World (#local)
+// Create Local World (#local-new)
+// Choose Server World (#server)
+// Create Server World (#server-new)
+
+
+
+// select certain screen based on the location hash
+console.log("Location hash", location.hash);
+if (location.hash === "#local") {
+  showLocalWorldPicker();
+} else if (location.hash === "#online") {
+  showOnlineWorldPicker();
+} else if (location.hash === "#online-new") {
+  showOnlineNewWorldScreen();
+} else if (location.hash === "#local-new") {
+  showLocalNewWorldScreen();
+}
+
+async function getLocalWorldModel() {
+  const clientDb = new ClientDb();
+  await clientDb.loadDb();
+  (window as IExtendedWindow).clientDb = clientDb;
+  return clientDb;
+}
+
+async function getOnlineWorldModel() {
   const serverWorldModel = new NetworkWorldModel();
   await SocketInterface.connect();
-  showWorldPicker(serverWorldModel);
-});
+  return serverWorldModel;
+}
 
-async function showWorldPicker(worldModel: WorldModel) {
-  showElement(ePickWorldScreen);
-  eGameTypeScreen.style.display = "none";
+
+// Display Screen Functions
+async function showLocalWorldPicker() {
+  const clientDb = await getLocalWorldModel();
+  showWorldPicker(clientDb, "local", "local-new", () => showLocalWorldPicker());
+}
+
+async function showOnlineWorldPicker() {
+  const serverWorldModel = await getOnlineWorldModel();
+  showWorldPicker(serverWorldModel, "online", "online-new", () => showOnlineWorldPicker());
+}
+
+async function showLocalNewWorldScreen() {
+  hideElement(eGameTypeScreen);
+  const clientDb = await getLocalWorldModel();
+  showWorldOptionsScreen(clientDb, () => showLocalWorldPicker())
+}
+
+async function showOnlineNewWorldScreen() {
+  hideElement(eGameTypeScreen);
+  const clientDb = await getLocalWorldModel();
+  showWorldOptionsScreen(clientDb, () => showOnlineWorldPicker())
+}
+
+
+async function showWorldPicker(worldModel: WorldModel, currentHash: string, nextHash: string, onBack: () => void) {
+  hideElement(eGameTypeScreen);
+  hideElement(eWorldOptionsScreen);
+
+  // show a loading spinner here
 
   // get all the saved worlds
   const games = await worldModel.getAllWorlds();
-
   const gamesMap = new Map<string, IGameMetadata>();
 
   console.log(games, gamesMap);
@@ -92,13 +148,27 @@ async function showWorldPicker(worldModel: WorldModel) {
 
   ePickWorldScreen.innerHTML = gamesHtml;
 
+  // Display the games now that they are populated
+  location.hash = currentHash;
+  showElement(ePickWorldScreen);
+  showElement(eBackButton);
+  eBackButton.onclick = () => {
+    location.hash = "";
+    hideElement(ePickWorldScreen);
+    hideElement(eBackButton);
+    showElement(eGameTypeScreen);
+  }
+
   const eGameItems = document.getElementsByClassName("gameItem");
 
   Array.from(eGameItems).forEach(ele => {
+    // you clicked a world
     ele.addEventListener("click", async () => {
+      location.hash = nextHash;
+
       if (ele.id === "game-new") {
         console.log("new World");
-        showWorldOptionsScreen(worldModel);
+        showWorldOptionsScreen(worldModel, onBack);
         return;
       }
 
@@ -115,11 +185,6 @@ async function showWorldPicker(worldModel: WorldModel) {
     });
   });
 }
-
-const eWorldOptionsScreen = document.getElementById("worldOptionsScreen")!;
-const eConfigForm = document.getElementById("configForm") as HTMLFormElement;
-const eConfigFormExtra = document.getElementById("configFormExtra")!;
-const eConfigFormStartButton = document.getElementById("configFormStartButton") as HTMLButtonElement;
 
 function createConfigHtmlObject(
   obj: Record<string, unknown>,
@@ -166,9 +231,11 @@ function createConfigHtml(
   return "";
 }
 
-function showWorldOptionsScreen(worldModel: WorldModel) {
+function showWorldOptionsScreen(worldModel: WorldModel, onBack: () => void) {
   showElement(eWorldOptionsScreen);
+  showElement(eBackButton);
   hideElement(ePickWorldScreen);
+  eBackButton.onclick = onBack;
 
   // Goal:
   // Make a way to extract all of the properties from the CONFIG and make
