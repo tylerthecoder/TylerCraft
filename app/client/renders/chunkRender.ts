@@ -1,13 +1,15 @@
-import { Renderer } from "./renderer";
-import { canvas } from "../canvas";
+import { Renderer, RenderData } from "./renderer";
 import { Camera } from "../../src/camera";
 import { Chunk } from "../../src/world/chunk";
-import { arrayMul, arrayAdd, arraySub } from "../../src/utils";
+import { arraySub } from "../../src/utils";
 import TextureMapper from "../textureMapper";
 import { Cube } from "../../src/entities/cube";
-import { Vector3D, Vector } from "../../src/utils/vector";
+import { Vector3D } from "../../src/utils/vector";
 import { World } from "../../src/world/world";
-import { BLOCK_DATA, BlockType } from "../../src/blockdata";
+import { BLOCK_DATA, BlockType, getBlockData } from "../../src/blockdata";
+import TextureService from "../services/textureService";
+import { ImageRenderer } from "./imageRender";
+import ShapeBuilder from "../services/shapeBuilder";
 
 
 type IVisibleFaceMap = Map<string, { cube: Cube, faceVectors: Vector3D[] }>;
@@ -16,10 +18,19 @@ export class ChunkRenderer extends Renderer {
 
   private isLoaded = false;
 
+  private otherRenders: Renderer[] = [];
+
   constructor(public chunk: Chunk, world: World) {
     super();
-    this.setActiveTexture(canvas.textures.textureAtlas);
+    this.setActiveTexture(TextureService.textureAtlas);
     this.getBufferData(world);
+
+    this.otherRenders.push(
+      new ImageRenderer(
+        chunk.pos.add(new Vector3D([2, 2, 2])),
+        0
+      )
+    );
 
     // const chunkRendererWorker = new ChunkRendererWorker();
 
@@ -47,7 +58,11 @@ export class ChunkRenderer extends Renderer {
 
   render(camera: Camera, trans?: boolean): void {
     // if (!this.isLoaded) return;
+    this.setActiveTexture(TextureService.textureAtlas);
+
     this.renderObject(this.chunk.pos.data, camera, trans);
+
+    this.otherRenders.forEach(r => r.render(camera));
   }
 
   // return if there is a cube (or void) at this position
@@ -86,17 +101,24 @@ export class ChunkRenderer extends Renderer {
     faceMap.set(cube.pos.toIndex(), visibleCubePos);
   }
 
-  private getDataForBlock(cube: Cube, offset: number, world: World, visibleFaceMap: IVisibleFaceMap): { addToOffset: number, positions: number[], indices: number[], textureCords: number[] } {
-    const blockData = BLOCK_DATA.get(cube.type)!;
+  private getDataForBlock(
+    renData: RenderData,
+    cube: Cube,
+    world: World,
+    visibleFaceMap: IVisibleFaceMap
+  ): void {
+    const blockData = getBlockData(cube.type);
+
+    // if (blockData.blockType === BlockType.flat) {
+
+    // }
+
     const relativePos = arraySub(cube.pos.data, this.chunk.pos.data);
     const texturePos = TextureMapper.getTextureCords(cube.type);
-    const positions: number[] = [];
-    const indices: number[] = [];
-    const textureCords: number[] = [];
+
     if (blockData.blockType === BlockType.cube || blockData.blockType === BlockType.fluid) {
 
       // loop through all the faces to get their cords
-      let count = 0;
       for (const face of [0, 1, 2, 3, 4, 5]) {
         // check to see if there is a cube touching me on this face
         const directionVector = Vector3D.unitVectors[face];
@@ -109,140 +131,52 @@ export class ChunkRenderer extends Renderer {
         // add the face to the list of visible faces on the chunk
         this.addVisibleFace(visibleFaceMap, cube, directionVector);
 
-        // get the dimension of the face i.e. x, y, z
-        const dim = face >> 1;
+        ShapeBuilder.buildFace(face, renData, relativePos, 1);
 
-        // get the direction of the face. In or out
-        const dir = face % 2 === 0 ? 1 : 0;
+        const textureCords = texturePos[face];
 
-        // four corners of a square, centered at origin
-        const square = [[0, 0], [1, 0], [1, 1], [0, 1]];
-
-        // get a flattened array of the positions
-        const vertices = square
-          .map(edge => {
-            // add the 3 dimension to the square
-            edge.splice(dim, 0, dir);
-
-            const size = cube.dim;
-
-            // multiply edges by dimensions
-            const cords = arrayMul(edge, size);
-
-            // move the vertices by the cube's relative position in the chunk
-            const adjustedCords = arrayAdd(cords, relativePos);
-
-            return adjustedCords;
-          })
-          .flat();
-
-        // get triangle indices
-        const triIndices = [0, 1, 2, 0, 2, 3].map(x => x + count + offset);
-
-        // increase the count
-        count += 4;
-
-        const textureCord = texturePos[face];
-
-        positions.push(...vertices);
-        indices.push(...triIndices);
-        textureCords.push(...textureCord);
+        renData.pushData({ textureCords, });
       }
 
-      return {
-        addToOffset: count,
-        positions,
-        indices,
-        textureCords,
-      }
     } else if (blockData.blockType === BlockType.x) {
+      ShapeBuilder.buildX(renData, relativePos);
 
-      const adjustedCords = Vector.xVectors.
-        map(v => arrayAdd(v, relativePos)).
-        flat();
-
-
-      const triIndices = [0, 1, 2, 0, 2, 3].map(x => x + offset);
-      const secondTriIndices = [0, 1, 2, 0, 2, 3].map(x => x + offset + 4);
-
-      positions.push(...adjustedCords);
-      indices.push(...triIndices, ...secondTriIndices);
-      textureCords.push(...texturePos[0], ...texturePos[1]);
+      renData.pushData({
+        textureCords: [...texturePos[0], ...texturePos[1]]
+      });
 
       // make a flower still "hittable"
       for (const directionVector of Vector3D.unitVectors) {
         this.addVisibleFace(visibleFaceMap, cube, directionVector);
       }
-
-      return {
-        addToOffset: 8,
-        positions,
-        indices,
-        textureCords,
-      }
+    } else if (blockData.blockType === BlockType.flat) {
+      // NO-OP
+      throw new Error("Not a valid block type")
     } else {
-      throw new Error("")
+
+      throw new Error("Not a valid block type")
     }
+
   }
 
   // have an options to launch this on a worker thread (maybe always have it on a different thread)
   getBufferData(world: World): void {
-
-
-
-    // console.log("Chunk update");
     const visibleCubePosMap = new Map<string, { cube: Cube, faceVectors: Vector3D[] }>();
 
-    // const addVisibleFace = (cube: Cube, directionVector: Vector3D) => {
-    //   let visibleCubePos = visibleCubePosMap.get(cube.pos.toIndex());
-    //   if (!visibleCubePos) {
-    //     visibleCubePos = {
-    //       cube: cube,
-    //       faceVectors: []
-    //     }
-    //   }
-    //   visibleCubePos.faceVectors.push(directionVector);
-    //   visibleCubePosMap.set(cube.pos.toIndex(), visibleCubePos);
-    // }
-
-
-    const positions: number[] = []; // used to store positions of vertices
-    const indices: number[] = []; // used to store pointers to those vertices
-    const textureCords: number[] = [];
-    let offset = 0;
-
-    const transPositions: number[] = [];
-    const transIndices: number[] = [];
-    const transTextureCords: number[] = [];
-    let transOffset = 0;
+    const renData = new RenderData();
+    const transRenData = new RenderData();
 
     this.chunk.blocks.iterate(cube => {
-      const blockData = BLOCK_DATA.get(cube.type)!;
-
-      if (!blockData) {
-        console.log(cube);
-      }
+      const blockData = getBlockData(cube.type);
 
       if (blockData.transparent) {
-        const {
-          addToOffset, positions: p, indices: i, textureCords: t
-        } = this.getDataForBlock(cube, transOffset, world, visibleCubePosMap);
-        transOffset += addToOffset;
-        transPositions.push(...p);
-        transIndices.push(...i);
-        transTextureCords.push(...t);
+        this.getDataForBlock(transRenData, cube, world, visibleCubePosMap);
       } else {
-        const {
-          addToOffset, positions: p, indices: i, textureCords: t
-        } = this.getDataForBlock(cube, offset, world, visibleCubePosMap);
-        offset += addToOffset;
-        positions.push(...p);
-        indices.push(...i);
-        textureCords.push(...t);
+        this.getDataForBlock(renData, cube, world, visibleCubePosMap);
       }
     })
 
     this.chunk.visibleCubesFaces = Array.from(visibleCubePosMap.values());
-    this.setBuffers(positions, indices, textureCords, transPositions, transIndices, transTextureCords);
+    this.setBuffers(renData, transRenData);
   }
 }

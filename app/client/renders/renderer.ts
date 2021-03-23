@@ -4,6 +4,32 @@ import { arraySub } from "../../src/utils";
 // import {mat4} from "gl-matrix";
 declare const mat4: any;
 
+interface IRenderData {
+  positions: number[];
+  indices: number[];
+  textureCords: number[];
+}
+
+export class RenderData implements IRenderData {
+  positions: number[] = [];
+  indices: number[] = [];
+  textureCords: number[] = [];
+
+  indexOffset = 0;
+
+  public pushData(renData: Partial<RenderData>) {
+    this.indices.push(...renData.indices ?? []);
+    this.positions.push(...renData.positions ?? []);
+    this.textureCords.push(...renData.textureCords ?? []);
+  }
+
+
+  public get posOffset() {
+    return this.positions.length;
+  }
+
+}
+
 export abstract class Renderer {
 
   canvas: CanvasProgram;
@@ -19,85 +45,81 @@ export abstract class Renderer {
   amount: number;
   transAmount: number;
 
-  protected setBuffersData(
-    positions: Float32Array,
-    indices: Uint16Array,
-    textureCords: Float32Array,
-    transPositions: Float32Array,
-    transIndices: Uint16Array,
-    transTextureCords: Float32Array,
-  ) {
-    const gl = canvas.gl;
+  // protected setBuffersData(
+  //   positions: Float32Array,
+  //   indices: Uint16Array,
+  //   textureCords: Float32Array,
+  //   transPositions: Float32Array,
+  //   transIndices: Uint16Array,
+  //   transTextureCords: Float32Array,
+  // ) {
+  //   const gl = canvas.gl;
 
-    this.amount = indices.length;
+  //   this.amount = indices.length;
 
-    this.posBuffer = gl.createBuffer()!;
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+  //   this.posBuffer = gl.createBuffer()!;
+  //   gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuffer);
+  //   gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
 
-    this.indexBuffer = gl.createBuffer()!;
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+  //   this.indexBuffer = gl.createBuffer()!;
+  //   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+  //   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
 
-    this.textureBuffer = gl.createBuffer()!;
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.textureBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, textureCords, gl.STATIC_DRAW);
+  //   this.textureBuffer = gl.createBuffer()!;
+  //   gl.bindBuffer(gl.ARRAY_BUFFER, this.textureBuffer);
+  //   gl.bufferData(gl.ARRAY_BUFFER, textureCords, gl.STATIC_DRAW);
 
-    this.transPosBuffer = gl.createBuffer()!;
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.transPosBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, transPositions, gl.STATIC_DRAW);
+  //   this.transPosBuffer = gl.createBuffer()!;
+  //   gl.bindBuffer(gl.ARRAY_BUFFER, this.transPosBuffer);
+  //   gl.bufferData(gl.ARRAY_BUFFER, transPositions, gl.STATIC_DRAW);
 
-    this.transIndexBuffer = gl.createBuffer()!;
-    this.transAmount = transIndices.length;
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.transIndexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, transIndices, gl.STATIC_DRAW);
+  //   this.transIndexBuffer = gl.createBuffer()!;
+  //   this.transAmount = transIndices.length;
+  //   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.transIndexBuffer);
+  //   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, transIndices, gl.STATIC_DRAW);
 
-    this.transTextureBuffer = gl.createBuffer()!;
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.transTextureBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, transTextureCords, gl.STATIC_DRAW);
-  }
+  //   this.transTextureBuffer = gl.createBuffer()!;
+  //   gl.bindBuffer(gl.ARRAY_BUFFER, this.transTextureBuffer);
+  //   gl.bufferData(gl.ARRAY_BUFFER, transTextureCords, gl.STATIC_DRAW);
+  // }
 
   protected setBuffers(
-    positions: number[],
-    indices: number[],
-    textureCords: number[],
-    transPositions?: number[],
-    transIndices?: number[],
-    transTextureCords?: number[],
+    renData: IRenderData,
+    transRenData?: IRenderData,
   ) {
     const gl = canvas.gl;
 
-    this.amount = indices.length;
+    this.amount = renData.indices.length;
 
     this.posBuffer = gl.createBuffer()!;
     gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(renData.positions), gl.STATIC_DRAW);
 
     this.indexBuffer = gl.createBuffer()!;
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(renData.indices), gl.STATIC_DRAW);
 
     this.textureBuffer = gl.createBuffer()!;
     gl.bindBuffer(gl.ARRAY_BUFFER, this.textureBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(textureCords), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(renData.textureCords), gl.STATIC_DRAW);
 
-    if (transPositions) {
+    if (transRenData?.positions) {
       this.transPosBuffer = gl.createBuffer()!;
       gl.bindBuffer(gl.ARRAY_BUFFER, this.transPosBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(transPositions), gl.STATIC_DRAW);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(transRenData.positions), gl.STATIC_DRAW);
     }
 
-    if (transIndices) {
+    if (transRenData?.indices) {
       this.transIndexBuffer = gl.createBuffer()!;
-      this.transAmount = transIndices.length;
+      this.transAmount = transRenData.indices.length;
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.transIndexBuffer);
-      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(transIndices), gl.STATIC_DRAW);
+      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(transRenData.indices), gl.STATIC_DRAW);
     }
 
-    if (transTextureCords) {
+    if (transRenData?.textureCords) {
       this.transTextureBuffer = gl.createBuffer()!;
       gl.bindBuffer(gl.ARRAY_BUFFER, this.transTextureBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(transTextureCords), gl.STATIC_DRAW);
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(transRenData.textureCords), gl.STATIC_DRAW);
     }
 
   }

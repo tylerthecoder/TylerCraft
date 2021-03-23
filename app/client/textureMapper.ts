@@ -8,32 +8,32 @@ const TEXTURE_ATLAS_HEIGHT = 4;
 const xStepVal = 1 / TEXTURE_ATLAS_WIDTH;
 const yStepVal = 1 / TEXTURE_ATLAS_HEIGHT;
 
-const textureData = new Map<BLOCKS, {offsetX: number, offsetY: number}>();
-textureData.set(BLOCKS.grass, {offsetX: 0, offsetY: 0});
-textureData.set(BLOCKS.stone, {offsetX: 1, offsetY: 0});
-textureData.set(BLOCKS.wood, {offsetX: 0, offsetY: 1});
-textureData.set(BLOCKS.leaf, {offsetX: 1, offsetY: 1});
-textureData.set(BLOCKS.cloud, {offsetX: 2, offsetY: 0});
-textureData.set(BLOCKS.gold, {offsetX: 2, offsetY: 1});
-textureData.set(BLOCKS.redFlower, {offsetX: 0, offsetY: 2});
-textureData.set(BLOCKS.water, {offsetX: 2, offsetY: 2});
+const textureData = new Map<BLOCKS, { offsetX: number, offsetY: number }>();
+textureData.set(BLOCKS.grass, { offsetX: 0, offsetY: 0 });
+textureData.set(BLOCKS.stone, { offsetX: 1, offsetY: 0 });
+textureData.set(BLOCKS.wood, { offsetX: 0, offsetY: 1 });
+textureData.set(BLOCKS.leaf, { offsetX: 1, offsetY: 1 });
+textureData.set(BLOCKS.cloud, { offsetX: 2, offsetY: 0 });
+textureData.set(BLOCKS.gold, { offsetX: 2, offsetY: 1 });
+textureData.set(BLOCKS.redFlower, { offsetX: 0, offsetY: 2 });
+textureData.set(BLOCKS.water, { offsetX: 2, offsetY: 2 });
 
 class Textures {
-  getTextureCords(type: BLOCKS) {
-    const {offsetX, offsetY} = textureData.get(type)!;
+  public getTextureCords(type: BLOCKS) {
+    const { offsetX, offsetY } = textureData.get(type)!;
 
 
     const startX = offsetX * xStepVal;
-    const midX = startX + xStepVal/2;
+    const midX = startX + xStepVal / 2;
     const endX = startX + xStepVal
 
     const startY = offsetY * yStepVal;
-    const midY = startY + yStepVal/2;
+    const midY = startY + yStepVal / 2;
     const endY = startY + yStepVal;
 
     return [
-      [midX, midY, midX, startY, startX, startY, startX, midY ], // front
-      [midX, midY, midX, startY, startX, startY, startX, midY ], // back
+      [midX, midY, midX, startY, startX, startY, startX, midY], // front
+      [midX, midY, midX, startY, startX, startY, startX, midY], // back
       [midX, startY, midX, midY, endX, midY, endX, startY], // top
       [midX, endY, midX, midY, startX, midY, startX, endY], // bottom
       [midX, endY, endX, endY, endX, midY, midX, midY], // right
@@ -41,8 +41,8 @@ class Textures {
     ]
   }
 
-  getBlockPreviewCords(type: BLOCKS, width: number, height: number) {
-    const {offsetX, offsetY} = textureData.get(type)!;
+  public getBlockPreviewCords(type: BLOCKS, width: number, height: number) {
+    const { offsetX, offsetY } = textureData.get(type)!;
 
     return {
       offset: {
@@ -51,7 +51,7 @@ class Textures {
       },
       cords: {
         x1: offsetX * xStepVal * width,
-        x2: offsetX * (xStepVal+ .5) * width,
+        x2: offsetX * (xStepVal + .5) * width,
         y1: offsetY * yStepVal * height,
         y2: offsetY * (yStepVal + .5) * height,
       }
@@ -78,7 +78,7 @@ class Textures {
     for (let i = 0; i < times; i++) {
       const x = rect[0];
       const y = rect[1];
-      rect.push(x,y);
+      rect.push(x, y);
       rect.shift();
       rect.shift();
     }
@@ -167,59 +167,59 @@ class Textures {
     // if (ent instanceof Player) {
 
 
-      // top and bottom face face
-      let startYVal = yStepVal * 2.5;
-      let endYVal = yStepVal * 3;
-      let startXVal = 0;
-      let endXVal = xStepVal;
+    // top and bottom face face
+    let startYVal = yStepVal * 2.5;
+    let endYVal = yStepVal * 3;
+    let startXVal = 0;
+    let endXVal = xStepVal;
 
-      // const top = [
-      //   startXVal, startYVal,
-      //   startXVal, endYVal,
-      //   endXVal / 2, endYVal,
-      //   endXVal / 2, startYVal,
-      // ];
+    // const top = [
+    //   startXVal, startYVal,
+    //   startXVal, endYVal,
+    //   endXVal / 2, endYVal,
+    //   endXVal / 2, startYVal,
+    // ];
 
     const top = this.getRect(0, 2.5, .5, 3);
     const bottom = this.getRect(.5, 2.5, 1, 3);
 
-      // front faces
+    // front faces
 
-      startXVal = xStepVal;
-      startYVal = yStepVal * 2;
-      const midXVal = xStepVal * 1.5;
-      endXVal = xStepVal * 2;
-      endYVal = yStepVal * 3;
+    startXVal = xStepVal;
+    startYVal = yStepVal * 2;
+    const midXVal = xStepVal * 1.5;
+    endXVal = xStepVal * 2;
+    endYVal = yStepVal * 3;
 
-      const front = [
-        midXVal, endYVal,
-        midXVal, startYVal,
-        startXVal, startYVal,
-        startXVal, endYVal,
-      ]
+    const front = [
+      midXVal, endYVal,
+      midXVal, startYVal,
+      startXVal, startYVal,
+      startXVal, endYVal,
+    ]
 
-      const back = [
-        endXVal, endYVal,
-        endXVal, startYVal,
-        midXVal, startYVal,
-        midXVal, endYVal,
-      ]
+    const back = [
+      endXVal, endYVal,
+      endXVal, startYVal,
+      midXVal, startYVal,
+      midXVal, endYVal,
+    ]
 
-      const other = [
-        midXVal, endYVal,
-        endXVal, endYVal,
-        endXVal, startYVal,
-        midXVal, startYVal,
-      ]
+    const other = [
+      midXVal, endYVal,
+      endXVal, endYVal,
+      endXVal, startYVal,
+      midXVal, startYVal,
+    ]
 
-      return [
-        front,
-        back,
-        top,
-        bottom,
-        other,
-        other,
-      ]
+    return [
+      front,
+      back,
+      top,
+      bottom,
+      other,
+      other,
+    ]
     // }
   }
 }

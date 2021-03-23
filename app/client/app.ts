@@ -3,7 +3,7 @@ import { ClientDb } from "./worldModels/clientdb";
 import { NetworkWorldModel } from "./worldModels/serverSaver";
 import { ClientGame } from "./clientGame";
 import { SocketHandler } from "./socket";
-import { CONFIG, setConfig } from "../src/config";
+import { CONFIG } from "../src/config";
 import { camelCaseToNormalCase } from "../src/utils";
 import { WorldModel } from "../src/types";
 
@@ -93,6 +93,46 @@ async function getOnlineWorldModel() {
   await SocketInterface.connect();
   return serverWorldModel;
 }
+
+
+// Auto load a world if a URL query is present
+const idQuery = new URL(location.href).searchParams.get("worldId")
+
+if (idQuery) {
+  loadWorldById(idQuery);
+}
+
+async function loadWorldById(worldId: string) {
+  const clientWorldModel = await getLocalWorldModel();
+
+  console.log("Loading world", worldId);
+
+  const clientWorlds = await clientWorldModel.getAllWorlds();
+  const clientHasWorld = clientWorlds.some(world => world.gameId === worldId);
+  if (clientHasWorld) {
+    const clientWorld = await clientWorldModel.getWorld(worldId);
+    startGame(new ClientGame(
+      clientWorldModel,
+      clientWorld
+    ));
+    return;
+  }
+
+  const serverWorldModel = await getOnlineWorldModel();
+  const serverWorlds = await serverWorldModel.getAllWorlds();
+  const serverHasWorld = serverWorlds.some(world => world.gameId === worldId);
+  if (serverHasWorld) {
+    const serverWorld = await serverWorldModel.getWorld(worldId);
+    startGame(new ClientGame(
+      serverWorldModel,
+      serverWorld!
+    ));
+    return;
+  }
+
+  throw new Error("Id not found");
+}
+
 
 
 // Display Screen Functions
@@ -297,6 +337,7 @@ function showWorldOptionsScreen(worldModel: WorldModel, onBack: () => void) {
 }
 
 function startGame(game: ClientGame) {
+  history.pushState("Game", "", `?worldId=${game.gameId}`);
   console.log("Starting game", game);
   (window as IExtendedWindow).game = game;
   ePickWorldScreen.classList.add("fade");

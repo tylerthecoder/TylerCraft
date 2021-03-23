@@ -190,6 +190,10 @@ export class GameController extends Controller {
     this.ifHasKeyThen("7", () => {
       this.controlled.selectedBlock = BLOCKS.redFlower;
     })
+
+    this.ifHasKeyThen("8", () => {
+      this.controlled.selectedBlock = BLOCKS.image;
+    });
   }
 
   ifHasKeyThenAddMeta(ent: MovableEntity, key: string, metaAction: MetaAction) {

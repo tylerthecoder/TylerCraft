@@ -1,4 +1,4 @@
-import { Renderer } from "./renderer";
+import { RenderData, Renderer } from "./renderer";
 import { canvas } from "../canvas";
 import { Camera } from "../../src/camera";
 import { Entity } from "../../src/entities/entity";
@@ -12,7 +12,6 @@ export class SphereRenderer extends Renderer {
 
     this.radius = (entity as Ball).radius;
 
-    this.setActiveTexture(canvas.textures.checker);
     this.setup();
   }
 
@@ -139,6 +138,13 @@ export class SphereRenderer extends Renderer {
       textureCords.push(0, 0, 0.5, 0.25);
     }
 
-    this.setBuffers(positions.flat(), indices.flat(), textureCords);
+    const renData = new RenderData();
+    renData.pushData({
+      positions: positions.flat(),
+      indices: indices.flat(),
+      textureCords,
+    });
+
+    this.setBuffers(renData);
   }
 }

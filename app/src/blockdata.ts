@@ -1,4 +1,12 @@
 
+// namespace BlockData {
+
+
+
+
+// }
+
+
 export enum BLOCKS {
   void = 0,
   stone = 1,
@@ -9,22 +17,37 @@ export enum BLOCKS {
   redFlower = 6,
   water = 7,
   grass = 8,
+  image = 9,
 }
 
 export enum BlockType {
   cube = 0,
   x = 1,
   fluid = 2,
+  flat = 3,
 }
 
-interface BlockData {
+export interface IImageBlockData {
+  galleryIndex: number;
+}
+
+export type ExtraBlockData = IImageBlockData;
+
+interface BlockMetaData {
   gravitable: boolean;
   blockType: BlockType;
   transparent?: boolean;
   intangible?: boolean;
 }
 
-export const BLOCK_DATA: Map<BLOCKS, BlockData> = new Map()
+export const BLOCK_DATA: Map<BLOCKS, BlockMetaData> = new Map()
+
+export function getBlockData(block: BLOCKS) {
+  const data = BLOCK_DATA.get(block);
+  if (!data) throw new Error("Block data not found");
+  return data;
+}
+
 BLOCK_DATA.set(BLOCKS.grass, {
   gravitable: false,
   blockType: BlockType.cube,

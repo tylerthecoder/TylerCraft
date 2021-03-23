@@ -1,4 +1,4 @@
-import { BLOCKS } from "../blockdata";
+import { BLOCKS, ExtraBlockData } from "../blockdata";
 import { Cube } from "../entities/cube";
 import { deserializeCube, ISerializedCube, serializeCube } from "../serializer";
 import { Vector3D } from "../utils/vector";
@@ -6,10 +6,14 @@ import { Chunk } from "./chunk";
 
 export type ISerializedBlockerHolder = ISerializedCube[]
 
+
 export class BlockHolder {
-  // private blocks: Map<string, Cube> = new Map();
-  // private blocks: Array<Array<Uint8Array>>;
   private blocks: Uint8Array;
+
+  // Will have to check performance on this
+  private blockData: {
+    [index: number]: ExtraBlockData
+  } = {};
 
   constructor(
     private chunk: Chunk
@@ -63,9 +67,17 @@ export class BlockHolder {
     return new Cube(block, worldPos);
   }
 
-  add(cube: Cube): void {
+  getBlockData(worldPos: Vector3D) {
+    const index = this.worldPosToIndex(worldPos);
+    return this.blockData[index] ?? null;
+  }
+
+  add(cube: Cube, blockData?: ExtraBlockData): void {
     const index = this.worldPosToIndex(cube.pos);
     this.blocks[index] = cube.type;
+    if (blockData) {
+      this.blockData[index] = blockData;
+    }
   }
 
   remove(worldPos: Vector3D): void {

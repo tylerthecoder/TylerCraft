@@ -1,5 +1,6 @@
 import { CONFIG } from "../src/config";
 import { Vector3D } from "../src/utils/vector";
+import TextureService from "./services/textureService";
 declare const mat4: any;
 // import {mat4} from "gl-matrix";
 
@@ -15,7 +16,6 @@ export class CanvasProgram {
     uniformLocations: { [name: string]: WebGLUniformLocation },
   };
 
-  textures: { [name: string]: WebGLTexture };
 
   constructor() {
     // init gl eCanvas
@@ -23,15 +23,9 @@ export class CanvasProgram {
       // premultipliedAlpha: false,
       // alpha: false,
     });
+    if (gl === null) throw new Error("WebGL failed to load"); // Only continue if WebGL is available and working
 
-
-    // Only continue if WebGL is available and working
-    if (gl === null) {
-      throw new Error(
-        "Unable to initialize WebGL. Your browser or machine may not support it."
-      );
-    }
-
+    TextureService.load(gl);
     this.gl = gl;
 
     const getCanvasDimensions = () => {
@@ -59,11 +53,6 @@ export class CanvasProgram {
 
       this.gl.enable(this.gl.BLEND);
     }
-
-    this.textures = {
-      textureAtlas: this.loadTexture("./img/texture_map.png"),
-      checker: this.loadTexture("./img/checker.jpg")
-    };
 
     this.clearCanvas();
   }
@@ -179,80 +168,6 @@ export class CanvasProgram {
     }
 
     return shader;
-  }
-
-  //
-  // Initialize a texture and load an image.
-  // When the image finished loading copy it into the texture.
-  //
-  loadTexture(url: string): WebGLTexture {
-    const gl = this.gl;
-
-    const isPowerOf2 = (x: number) => (x & (x - 1)) === 0;
-
-    const texture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-
-    // Because images have to be download over the internet
-    // they might take a moment until they are ready.
-    // Until then put a single pixel in the texture so we can
-    // use it immediately. When the image has finished downloading
-    // we'll update the texture with the contents of the image.
-    const level = 0;
-    const internalFormat = gl.RGBA;
-    const width = 1;
-    const height = 1;
-    const border = 0;
-    const srcFormat = gl.RGBA;
-    const srcType = gl.UNSIGNED_BYTE;
-    const pixel = new Uint8Array([0, 0, 255, 255]); // opaque blue
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      level,
-      internalFormat,
-      width,
-      height,
-      border,
-      srcFormat,
-      srcType,
-      pixel
-    );
-
-    const image = new Image();
-    image.onload = function () {
-      gl.bindTexture(gl.TEXTURE_2D, texture);
-      gl.texImage2D(
-        gl.TEXTURE_2D,
-        level,
-        internalFormat,
-        srcFormat,
-        srcType,
-        image
-      );
-
-      // WebGL1 has different requirements for power of 2 images
-      // vs non power of 2 images so check if the image is a
-      // power of 2 in both dimensions.
-      if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
-        // Yes, it's a power of 2. Generate mips.
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.generateMipmap(gl.TEXTURE_2D);
-      } else {
-        // No, it's not a power of 2. Turn off mips and set
-        // wrapping to clamp to edge
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-      }
-    };
-    image.src = url;
-
-    if (!texture) {
-      throw new Error("Error loading texture file")
-    }
-
-    return texture;
   }
 }
 

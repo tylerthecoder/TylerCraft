@@ -1,16 +1,16 @@
 import { Player } from "../../src/entities/player";
 import { Camera } from "../../src/camera";
 import TextureMapper from "../textureMapper";
-import { Renderer } from "./renderer";
-import { canvas } from "../canvas";
+import { RenderData, Renderer } from "./renderer";
 import { Vector3D } from "../../src/utils/vector";
-
+import TextureService from "../services/textureService";
+import ShapeBuilder from "../services/shapeBuilder";
 
 export class PlayerRenderer extends Renderer {
 
   constructor(public player: Player) {
     super();
-    this.setActiveTexture(canvas.textures.textureAtlas);
+    this.setActiveTexture(TextureService.textureAtlas);
   }
 
   render(camera: Camera) {
@@ -18,47 +18,18 @@ export class PlayerRenderer extends Renderer {
     this.renderObject(this.player.pos.data, camera);
   }
 
-  private drawBox(edgeFunction: (edge: Vector3D) => Vector3D, positions: number[], indices: number[], count: number) {
-    const base = [0, 1, 2, 0, 2, 3];
-    const facesToRender = [0, 1, 2, 3, 4, 5];
-    for (const face of facesToRender) {
-      const i = face >> 1;
-      const dir = face % 2 === 0 ? 1 : 0;
-
-      // const pos = this.getFace(i, dir, this.dim);
-      const square = [[0, 0], [1, 0], [1, 1], [0, 1]];
-      const pos = square
-        .map(edge => {
-          // make the 2D square vector 3D
-          edge.splice(i, 0, dir);
-          return edgeFunction(new Vector3D(edge)).data;
-        })
-        .flat();
-
-      const index = base.map(x => x + count);
-      count += 4;
-
-      positions.push(...pos);
-      indices.push(...index);
-    }
-
-    return count;
-  }
-
-
-  private armRot = 0;
-
   private calculateBuffers() {
+    const renderData = new RenderData();
+
     const textureCords = [
       ...TextureMapper.getPlayerTextureCoords(),
       ...TextureMapper.getPlayerTextureCoords(),
     ];
 
-    // this.armRot += .01;
+    renderData.pushData({
+      textureCords,
+    });
 
-    const positions: number[] = [];
-    const indices: number[] = [];
-    let count = 0;
 
     const theta = this.player.rot.get(1);
     const phi = -this.player.rot.get(2) + Math.PI / 2;
@@ -88,64 +59,65 @@ export class PlayerRenderer extends Renderer {
     const leftLegRot = Math.sin(this.player.distanceMoved + Math.PI);
 
     // draw head
-    count = this.drawBox(edge => {
+    ShapeBuilder.buildBox(edge => {
       return edge
         .multiply(headSize)
         .sub(halfHeadSize)
         .rotateZ(-phi)
         .rotateY(theta + rightLegRot)
         .add(headPos)
-    }, positions, indices, count);
+    }, renderData);
 
     // draw body
-    count = this.drawBox(edge => {
+    ShapeBuilder.buildBox(edge => {
       return edge
         .multiply(bodySize)
         .sub(bodyOrigin)
         .rotateY(theta)
         .add(bodyPos)
-    }, positions, indices, count);
+    }, renderData);
 
     // draw right leg
-    count = this.drawBox(edge => {
+    ShapeBuilder.buildBox(edge => {
       return edge
         .multiply(legSize)
         .sub(legOrigin)
         .rotateZ(rightLegRot)
         .rotateY(theta)
         .add(rightLegPos)
-    }, positions, indices, count);
+    }, renderData);
 
     // draw left leg
-    count = this.drawBox(edge => {
+    ShapeBuilder.buildBox(edge => {
       return edge
         .multiply(legSize)
         .sub(legOrigin)
         .rotateZ(leftLegRot)
         .rotateY(theta)
         .add(leftLegPos)
-    }, positions, indices, count);
+    }, renderData);
 
     // draw right arm
-    count = this.drawBox(edge => {
+    ShapeBuilder.buildBox(edge => {
       return edge
         .multiply(armSize)
         .sub(armOrigin)
         .rotateZ(rightArmRot)
         .rotateY(theta)
         .add(rightArmPos)
-    }, positions, indices, count);
+    }, renderData);
 
     // draw left arm
-    this.drawBox(edge => {
+    ShapeBuilder.buildBox(edge => {
       return edge
         .multiply(armSize)
         .sub(armOrigin)
         .rotateZ(leftArmRot)
         .rotateY(theta)
         .add(leftArmPos)
-    }, positions, indices, count);
+    }, renderData);
 
-    this.setBuffers(positions, indices, textureCords);
+    this.setBuffers(renderData);
+
   }
 }
