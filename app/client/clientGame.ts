@@ -5,10 +5,10 @@ import { Entity } from "../src/entities/entity";
 import { canvas } from "./canvas";
 import { IDim, IAction, IActionType, ISocketMessageType, WorldModel, IWorldData } from "../src/types";
 import WorldRenderer from "./renders/worldRender";
-import { BLOCKS } from "../src/blockdata";
+import { BLOCKS, ExtraBlockData } from "../src/blockdata";
 import { ControllerHolder } from "./controllers/controllerHolder";
 import { Spectator } from "../src/entities/spectator";
-import { Cube } from "../src/entities/cube";
+import { Cube, isPointInsideOfCube } from "../src/entities/cube";
 import { GameSocketController } from "./controllers/gameSocketController";
 import { getMyUid, IS_MOBILE, SocketInterface } from "./app";
 import { Player } from "../src/entities/player";
@@ -22,7 +22,7 @@ export class ClientGame extends Game {
   isSpectating = false;
   camera: Camera;
   selectedBlock: BLOCKS = BLOCKS.stone;
-  numOfBlocks = 7;
+  numOfBlocks = 10;
   totTime = 0;
   pastDeltas: number[] = [];
   mainPlayer: Player;
@@ -136,8 +136,17 @@ export class ClientGame extends Game {
 
     // check to see if any entity is in block
     for (const entity of this.entities.iterable()) {
-      if (cube.isPointInsideMe(entity.pos.data as IDim)) {
+      if (isPointInsideOfCube(cube, entity.pos)) {
         return;
+      }
+    }
+
+    let extraBlockData: ExtraBlockData | undefined = undefined;
+
+    if (this.selectedBlock === BLOCKS.image) {
+      extraBlockData = {
+        galleryIndex: 0,
+        face: data.face,
       }
     }
 
@@ -146,6 +155,7 @@ export class ClientGame extends Game {
       playerPlaceBlock: {
         blockType: this.selectedBlock,
         blockPos: data.newCubePos.data as IDim,
+        blockData: extraBlockData,
       }
     });
   }

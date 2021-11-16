@@ -227,6 +227,7 @@ export class World {
       if (!isReachable) continue;
 
       const cubeData = chunk.lookingAt(camera);
+      console.log(cubeData);
       if (cubeData && closestDist > cubeData.dist && cubeData.dist < CONFIG.player.reach) {
         closestDist = cubeData.dist;
         closestCube = cubeData;

@@ -23,8 +23,9 @@ export class ImageRenderer extends Renderer {
     const renData = new RenderData();
     const textureCords = [0, 0, 0, 1, 1, 1, 1, 0];
 
-    renData.pushData({ textureCords });
-    ShapeBuilder.buildFace(this.face, renData, this.pos.data, 4);
+    renData.pushData({ textureCords })/*  */;
+    ShapeBuilder.buildFace(this.face, renData, Vector3D.zero.data, 4);
+    this.setBuffers(renData);
   }
 
   render(camera: Camera): void {

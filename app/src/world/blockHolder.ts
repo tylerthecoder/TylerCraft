@@ -72,11 +72,11 @@ export class BlockHolder {
     return this.blockData[index] ?? null;
   }
 
-  add(cube: Cube, blockData?: ExtraBlockData): void {
+  add(cube: Cube): void {
     const index = this.worldPosToIndex(cube.pos);
     this.blocks[index] = cube.type;
-    if (blockData) {
-      this.blockData[index] = blockData;
+    if (cube.extraData) {
+      this.blockData[index] = cube.extraData;
     }
   }
 

@@ -1,4 +1,4 @@
-import { BLOCKS } from "../src/blockdata";
+import { BLOCKS, ExtraBlockData } from "../src/blockdata";
 import { ISerializedEntity } from "../src/entities/entity";
 import { IConfig } from "./config";
 import { ISerializedEntities } from "./entities/entityHolder";
@@ -39,6 +39,7 @@ export interface IAction {
   playerPlaceBlock?: {
     blockType: BLOCKS;
     blockPos: IDim;
+    blockData?: ExtraBlockData;
   };
   removeBlock?: {
     blockPos: IDim;
@@ -76,7 +77,7 @@ export interface IChunkReader {
 }
 
 export interface INullableChunkReader {
-  getChunk(chunkPos: string): Promise<Chunk|null>;
+  getChunk(chunkPos: string): Promise<Chunk | null>;
 }
 
 export interface IWorldData {

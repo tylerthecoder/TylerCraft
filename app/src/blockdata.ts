@@ -29,6 +29,7 @@ export enum BlockType {
 
 export interface IImageBlockData {
   galleryIndex: number;
+  face: number;
 }
 
 export type ExtraBlockData = IImageBlockData;
@@ -84,4 +85,8 @@ BLOCK_DATA.set(BLOCKS.water, {
   blockType: BlockType.fluid,
   transparent: true,
   intangible: true,
+});
+BLOCK_DATA.set(BLOCKS.image, {
+  gravitable: false,
+  blockType: BlockType.flat,
 });

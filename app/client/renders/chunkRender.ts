@@ -10,6 +10,7 @@ import { BLOCK_DATA, BlockType, getBlockData } from "../../src/blockdata";
 import TextureService from "../services/textureService";
 import { ImageRenderer } from "./imageRender";
 import ShapeBuilder from "../services/shapeBuilder";
+import { faceVectorToFaceNumber } from "../../src/utils/face";
 
 
 type IVisibleFaceMap = Map<string, { cube: Cube, faceVectors: Vector3D[] }>;
@@ -25,12 +26,12 @@ export class ChunkRenderer extends Renderer {
     this.setActiveTexture(TextureService.textureAtlas);
     this.getBufferData(world);
 
-    this.otherRenders.push(
-      new ImageRenderer(
-        chunk.pos.add(new Vector3D([2, 2, 2])),
-        0
-      )
-    );
+    // this.otherRenders.push(
+    //   new ImageRenderer(
+    //     chunk.pos.add(new Vector3D([2, 2, 2])),
+    //     0
+    //   )
+    // );
 
     // const chunkRendererWorker = new ChunkRendererWorker();
 
@@ -62,7 +63,9 @@ export class ChunkRenderer extends Renderer {
 
     this.renderObject(this.chunk.pos.data, camera, trans);
 
-    this.otherRenders.forEach(r => r.render(camera));
+    this.otherRenders.forEach(r => {
+      r.render(camera)
+    });
   }
 
   // return if there is a cube (or void) at this position
@@ -109,9 +112,19 @@ export class ChunkRenderer extends Renderer {
   ): void {
     const blockData = getBlockData(cube.type);
 
-    // if (blockData.blockType === BlockType.flat) {
+    // If they are flat then they are an image, thus we need to add them to otherRenderers
+    if (blockData.blockType === BlockType.flat) {
+      const extraBlockData = this.chunk.blocks.getBlockData(cube.pos);
+      console.log(extraBlockData, cube.pos);
+      const imageRender = new ImageRenderer(
+        cube.pos,
+        extraBlockData.face,
+      );
 
-    // }
+      this.otherRenders.push(imageRender);
+
+      return;
+    }
 
     const relativePos = arraySub(cube.pos.data, this.chunk.pos.data);
     const texturePos = TextureMapper.getTextureCords(cube.type);
@@ -160,23 +173,95 @@ export class ChunkRenderer extends Renderer {
   }
 
   // have an options to launch this on a worker thread (maybe always have it on a different thread)
+  /**
+   * Gets the position of each of the vertices in this chunk and adds them to the buffer
+   * @param world
+   */
   getBufferData(world: World): void {
-    const visibleCubePosMap = new Map<string, { cube: Cube, faceVectors: Vector3D[] }>();
+    this.chunk.calculateVisibleFaces(world);
+
+    console.log("Getting Buffer Data");
+
+    this.otherRenders = [];
 
     const renData = new RenderData();
-    const transRenData = new RenderData();
+    const transRenData = new RenderData(true);
 
-    this.chunk.blocks.iterate(cube => {
+
+
+    this.chunk.visibleCubesFaces.forEach((visibleFace) => {
+      const { cube, faceVectors } = visibleFace;
+
+      const relativePos = arraySub(cube.pos.data, this.chunk.pos.data);
       const blockData = getBlockData(cube.type);
+      const blockRenData = blockData.transparent ? transRenData : renData;
 
-      if (blockData.transparent) {
-        this.getDataForBlock(transRenData, cube, world, visibleCubePosMap);
-      } else {
-        this.getDataForBlock(renData, cube, world, visibleCubePosMap);
+      switch (blockData.blockType) {
+        case BlockType.cube:
+        case BlockType.fluid: {
+          const texturePos = TextureMapper.getTextureCords(cube.type);
+          // loop through all the faces to get their cords
+          for (const directionVector of faceVectors) {
+            // check to see if there is a cube touching me on this face
+            const nearbyCube = this.isCube(cube.pos.add(directionVector), world, cube);
+            // skkkkkip
+            if (nearbyCube) continue;
+
+            const faceIndex = faceVectorToFaceNumber(directionVector);
+
+            ShapeBuilder.buildFace(faceIndex, blockRenData, relativePos, 1);
+
+            const textureCords = texturePos[faceIndex];
+
+            blockRenData.pushData({ textureCords, });
+          }
+
+          break;
+        }
+        case BlockType.flat: {
+          const extraBlockData = this.chunk.blocks.getBlockData(cube.pos);
+          console.log(extraBlockData, cube.pos);
+          const imageRender = new ImageRenderer(
+            cube.pos,
+            extraBlockData.face,
+          );
+
+          this.otherRenders.push(imageRender);
+          break;
+        }
+        case BlockType.x: {
+          const texturePos = TextureMapper.getTextureCords(cube.type);
+          ShapeBuilder.buildX(renData, relativePos);
+
+          renData.pushData({
+            textureCords: [...texturePos[0], ...texturePos[1]]
+          });
+          break;
+        }
+
+        default: {
+          throw new Error("Block type not renderable")
+        }
       }
-    })
+    });
 
-    this.chunk.visibleCubesFaces = Array.from(visibleCubePosMap.values());
+
+
+    // const renData = new RenderData();
+    // const transRenData = new RenderData();
+
+    // this.chunk.blocks.iterate(cube => {
+    //   const blockData = getBlockData(cube.type);
+
+    //   if (blockData.transparent) {
+    //     this.getDataForBlock(transRenData, cube, world, visibleCubePosMap);
+    //   } else {
+    //     this.getDataForBlock(renData, cube, world, visibleCubePosMap);
+    //   }
+    // })
+
+    // this.chunk.visibleCubesFaces = Array.from(visibleCubePosMap.values());
+    console.log("Transparent Render Data", transRenData);
     this.setBuffers(renData, transRenData);
   }
 }

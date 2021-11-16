@@ -17,7 +17,14 @@ export class RenderData implements IRenderData {
 
   indexOffset = 0;
 
+  constructor(
+    private shouldLog = false,
+  ) { }
+
   public pushData(renData: Partial<RenderData>) {
+    if (this.shouldLog) {
+      console.log(renData);
+    }
     this.indices.push(...renData.indices ?? []);
     this.positions.push(...renData.positions ?? []);
     this.textureCords.push(...renData.textureCords ?? []);

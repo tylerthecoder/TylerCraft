@@ -139,7 +139,8 @@ export class Game {
 
       case IActionType.playerPlaceBlock: {
         const payload = action.playerPlaceBlock!;
-        const newCube = new Cube(payload.blockType, new Vector3D(payload.blockPos));
+        console.log(" Placing Bloack", payload);
+        const newCube = new Cube(payload.blockType, new Vector3D(payload.blockPos), payload.blockData);
         this.world.addBlock(newCube);
         return;
       }

@@ -1,5 +1,3 @@
-import { MaxKey } from "mongodb";
-import { bool } from "random";
 import { BLOCKS } from "../src/blockdata";
 
 const TEXTURE_ATLAS_WIDTH = 3;
@@ -8,7 +6,7 @@ const TEXTURE_ATLAS_HEIGHT = 4;
 const xStepVal = 1 / TEXTURE_ATLAS_WIDTH;
 const yStepVal = 1 / TEXTURE_ATLAS_HEIGHT;
 
-const textureData = new Map<BLOCKS, { offsetX: number, offsetY: number }>();
+const textureData = new Map<BLOCKS, { offsetX: number, offsetY: number } | null>();
 textureData.set(BLOCKS.grass, { offsetX: 0, offsetY: 0 });
 textureData.set(BLOCKS.stone, { offsetX: 1, offsetY: 0 });
 textureData.set(BLOCKS.wood, { offsetX: 0, offsetY: 1 });
@@ -19,8 +17,15 @@ textureData.set(BLOCKS.redFlower, { offsetX: 0, offsetY: 2 });
 textureData.set(BLOCKS.water, { offsetX: 2, offsetY: 2 });
 
 class Textures {
+  private getTextureData(type: BLOCKS) {
+    const data = textureData.get(type);
+    if (!data) throw new Error(`Texture data fro texture ${type} was not found`);
+    return data;
+  }
+
+
   public getTextureCords(type: BLOCKS) {
-    const { offsetX, offsetY } = textureData.get(type)!;
+    const { offsetX, offsetY } = this.getTextureData(type);
 
 
     const startX = offsetX * xStepVal;

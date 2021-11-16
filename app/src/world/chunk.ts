@@ -1,17 +1,22 @@
-import { Cube } from "../entities/cube";
+import { Cube, getCubeObscuringPositions, isCubeFaceVisible } from "../entities/cube";
 import { Entity } from "../entities/entity";
 import { IDim, IActionType, IAction } from "../types";
 import { arrayMul, arrayAdd, arrayDot, arrayScalarMul, roundToNPlaces, arrayDistSquared } from "../utils";
 import { CONFIG } from "../config";
 import { Vector3D, Vector, Vector2D } from "../utils/vector";
-import { BLOCK_DATA } from "../blockdata";
-import { ISerializedCube, deserializeCube, serializeCube } from "../serializer";
+import { BlockType, BLOCK_DATA } from "../blockdata";
+import { ISerializedCube } from "../serializer";
 import { Camera } from "../camera";
 import { BlockHolder } from "./blockHolder";
+import { faceVectorToFaceNumber, getOppositeCubeFace } from "../utils/face";
+import { World } from "./world";
+import { isPointInsideOfCube } from "../entities/cube"
 
 export interface ILookingAtData {
   newCubePos: Vector,
   entity?: Entity,
+  // The face number (0 - 5) that is being looked at
+  face: number;
   dist: number;
 }
 
@@ -25,7 +30,6 @@ export interface ISerializedChunk {
 
 export class Chunk {
   blocks: BlockHolder;
-  // this is set by the client
   visibleCubesFaces: Array<{
     cube: Cube,
     faceVectors: Vector3D[],
@@ -135,14 +139,104 @@ export class Chunk {
     return scaledPos[0] === this.chunkPos.get(0) && scaledPos[2] === this.chunkPos.get(1);
   }
 
+  private isFaceVisible(world: World, direction: Vector3D, currentCube: Cube): boolean {
+    const newFacePos = currentCube.pos.add(direction);
+
+    // This is outside of the world, so we don't have to show this face
+    if (newFacePos.get(1) < 0) return true;
+
+    const cube = world.getBlockFromWorldPoint(newFacePos);
+    // There isn't a block, so we should show the face
+    if (cube === null) return true;
+
+    const blockData = BLOCK_DATA.get(cube.type)!;
+    const currentBlockData = BLOCK_DATA.get(currentCube.type)!;
+
+    if (blockData.blockType === BlockType.fluid && currentBlockData.blockType === BlockType.fluid) {
+      return true;
+    }
+
+    if (blockData.blockType === BlockType.flat && currentCube.extraData) {
+      const faceIndex = faceVectorToFaceNumber(direction);
+      if (faceIndex === currentCube.extraData.face) {
+        return true
+      }
+    }
+
+    if (blockData.transparent) {
+      return false;
+    }
+
+    return true;
+
+  }
+
+
+  calculateVisibleFaces(world: World) {
+    const visibleCubePosMap = new Map<string, { cube: Cube, faceVectors: Vector3D[] }>();
+
+    // return if there is a cube (or void) at this position
+    // const isCube = (pos: Vector3D, currentCube: Cube) => {
+    //   // This is outside of the world, so we don't have to show this face
+    //   if (pos.get(1) < 0) return true;
+
+    //   const cube = world.getBlockFromWorldPoint(pos);
+    //   if (cube === null) return true;
+
+    //   const blockData = BLOCK_DATA.get(cube.type)!;
+    //   const currentCubeBlockData = BLOCK_DATA.get(currentCube.type)!;
+
+    //   if (blockData.blockType === BlockType.fluid && currentCubeBlockData.blockType === BlockType.fluid) {
+    //     return true;
+    //   }
+
+    //   if (blockData.transparent) {
+    //     return false;
+    //   }
+
+    //   return true;
+    // }
+
+    const addVisibleFace = (cube: Cube, directionVector: Vector3D) => {
+      const visibleCubePos =
+        visibleCubePosMap.get(cube.pos.toIndex()) ??
+        {
+          cube: cube,
+          faceVectors: []
+        };
+
+      visibleCubePos.faceVectors.push(directionVector);
+      visibleCubePosMap.set(cube.pos.toIndex(), visibleCubePos);
+    }
+
+    this.blocks.iterate(cube => {
+      getCubeObscuringPositions(cube)
+        .filter(direction => isCubeFaceVisible(cube, world, direction))
+        .forEach(direction => addVisibleFace(cube, direction));
+    });
+
+
+    //   for (const directionVector of Vector3D.unitVectors) {      // return [{
+    //   //   position: cube.pos.add(vec)
+    //   // }]
+    //     if (this.isFaceVisible(world, directionVector, cube)) {
+    //       // if (isCube(directionVector, cube)) {
+    //       addVisibleFace(cube, directionVector);
+    //     }
+    //   }
+    // });
+
+    this.visibleCubesFaces = Array.from(visibleCubePosMap.values());
+  }
+
   lookingAt(camera: Camera): ILookingAtData | false {
     let firstIntersection: IDim;
 
     const cameraPos = camera.pos.data;
     const cameraDir = camera.rotCart.multiply(new Vector3D([1, -1, 1])).data;
 
-    // [dist, faceVector( a vector, when added to the cubes pos, gives you the pos of a new cube if placed on this block)]
-    const defaultBest: [number, IDim, Cube?] = [Infinity, [-1, -1, -1]];
+    // [dist, newCubePos( a vector, when added to the cubes pos, gives you the pos of a new cube if placed on this block)]
+    const defaultBest: [number, IDim, Vector3D, Cube?] = [Infinity, [-1, -1, -1], Vector3D.zero];
 
     const newCubePosData = this.visibleCubesFaces.reduce((bestFace, cubeData) => {
       const cube = cubeData.cube;
@@ -176,7 +270,7 @@ export class Chunk {
         }
 
         // check to see if this intersection is within the face (Doing the whole cube for now, will switch to face later)
-        const hit = cube.isPointInsideMe(roundedIntersection);
+        const hit = isPointInsideOfCube(cube, new Vector3D(roundedIntersection));
 
         if (hit) {
           // we have determined that the camera is looking at this face, now see if this is the point
@@ -187,11 +281,10 @@ export class Chunk {
 
           if (pointDist < bestFace[0]) {
             const newCubePos = arrayAdd(cube.pos.data, arrayMul(cube.dim, faceNormal)) as IDim;
-            bestFace = [pointDist, newCubePos, cube];
+            bestFace = [pointDist, newCubePos, directionVector, cube];
           }
         }
       });
-
 
       return bestFace
     }, defaultBest)
@@ -208,7 +301,8 @@ export class Chunk {
 
     return {
       newCubePos: new Vector(newCubePosData[1]),
-      entity: newCubePosData[2],
+      face: getOppositeCubeFace(faceVectorToFaceNumber(newCubePosData[2])),
+      entity: newCubePosData[3],
       dist: newCubePosData[0],
     }
   }
