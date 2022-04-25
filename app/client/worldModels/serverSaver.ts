@@ -4,7 +4,6 @@ import { Chunk, } from "../../src/world/chunk";
 import { ICreateWorldOptions, ISocketMessage, ISocketMessageType, ISocketWelcomePayload, IWorldData, WorldModel, IChunkReader } from "../../src/types";
 import { getMyUid, SocketInterface } from "../app";
 import { SocketListener } from "../socket";
-import { SERVER_URL } from "../clientConfig";
 
 export class NetworkWorldModel extends WorldModel {
   private async waitForWelcomeMessage() {
@@ -85,8 +84,7 @@ export class NetworkWorldModel extends WorldModel {
   }
 
   public async getAllWorlds(): Promise<IGameMetadata[]> {
-    const requestUrl = `${SERVER_URL}worlds`;
-    const res = await fetch(requestUrl);
+    const res = await fetch("/worlds");
     const data = await res.json() as IGameMetadata[];
     return data;
   }

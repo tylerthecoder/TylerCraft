@@ -17,6 +17,8 @@ app.use(cors());
 app.use(express.urlencoded({ extended: false }))
 app.use(express.json({ limit: "50mb" }));
 
+app.use(express.static("dist/public"));
+
 TylerCraftApp.addRoutes(app);
 
 export const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

@@ -83,7 +83,7 @@ export class GameController extends Controller {
     });
 
     this.menuButton.addEventListener("click", () => {
-      this.gameMenu.style.display = "block";
+      this.openMenu();
     });
 
     this.exitMenuButton.addEventListener("click", () => {
@@ -109,6 +109,10 @@ export class GameController extends Controller {
         pos: this.controlled.mainPlayer.pos.data as IDim,
       }
     });
+  }
+
+  openMenu() {
+    this.gameMenu.style.display = "block";
   }
 
   update(_delta: number) {
@@ -157,6 +161,10 @@ export class GameController extends Controller {
 
     this.ifHasKeyThen("c", () => {
       this.controlled.toggleCreative();
+    })
+
+    this.ifHasKeyThen("m", () => {
+      this.openMenu();
     })
 
     this.ifHasKeyThen("p", () => {

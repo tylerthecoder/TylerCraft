@@ -15,15 +15,15 @@
   ],
   "scripts": {
     "dev:server": "npm-run-all --parallel wbuild:server wstart:server",
+    "dev:client": "yarn wbuild:client",
     "start:server": "node -r dotenv/config ./dist/server/server.js",
     "wstart:server": "nodemon -r dotenv/config ./dist/server/server.js",
     "build:server": "tsc -p ./app/server/tsconfig.json",
     "wbuild:server": "tsc -w -p ./app/server/tsconfig.json",
-    "dev:client": "npm-run-all --parallel wbuild:client serve:client",
     "build:client": "webpack --config webpack.config.js",
     "wbuild:client": "webpack --watch --config webpack.config.js",
-    "serve:client": "serve -l 12345 dist/public",
-    "prepare": "npm run build:server && npm run build:client"
+    "prepare": "npm run build:server && npm run build:client",
+    "start:prod": "yarn && yarn build:server && yarn build:client && yarn start:server"
   },
   "dependencies": {
     "cors": "^2.8.5",

@@ -1,4 +1,3 @@
-import { SOCKET_SERVER_URL } from "./clientConfig";
 import { ISocketMessage, } from "../src/types";
 
 export type SocketListener = (message: ISocketMessage) => void;
@@ -7,9 +6,15 @@ export class SocketHandler {
   private socket: WebSocket;
   private listeners: SocketListener[] = [];
 
+  private get wssUrl() {
+    const url = new URL(location.href);
+    const protocol = url.protocol === "https:" ? "wss:" : "ws:";
+    return `${protocol}//${url.host}?app=tylercraft`;
+  }
+
   connect() {
     return new Promise<void>(resolve => {
-      this.socket = new WebSocket(SOCKET_SERVER_URL);
+      this.socket = new WebSocket(this.wssUrl);
       this.socket.onopen = () => {
         console.log("Socket Connected");
         resolve();

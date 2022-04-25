@@ -39,6 +39,7 @@ export class Player extends MovableEntity {
   creative = false;
 
   constructor(
+    /** Means that the player is controlled by the current user */
     public isReal: boolean,
     uid?: string
   ) {

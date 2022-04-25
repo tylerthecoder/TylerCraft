@@ -1,10 +1,6 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyPlugin = require("copy-webpack-plugin");
-const webpack = require("webpack");
 const WebpackBuildNotifierPlugin = require('webpack-build-notifier');
-
-
-
 
 module.exports = {
   entry: {
@@ -40,10 +36,6 @@ module.exports = {
       to: "css/",
     },
     ]),
-    new webpack.EnvironmentPlugin({
-      SOCKET_SERVER_URL: "ws://localhost:3000/",
-      SERVER_URL: "http://localhost:3000/",
-    }),
     new WebpackBuildNotifierPlugin({
       title: "Tylercraft",
     })

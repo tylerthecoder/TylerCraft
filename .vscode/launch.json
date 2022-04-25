@@ -15,7 +15,7 @@
       "type": "chrome",
       "request": "launch",
       "name": "Debug Minecraft",
-      "url": "http://localhost:12345",
+      "url": "http://localhost:3000",
       "webRoot": "${workspaceFolder}"
     }
   ]

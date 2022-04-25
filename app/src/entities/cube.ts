@@ -55,12 +55,6 @@ export function getCubeObscuringPositions(cube: Cube): Vector3D[] {
     case BlockType.x:
     case BlockType.cube: {
       return Vector3D.unitVectors;
-      // return Vector3D.unitVectors.map(dir => (
-      //   {
-      //     direction: dir,
-      //     position: cube.pos.add(dir),
-      //   }
-      // ));
     }
 
     case BlockType.flat: {
@@ -68,27 +62,7 @@ export function getCubeObscuringPositions(cube: Cube): Vector3D[] {
       if (!cube.extraData) throw new Error("This block should have extra data");
       const direction = faceNumberToFaceVector(cube.extraData.face)
       return [direction];
-      // return [{
-      //   position: cube.pos.add(vec)
-      // }]
     }
-
-    // case BlockType.flat: {
-    //   if (!cube.extraData) throw new Error("This block should have extra data");
-    //   const ret: IBlockFaceLocator[] = []
-    //   const direction = faceNumberToFaceVector(cube.extraData.face)
-    //   for (let i = 0; i < cube.dim[0]; i++) {
-    //     for (let j = 0; j < cube.dim[1]; j++) {
-    //       for (let k = 0; k < cube.dim[2]; k++) {
-    //         ret.push({
-    //           position: new Vector3D([i, j, k]).add(cube.pos).add(direction),
-    //           direction: faceNumberToFaceVector(getOppositeCubeFace(cube.extraData.face)),
-    //         });
-    //       }
-    //     }
-    //   }
-    //   return ret;
-    // }
   }
 }
 
@@ -117,7 +91,7 @@ export function isCubeFaceVisible(cube: Cube, world: World, direction: Vector3D)
   }
 
   if (blockData.transparent) {
-    return false;
+    return true;
   }
 
   return true;

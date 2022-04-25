@@ -168,34 +168,10 @@ export class Chunk {
     }
 
     return true;
-
   }
-
 
   calculateVisibleFaces(world: World) {
     const visibleCubePosMap = new Map<string, { cube: Cube, faceVectors: Vector3D[] }>();
-
-    // return if there is a cube (or void) at this position
-    // const isCube = (pos: Vector3D, currentCube: Cube) => {
-    //   // This is outside of the world, so we don't have to show this face
-    //   if (pos.get(1) < 0) return true;
-
-    //   const cube = world.getBlockFromWorldPoint(pos);
-    //   if (cube === null) return true;
-
-    //   const blockData = BLOCK_DATA.get(cube.type)!;
-    //   const currentCubeBlockData = BLOCK_DATA.get(currentCube.type)!;
-
-    //   if (blockData.blockType === BlockType.fluid && currentCubeBlockData.blockType === BlockType.fluid) {
-    //     return true;
-    //   }
-
-    //   if (blockData.transparent) {
-    //     return false;
-    //   }
-
-    //   return true;
-    // }
 
     const addVisibleFace = (cube: Cube, directionVector: Vector3D) => {
       const visibleCubePos =
@@ -214,17 +190,6 @@ export class Chunk {
         .filter(direction => isCubeFaceVisible(cube, world, direction))
         .forEach(direction => addVisibleFace(cube, direction));
     });
-
-
-    //   for (const directionVector of Vector3D.unitVectors) {      // return [{
-    //   //   position: cube.pos.add(vec)
-    //   // }]
-    //     if (this.isFaceVisible(world, directionVector, cube)) {
-    //       // if (isCube(directionVector, cube)) {
-    //       addVisibleFace(cube, directionVector);
-    //     }
-    //   }
-    // });
 
     this.visibleCubesFaces = Array.from(visibleCubePosMap.values());
   }

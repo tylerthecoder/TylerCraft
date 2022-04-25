@@ -46,6 +46,10 @@ export default class WorldRenderer {
     }
   }
 
+  /**
+   * Map the entity to its renderer.
+   * @param entity The entity to render
+   */
   addEntity(entity: Entity) {
     if (entity instanceof Player) {
       const renderer = new PlayerRenderer(entity);
@@ -81,6 +85,7 @@ export default class WorldRenderer {
     // this is a new chunk we haven't seen yet
     if (!chunkRenderer) {
 
+      // Go through and render the touching chunks
       // not ideal but it is what needs to be done to make sure that the visible faces are rendered correctly
       // maybe put on another thread later.
       this.blockUpdate(chunkPos.add(new Vector2D([0, 1])).toIndex());
@@ -113,12 +118,13 @@ export default class WorldRenderer {
     }
 
     for (const entityRenderer of this.entityRenderers.values()) {
-      if (entityRenderer instanceof PlayerRenderer) {
-        const isMainPlayer = entityRenderer.player === game.mainPlayer;
-
-        if (isMainPlayer && !this.shouldRenderMainPlayer) {
-          continue;
-        }
+      // Skip rendering the player if we aren't supposed to
+      if (
+        entityRenderer instanceof PlayerRenderer &&
+        entityRenderer.player === game.mainPlayer &&
+        !this.shouldRenderMainPlayer
+      ) {
+        continue;
       }
       entityRenderer.render(camera);
     }
@@ -170,7 +176,7 @@ export default class WorldRenderer {
 
     for (const chunkPos of skippedChunkPos.values()) {
       // check to see if any of the neighboring chunks were rendered
-      // this is slightly inefficent but it makes sure the user sees all chunks.
+      // this is slightly inefficient but it makes sure the user sees all chunks.
       // since we are checking to see if the user can see the middle of the chunk we miss some chunks
       // that the user sees the edge of. This fixes that
       let stillShouldntRender = true;
@@ -203,6 +209,7 @@ export default class WorldRenderer {
 
 
     // loop through all the chunk renders and only render the transparent things
+    // This is last so that the transparent things are rendered on top of the solid things
     for (const chunkRenderer of renderedChunks.values()) {
       chunkRenderer.render(camera, true);
     }
