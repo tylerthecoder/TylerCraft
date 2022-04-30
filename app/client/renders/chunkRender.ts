@@ -3,8 +3,6 @@ import { Camera } from "../../src/camera";
 import { Chunk } from "../../src/world/chunk";
 import { arraySub } from "../../src/utils";
 import TextureMapper from "../textureMapper";
-import { Cube } from "../../src/entities/cube";
-import { Vector3D } from "../../src/utils/vector";
 import { World } from "../../src/world/world";
 import { BlockType, getBlockData } from "../../src/blockdata";
 import TextureService from "../services/textureService";
@@ -12,13 +10,7 @@ import { ImageRenderer } from "./imageRender";
 import ShapeBuilder from "../services/shapeBuilder";
 import { faceVectorToFaceNumber } from "../../src/utils/face";
 
-
-type IVisibleFaceMap = Map<string, { cube: Cube, faceVectors: Vector3D[] }>;
-
 export class ChunkRenderer extends Renderer {
-
-  private isLoaded = false;
-
   private otherRenders: Renderer[] = [];
 
   constructor(public chunk: Chunk, world: World) {
@@ -133,24 +125,6 @@ export class ChunkRenderer extends Renderer {
         }
       }
     });
-
-
-
-    // const renData = new RenderData();
-    // const transRenData = new RenderData();
-
-    // this.chunk.blocks.iterate(cube => {
-    //   const blockData = getBlockData(cube.type);
-
-    //   if (blockData.transparent) {
-    //     this.getDataForBlock(transRenData, cube, world, visibleCubePosMap);
-    //   } else {
-    //     this.getDataForBlock(renData, cube, world, visibleCubePosMap);
-    //   }
-    // })
-
-    // this.chunk.visibleCubesFaces = Array.from(visibleCubePosMap.values());
-    console.log("Transparent Render Data", transRenData);
     this.setBuffers(renData, transRenData);
   }
 }

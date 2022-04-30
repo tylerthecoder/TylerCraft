@@ -103,7 +103,6 @@ export default class WorldRenderer {
   }
 
   render(game: ClientGame) {
-    canvas.clearCanvas();
     const camera = game.camera;
 
     const filter = this.getFilter(camera);

@@ -87,21 +87,19 @@ export class ClientGame extends Game {
     this.setUpPlayer();
     // this.setUpSpectator();
 
-    requestAnimationFrame(this.loop.bind(this));
+    canvas.loop(this.logicLoop.bind(this))
   }
 
-  loop(time: number) {
+  logicLoop(time: number) {
     const delta = time - this.totTime;
 
     this.controllers.update(delta);
     this.update(delta);
     this.worldRenderer.render(this);
-
     this.pastDeltas.push(delta);
     this.totTime = time;
-
-    requestAnimationFrame(this.loop.bind(this));
   }
+
 
   // this will be called by the super class when a new entity is added
   onNewEntity(entity: Entity) {

@@ -81,7 +81,7 @@ if (location.hash === "#local") {
   showLocalNewWorldScreen();
 }
 
-async function getLocalWorldModel() {
+export async function getLocalWorldModel() {
   const clientDb = new ClientDb();
   await clientDb.loadDb();
   (window as IExtendedWindow).clientDb = clientDb;
@@ -102,7 +102,7 @@ if (idQuery) {
   loadWorldById(idQuery);
 }
 
-async function loadWorldById(worldId: string) {
+export async function loadWorldById(worldId: string) {
   const clientWorldModel = await getLocalWorldModel();
 
   console.log("Loading world", worldId);
@@ -336,7 +336,7 @@ function showWorldOptionsScreen(worldModel: WorldModel, onBack: () => void) {
   });
 }
 
-function startGame(game: ClientGame) {
+export function startGame(game: ClientGame) {
   history.pushState("Game", "", `?worldId=${game.gameId}`);
   console.log("Starting game", game);
   (window as IExtendedWindow).game = game;

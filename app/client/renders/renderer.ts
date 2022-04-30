@@ -187,7 +187,76 @@ export abstract class Renderer {
 
   abstract render(camera: Camera): void;
 
+
+  renderXrObject(pos: number[], camera: Camera, trans?: boolean) {
+    const { currentXRFrame, xrRefSpace, gl, program, webXrSession } = canvas;
+    if (!currentXRFrame || !xrRefSpace || !webXrSession) {
+      return;
+    }
+    const pose = currentXRFrame.getViewerPose(xrRefSpace);
+    const glLayer = webXrSession.renderState.baseLayer; // get the WebGL layer (it contains some important information we need)
+    if (!pose || !glLayer) {
+      return;
+    }
+
+    gl.bindFramebuffer(gl.FRAMEBUFFER, glLayer.framebuffer); // sets the framebuffer (drawing target of WebGL) to be our WebXR display's framebuffer
+
+    for (const view of pose.views) {
+      const { projectionMatrix } = view;
+
+      // console.log("Number of views", pose.views.length, "Projection matrix", projectionMatrix);
+
+      const viewport = glLayer.getViewport(view); // we get the viewport of our view (the place on the screen where things will be drawn)
+      gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height); // we set our viewport appropriately
+
+      // Set the drawing position to the "identity" point, which is
+      // the center of the scene.
+      const modelViewMatrix = mat4.create();
+
+      mat4.multiply(
+        modelViewMatrix,
+        modelViewMatrix,
+        view.transform.inverse.matrix
+      )
+
+      // Now move the drawing position to where we want to start drawing the square.
+      mat4.translate(
+        modelViewMatrix, // destination matrix
+        modelViewMatrix, // matrix to translate
+        new Float32Array(pos)
+      );
+
+      gl.uniformMatrix4fv(
+        program.uniformLocations.projectionMatrix,
+        false,
+        projectionMatrix
+      );
+
+      gl.uniformMatrix4fv(
+        program.uniformLocations.modelViewMatrix,
+        false,
+        modelViewMatrix
+      );
+
+      this.bindCube(trans || false);
+      this.bindTexture(trans || false);
+
+      gl.bindTexture(gl.TEXTURE_2D, this.texture);
+
+      gl.drawElements(
+        gl.TRIANGLES,
+        trans ? this.transAmount : this.amount,
+        gl.UNSIGNED_SHORT,
+        0
+      );
+    }
+  }
+
+
   renderObject(pos: number[], camera: Camera, trans?: boolean) {
+    if (canvas.currentXRFrame) {
+      return this.renderXrObject(pos, camera, trans);
+    }
     const gl = canvas.gl;
     const programInfo = canvas.program;
 

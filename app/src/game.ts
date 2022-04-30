@@ -2,7 +2,7 @@ import { Player } from "./entities/player";
 import { ISerializedWorld, World } from "./world/world";
 import { Entity } from "./entities/entity";
 import { Cube } from "./entities/cube";
-import { Vector3D, Vector } from "./utils/vector";
+import { Vector3D } from "./utils/vector";
 import { MovableEntity } from "./entities/moveableEntity";
 import { IAction, IActionType, ISocketMessage, IWorldData, WorldModel } from "./types";
 import { CONFIG, IConfig, setConfig } from "./config";

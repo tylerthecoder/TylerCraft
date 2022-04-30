@@ -9,6 +9,6 @@
     "strictNullChecks": true,
     "target": "es6",
     "declaration": true,
-    "lib": ["es2019"]
+    "lib": ["es2019", "dom"]
   }
 }

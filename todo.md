@@ -2,7 +2,6 @@
 
 We want to get this to be able to be loaded on my site for a "3D view"
 
-- Fix flower rendering
 - Support fonts
 - Ability to open links
 - Many more blocks

@@ -22,7 +22,6 @@
     "wbuild:server": "tsc -w -p ./app/server/tsconfig.json",
     "build:client": "webpack --config webpack.config.js",
     "wbuild:client": "webpack --watch --config webpack.config.js",
-    "prepare": "npm run build:server && npm run build:client",
     "start:prod": "yarn && yarn build:server && yarn build:client && yarn start:server"
   },
   "dependencies": {
@@ -47,6 +46,7 @@
     "@types/mongodb": "^3.5.27",
     "@types/random": "^2.1.1",
     "@types/seedrandom": "^2.4.28",
+    "@types/webxr": "^0.2.3",
     "@types/ws": "^6.0.1",
     "@typescript-eslint/eslint-plugin": "^4.2.0",
     "@typescript-eslint/parser": "^4.2.0",

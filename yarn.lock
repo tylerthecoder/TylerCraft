@@ -172,6 +172,11 @@
     "@types/express-serve-static-core" "*"
     "@types/mime" "*"
 
+"@types/webxr@^0.2.3":
+  version "0.2.3"
+  resolved "https://registry.yarnpkg.com/@types/webxr/-/webxr-0.2.3.tgz#6e04a6c4aff9a6e9ae4265ad3eae6545dcfdcf0a"
+  integrity sha512-MCxbyG4KIcx8+g1RwX9uRYsEfRncWLKtGhzSFh+j8fNOgnuzuBAabGJZz45iU4JvPeqaKaLRqQt6o92NMprmwQ==
+
 "@types/ws@^6.0.1":
   version "6.0.4"
   resolved "https://registry.yarnpkg.com/@types/ws/-/ws-6.0.4.tgz#7797707c8acce8f76d8c34b370d4645b70421ff1"

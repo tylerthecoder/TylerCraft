@@ -2,12 +2,18 @@ import { CONFIG } from "../src/config";
 import { Vector3D } from "../src/utils/vector";
 import TextureService from "./services/textureService";
 declare const mat4: any;
+import type { Navigator, XRSession, XRFrame, XRWebGLLayer, XRReferenceSpace } from 'webxr';
+import { getLocalWorldModel, startGame } from "./app";
+import { ClientGame } from "./clientGame";
 // import {mat4} from "gl-matrix";
+
+const WebGlLayer = (window as any).XRWebGLLayer as typeof XRWebGLLayer;
 
 export class CanvasProgram {
   eCanvas = document.getElementById("glCanvas") as HTMLCanvasElement;
   eHudCanvas = document.getElementById("hudCanvas") as HTMLCanvasElement;
   eHud = document.getElementById("hud") as HTMLCanvasElement;
+  eWebxrButton = document.getElementById("webxrButton") as HTMLCanvasElement;
   gl: WebGLRenderingContext;
   hudCxt: CanvasRenderingContext2D;
   program: {
@@ -16,10 +22,14 @@ export class CanvasProgram {
     uniformLocations: { [name: string]: WebGLUniformLocation },
   };
 
+  navigator = (window.navigator as any as Navigator);
+  webXrSession: XRSession | null = null;
+  xrRefSpace: XRReferenceSpace | null = null;
+  currentXRFrame: XRFrame | null = null;
 
   constructor() {
     // init gl eCanvas
-    const gl = this.eCanvas.getContext("webgl", {
+    const gl = this.eCanvas.getContext("webgl2", {
       // premultipliedAlpha: false,
       // alpha: false,
     });
@@ -55,6 +65,7 @@ export class CanvasProgram {
     }
 
     this.clearCanvas();
+
   }
 
   private createProjectionMatrix() {
@@ -78,6 +89,58 @@ export class CanvasProgram {
       projectionMatrix
     );
   }
+
+  private async initWebXR() {
+    if (!this.navigator.xr) {
+      console.log("WebXR not supported");
+      return;
+    }
+
+    const supported = await this.navigator.xr.isSessionSupported("immersive-vr");
+    if (!supported) {
+      console.log("Immersive VR not supported");
+      return;
+    }
+
+    this.webXrSession = await this.navigator.xr.requestSession("immersive-vr", {
+      requiredFeatures: ["local-floor"],
+    });
+    console.log("XR session", this.webXrSession);
+    this.webXrSession.addEventListener("end", () => {
+      this.eWebxrButton.style.display = "none";
+    });
+
+    this.webXrSession.addEventListener("inputsourceschange", () => {
+      console.log("inputsourceschange");
+    });
+
+    this.webXrSession.updateRenderState({ baseLayer: new WebGlLayer(this.webXrSession, this.gl), depthFar: 1000, depthNear: 0.1 });
+    this.xrRefSpace = await this.webXrSession.requestReferenceSpace("local-floor");
+    console.log("Ref space", this.xrRefSpace);
+  }
+
+  loop(loopFunc: (delta: number) => void) {
+    const wrappedXRLoopFunc = (t: number, frame: XRFrame) => {
+      this.clearCanvas()
+      this.currentXRFrame = frame;
+      loopFunc(t);
+      this.webXrSession?.requestAnimationFrame(wrappedXRLoopFunc);
+    }
+    const wrappedLoopFunc = (t: number) => {
+      this.clearCanvas()
+      loopFunc(t);
+      window.requestAnimationFrame(wrappedLoopFunc);
+    }
+
+    if (this.webXrSession) {
+      console.log("xr loop")
+      this.webXrSession.requestAnimationFrame(wrappedXRLoopFunc);
+    } else {
+      console.log("Normal loop")
+      window.requestAnimationFrame(wrappedLoopFunc);
+    }
+  }
+
 
   clearCanvas() {
     this.gl.clearColor(0.0, 0.8, 1.0, 1.0);
@@ -141,6 +204,8 @@ export class CanvasProgram {
     // set the color filter
     this.setColorFilter(new Vector3D([0, 0, 0]));
     this.createProjectionMatrix();
+
+    await this.initWebXR();
   }
 
   //
