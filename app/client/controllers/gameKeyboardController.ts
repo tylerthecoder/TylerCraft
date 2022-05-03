@@ -1,7 +1,7 @@
 import { Controller } from "./controller";
 import { ClientGame } from "../clientGame";
 import { BLOCKS } from "../../src/blockdata";
-import { CanvasProgram } from "../canvas";
+import { canvas } from "../canvas";
 import { MetaAction } from "../../src/entities/entity";
 import { IActionType, IDim } from "../../src/types";
 import { MovableEntity } from "../../src/entities/moveableEntity";
@@ -19,7 +19,7 @@ export class GameController extends Controller {
   private eGameNameInput = document.getElementById("gameNameInput") as HTMLInputElement;
   private eSaveButton = document.getElementById("saveButton") as HTMLButtonElement;
 
-  constructor(public controlled: ClientGame, canvas: CanvasProgram) {
+  constructor(public controlled: ClientGame) {
     super();
 
     window.addEventListener("keydown", ({ key }) => {

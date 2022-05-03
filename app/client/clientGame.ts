@@ -14,6 +14,8 @@ import { getMyUid, IS_MOBILE, SocketInterface } from "./app";
 import { Player } from "../src/entities/player";
 import { MobileController } from "./controllers/mobileController";
 import { GameController } from "./controllers/gameKeyboardController";
+import { XrCamera } from "./cameras/xrCamera";
+import { Quest2Controller } from "./controllers/quest2Controller";
 
 export class ClientGame extends Game {
   controllers: ControllerHolder;
@@ -74,7 +76,18 @@ export class ClientGame extends Game {
     await canvas.loadProgram();
     await this.world.load();
 
-    const gameController = IS_MOBILE ? new MobileController(this) : new GameController(this, canvas);
+    const getController = () => {
+      if (IS_MOBILE) {
+        return new MobileController(this);
+      } else if (canvas.isXr) {
+        return new Quest2Controller(this);
+      } else {
+        return new GameController(this);
+      }
+    }
+
+    const gameController = getController();
+
     this.controllers.add(gameController);
 
     console.log("World Loaded");
@@ -86,6 +99,13 @@ export class ClientGame extends Game {
 
     this.setUpPlayer();
     // this.setUpSpectator();
+
+    if (canvas.isXr) {
+      this.camera = new XrCamera(this.mainPlayer);
+    }
+
+    this.camera = new EntityCamera(this.mainPlayer);
+
 
     canvas.loop(this.logicLoop.bind(this))
   }

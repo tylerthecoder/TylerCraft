@@ -1,8 +1,7 @@
 import { CanvasProgram, canvas } from "../canvas";
 import { Camera } from "../../src/camera";
 import { arraySub } from "../../src/utils";
-// import {mat4} from "gl-matrix";
-declare const mat4: any;
+import { mat4, vec3 } from "gl-matrix";
 
 interface IRenderData {
   positions: number[];
@@ -51,44 +50,6 @@ export abstract class Renderer {
   texture: WebGLTexture;
   amount: number;
   transAmount: number;
-
-  // protected setBuffersData(
-  //   positions: Float32Array,
-  //   indices: Uint16Array,
-  //   textureCords: Float32Array,
-  //   transPositions: Float32Array,
-  //   transIndices: Uint16Array,
-  //   transTextureCords: Float32Array,
-  // ) {
-  //   const gl = canvas.gl;
-
-  //   this.amount = indices.length;
-
-  //   this.posBuffer = gl.createBuffer()!;
-  //   gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuffer);
-  //   gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
-
-  //   this.indexBuffer = gl.createBuffer()!;
-  //   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-  //   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
-
-  //   this.textureBuffer = gl.createBuffer()!;
-  //   gl.bindBuffer(gl.ARRAY_BUFFER, this.textureBuffer);
-  //   gl.bufferData(gl.ARRAY_BUFFER, textureCords, gl.STATIC_DRAW);
-
-  //   this.transPosBuffer = gl.createBuffer()!;
-  //   gl.bindBuffer(gl.ARRAY_BUFFER, this.transPosBuffer);
-  //   gl.bufferData(gl.ARRAY_BUFFER, transPositions, gl.STATIC_DRAW);
-
-  //   this.transIndexBuffer = gl.createBuffer()!;
-  //   this.transAmount = transIndices.length;
-  //   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.transIndexBuffer);
-  //   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, transIndices, gl.STATIC_DRAW);
-
-  //   this.transTextureBuffer = gl.createBuffer()!;
-  //   gl.bindBuffer(gl.ARRAY_BUFFER, this.transTextureBuffer);
-  //   gl.bufferData(gl.ARRAY_BUFFER, transTextureCords, gl.STATIC_DRAW);
-  // }
 
   protected setBuffers(
     renData: IRenderData,
@@ -213,17 +174,18 @@ export abstract class Renderer {
       // the center of the scene.
       const modelViewMatrix = mat4.create();
 
+      // Apply camera rotation
       mat4.multiply(
         modelViewMatrix,
         modelViewMatrix,
-        view.transform.inverse.matrix
+        view.transform.inverse.matrix as mat4
       )
 
       // Now move the drawing position to where we want to start drawing the square.
       mat4.translate(
         modelViewMatrix, // destination matrix
         modelViewMatrix, // matrix to translate
-        new Float32Array(pos)
+        new Float32Array(arraySub(pos, camera.pos.data)) as vec3
       );
 
       gl.uniformMatrix4fv(
@@ -270,7 +232,7 @@ export abstract class Renderer {
     mat4.translate(
       modelViewMatrix, // destination matrix
       modelViewMatrix, // matrix to translate
-      new Float32Array(arraySub(pos, camera.pos.data))
+      new Float32Array(arraySub(pos, camera.pos.data)) as vec3
     );
 
     this.bindCube(trans || false);

@@ -1,3 +1,4 @@
+import { ClientGame } from "../clientGame";
 import { Controller, Controlled } from "./controller";
 
 
@@ -6,6 +7,12 @@ export class ControllerHolder {
 
   add(controller: Controller) {
     this.controllers.push(controller);
+  }
+
+  getGameController() {
+    return this.controllers.filter(controller => {
+      return controller.controlled instanceof ClientGame;
+    })[0];
   }
 
   update(delta: number) {

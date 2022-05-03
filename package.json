@@ -1,5 +1,11 @@
 {
   "name": "tylercraft",
+  "private": true,
+  "workspaces": [
+    "app/client",
+    "app/src",
+    "app/server"
+  ],
   "license": "MIT",
   "version": "1.0.7",
   "description": "TylerCraft, My version of a web based MineCraft",
@@ -28,7 +34,6 @@
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "dotenv-webpack": "^6.0.0",
-    "gl-matrix": "^3.0.0",
     "random": "^2.2.0",
     "seedrandom": "^3.0.5",
     "simplex-noise": "^2.4.0",

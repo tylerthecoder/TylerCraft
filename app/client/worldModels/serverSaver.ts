@@ -108,7 +108,7 @@ export class NetworkWorldModel extends WorldModel {
 class ServerGameReader implements IChunkReader {
 
   // send a socket message asking for the chunk then wait for the reply
-  // this could also be a rest endpoint but hat isn't as fun :) Plus the socket already has some identity to it
+  // this could also be a rest endpoint but that isn't as fun :) Plus the socket already has some identity to it
   async getChunk(chunkPos: string) {
     // send the socket message
     SocketInterface.send({

@@ -5,6 +5,8 @@ import { CanvasProgram } from "../canvas";
 import { ClientGame } from "../clientGame";
 import TextureMapper from "../textureMapper";
 import { IS_MOBILE } from "../app";
+import { Quest2Controller } from "../controllers/quest2Controller";
+import { Vector2D } from "@tylercraft/src/utils/vector";
 
 function hide(e: HTMLElement) {
   e.style.display = "none";
@@ -88,9 +90,14 @@ export class HudRenderer extends Renderer {
       statsElement.innerHTML = statsString;
       this.lastStats = statsString;
     }
-    // const rotVec = new Vector2D([camera.rot[0], camera.rot[1]]);
-    // rotVec.data = rotVec.data.map(n => Math.floor(n * 100) / 100);
-    // this.drawText(rotVec.toIndex(), 0, 70);
+
+    const gameController = this.game.controllers.getGameController();
+
+    if (gameController instanceof Quest2Controller) {
+      const rotVec = new Vector2D([camera.rot.get(0), camera.rot.get(1)]);
+      rotVec.data = rotVec.data.map(n => Math.floor(n * 100) / 100);
+      this.drawText(rotVec.toIndex(), 0, 70);
+    }
 
   }
 

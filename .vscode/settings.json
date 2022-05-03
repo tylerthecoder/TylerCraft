@@ -3,6 +3,7 @@
     "crosshairs",
     "gravitable",
     "toolbelt",
+    "tylercraft",
     "upsert",
     "wasd"
   ],
@@ -15,5 +16,5 @@
     "**/bower_components": true,
     "**/*.code-search": true,
     "bin/": true
-  },
+  }
 }

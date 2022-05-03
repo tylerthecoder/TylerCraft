@@ -65,8 +65,12 @@ export class CanvasProgram {
     }
 
     this.clearCanvas();
-
   }
+
+  public createAndBindArrayBuffer() {
+    const arrayBuffer = this.gl.createBuffer();
+  }
+
 
   private createProjectionMatrix() {
     // Create a perspective matrix, a special matrix that is
@@ -90,6 +94,10 @@ export class CanvasProgram {
     );
   }
 
+  get isXr() {
+    return this.webXrSession !== null;
+  }
+
   private async initWebXR() {
     if (!this.navigator.xr) {
       console.log("WebXR not supported");
@@ -105,6 +113,7 @@ export class CanvasProgram {
     this.webXrSession = await this.navigator.xr.requestSession("immersive-vr", {
       requiredFeatures: ["local-floor"],
     });
+
     console.log("XR session", this.webXrSession);
     this.webXrSession.addEventListener("end", () => {
       this.eWebxrButton.style.display = "none";
@@ -117,6 +126,8 @@ export class CanvasProgram {
     this.webXrSession.updateRenderState({ baseLayer: new WebGlLayer(this.webXrSession, this.gl), depthFar: 1000, depthNear: 0.1 });
     this.xrRefSpace = await this.webXrSession.requestReferenceSpace("local-floor");
     console.log("Ref space", this.xrRefSpace);
+
+
   }
 
   loop(loopFunc: (delta: number) => void) {

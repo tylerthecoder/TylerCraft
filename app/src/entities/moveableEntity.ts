@@ -1,13 +1,13 @@
 import { IDim } from "../types";
 import { CONFIG } from "../config";
 import { bindValue } from "../utils";
-import { Vector, Vector3D } from "../utils/vector";
+import { Vector3D } from "../utils/vector";
 import { Entity, IEntityType, ISerializedEntity, MetaAction } from "./entity";
 
 
 export abstract class MovableEntity extends Entity {
   vel = Vector3D.zero;
-  // (radius, theta: [0, 2pi], phi: [0, pi])
+  // (radius (1), theta: [0, 2pi], phi: [0, pi])
   rot = Vector3D.zero;
   rotCart: Vector3D = this.rot.toCartesianCoords();
 
