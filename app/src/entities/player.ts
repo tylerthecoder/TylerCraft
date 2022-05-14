@@ -1,16 +1,19 @@
 import { Entity, FaceLocater, IEntityType, ISerializedEntity, MetaAction } from "./entity";
 import { arrayAdd, arrayScalarMul } from "../utils";
-import { IDim, IAction, IActionType } from "../types";
+import { IDim, IAction } from "../types";
 import { Vector, Vector2D, Vector3D } from "../utils/vector";
 import { Projectile } from "./projectile";
 import { MovableEntity } from "./moveableEntity";
 import { CONFIG } from "../config";
+import { BLOCKS, ExtraBlockData } from "../blockdata";
+
 
 export interface ISerializedPlayer extends ISerializedEntity {
   vel: IDim;
   isReal: boolean;
 }
 
+// A controller / PlayerHandler will append actions to Player
 export class Player extends MovableEntity {
   // Entity overrides
   pos: Vector3D = new Vector3D([0, 50, 0]);
@@ -78,8 +81,8 @@ export class Player extends MovableEntity {
 
     const addMoveAction = (vel: Vector3D) => {
       actions.push({
-        type: IActionType.setEntVel,
-        setEntVel: {
+        type: .setEntVel,
+        payload: {
           vel: vel.data as IDim,
           uid: this.uid,
         }
@@ -110,6 +113,12 @@ export class Player extends MovableEntity {
     // this.metaActions.clear();
 
     return actions;
+  }
+
+  tryJump() {
+    if (this.onGround) {
+      this.vel.set(1, CONFIG.player.jumpSpeed);
+    }
   }
 
   setCreative(val: boolean) {
@@ -153,7 +162,7 @@ export class Player extends MovableEntity {
 
     this.actions.push({
       type: IActionType.addEntity,
-      addEntity: {
+      payload: {
         ent: ball.serialize(IEntityType.Projectile),
       }
     });

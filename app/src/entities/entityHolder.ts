@@ -88,8 +88,16 @@ export class EntityHolder {
     this.entities.delete(entity.uid);
   }
 
-  get(uid: string) {
-    return this.entities.get(uid);
+  tryGet<T extends Entity>(uid: string): T | undefined {
+    return this.entities.get(uid) as T | undefined;
+  }
+
+  get<T extends Entity>(id: string): T {
+    const ent = this.tryGet<T>(id);
+    if (!ent) {
+      throw new Error(`Entity ${id} not found`);
+    }
+    return ent;
   }
 
   getActivePlayers() {

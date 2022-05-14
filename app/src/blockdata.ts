@@ -32,7 +32,7 @@ export interface IImageBlockData {
   face: number;
 }
 
-export type ExtraBlockData = IImageBlockData;
+export type ExtraBlockData = IImageBlockData | undefined;
 
 interface BlockMetaData {
   gravitable: boolean;

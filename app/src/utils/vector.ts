@@ -3,6 +3,13 @@ type IDim = [number, number, number];
 // type VectorIndex = bigint;
 export type VectorIndex = string;
 
+export enum Direction {
+  Forwards = 0,
+  Backwards = 1,
+  Left = 2,
+  Right = 3,
+}
+
 export class Vector<T extends number[] = IDim> {
 
   static xVectors = [

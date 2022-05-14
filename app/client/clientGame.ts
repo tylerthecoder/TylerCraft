@@ -3,21 +3,24 @@ import { EntityCamera } from "./cameras/entityCamera";
 import { Game } from "../src/game";
 import { Entity } from "../src/entities/entity";
 import { canvas } from "./canvas";
-import { IDim, IAction, IActionType, ISocketMessageType, WorldModel, IWorldData } from "../src/types";
+import { IDim, ISocketMessageType, WorldModel, IWorldData } from "../src/types";
 import WorldRenderer from "./renders/worldRender";
 import { BLOCKS, ExtraBlockData } from "../src/blockdata";
 import { ControllerHolder } from "./controllers/controllerHolder";
 import { Spectator } from "../src/entities/spectator";
 import { Cube, isPointInsideOfCube } from "../src/entities/cube";
-import { GameSocketController } from "./controllers/gameSocketController";
-import { getMyUid, IS_MOBILE, SocketInterface } from "./app";
+import { SocketGameHandler } from "./controllers/gameSocketController";
+import { getMyUid, SocketInterface } from "./app";
 import { Player } from "../src/entities/player";
-import { MobileController } from "./controllers/mobileController";
-import { GameController } from "./controllers/gameKeyboardController";
 import { XrCamera } from "./cameras/xrCamera";
-import { Quest2Controller } from "./controllers/quest2Controller";
+import { AbstractScript } from "@tylercraft/src/scripts/AbstractScript"
+import { GameAction } from "@tylercraft/src/gameActions";
+import { GameStateDiff } from "@tylercraft/src/gameStateDiff";
 
-export class ClientGame extends Game {
+
+// This class should only read game and not write.
+// It uses game data to draw the game to the screen and handle user input
+export class ClientGame extends AbstractScript {
   controllers: ControllerHolder;
   worldRenderer: WorldRenderer;
   spectator: Spectator;
@@ -30,36 +33,16 @@ export class ClientGame extends Game {
   mainPlayer: Player;
 
   constructor(
-    worldModel: WorldModel,
-    worldData: IWorldData
+    public game: Game,
   ) {
-    super(worldModel, worldData);
+    super();
+
     this.controllers = new ControllerHolder();
-    this.worldRenderer = new WorldRenderer(this.world, this);
-    this.mainPlayer = this.entities.createOrGetPlayer(true, getMyUid());
+
+    this.worldRenderer = new WorldRenderer(this.game.world, this);
+    this.mainPlayer = this.game.entities.createOrGetPlayer(true, getMyUid());
 
     console.log("My UID", getMyUid());
-
-    if (!this.mainPlayer) throw new Error("Main player was not found");
-
-    const activePlayers = worldData.activePlayers ?? [];
-    // draw only the active players
-    for (const entity of this.entities.iterable()) {
-
-      // We don't want to be able to control players that we do not own
-      if (entity instanceof Player && entity.uid !== getMyUid()) {
-        entity.isReal = false;
-      }
-
-      // if an entity is a player but not active then don't render them
-      if (
-        entity instanceof Player &&
-        !activePlayers.includes(entity.uid)
-      ) continue;
-
-      if (entity.uid === getMyUid()) continue; // don't render the main player
-      this.onNewEntity(entity);
-    }
 
     this.load();
   }
@@ -74,26 +57,10 @@ export class ClientGame extends Game {
 
   async load() {
     await canvas.loadProgram();
-    await this.world.load();
+    this.controllers.init(this);
 
-    const getController = () => {
-      if (IS_MOBILE) {
-        return new MobileController(this);
-      } else if (canvas.isXr) {
-        return new Quest2Controller(this);
-      } else {
-        return new GameController(this);
-      }
-    }
-
-    const gameController = getController();
-
-    this.controllers.add(gameController);
-
-    console.log("World Loaded");
-
-    if (this.multiPlayer) {
-      const socketController = new GameSocketController(this);
+    if (this.game.multiPlayer) {
+      const socketController = new SocketGameHandler(this);
       this.controllers.add(socketController);
     }
 
@@ -102,24 +69,31 @@ export class ClientGame extends Game {
 
     if (canvas.isXr) {
       this.camera = new XrCamera(this.mainPlayer);
+    } else {
+      this.camera = new EntityCamera(this.mainPlayer);
     }
 
-    this.camera = new EntityCamera(this.mainPlayer);
-
-
-    canvas.loop(this.logicLoop.bind(this))
+    canvas.loop(this.renderLoop.bind(this))
   }
 
-  logicLoop(time: number) {
-    const delta = time - this.totTime;
 
+  // Called by Game each tick,
+  update(delta: number, stateDiff: GameStateDiff) {
+
+    // Update the controllers so they can append game actions
     this.controllers.update(delta);
-    this.update(delta);
+
+    for (const dirtyChunkId of stateDiff.getDirtyChunks()) {
+      this.worldRenderer.blockUpdate(dirtyChunkId);
+    }
+  }
+
+  renderLoop(time: number) {
+    const delta = time - this.totTime;
     this.worldRenderer.render(this);
     this.pastDeltas.push(delta);
     this.totTime = time;
   }
-
 
   // this will be called by the super class when a new entity is added
   onNewEntity(entity: Entity) {
@@ -130,23 +104,18 @@ export class ClientGame extends Game {
     this.worldRenderer.removeEntity(uid);
   }
 
-  clientActionListener(action: IAction) {
-    if (action.blockUpdate) {
-      this.worldRenderer.blockUpdate(action.blockUpdate.chunkId)
-    }
-  }
-
   // this will be called by the super class when actions are received
-  onActions(actions: IAction[]) {
-    if (this.multiPlayer && actions.length > 0) {
+  // Don't need to filter actions because they all originate from this class
+  onActions(actions: GameAction[]) {
+    if (this.game.multiPlayer && actions.length > 0) {
       SocketInterface.send({
         type: ISocketMessageType.actions,
-        // filter out actions that we received from the server
-        actionPayload: actions.filter(a => !a.isFromServer)
+        actionPayload: actions
       });
     }
   }
 
+  // TODO move this to the Game class
   placeBlock() {
     const data = this.world.lookingAt(this.camera);
     if (!data) return;
@@ -170,7 +139,7 @@ export class ClientGame extends Game {
 
     this.actions.push({
       type: IActionType.playerPlaceBlock,
-      playerPlaceBlock: {
+      payload: {
         blockType: this.selectedBlock,
         blockPos: data.newCubePos.data as IDim,
         blockData: extraBlockData,
@@ -178,6 +147,7 @@ export class ClientGame extends Game {
     });
   }
 
+  // TODO move this to the Game class
   removeBlock() {
     const data = this.world.lookingAt(this.camera);
     if (!data) return;
@@ -185,7 +155,7 @@ export class ClientGame extends Game {
 
     this.actions.push({
       type: IActionType.removeBlock,
-      removeBlock: {
+      payload: {
         blockPos: cube.pos.data as IDim,
       }
     });
@@ -212,7 +182,7 @@ export class ClientGame extends Game {
   setUpSpectator() {
     this.isSpectating = true;
     this.spectator = new Spectator();
-    this.entities.add(this.spectator);
+    // this.entities.add(this.spectator);
     this.camera = new EntityCamera(this.spectator);
     this.worldRenderer.shouldRenderMainPlayer = true;
   }

@@ -4,12 +4,13 @@ import { Entity } from "./entities/entity";
 import { Cube } from "./entities/cube";
 import { Vector3D } from "./utils/vector";
 import { MovableEntity } from "./entities/moveableEntity";
-import { IAction, IActionType, ISocketMessage, IWorldData, WorldModel } from "./types";
+import { ISocketMessage, IWorldData, WorldModel } from "./types";
 import { CONFIG, IConfig, setConfig } from "./config";
-import { deserializeEntity } from "./serializer";
 import { EntityHolder, ISerializedEntities } from "./entities/entityHolder";
 import Random from "./utils/random";
-import { NPC } from "./entities/npc";
+import { GameAction, GameActionType } from "./gameActions";
+import { GameStateDiff, IGameDiff } from "./gameStateDiff";
+import { AbstractScript } from "./scripts/AbstractScript";
 
 export interface ISerializedGame {
   config: IConfig;
@@ -24,19 +25,32 @@ export interface IGameMetadata {
   name: string;
 }
 
+
+// Receives client actions from somewhere.
+// Generate dirty entities and dirty chunks.
+
 export class Game {
   public gameId: string;
   public name: string;
-  protected actions: IAction[] = [];
+  // protected actions: IAction[] = [];
   public entities: EntityHolder;
   public world: World;
   multiPlayer: boolean;
 
+  private stateDiff: GameStateDiff;
+
   constructor(
+    /**
+      The main script to control the game
+      Usually will be the ClientGame
+    */
+    private gameScript: AbstractScript,
     private worldModel: WorldModel,
     worldData: IWorldData,
   ) {
     Random.setSeed(worldData.config.seed);
+
+    this.stateDiff = new GameStateDiff(this);
 
     this.multiPlayer = Boolean(worldData.multiplayer);
 
@@ -65,10 +79,6 @@ export class Game {
     this.gameId = worldData.worldId;
     this.name = worldData.name;
 
-    // this.entities.add(
-    //   new NPC()
-    // );
-
     if (worldData.config) {
       setConfig({
         ...CONFIG,
@@ -76,6 +86,12 @@ export class Game {
       });
     }
 
+  }
+
+
+  async load() {
+    await this.world.load();
+    console.log("World Loaded");
   }
 
   serialize(): ISerializedGame {
@@ -88,76 +104,66 @@ export class Game {
     };
   }
 
+
   update(delta: number) {
-    // get all of the actions
-    // there could also be actions that came from the socket
+    this.gameScript.update(delta, this.stateDiff);
 
-    const entityActions = this.entities.getActions();
-    this.actions.push(...entityActions);
+    // TODO keep track of if an entity modifies a chunk and return it here
+    this.entities.update(this.world, delta);
 
-    // send the actions to the subclass
-    this.onActions(this.actions);
-
-    let failSafe = 0;
-    while (this.actions.length > 0 && failSafe < 100) {
-      const action = this.actions[0];
-      const status = this.handleAction(action);
-
-      if (!status && this.clientActionListener) {
-        this.clientActionListener(action);
-      }
-
-      // remove the first element from actions
-      this.actions.shift();
-
-      failSafe++;
-    }
-
-    if (failSafe > 100) throw new Error("Uh Oh");
-
-    // delete all of the actions
-    this.actions = [];
-
-    this.entities.update(this.world, delta)
+    this.stateDiff.clear();
   }
 
-  protected handleAction(action: IAction) {
+
+  /** This happens on a fast loop. Mark things that change as dirty */
+  public handleAction(action: GameAction) {
     // console.log("Handling Action", action);
 
-    const findEntity = <T extends Entity>(uid: string) => this.entities.get(uid) as T | undefined;
-
     switch (action.type) {
-      case IActionType.addEntity: {
-        const { ent } = action.addEntity!;
-        const entity = deserializeEntity(ent);
-        this.entities.add(entity);
+      // case GameActionType.addEntity: {
+      //   const { ent } = action.payload;
+      //   const entity = deserializeEntity(ent);
+      //   this.entities.add(entity);
+      //   return;
+      // }
+
+      // case IActionType.removeEntity: {
+      //   const payload = action.payload;
+      //   const entity = findEntity(payload.uid);
+      //   if (!entity) return;
+      //   this.removeEntity(entity.uid);
+      //   return;
+      // }
+      case GameActionType.Rotate: {
+        const { playerRot, playerUid } = action;
+        const player = this.entities.get<Player>(playerUid);
+        player.rot = new Vector3D(playerRot);
         return;
       }
 
-      case IActionType.removeEntity: {
-        const payload = action.removeEntity!;
-        const entity = findEntity(payload.uid);
-        if (!entity) return;
-        this.removeEntity(entity.uid);
+      case GameActionType.Jump: {
+        const { playerUid } = action;
+        const player = this.entities.get<Player>(playerUid);
+        player.tryJump();
         return;
       }
 
-      case IActionType.playerPlaceBlock: {
-        const payload = action.playerPlaceBlock!;
-        console.log(" Placing Bloack", payload);
+      case GameActionType.PlaceBlock: {
+        const payload = action.payload;
+        console.log("Placing Block", payload);
         const newCube = new Cube(payload.blockType, new Vector3D(payload.blockPos), payload.blockData);
         this.world.addBlock(newCube);
         return;
       }
 
       case IActionType.removeBlock: {
-        const payload = action.removeBlock!
+        const payload = action.payload;
         this.world.removeBlock(new Vector3D(payload.blockPos));
         break;
       }
 
       case IActionType.playerSetPos: {
-        const payload = action.playerSetPos!;
+        const payload = action.payload;
         const entity = findEntity<MovableEntity>(payload.uid);
         if (!entity) {
           console.log("Couldn't find entity", payload.uid);
@@ -168,7 +174,7 @@ export class Game {
       }
 
       case IActionType.setEntVel: {
-        const payload = action.setEntVel!;
+        const payload = action.payload;
         const entity = findEntity(payload.uid) as MovableEntity;
         if (!entity) {
           console.log("Couldn't find entity", payload.uid);
@@ -186,7 +192,7 @@ export class Game {
       }
 
       case IActionType.hurtEntity: {
-        const payload = action.hurtEntity!;
+        const payload = action.payload;
         const entity = findEntity(payload.uid) as Player;
         if (!entity) {
           console.log("Entity not found", payload.uid);
@@ -201,6 +207,12 @@ export class Game {
     }
 
     return true;
+  }
+
+
+  /** Currently only sent by server. Will quickly update the state of the game */
+  public handleStateDiff(stateDiff: IGameDiff) {
+
   }
 
   addAction(action: IAction) {

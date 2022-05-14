@@ -23,7 +23,10 @@ export const BASE_CONFIG = {
     trees: false,
     // flowers: true,
     flowers: false,
-    infiniteGen: false,
+    /** Make the world load forever in all directions.
+     * If off the world loads to the size of Config.loadDistance
+     */
+    infiniteGen: true,
   },
 
   gravity: -0.013,

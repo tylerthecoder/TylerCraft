@@ -1,8 +1,7 @@
 
-
-
-// we need to generate a world
-
+/*
+  This file contains logic for the terrain viewer app
+**/
 import { BLOCKS } from "../src/blockdata";
 import { CONFIG } from "../src/config";
 import Random from "../src/utils/random";
@@ -12,11 +11,8 @@ import { Chunk } from "../src/world/chunk";
 import { TerrainGenerator } from "../src/world/terrainGenerator";
 import { World } from "../src/world/world";
 
-
 const LOAD_DIST = 6;
 const SCALE_FACTOR = 10;
-
-// generate the world
 
 export class TerrainApp {
   private terrainGenerator = new TerrainGenerator(

@@ -1,71 +1,52 @@
-import { BLOCKS, ExtraBlockData } from "../src/blockdata";
-import { ISerializedEntity } from "../src/entities/entity";
 import { IConfig } from "./config";
+import { ISerializedEntity } from "./entities/entity";
 import { ISerializedEntities } from "./entities/entityHolder";
 import { Game, IGameMetadata, ISerializedGame } from "./game";
+import { GameAction } from "./gameActions";
+import { IGameDiff } from "./gameStateDiff";
 import { Chunk, ISerializedChunk } from "./world/chunk";
 
 export type IDim = [number, number, number];
 
-export const enum IActionType {
-  setEntVel,
-  playerMoveDir,
-  playerPlaceBlock,
-  removeBlock,
-  playerFireball,
-  playerSetPos,
-  blockUpdate,
-  addEntity,
-  removeEntity,
-  hurtEntity,
+
+// Defs
+// There are actions and state changes
+// Actions are sent to the server to be converted to state changes that are then sent to the clients
+// Servers can only just send state changes to the clients without any actions (An entity spawned, a timer went off)
+
+
+export enum StateUpdateType {
+  AddEntity,
+  UpdateEntity,
+  RemoveEntity,
+  UpdateChunk
 }
 
-export interface IAction {
-  type: IActionType;
-  dontSendToServer?: boolean;
-  isFromServer?: boolean;
-  setEntVel?: {
-    vel: IDim;
-    uid: string;
-  };
-  playerJump?: {
-    uid: string;
-  };
-  playerMoveDir?: {
-    x: number;
-    y: number;
-    uid: string;
-  };
-  playerPlaceBlock?: {
-    blockType: BLOCKS;
-    blockPos: IDim;
-    blockData?: ExtraBlockData;
-  };
-  removeBlock?: {
-    blockPos: IDim;
-  };
-  playerFireball?: {
-    uid: string;
-  };
-  // we *technically* shouldn't need this but the player position gets off over time
-  playerSetPos?: {
-    uid: string;
-    pos: IDim;
-  };
-  blockUpdate?: {
-    chunkId: string;
-  };
-  addEntity?: {
-    ent: ISerializedEntity,
-  }
-  removeEntity?: {
-    uid: string;
-  }
-  hurtEntity?: {
-    uid: string,
-    amount: number,
-  }
+export interface IAddEntityStateUpdate {
+  action: StateUpdateType.AddEntity;
+  ent: ISerializedEntity;
 }
+
+export interface IUpdateEntityStateUpdate {
+  action: StateUpdateType.UpdateEntity;
+  ent: Partial<ISerializedEntity>;
+}
+
+export interface IEntityRemoveStateUpdate {
+  action: StateUpdateType.RemoveEntity;
+  uid: string;
+}
+
+export interface IChunkUpdateStateUpdate {
+  action: StateUpdateType.UpdateChunk;
+  chunk: ISerializedChunk;
+}
+
+export type StateUpdate =
+  IAddEntityStateUpdate |
+  IUpdateEntityStateUpdate |
+  IEntityRemoveStateUpdate |
+  IChunkUpdateStateUpdate;
 
 export interface ICreateWorldOptions {
   gameName: string;
@@ -106,6 +87,7 @@ export const enum ISocketMessageType {
   // this could be for joining an existing world or starting up an old one
   joinWorld, // server sends welcome
   // from server
+  gameDiff,
   welcome,
   setChunk,
   newPlayer,
@@ -144,17 +126,18 @@ export interface ISocketMessage {
 
   // from server
   welcomePayload?: ISocketWelcomePayload,
-  newPlayerPayload?: {
-    uid: string,
-  },
-  playerLeavePayload?: {
-    uid: string,
-  },
-  setChunkPayload?: {
-    pos: string,
-    data: ISerializedChunk,
-  }
+  // newPlayerPayload?: {
+  //   uid: string,
+  // },
+  // playerLeavePayload?: {
+  //   uid: string,
+  // },
+  // setChunkPayload?: {
+  //   pos: string,
+  //   data: ISerializedChunk,
+  // }
+  gameDiffPayload?: IGameDiff;
 
   // from either
-  actionPayload?: IAction[];
+  actionPayload?: GameAction[];
 }

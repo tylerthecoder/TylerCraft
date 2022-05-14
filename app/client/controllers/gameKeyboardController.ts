@@ -1,13 +1,14 @@
-import { Controller } from "./controller";
 import { ClientGame } from "../clientGame";
 import { BLOCKS } from "../../src/blockdata";
 import { canvas } from "../canvas";
 import { MetaAction } from "../../src/entities/entity";
-import { IActionType, IDim } from "../../src/types";
+import { IDim } from "../../src/types";
 import { MovableEntity } from "../../src/entities/moveableEntity";
 import { CONFIG } from "../../src/config";
+import { GameActionType } from "@tylercraft/src/gameActions";
+import { Direction } from "@tylercraft/src/utils/vector";
 
-export class GameController extends Controller {
+export class MouseAndKeyController {
   private keys = new Set();
   private keysPressed = new Set();
   private numOfUpdates = 0;
@@ -19,8 +20,7 @@ export class GameController extends Controller {
   private eGameNameInput = document.getElementById("gameNameInput") as HTMLInputElement;
   private eSaveButton = document.getElementById("saveButton") as HTMLButtonElement;
 
-  constructor(public controlled: ClientGame) {
-    super();
+  constructor(public game: ClientGame) {
 
     window.addEventListener("keydown", ({ key }) => {
       this.keys.add(key.toLowerCase());
@@ -47,9 +47,9 @@ export class GameController extends Controller {
 
 
       if (e.which === 3) { // right click
-        this.controlled.placeBlock();
+        this.game.placeBlock();
       } else if (e.which === 1) { // left click
-        this.controlled.removeBlock();
+        this.game.removeBlock();
       }
       e.preventDefault();
     });
@@ -59,17 +59,24 @@ export class GameController extends Controller {
         const moveX = e.movementX * CONFIG.player.mouseRotSpeed;
         const moveY = e.movementY * CONFIG.player.mouseRotSpeed;
 
-        this.controlled.camera.rotateBy(moveX, moveY);
+        this.game.camera.rotateBy(moveX, moveY);
+
+        // Send this data to the server
+        this.game.addGameAction({
+          type: GameActionType.Rotate,
+          playerRot: this.game.mainPlayer.rot.data as IDim,
+          playerUid: this.game.mainPlayer.uid,
+        });
       }
     });
 
     window.addEventListener("wheel", (e: WheelEvent) => {
       if (e.deltaY > 0) {
-        this.controlled.selectedBlock = (this.controlled.selectedBlock + 1) % this.controlled.numOfBlocks;
+        this.game.selectedBlock = (this.game.selectedBlock + 1) % this.game.numOfBlocks;
       }
 
       if (e.deltaY < 0) {
-        this.controlled.selectedBlock = ((this.controlled.selectedBlock - 1) + this.controlled.numOfBlocks) % this.controlled.numOfBlocks;
+        this.game.selectedBlock = ((this.game.selectedBlock - 1) + this.game.numOfBlocks) % this.game.numOfBlocks;
       }
     })
 
@@ -90,24 +97,26 @@ export class GameController extends Controller {
       this.gameMenu.style.display = "none";
     });
 
-    this.eGameNameInput.value = controlled.name;
+    this.eGameNameInput.value = game.game.name;
     this.eGameNameInput.addEventListener("change", (e: KeyboardEvent) => {
       if (!e.target) return;
-      controlled.name = (e.target as HTMLInputElement).value;
+      // TODO debounce this
+      this.game.addGameAction({
+        type: GameActionType.ChangeName,
+        name: (e.target as HTMLInputElement).value
+      });
     });
 
     this.eSaveButton.addEventListener("click", () => {
-      this.controlled.save();
+      this.game.addGameAction({ type: GameActionType.Save, })
     })
   }
 
   sendPos() {
-    this.controlled.addAction({
-      type: IActionType.playerSetPos,
-      playerSetPos: {
-        uid: this.controlled.mainPlayer.uid,
-        pos: this.controlled.mainPlayer.pos.data as IDim,
-      }
+    this.game.addGameAction({
+      type: GameActionType.SetPlayerPos,
+      playerUid: this.game.mainPlayer.uid,
+      pos: this.game.mainPlayer.pos.data as IDim,
     });
   }
 
@@ -116,8 +125,8 @@ export class GameController extends Controller {
   }
 
   update(_delta: number) {
-    if (this.controlled.isSpectating) {
-      const spectator = this.controlled.spectator;
+    if (this.game.isSpectating) {
+      const spectator = this.game.spectator;
       this.ifHasKeyThenAddMeta(spectator, "w", MetaAction.forward);
       this.ifHasKeyThenAddMeta(spectator, "s", MetaAction.backward);
       this.ifHasKeyThenAddMeta(spectator, "d", MetaAction.right);
@@ -125,11 +134,22 @@ export class GameController extends Controller {
       this.ifHasKeyThenAddMeta(spectator, " ", MetaAction.up);
       this.ifHasKeyThenAddMeta(spectator, "shift", MetaAction.down);
     } else {
-      const player = this.controlled.mainPlayer;
-      this.ifHasKeyThenAddMeta(player, "w", MetaAction.forward);
-      this.ifHasKeyThenAddMeta(player, "s", MetaAction.backward);
-      this.ifHasKeyThenAddMeta(player, "d", MetaAction.right);
-      this.ifHasKeyThenAddMeta(player, "a", MetaAction.left);
+      const addMoveGameAction = (key: string, direction: Direction) => {
+        if (this.keysPressed.has(key)) {
+          this.game.addGameAction({
+            type: GameActionType.Move,
+            direction,
+            playerUid: this.game.mainPlayer.uid,
+            playerRot: this.game.mainPlayer.rot.data as IDim,
+          })
+        }
+      }
+      const player = this.game.mainPlayer;
+      addMoveGameAction("w", Direction.Forwards);
+      addMoveGameAction("s", Direction.Backwards);
+      addMoveGameAction("d", Direction.Right);
+      addMoveGameAction("a", Direction.Left);
+
       player.fire.holding = this.keys.has("f");
 
       if (this.keys.has("f")) {
@@ -156,11 +176,11 @@ export class GameController extends Controller {
     }
 
     this.ifHasKeyThen("v", () => {
-      this.controlled.toggleThirdPerson();
+      this.game.toggleThirdPerson();
     })
 
     this.ifHasKeyThen("c", () => {
-      this.controlled.toggleCreative();
+      this.game.toggleCreative();
     })
 
     this.ifHasKeyThen("m", () => {
@@ -168,43 +188,43 @@ export class GameController extends Controller {
     })
 
     this.ifHasKeyThen("p", () => {
-      this.controlled.save();
+      this.game.addGameAction({ type: GameActionType.Save })
     })
 
     this.ifHasKeyThen("1", () => {
-      this.controlled.selectedBlock = BLOCKS.grass;
+      this.game.selectedBlock = BLOCKS.grass;
     })
 
     this.ifHasKeyThen("2", () => {
-      this.controlled.selectedBlock = BLOCKS.stone;
+      this.game.selectedBlock = BLOCKS.stone;
     })
 
     this.ifHasKeyThen("3", () => {
-      this.controlled.selectedBlock = BLOCKS.wood;
+      this.game.selectedBlock = BLOCKS.wood;
     })
 
     this.ifHasKeyThen("4", () => {
-      this.controlled.selectedBlock = BLOCKS.leaf;
+      this.game.selectedBlock = BLOCKS.leaf;
     })
 
     this.ifHasKeyThen("5", () => {
-      this.controlled.selectedBlock = BLOCKS.cloud;
+      this.game.selectedBlock = BLOCKS.cloud;
     })
 
     this.ifHasKeyThen("6", () => {
-      this.controlled.selectedBlock = BLOCKS.gold;
+      this.game.selectedBlock = BLOCKS.gold;
     })
 
     this.ifHasKeyThen("7", () => {
-      this.controlled.selectedBlock = BLOCKS.redFlower;
+      this.game.selectedBlock = BLOCKS.redFlower;
     })
 
     this.ifHasKeyThen("8", () => {
-      this.controlled.selectedBlock = BLOCKS.image;
+      this.game.selectedBlock = BLOCKS.image;
     });
 
     this.ifHasKeyThen("9", () => {
-      this.controlled.selectedBlock = BLOCKS.image;
+      this.game.selectedBlock = BLOCKS.image;
     });
   }
 
