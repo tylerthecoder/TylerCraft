@@ -21,7 +21,7 @@ export default class WorldRenderer {
   private renderers: Renderer[] = [];
   private entityRenderers: Map<string, Renderer> = new Map();
   private chunkRenderers: Map<string, ChunkRenderer> = new Map();
-  shouldRenderMainPlayer = false;
+  shouldRenderMainPlayer = true;
 
   constructor(
     private world: World,

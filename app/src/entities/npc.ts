@@ -5,15 +5,13 @@ import { Player } from "./player";
 
 
 export class NPC extends Player {
-	constructor(
-		pos: Vector3D,
-		dim: IDim,
-		rot: Vector3D
-	) {
+	// Entity overrides
+	pos: Vector3D = new Vector3D([0, 50, 0]);
+	dim: IDim = [.8, 2, .8];
+	rot = new Vector3D([0, 0, Math.PI / 2]);
+
+	constructor() {
 		super(false, "npc");
-		this.pos = pos;
-		this.dim = dim;
-		this.rot = rot;
 	}
 
 

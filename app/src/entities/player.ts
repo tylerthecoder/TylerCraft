@@ -1,7 +1,7 @@
 import { Entity, FaceLocater, IEntityType, ISerializedEntity, MetaAction } from "./entity";
 import { arrayAdd, arrayScalarMul } from "../utils";
 import { IDim, IAction, IActionType } from "../types";
-import { Vector, Vector3D } from "../utils/vector";
+import { Vector, Vector2D, Vector3D } from "../utils/vector";
 import { Projectile } from "./projectile";
 import { MovableEntity } from "./moveableEntity";
 import { CONFIG } from "../config";
@@ -22,6 +22,9 @@ export class Player extends MovableEntity {
   onGround = false;
   jumpCount = 0;
   distanceMoved = 0; // used for animating the arms and legs. Reset to zero when not moving
+
+  leftHandPosition = new Vector3D([1, 1, 0]);
+  rightHandPosition = new Vector3D([1, 1, 1]);
 
   health = {
     current: 100,

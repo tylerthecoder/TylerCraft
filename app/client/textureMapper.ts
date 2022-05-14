@@ -163,6 +163,8 @@ class Textures {
       ...makeLeg(),
       ...makeArm(),
       ...makeArm(),
+      // Added this just for fun to test hand rendering
+      ...makeArm(),
     ]
 
 

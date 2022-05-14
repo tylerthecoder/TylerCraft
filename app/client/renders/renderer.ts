@@ -34,6 +34,14 @@ export class RenderData implements IRenderData {
     return this.positions.length;
   }
 
+  public clear() {
+    this.positions = [];
+    this.indices = [];
+    this.textureCords = [];
+    this.indexOffset = 0;
+  }
+
+
 }
 
 export abstract class Renderer {

@@ -9,6 +9,7 @@ import { CONFIG, IConfig, setConfig } from "./config";
 import { deserializeEntity } from "./serializer";
 import { EntityHolder, ISerializedEntities } from "./entities/entityHolder";
 import Random from "./utils/random";
+import { NPC } from "./entities/npc";
 
 export interface ISerializedGame {
   config: IConfig;
@@ -63,6 +64,10 @@ export class Game {
 
     this.gameId = worldData.worldId;
     this.name = worldData.name;
+
+    // this.entities.add(
+    //   new NPC()
+    // );
 
     if (worldData.config) {
       setConfig({

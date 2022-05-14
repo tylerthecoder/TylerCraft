@@ -23,6 +23,7 @@ export const BASE_CONFIG = {
     trees: false,
     // flowers: true,
     flowers: false,
+    infiniteGen: false,
   },
 
   gravity: -0.013,

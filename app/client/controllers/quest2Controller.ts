@@ -12,6 +12,8 @@ export class Quest2Controller extends Controller {
 		super();
 	}
 
+	public data: any;
+
 	update(_delta: number) {
 		const { webXrSession, currentXRFrame, xrRefSpace } = canvas;
 
@@ -21,10 +23,10 @@ export class Quest2Controller extends Controller {
 
 		const mainPlayer = this.controlled.mainPlayer;
 
-		const pose = currentXRFrame.getViewerPose(xrRefSpace);
+		const viewerPose = currentXRFrame.getViewerPose(xrRefSpace);
 
-		if (pose) {
-			const headQuat = pose.transform.orientation;
+		if (viewerPose) {
+			const headQuat = viewerPose.transform.orientation;
 
 			const headsetRot = quat.fromValues(headQuat.x, headQuat.y, headQuat.z, headQuat.w);
 			const inverseHeadsetRot = quat.invert(quat.create(), headsetRot);
@@ -44,6 +46,30 @@ export class Quest2Controller extends Controller {
 			]);
 		}
 
+
+		const rightController = webXrSession.inputSources[0];
+		const rightHandPose = currentXRFrame.getPose(rightController.targetRaySpace, xrRefSpace);
+
+		if (rightHandPose && viewerPose) {
+			this.controlled.mainPlayer.rightHandPosition = new Vector3D([
+				rightHandPose.transform.position.x,
+				rightHandPose.transform.position.y,
+				rightHandPose.transform.position.z
+			]);
+		}
+
+		const leftController = webXrSession.inputSources[1];
+		const leftHandPose = currentXRFrame.getPose(leftController.targetRaySpace, xrRefSpace);
+
+		if (leftHandPose && viewerPose) {
+			this.controlled.mainPlayer.leftHandPosition = new Vector3D([
+				leftHandPose.transform.position.x,
+				leftHandPose.transform.position.y,
+				leftHandPose.transform.position.z
+			]);
+		}
+
+		this.data = webXrSession.inputSources;
 
 		for (const device of webXrSession.inputSources) {
 			const { gamepad } = device;
