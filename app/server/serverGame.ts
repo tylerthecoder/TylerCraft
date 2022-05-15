@@ -22,7 +22,7 @@ export class ServerGame extends AbstractScript {
     this.clients = new Players(this.game);
   }
 
-  async load(): Promise<void> {
+  async init(): Promise<void> {
     // NO-OP
   }
 

@@ -140,7 +140,7 @@ export class Game {
   /** This happens on a fast loop. Mark things that change as dirty */
 
   public handleAction<T extends GameAction, U extends GameActionData[T]>(action: T, actionData: U) {
-    console.log("Handling Action", action);
+    // console.log("Handling Action", action, actionData);
 
     this.gameScript.onAction(action);
     const actionHolder = GameActionHolder.create(action, actionData)

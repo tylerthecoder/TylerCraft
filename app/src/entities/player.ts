@@ -40,6 +40,8 @@ export class Player extends MovableEntity {
 
   creative = false;
 
+  moveDirections: Direction[] = [];
+
   constructor(
     /** Means that the player is controlled by the current user */
     public isReal: boolean,
@@ -71,75 +73,31 @@ export class Player extends MovableEntity {
     return player;
   }
 
-  // getActions(): IAction[] {
-  //   if (!this.isReal) return [];
-  //   const actions = this.actions;
-
-  //   const addMoveAction = (vel: Vector3D) => {
-  //     actions.push({
-  //       type: .setEntVel,
-  //       payload: {
-  //         vel: vel.data as IDim,
-  //         uid: this.uid,
-  //       }
-  //     });
-  //   }
-
-  //   let totVel = this.getWasdVel();
-
-  //   if (this.creative) {
-  //     totVel = totVel.add(this.getVerticalVel());
-  //     if (!totVel.equals(this.vel)) {
-  //       addMoveAction(totVel);
-  //     }
-  //   } else {
-  //     if (this.metaActions.has(MetaAction.jump) && this.onGround) {
-  //       totVel.set(1, CONFIG.player.jumpSpeed);
-  //       addMoveAction(totVel);
-  //     } else {
-  //       totVel.set(1, this.vel.get(1));
-  //       if (!totVel.equals(this.vel)) {
-  //         addMoveAction(totVel);
-  //       }
-  //     }
-  //   }
-
-  //   this.actions = [];
-
-  //   // this.metaActions.clear();
-
-  //   return actions;
-  // }
-
-  // TODO allow moving in multiple directions
-  // to do this game actions should be combined somehow.
-  // Or the controller should combine the actions and send an array
-  // of directions
-  moveInDirections(directions: Direction[]) {
+  moveInDirections() {
     const baseSpeed = CONFIG.player.speed;
-
-    const addXZ = (vec: Vector3D) {
-      this.vel
-    }
 
     const moveDirection = (direction: Direction) => {
       switch (direction) {
         case Direction.Forwards:
           return new Vector3D([
             -baseSpeed, this.rot.get(1), Math.PI / 2,
-          ]).toCartesianCoords();
+          ]).toCartesianCoords()
+            .set(1, 0)
         case Direction.Backwards:
           return new Vector3D([
             baseSpeed, this.rot.get(1), Math.PI / 2,
-          ]).toCartesianCoords();
+          ]).toCartesianCoords()
+            .set(1, 0);
         case Direction.Left:
           return new Vector3D([
             baseSpeed, this.rot.get(1) + Math.PI / 2, Math.PI / 2
-          ]).toCartesianCoords();
+          ]).toCartesianCoords()
+            .set(1, 0);
         case Direction.Right:
           return new Vector3D([
             baseSpeed, this.rot.get(1) - Math.PI / 2, Math.PI / 2
-          ]).toCartesianCoords();
+          ]).toCartesianCoords()
+            .set(1, 0);
         case Direction.Up:
           if (this.creative) {
             return new Vector3D([0, baseSpeed, 0]);
@@ -155,10 +113,18 @@ export class Player extends MovableEntity {
       }
     }
 
+    let newVel = Vector3D.zero;
+    for (const dir of this.moveDirections) {
+      const vel = moveDirection(dir);
+      newVel = newVel.add(vel);
+    }
 
+    // If we don't have a y comp then use the current one
+    if (!newVel.get(1)) {
+      newVel.set(1, this.vel.get(1));
+    }
 
-    const vel = getVel();
-    this.vel = vel;
+    this.vel = newVel;
   }
 
   tryJump() {
@@ -177,6 +143,8 @@ export class Player extends MovableEntity {
   }
 
   update(delta: number) {
+    this.moveInDirections();
+
     this.onGround = false;
     if (this.fire.count > 0 && !this.fire.holding) this.fire.count--;
 

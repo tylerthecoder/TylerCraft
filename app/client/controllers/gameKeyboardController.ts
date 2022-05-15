@@ -14,12 +14,19 @@ export class MouseAndKeyController extends GameController {
   private keysPressed = new Set();
   private numOfUpdates = 0;
 
+  private currentMoveDirections = new Set<Direction>();
+  private prevMoveDirections = new Set<Direction>();
+
   private fullScreenButton = document.getElementById("fullScreenButton")!;
   private exitMenuButton = document.getElementById("exitMenuButton")!;
   private menuButton = document.getElementById("menuIcon")!;
   private gameMenu = document.getElementById("gameMenu")!;
   private eGameNameInput = document.getElementById("gameNameInput") as HTMLInputElement;
   private eSaveButton = document.getElementById("saveButton") as HTMLButtonElement;
+
+
+
+
 
   constructor(
     clientGame: ClientGame
@@ -30,12 +37,11 @@ export class MouseAndKeyController extends GameController {
 
 
     window.addEventListener("keydown", ({ key }) => {
-      this.keys.add(key.toLowerCase());
+      this.handleKeyDown(key)
     });
 
     window.addEventListener("keyup", ({ key }) => {
-      this.keys.delete(key.toLowerCase());
-      this.keysPressed.add(key.toLowerCase());
+      this.handleKeyUp(key)
     });
 
     window.addEventListener("mousedown", (e: MouseEvent) => {
@@ -129,6 +135,33 @@ export class MouseAndKeyController extends GameController {
     this.gameMenu.style.display = "block";
   }
 
+  handleKeyDown(key: string) {
+    this.keys.add(key.toLowerCase());
+    if (key === "w") {
+      this.currentMoveDirections.add(Direction.Forwards);
+    } else if (key === "s") {
+      this.currentMoveDirections.add(Direction.Backwards);
+    } else if (key === "a") {
+      this.currentMoveDirections.add(Direction.Left);
+    } else if (key === "d") {
+      this.currentMoveDirections.add(Direction.Right);
+    }
+  }
+
+  handleKeyUp(key: string) {
+    this.keys.delete(key.toLowerCase());
+    this.keysPressed.add(key.toLowerCase());
+    if (key === "w") {
+      this.currentMoveDirections.delete(Direction.Forwards);
+    } else if (key === "s") {
+      this.currentMoveDirections.delete(Direction.Backwards);
+    } else if (key === "a") {
+      this.currentMoveDirections.delete(Direction.Left);
+    } else if (key === "d") {
+      this.currentMoveDirections.delete(Direction.Right);
+    }
+  }
+
   update(_delta: number) {
     if (this.clientGame.isSpectating) {
       const spectator = this.clientGame.spectator;
@@ -139,22 +172,34 @@ export class MouseAndKeyController extends GameController {
       this.ifHasKeyThenAddMeta(spectator, " ", MetaAction.up);
       this.ifHasKeyThenAddMeta(spectator, "shift", MetaAction.down);
     } else {
-      const addMoveGameAction = (key: string, direction: Direction) => {
-        console.log(this.keysPressed);
-        if (this.keysPressed.has(key)) {
-          console.log("Has it")
-          this.game.handleAction(GameAction.PlayerMove, {
-            direction,
-            playerUid: this.clientGame.mainPlayer.uid,
-            playerRot: this.clientGame.mainPlayer.rot.data as IDim,
-          })
+      const player = this.clientGame.mainPlayer;
+
+
+      // check if previous directions is different than current directions
+      let areDifferent = false;
+      for (const direction of this.currentMoveDirections) {
+        if (!this.prevMoveDirections.has(direction)) {
+          areDifferent = true;
+          break;
         }
       }
-      const player = this.clientGame.mainPlayer;
-      addMoveGameAction("w", Direction.Forwards);
-      addMoveGameAction("s", Direction.Backwards);
-      addMoveGameAction("d", Direction.Right);
-      addMoveGameAction("a", Direction.Left);
+      for (const direction of this.prevMoveDirections) {
+        if (!this.currentMoveDirections.has(direction)) {
+          areDifferent = true;
+          break;
+        }
+      }
+
+      if (areDifferent) {
+        this.game.handleAction(GameAction.PlayerMove, {
+          directions: Array.from(this.currentMoveDirections.values()),
+          playerUid: this.clientGame.mainPlayer.uid,
+          playerRot: this.clientGame.mainPlayer.rot.data as IDim,
+        })
+
+        // Copy prev to current
+        this.prevMoveDirections = new Set(this.currentMoveDirections);
+      }
 
       player.fire.holding = this.keys.has("f");
 

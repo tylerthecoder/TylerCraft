@@ -196,6 +196,7 @@ export class World {
   }
 
   private checkSurroundingChunkForUpdate(chunk: Chunk, pos: Vector3D) {
+    console.log("POS", pos)
     Vector3D.edgeVectorsStripY.forEach(indexVec => {
       const checkCubePos = pos.add(indexVec);
       const otherChunk = this.getChunkFromWorldPoint(checkCubePos);

@@ -13,7 +13,7 @@ import { World } from "./world";
 import { isPointInsideOfCube } from "../entities/cube"
 
 export interface ILookingAtData {
-  newCubePos: Vector,
+  newCubePos: Vector3D,
   entity?: Entity,
   // The face number (0 - 5) that is being looked at
   face: number;
@@ -254,31 +254,17 @@ export class Chunk {
       return bestFace
     }, defaultBest)
 
-    // const newCubePosData = this.visibleFaces.reduce((bestFace, { cube, directionVector }) => {
-
-    // return bestFace;
-    // }, defaultBest)
-
     // this means we didn't find a block
     if (newCubePosData[0] === Infinity) {
       return false;
     }
 
     return {
-      newCubePos: new Vector(newCubePosData[1]),
+      newCubePos: new Vector3D(newCubePosData[1]),
       face: getOppositeCubeFace(faceVectorToFaceNumber(newCubePosData[2])),
       entity: newCubePosData[3],
       dist: newCubePosData[0],
     }
   }
-
-  // getBlockUpdateAction(): IAction {
-  //   return {
-  //     type: IActionType.blockUpdate,
-  //     blockUpdate: {
-  //       chunkId: this.uid,
-  //     }
-  //   }
-  // }
 
 }

@@ -42,6 +42,7 @@ export class Vector<T extends number[] = IDim> {
 
   set(index: number, value: number) {
     this.data[index] = value;
+    return this;
   }
 
   copy(): Vector<T> {

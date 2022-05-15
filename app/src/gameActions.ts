@@ -25,7 +25,7 @@ export interface GameActionData extends Record<GameAction, unknown> {
 	[GameAction.PlayerMove]: {
 		playerUid: string;
 		playerRot: IDim;
-		direction: Direction[];
+		directions: Direction[];
 	}
 	[GameAction.PlayerJump]: {
 		playerUid: string;
@@ -117,6 +117,8 @@ export class GameActionHandler {
 				extraBlockData,
 			);
 
+			console.log(newCube)
+
 			this.game.world.addBlock(newCube);
 			return;
 		}
@@ -139,11 +141,11 @@ export class GameActionHandler {
 		}
 
 		if (action.isType(GameAction.PlayerMove)) {
-			const { direction, playerRot, playerUid } = action.data;
+			const { directions, playerRot, playerUid } = action.data;
 			const player = this.game.entities.get<Player>(playerUid);
 			// TODO this might be unnecessary
 			player.rot = new Vector3D(playerRot);
-			player.moveInDirection(direction);
+			player.moveDirections = directions;
 		}
 	}
 
