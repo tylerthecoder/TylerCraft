@@ -13,7 +13,7 @@ export class Quest2Controller extends GameController {
 			return
 		}
 
-		const mainPlayer = this.game.mainPlayer;
+		const mainPlayer = this.clientGame.mainPlayer;
 
 		const viewerPose = currentXRFrame.getViewerPose(xrRefSpace);
 
@@ -43,7 +43,7 @@ export class Quest2Controller extends GameController {
 		const rightHandPose = currentXRFrame.getPose(rightController.targetRaySpace, xrRefSpace);
 
 		if (rightHandPose && viewerPose) {
-			this.game.mainPlayer.rightHandPosition = new Vector3D([
+			this.clientGame.mainPlayer.rightHandPosition = new Vector3D([
 				rightHandPose.transform.position.x,
 				rightHandPose.transform.position.y,
 				rightHandPose.transform.position.z
@@ -54,7 +54,7 @@ export class Quest2Controller extends GameController {
 		const leftHandPose = currentXRFrame.getPose(leftController.targetRaySpace, xrRefSpace);
 
 		if (leftHandPose && viewerPose) {
-			this.game.mainPlayer.leftHandPosition = new Vector3D([
+			this.clientGame.mainPlayer.leftHandPosition = new Vector3D([
 				leftHandPose.transform.position.x,
 				leftHandPose.transform.position.y,
 				leftHandPose.transform.position.z
@@ -87,9 +87,9 @@ export class Quest2Controller extends GameController {
 			}
 
 			if (gamepad.buttons[4].pressed) {
-				this.game.mainPlayer.metaActions.add(MetaAction.jump)
+				this.clientGame.mainPlayer.metaActions.add(MetaAction.jump)
 			} else {
-				this.game.mainPlayer.metaActions.delete(MetaAction.jump)
+				this.clientGame.mainPlayer.metaActions.delete(MetaAction.jump)
 			}
 
 		}

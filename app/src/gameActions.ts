@@ -1,74 +1,152 @@
 import { BLOCKS, ExtraBlockData } from "./blockdata";
 import { ICameraData } from "./camera";
+import { Cube, isPointInsideOfCube } from "./entities/cube";
+import { Player } from "./entities/player";
+import { Game } from "./game";
 import { IDim } from "./types";
-import { Direction } from "./utils/vector";
+import { Direction, Vector3D } from "./utils/vector";
 
-
-export enum GameActionType {
-	Jump,
-	PlaceBlock,
-	RemoveBlock,
-	Move,
-	Rotate,
-	SetPlayerPos,
-	Save,
-	ChangeName
+export enum GameAction {
+	PlayerJump = "jump",
+	PlaceBlock = "placeBlock",
+	RemoveBlock = "removeBlock",
+	PlayerMove = "move",
+	PlayerRotate = "rotate",
+	PlayerSetPos = "setPlayerPos",
+	Save = "save",
+	ChangeName = "changeName",
 }
 
-interface BaseAction {
-	type: GameActionType;
+export interface GameActionData extends Record<GameAction, unknown> {
+	[GameAction.PlayerRotate]: {
+		playerUid: string;
+		playerRot: IDim;
+	}
+	[GameAction.PlayerMove]: {
+		playerUid: string;
+		playerRot: IDim;
+		direction: Direction[];
+	}
+	[GameAction.PlayerJump]: {
+		playerUid: string;
+	},
+	[GameAction.PlayerSetPos]: {
+		playerUid: string;
+		pos: IDim;
+	},
+	[GameAction.PlaceBlock]: {
+		blockType: BLOCKS;
+		cameraData: ICameraData;
+	},
+	[GameAction.RemoveBlock]: {
+		cameraData: ICameraData;
+	}
+	[GameAction.ChangeName]: {
+		name: string;
+	}
+	[GameAction.Save]: undefined,
 }
 
-export interface IBasePlayerAction extends BaseAction {
-	playerUid: string;
+export class GameActionHolder<T extends GameAction> {
+	static create<T extends GameAction>(type: T, data: GameActionData[T]): GameActionHolder<T> {
+		return new GameActionHolder(type, data);
+	}
+
+	private constructor(
+		public type: T,
+		public data: GameActionData[T],
+	) { }
+
+
+	isType<U extends GameAction>(type: U): this is GameActionHolder<U> {
+		return (type as GameAction) === this.type;
+	}
 }
 
-export interface IPlaceBlockAction extends IBasePlayerAction {
-	type: GameActionType.PlaceBlock;
-	blockType: BLOCKS;
-	cameraData: ICameraData;
+export class GameActionHandler {
+	constructor(
+		private game: Game
+	) { }
+
+	private getPlayer(id: string) {
+		return this.game.entities.get<Player>(id);
+	}
+
+	handle(action: GameActionHolder<GameAction>) {
+		if (action.isType(GameAction.PlayerRotate)) {
+			const { playerRot, playerUid } = action.data;
+			const player = this.getPlayer(playerUid);
+			player.rot = new Vector3D(playerRot);
+			return;
+		}
+
+		if (action.isType(GameAction.PlayerJump)) {
+			const { playerUid } = action.data;
+			const player = this.getPlayer(playerUid);
+			player.tryJump();
+			return;
+		}
+
+		if (action.isType(GameAction.PlaceBlock)) {
+			console.log("Placing Block");
+			const { blockType, cameraData } = action.data;
+
+			const lookingData = this.game.world.lookingAt(cameraData);
+			if (!lookingData) return;
+			const cube = lookingData.entity as Cube;
+
+			// check to see if any entity is in block
+			for (const entity of this.game.entities.iterable()) {
+				if (isPointInsideOfCube(cube, entity.pos)) {
+					return;
+				}
+			}
+
+			let extraBlockData: ExtraBlockData | undefined = undefined;
+
+			if (blockType === BLOCKS.image) {
+				extraBlockData = {
+					galleryIndex: 0,
+					face: lookingData.face,
+				}
+			}
+
+			const newCube = new Cube(
+				blockType,
+				lookingData.newCubePos as Vector3D,
+				extraBlockData,
+			);
+
+			this.game.world.addBlock(newCube);
+			return;
+		}
+
+		if (action.isType(GameAction.RemoveBlock)) {
+			console.log("Removing Block");
+			const { cameraData } = action.data;
+			const lookingData = this.game.world.lookingAt(cameraData);
+			if (!lookingData) return;
+			const cube = lookingData.entity as Cube;
+			this.game.world.removeBlock(cube.pos);
+			return;
+		}
+
+		if (action.isType(GameAction.PlayerSetPos)) {
+			const { playerUid, pos } = action.data;
+			const player = this.game.entities.get<Player>(playerUid);
+			player.pos = new Vector3D(pos);
+			return;
+		}
+
+		if (action.isType(GameAction.PlayerMove)) {
+			const { direction, playerRot, playerUid } = action.data;
+			const player = this.game.entities.get<Player>(playerUid);
+			// TODO this might be unnecessary
+			player.rot = new Vector3D(playerRot);
+			player.moveInDirection(direction);
+		}
+	}
+
 }
 
-export interface IRemoveBlockAction extends IBasePlayerAction {
-	type: GameActionType.RemoveBlock;
-	cameraData: ICameraData;
-}
 
-export interface IPlayerJumpAction extends IBasePlayerAction {
-	type: GameActionType.Jump;
-}
-
-export interface IPlayerMoveAction extends IBasePlayerAction {
-	type: GameActionType.Move;
-	playerRot: IDim;
-	direction: Direction;
-}
-
-export interface IPlayerSetPosAction extends IBasePlayerAction {
-	type: GameActionType.SetPlayerPos;
-	pos: IDim;
-}
-
-export interface IPlayerRotAction extends IBasePlayerAction {
-	type: GameActionType.Rotate;
-	playerRot: IDim;
-}
-
-export interface IGameActionSave extends BaseAction {
-	type: GameActionType.Save;
-}
-
-export interface IChangeNameGameAction extends BaseAction {
-	type: GameActionType.ChangeName;
-	name: string
-}
-
-export type GameAction =
-	IPlaceBlockAction |
-	IRemoveBlockAction |
-	IPlayerJumpAction |
-	IPlayerMoveAction |
-	IPlayerRotAction |
-	IGameActionSave |
-	IChangeNameGameAction |
-	IPlayerSetPosAction;

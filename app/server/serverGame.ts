@@ -26,7 +26,7 @@ export class ServerGame extends AbstractScript {
     // NO-OP
   }
 
-  onActions(_action: GameAction): void {
+  onAction(_action: GameAction): void {
     // throw new Error("Method not implemented.");
   }
 

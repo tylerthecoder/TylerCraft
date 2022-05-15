@@ -1,15 +1,12 @@
 import { Player } from "./entities/player";
 import { ISerializedWorld, World } from "./world/world";
-import { Cube, isPointInsideOfCube } from "./entities/cube";
-import { Vector3D } from "./utils/vector";
 import { IWorldData, WorldModel } from "./types";
 import { CONFIG, IConfig, setConfig } from "./config";
 import { EntityHolder, ISerializedEntities } from "./entities/entityHolder";
 import Random from "./utils/random";
-import { GameAction, GameActionType } from "./gameActions";
+import { GameAction, GameActionData, GameActionHandler, GameActionHolder } from "./gameActions";
 import { GameStateDiff, IGameDiff } from "./gameStateDiff";
 import { AbstractScript } from "./scripts/AbstractScript";
-import { BLOCKS, ExtraBlockData } from "./blockdata";
 
 export interface ISerializedGame {
   config: IConfig;
@@ -37,6 +34,7 @@ export class Game {
   public stateDiff: GameStateDiff;
   public gameScript: AbstractScript;
 
+  private gameActionHandler: GameActionHandler;
   private worldModel: WorldModel;
 
   private previousTime = Date.now();
@@ -51,10 +49,10 @@ export class Game {
     worldData: IWorldData,
   ) {
     this.worldModel = worldModel;
-    this.gameScript = new gameScript(this);
     Random.setSeed(worldData.config.seed);
 
     this.stateDiff = new GameStateDiff(this);
+    this.gameActionHandler = new GameActionHandler(this);
 
     this.multiPlayer = Boolean(worldData.multiplayer);
 
@@ -90,6 +88,10 @@ export class Game {
       });
     }
 
+    // Generate this last so the game script has access to all the Game's data
+    this.gameScript = new gameScript(this);
+
+    this.load();
   }
 
 
@@ -97,14 +99,14 @@ export class Game {
     await this.world.load();
     console.log("World Loaded");
 
-    await this.gameScript.load();
+    await this.gameScript.init();
 
     // Setup timer
     this.previousTime = Date.now();
     this.update();
   }
 
-  serialize(): ISerializedGame {
+  public serialize(): ISerializedGame {
     return {
       config: CONFIG,
       entities: this.entities.serialize(),
@@ -118,7 +120,7 @@ export class Game {
   /**
    * Called 20 times a second
    */
-  update() {
+  public update() {
     const now = Date.now();
     const delta = now - this.previousTime;
 
@@ -136,85 +138,13 @@ export class Game {
 
 
   /** This happens on a fast loop. Mark things that change as dirty */
-  public handleAction(action: GameAction) {
-    // console.log("Handling Action", action);
 
-    this.gameScript.onActions(action);
+  public handleAction<T extends GameAction, U extends GameActionData[T]>(action: T, actionData: U) {
+    console.log("Handling Action", action);
 
-    switch (action.type) {
-      case GameActionType.Rotate: {
-        const { playerRot, playerUid } = action;
-        const player = this.entities.get<Player>(playerUid);
-        player.rot = new Vector3D(playerRot);
-        return;
-      }
-
-      case GameActionType.Jump: {
-        const { playerUid } = action;
-        const player = this.entities.get<Player>(playerUid);
-        player.tryJump();
-        return;
-      }
-
-      case GameActionType.PlaceBlock: {
-        console.log("Placing Block");
-        const { blockType, cameraData } = action;
-
-        const lookingData = this.world.lookingAt(cameraData);
-        if (!lookingData) return;
-        const cube = lookingData.entity as Cube;
-
-        // check to see if any entity is in block
-        for (const entity of this.entities.iterable()) {
-          if (isPointInsideOfCube(cube, entity.pos)) {
-            return;
-          }
-        }
-
-        let extraBlockData: ExtraBlockData | undefined = undefined;
-
-        if (blockType === BLOCKS.image) {
-          extraBlockData = {
-            galleryIndex: 0,
-            face: lookingData.face,
-          }
-        }
-
-        const newCube = new Cube(
-          blockType,
-          lookingData.newCubePos as Vector3D,
-          extraBlockData,
-        );
-
-        this.world.addBlock(newCube);
-        return;
-      }
-
-      case GameActionType.RemoveBlock: {
-        console.log("Removing Block");
-        const { cameraData } = action;
-        const lookingData = this.world.lookingAt(cameraData);
-        if (!lookingData) return;
-        const cube = lookingData.entity as Cube;
-        this.world.removeBlock(cube.pos);
-        return;
-      }
-
-      case GameActionType.SetPlayerPos: {
-        const { playerUid, pos } = action;
-        const player = this.entities.get<Player>(playerUid);
-        player.pos = new Vector3D(pos);
-        return;
-      }
-
-      case GameActionType.Move: {
-        const { direction, playerRot, playerUid } = action;
-        const player = this.entities.get<Player>(playerUid);
-        // TODO this might be unnecessary
-        player.rot = new Vector3D(playerRot);
-        player.moveInDirection(direction);
-      }
-    }
+    this.gameScript.onAction(action);
+    const actionHolder = GameActionHolder.create(action, actionData)
+    this.gameActionHandler.handle(actionHolder);
   }
 
 

@@ -8,9 +8,15 @@ export type Controlled = Entity | Camera | ClientGame | Player;
 
 
 export abstract class GameController {
+  protected game: Game;
+  protected clientGame: ClientGame;
+
   constructor(
-    protected game: ClientGame,
-  ) { }
+    clientGame: ClientGame,
+  ) {
+    this.clientGame = clientGame;
+    this.game = clientGame.game;
+  }
   abstract update(delta: number): void;
 }
 

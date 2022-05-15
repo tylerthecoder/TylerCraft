@@ -1,3 +1,7 @@
+/** Entry point for the browser app
+ * Controls string UI and creating the game
+ */
+
 import { Game, IGameMetadata } from "../src/game";
 import { ClientDb } from "./worldModels/clientdb";
 import { NetworkWorldModel } from "./worldModels/serverSaver";
@@ -7,9 +11,10 @@ import { CONFIG } from "../src/config";
 import { camelCaseToNormalCase } from "../src/utils";
 import { WorldModel } from "../src/types";
 
-interface IExtendedWindow extends Window {
+export interface IExtendedWindow extends Window {
   clientDb?: ClientDb;
   game?: Game;
+  clientGame?: ClientGame;
 }
 
 export const IS_MOBILE = /Mobi/.test(window.navigator.userAgent);

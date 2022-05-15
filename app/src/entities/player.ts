@@ -115,9 +115,14 @@ export class Player extends MovableEntity {
   // to do this game actions should be combined somehow.
   // Or the controller should combine the actions and send an array
   // of directions
-  moveInDirection(direction: Direction) {
+  moveInDirections(directions: Direction[]) {
     const baseSpeed = CONFIG.player.speed;
-    const getVel = () => {
+
+    const addXZ = (vec: Vector3D) {
+      this.vel
+    }
+
+    const moveDirection = (direction: Direction) => {
       switch (direction) {
         case Direction.Forwards:
           return new Vector3D([
@@ -149,6 +154,9 @@ export class Player extends MovableEntity {
           }
       }
     }
+
+
+
     const vel = getVel();
     this.vel = vel;
   }

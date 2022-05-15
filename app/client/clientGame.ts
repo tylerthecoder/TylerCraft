@@ -8,12 +8,12 @@ import { BLOCKS } from "../src/blockdata";
 import { ControllerHolder } from "./controllers/controllerHolder";
 import { Spectator } from "../src/entities/spectator";
 import { SocketGameHandler } from "./controllers/gameSocketController";
-import { getMyUid, SocketInterface } from "./app";
+import { getMyUid, IExtendedWindow, SocketInterface } from "./app";
 import { Player } from "../src/entities/player";
 import { XrCamera } from "./cameras/xrCamera";
 import { AbstractScript } from "@tylercraft/src/scripts/AbstractScript"
-import { GameAction, GameActionType } from "@tylercraft/src/gameActions";
 import { GameStateDiff } from "@tylercraft/src/gameStateDiff";
+import { GameAction } from "@tylercraft/src/gameActions";
 
 
 // This class should only read game and not write.
@@ -35,9 +35,17 @@ export class ClientGame extends AbstractScript {
   ) {
     super(game);
 
+    (window as IExtendedWindow).clientGame = this;
+
+    console.log("ClientGame created", this);
+
     this.controllers = new ControllerHolder();
 
     this.worldRenderer = new WorldRenderer(this.game.world, this);
+
+    // Temp
+    this.worldRenderer.shouldRenderMainPlayer = false;
+
     this.mainPlayer = this.game.entities.createOrGetPlayer(true, getMyUid());
 
     console.log("My UID", getMyUid());
@@ -46,8 +54,6 @@ export class ClientGame extends AbstractScript {
     for (const entity of this.game.entities.iterable()) {
       this.worldRenderer.addEntity(entity);
     }
-
-    this.load();
   }
 
   get frameRate() {
@@ -58,7 +64,7 @@ export class ClientGame extends AbstractScript {
     return fps;
   }
 
-  async load() {
+  async init() {
     await canvas.loadProgram();
     this.controllers.init(this);
 
@@ -108,7 +114,7 @@ export class ClientGame extends AbstractScript {
 
   // this will be called by the super class when actions are received
   // Don't need to filter actions because they all originate from this class
-  onActions(action: GameAction) {
+  onAction(action: GameAction) {
     if (this.game.multiPlayer) {
       SocketInterface.send({
         type: ISocketMessageType.actions,
@@ -118,18 +124,14 @@ export class ClientGame extends AbstractScript {
   }
 
   placeBlock() {
-    this.addGameAction({
-      type: GameActionType.PlaceBlock,
+    this.game.handleAction(GameAction.PlaceBlock, {
       blockType: this.selectedBlock,
-      // blockData: extraBlockData,
-      playerUid: this.mainPlayer.uid,
       cameraData: this.camera.getCameraData(),
     });
   }
 
   removeBlock() {
-    this.addGameAction({
-      type: GameActionType.RemoveBlock,
+    this.game.handleAction(GameAction.RemoveBlock, {
       cameraData: this.camera.getCameraData(),
       playerUid: this.mainPlayer.uid,
     })
