@@ -1,4 +1,3 @@
-import { IAction } from "../types";
 import { Game } from "../game";
 import { deserializeEntity, getEntityType } from "../serializer";
 import { World } from "../world/world";
@@ -30,15 +29,6 @@ export class EntityHolder {
     }
   }
 
-  getActions() {
-    const actions: IAction[] = [];
-    for (const entity of this.entities.values()) {
-      const entActions = entity.getActions();
-      actions.push(...entActions);
-    }
-    return actions;
-  }
-
   update(world: World, delta: number) {
     const entityArray = Array.from(this.entities.values());
     entityArray.forEach(entity => entity.update(delta));
@@ -54,7 +44,7 @@ export class EntityHolder {
   add(entity: Entity) {
     if (!entity.uid) throw new Error("Must have uid");
     this.entities.set(entity.uid, entity);
-    this.game.onNewEntity(entity);
+    this.game.stateDiff.addEntity(entity.uid);
   }
 
   createOrGetPlayer(real: boolean, uid: string): Player {
@@ -63,7 +53,7 @@ export class EntityHolder {
     if (player) {
       player.isReal = real;
       // send an event to the game
-      this.game.onNewEntity(player);
+      this.game.stateDiff.addEntity(player.uid);
       return player;
     }
 

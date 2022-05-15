@@ -101,6 +101,7 @@ export class ChunkRenderer extends Renderer {
         }
         case BlockType.flat: {
           const extraBlockData = this.chunk.blocks.getBlockData(cube.pos);
+          if (!extraBlockData) return;
           console.log(extraBlockData, cube.pos);
           const imageRender = new ImageRenderer(
             cube.pos,

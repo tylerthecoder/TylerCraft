@@ -1,22 +1,26 @@
 import * as wSocket from "ws";
 import { CONFIG } from "../src/config";
 import { Player } from "../src/entities/player";
+import { Game } from "../src/game";
+import { GameStateDiff } from "../src/gameStateDiff";
 import { ISocketMessage, ISocketMessageType } from "../src/types";
-import { ServerGame } from "./serverGame";
-import SocketServer from "./socket";
+import { SocketInterface } from "./app";
 
 export default class Players {
   players: Map<wSocket, Player> = new Map();
 
   constructor(
-    public game: ServerGame,
-    private SocketInterface: SocketServer,
+    public game: Game,
   ) { }
+
+  getSockets(): wSocket[] {
+    return Array.from(this.players.keys());
+  }
 
   sendMessageToAll(message: ISocketMessage, exclude?: wSocket) {
     for (const socket of this.players.keys()) {
       if (exclude && socket === exclude) continue;
-      this.SocketInterface.send(socket, message);
+      SocketInterface.send(socket, message);
     }
   }
 
@@ -37,17 +41,18 @@ export default class Players {
         name: this.game.name,
       }
     };
-    this.SocketInterface.send(ws, welcomeMessage);
+    SocketInterface.send(ws, welcomeMessage);
 
     // add them to the SYSTEM
     this.players.set(ws, player);
 
+    const gameDiff = new GameStateDiff(this.game);
+    gameDiff.addEntity(uid);
+
     // tell Everyone about the new guy
     const newPlayerMessage: ISocketMessage = {
-      type: ISocketMessageType.newPlayer,
-      newPlayerPayload: {
-        uid
-      }
+      type: ISocketMessageType.gameDiff,
+      gameDiffPayload: gameDiff.get(),
     };
     this.sendMessageToAll(newPlayerMessage, ws);
 
@@ -64,14 +69,15 @@ export default class Players {
       return;
     }
 
+    const gameDiff = new GameStateDiff(this.game);
+    gameDiff.removeEntity(player.uid);
+
     // tell everyone about this tragedy
-    const playerLeaveMessage: ISocketMessage = {
-      type: ISocketMessageType.playerLeave,
-      playerLeavePayload: {
-        uid: player.uid
-      }
+    const newPlayerMessage: ISocketMessage = {
+      type: ISocketMessageType.gameDiff,
+      gameDiffPayload: gameDiff.get(),
     };
-    this.sendMessageToAll(playerLeaveMessage, ws);
+    this.sendMessageToAll(newPlayerMessage, ws);
 
     // FINISH THEM!
     this.game.removeEntity(player.uid);

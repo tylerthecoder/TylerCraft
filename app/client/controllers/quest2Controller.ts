@@ -2,18 +2,10 @@ import { MetaAction } from "@tylercraft/src/entities/entity";
 import { Vector3D } from "@tylercraft/src/utils/vector";
 import { quat } from "gl-matrix";
 import { canvas } from "../canvas";
-import { ClientGame } from "../clientGame";
-import { Controller } from "./controller";
+import { GameController } from "./controller";
 
 
-
-export class Quest2Controller extends Controller {
-	constructor(public controlled: ClientGame) {
-		super();
-	}
-
-	public data: any;
-
+export class Quest2Controller extends GameController {
 	update(_delta: number) {
 		const { webXrSession, currentXRFrame, xrRefSpace } = canvas;
 
@@ -21,7 +13,7 @@ export class Quest2Controller extends Controller {
 			return
 		}
 
-		const mainPlayer = this.controlled.mainPlayer;
+		const mainPlayer = this.game.mainPlayer;
 
 		const viewerPose = currentXRFrame.getViewerPose(xrRefSpace);
 
@@ -51,7 +43,7 @@ export class Quest2Controller extends Controller {
 		const rightHandPose = currentXRFrame.getPose(rightController.targetRaySpace, xrRefSpace);
 
 		if (rightHandPose && viewerPose) {
-			this.controlled.mainPlayer.rightHandPosition = new Vector3D([
+			this.game.mainPlayer.rightHandPosition = new Vector3D([
 				rightHandPose.transform.position.x,
 				rightHandPose.transform.position.y,
 				rightHandPose.transform.position.z
@@ -62,14 +54,12 @@ export class Quest2Controller extends Controller {
 		const leftHandPose = currentXRFrame.getPose(leftController.targetRaySpace, xrRefSpace);
 
 		if (leftHandPose && viewerPose) {
-			this.controlled.mainPlayer.leftHandPosition = new Vector3D([
+			this.game.mainPlayer.leftHandPosition = new Vector3D([
 				leftHandPose.transform.position.x,
 				leftHandPose.transform.position.y,
 				leftHandPose.transform.position.z
 			]);
 		}
-
-		this.data = webXrSession.inputSources;
 
 		for (const device of webXrSession.inputSources) {
 			const { gamepad } = device;
@@ -97,9 +87,9 @@ export class Quest2Controller extends Controller {
 			}
 
 			if (gamepad.buttons[4].pressed) {
-				this.controlled.mainPlayer.metaActions.add(MetaAction.jump)
+				this.game.mainPlayer.metaActions.add(MetaAction.jump)
 			} else {
-				this.controlled.mainPlayer.metaActions.delete(MetaAction.jump)
+				this.game.mainPlayer.metaActions.delete(MetaAction.jump)
 			}
 
 		}

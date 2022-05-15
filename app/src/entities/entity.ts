@@ -1,4 +1,4 @@
-import { IDim, IAction } from "../types";
+import { IDim } from "../types";
 import { Vector3D } from "../utils/vector";
 
 export enum RenderType {
@@ -118,9 +118,5 @@ export abstract class Entity {
       side: i,
       dir: dir as 1 | 0
     };
-  }
-
-  getActions(): IAction[] {
-    return [];
   }
 }

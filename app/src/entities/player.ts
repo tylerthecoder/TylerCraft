@@ -1,12 +1,10 @@
 import { Entity, FaceLocater, IEntityType, ISerializedEntity, MetaAction } from "./entity";
 import { arrayAdd, arrayScalarMul } from "../utils";
-import { IDim, IAction } from "../types";
-import { Vector, Vector2D, Vector3D } from "../utils/vector";
+import { IDim } from "../types";
 import { Projectile } from "./projectile";
 import { MovableEntity } from "./moveableEntity";
 import { CONFIG } from "../config";
-import { BLOCKS, ExtraBlockData } from "../blockdata";
-
+import { Direction, Vector3D } from "../utils/vector";
 
 export interface ISerializedPlayer extends ISerializedEntity {
   vel: IDim;
@@ -33,8 +31,6 @@ export class Player extends MovableEntity {
     current: 100,
     max: 100,
   }
-
-  actions: IAction[] = [];
 
   fire = {
     count: 0,
@@ -75,44 +71,86 @@ export class Player extends MovableEntity {
     return player;
   }
 
-  getActions(): IAction[] {
-    if (!this.isReal) return [];
-    const actions = this.actions;
+  // getActions(): IAction[] {
+  //   if (!this.isReal) return [];
+  //   const actions = this.actions;
 
-    const addMoveAction = (vel: Vector3D) => {
-      actions.push({
-        type: .setEntVel,
-        payload: {
-          vel: vel.data as IDim,
-          uid: this.uid,
-        }
-      });
-    }
+  //   const addMoveAction = (vel: Vector3D) => {
+  //     actions.push({
+  //       type: .setEntVel,
+  //       payload: {
+  //         vel: vel.data as IDim,
+  //         uid: this.uid,
+  //       }
+  //     });
+  //   }
 
-    let totVel = this.getWasdVel();
+  //   let totVel = this.getWasdVel();
 
-    if (this.creative) {
-      totVel = totVel.add(this.getVerticalVel());
-      if (!totVel.equals(this.vel)) {
-        addMoveAction(totVel);
+  //   if (this.creative) {
+  //     totVel = totVel.add(this.getVerticalVel());
+  //     if (!totVel.equals(this.vel)) {
+  //       addMoveAction(totVel);
+  //     }
+  //   } else {
+  //     if (this.metaActions.has(MetaAction.jump) && this.onGround) {
+  //       totVel.set(1, CONFIG.player.jumpSpeed);
+  //       addMoveAction(totVel);
+  //     } else {
+  //       totVel.set(1, this.vel.get(1));
+  //       if (!totVel.equals(this.vel)) {
+  //         addMoveAction(totVel);
+  //       }
+  //     }
+  //   }
+
+  //   this.actions = [];
+
+  //   // this.metaActions.clear();
+
+  //   return actions;
+  // }
+
+  // TODO allow moving in multiple directions
+  // to do this game actions should be combined somehow.
+  // Or the controller should combine the actions and send an array
+  // of directions
+  moveInDirection(direction: Direction) {
+    const baseSpeed = CONFIG.player.speed;
+    const getVel = () => {
+      switch (direction) {
+        case Direction.Forwards:
+          return new Vector3D([
+            -baseSpeed, this.rot.get(1), Math.PI / 2,
+          ]).toCartesianCoords();
+        case Direction.Backwards:
+          return new Vector3D([
+            baseSpeed, this.rot.get(1), Math.PI / 2,
+          ]).toCartesianCoords();
+        case Direction.Left:
+          return new Vector3D([
+            baseSpeed, this.rot.get(1) + Math.PI / 2, Math.PI / 2
+          ]).toCartesianCoords();
+        case Direction.Right:
+          return new Vector3D([
+            baseSpeed, this.rot.get(1) - Math.PI / 2, Math.PI / 2
+          ]).toCartesianCoords();
+        case Direction.Up:
+          if (this.creative) {
+            return new Vector3D([0, baseSpeed, 0]);
+          } else {
+            return Vector3D.zero;
+          }
+        case Direction.Down:
+          if (this.creative) {
+            return new Vector3D([0, -baseSpeed, 0]);
+          } else {
+            return Vector3D.zero;
+          }
       }
-    } else {
-      if (this.metaActions.has(MetaAction.jump) && this.onGround) {
-        totVel.set(1, CONFIG.player.jumpSpeed);
-        addMoveAction(totVel);
-      } else {
-        totVel.set(1, this.vel.get(1));
-        if (!totVel.equals(this.vel)) {
-          addMoveAction(totVel);
-        }
-      }
     }
-
-    this.actions = [];
-
-    // this.metaActions.clear();
-
-    return actions;
+    const vel = getVel();
+    this.vel = vel;
   }
 
   tryJump() {
@@ -160,12 +198,12 @@ export class Player extends MovableEntity {
     const pos = arrayAdd(arrayAdd(this.pos.data, arrayScalarMul(vel, 4)), [.5, 2, .5]) as IDim;
     const ball = new Projectile(new Vector3D(pos), new Vector3D(vel));
 
-    this.actions.push({
-      type: IActionType.addEntity,
-      payload: {
-        ent: ball.serialize(IEntityType.Projectile),
-      }
-    });
+    // this.actions.push({
+    //   type: IActionType.addEntity,
+    //   payload: {
+    //     ent: ball.serialize(IEntityType.Projectile),
+    //   }
+    // });
 
     this.fire.count = this.fire.coolDown;
   }

@@ -2,10 +2,10 @@ import { Cube } from "../entities/cube";
 import { Chunk, ILookingAtData, ISerializedChunk } from "./chunk";
 import { Entity } from "../entities/entity";
 import { Game } from "../game";
-import { IActionType, IChunkReader } from "../types";
+import { IChunkReader } from "../types";
 import { CONFIG } from "../config";
 import { Vector3D, Vector2D } from "../utils/vector";
-import { Camera } from "../camera";
+import { ICameraData } from "../camera";
 import { Spectator } from "../entities/spectator";
 
 export interface ISerializedWorld {
@@ -35,7 +35,7 @@ export class World {
       }
       this.chunks = chunksMap;
 
-      this.chunks.forEach(chunk => this.updateChunk(chunk.chunkPos));
+      // this.chunks.forEach(chunk => this.updateChunk(chunk.chunkPos));
 
     } else {
       // this.terrainGenerator = new TerrainGenerator(this.hasChunk.bind(this), this.getChunkFromPos.bind(this));
@@ -69,6 +69,13 @@ export class World {
     ]);
   }
 
+  // TODO make this a lookup instead of an array search
+  getChunkById(chunkId: string) {
+    for (const chunk of this.getChunks()) {
+      if (chunk.uid === chunkId) return chunk;
+    }
+    throw new Error("Chunk with id " + chunkId + " not found");
+  }
 
   getChunkFromPos(chunkPos: Vector2D, config?: { loadIfNotFound?: boolean }) {
     const chunk = this.chunks.get(chunkPos.toIndex());
@@ -120,17 +127,17 @@ export class World {
     return null;
   }
 
-  updateChunk(chunkPos: Vector2D) {
-    const chunkToUpdate = this.chunks.get(chunkPos.add(new Vector2D([0, 1])).toIndex());
-    if (chunkToUpdate) {
-      this.game.addAction({
-        type: IActionType.blockUpdate,
-        blockUpdate: {
-          chunkId: chunkToUpdate.chunkPos.toIndex(),
-        }
-      });
-    }
-  }
+  // updateChunk(chunkPos: Vector2D) {
+  //   const chunkToUpdate = this.chunks.get(chunkPos.add(new Vector2D([0, 1])).toIndex());
+  //   if (chunkToUpdate) {
+  //     this.game.addAction({
+  //       type: IActionType.blockUpdate,
+  //       blockUpdate: {
+  //         chunkId: chunkToUpdate.chunkPos.toIndex(),
+  //       }
+  //     });
+  //   }
+  // }
 
   // private generateChunk(chunkPos: Vector2D) {
   //   console.log("Generating chunk", chunkPos, this.game.gameId);
@@ -195,7 +202,8 @@ export class World {
 
       // if this is a different chunk
       if (otherChunk && chunk !== otherChunk) {
-        this.game.addAction(otherChunk.getBlockUpdateAction());
+        this.game.stateDiff.updateChunk(chunk.uid);
+        // TODO recalculate faces
       }
     });
   }
@@ -205,25 +213,27 @@ export class World {
     const chunk = this.getChunkFromWorldPoint(cube.pos);
     if (!chunk) return;
     chunk.blocks.add(cube);
-    this.game.addAction(chunk.getBlockUpdateAction());
+    // TODO recalculate faces
+    this.game.stateDiff.updateChunk(chunk.uid);
     this.checkSurroundingChunkForUpdate(chunk, cube.pos);
   }
 
   removeBlock(cubePos: Vector3D) {
     const chunk = this.getChunkFromWorldPoint(cubePos);
     if (!chunk) return;
+    // TODO recalculate faces
     this.checkSurroundingChunkForUpdate(chunk, cubePos);
     chunk.blocks.remove(cubePos)
-    this.game.addAction(chunk.getBlockUpdateAction());
+    this.game.stateDiff.updateChunk(chunk.uid);
   }
 
-  lookingAt(camera: Camera): ILookingAtData | null {
+  lookingAt(camera: ICameraData): ILookingAtData | null {
     let closestDist = Infinity;
     let closestCube: ILookingAtData | null = null;
 
     // loop over all chunks and then check if they are reachable
     for (const chunk of this.chunks.values()) {
-      const isReachable = chunk.circleIntersect(camera.pos, CONFIG.player.reach)
+      const isReachable = chunk.circleIntersect(new Vector3D(camera.pos), CONFIG.player.reach)
       if (!isReachable) continue;
 
       const cubeData = chunk.lookingAt(camera);

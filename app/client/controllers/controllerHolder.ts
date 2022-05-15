@@ -1,7 +1,7 @@
 import { IS_MOBILE } from "../app";
 import { canvas } from "../canvas";
 import { ClientGame } from "../clientGame";
-import { Controller, Controlled } from "./controller";
+import { Controller, Controlled, GameController } from "./controller";
 import { MouseAndKeyController } from "./gameKeyboardController";
 import { MobileController } from "./mobileController";
 import { Quest2Controller } from "./quest2Controller";
@@ -9,6 +9,8 @@ import { Quest2Controller } from "./quest2Controller";
 
 export class ControllerHolder {
   controllers: Controller[] = [];
+
+  private gameController: GameController;
 
   /** Must be initialized after canvas */
   init(clientGame: ClientGame) {
@@ -24,8 +26,7 @@ export class ControllerHolder {
     }
 
     const gameControllerClass = getGameControllerClass();
-    const gameController = new gameControllerClass(clientGame);
-    this.add(gameController);
+    this.gameController = new gameControllerClass(clientGame);
   }
 
   add(controller: Controller) {
@@ -33,12 +34,11 @@ export class ControllerHolder {
   }
 
   getGameController() {
-    return this.controllers.filter(controller => {
-      return controller.controlled instanceof ClientGame;
-    })[0];
+    return this.gameController;
   }
 
   update(delta: number) {
+    this.gameController.update(delta);
     for (const controller of this.controllers) {
       controller.update(delta);
     }

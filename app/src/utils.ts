@@ -122,3 +122,28 @@ export function arrayCross(arr1: IDim, arr2: IDim): IDim {
 export function getRandEle<T>(arr: Array<T>): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
+
+
+
+export class MapArray<T, S> {
+  private map: Map<T, S[]> = new Map();
+
+  public get(key: T) {
+    return this.map.get(key);
+  }
+
+  public keys() {
+    return this.map.keys();
+  }
+
+  public append(key: T, value: S) {
+    const currentValue = this.map.get(key) ?? [];
+    const newValue = [...currentValue, value];
+    this.map.set(key, newValue);
+  }
+
+  public entries() {
+    return this.map.entries();
+  }
+
+}

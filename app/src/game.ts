@@ -1,16 +1,15 @@
 import { Player } from "./entities/player";
 import { ISerializedWorld, World } from "./world/world";
-import { Entity } from "./entities/entity";
-import { Cube } from "./entities/cube";
+import { Cube, isPointInsideOfCube } from "./entities/cube";
 import { Vector3D } from "./utils/vector";
-import { MovableEntity } from "./entities/moveableEntity";
-import { ISocketMessage, IWorldData, WorldModel } from "./types";
+import { IWorldData, WorldModel } from "./types";
 import { CONFIG, IConfig, setConfig } from "./config";
 import { EntityHolder, ISerializedEntities } from "./entities/entityHolder";
 import Random from "./utils/random";
 import { GameAction, GameActionType } from "./gameActions";
 import { GameStateDiff, IGameDiff } from "./gameStateDiff";
 import { AbstractScript } from "./scripts/AbstractScript";
+import { BLOCKS, ExtraBlockData } from "./blockdata";
 
 export interface ISerializedGame {
   config: IConfig;
@@ -32,22 +31,27 @@ export interface IGameMetadata {
 export class Game {
   public gameId: string;
   public name: string;
-  // protected actions: IAction[] = [];
   public entities: EntityHolder;
   public world: World;
-  multiPlayer: boolean;
+  public multiPlayer: boolean;
+  public stateDiff: GameStateDiff;
+  public gameScript: AbstractScript;
 
-  private stateDiff: GameStateDiff;
+  private worldModel: WorldModel;
+
+  private previousTime = Date.now();
 
   constructor(
     /**
       The main script to control the game
       Usually will be the ClientGame
     */
-    private gameScript: AbstractScript,
-    private worldModel: WorldModel,
+    gameScript: { new(game: Game): AbstractScript },
+    worldModel: WorldModel,
     worldData: IWorldData,
   ) {
+    this.worldModel = worldModel;
+    this.gameScript = new gameScript(this);
     Random.setSeed(worldData.config.seed);
 
     this.stateDiff = new GameStateDiff(this);
@@ -92,6 +96,12 @@ export class Game {
   async load() {
     await this.world.load();
     console.log("World Loaded");
+
+    await this.gameScript.load();
+
+    // Setup timer
+    this.previousTime = Date.now();
+    this.update();
   }
 
   serialize(): ISerializedGame {
@@ -105,13 +115,23 @@ export class Game {
   }
 
 
-  update(delta: number) {
+  /**
+   * Called 20 times a second
+   */
+  update() {
+    const now = Date.now();
+    const delta = now - this.previousTime;
+
     this.gameScript.update(delta, this.stateDiff);
 
     // TODO keep track of if an entity modifies a chunk and return it here
     this.entities.update(this.world, delta);
 
     this.stateDiff.clear();
+
+    this.previousTime = now;
+
+    setTimeout(this.update.bind(this), 1000 / 20);
   }
 
 
@@ -119,21 +139,9 @@ export class Game {
   public handleAction(action: GameAction) {
     // console.log("Handling Action", action);
 
-    switch (action.type) {
-      // case GameActionType.addEntity: {
-      //   const { ent } = action.payload;
-      //   const entity = deserializeEntity(ent);
-      //   this.entities.add(entity);
-      //   return;
-      // }
+    this.gameScript.onActions(action);
 
-      // case IActionType.removeEntity: {
-      //   const payload = action.payload;
-      //   const entity = findEntity(payload.uid);
-      //   if (!entity) return;
-      //   this.removeEntity(entity.uid);
-      //   return;
-      // }
+    switch (action.type) {
       case GameActionType.Rotate: {
         const { playerRot, playerUid } = action;
         const player = this.entities.get<Player>(playerUid);
@@ -149,78 +157,70 @@ export class Game {
       }
 
       case GameActionType.PlaceBlock: {
-        const payload = action.payload;
-        console.log("Placing Block", payload);
-        const newCube = new Cube(payload.blockType, new Vector3D(payload.blockPos), payload.blockData);
+        console.log("Placing Block");
+        const { blockType, cameraData } = action;
+
+        const lookingData = this.world.lookingAt(cameraData);
+        if (!lookingData) return;
+        const cube = lookingData.entity as Cube;
+
+        // check to see if any entity is in block
+        for (const entity of this.entities.iterable()) {
+          if (isPointInsideOfCube(cube, entity.pos)) {
+            return;
+          }
+        }
+
+        let extraBlockData: ExtraBlockData | undefined = undefined;
+
+        if (blockType === BLOCKS.image) {
+          extraBlockData = {
+            galleryIndex: 0,
+            face: lookingData.face,
+          }
+        }
+
+        const newCube = new Cube(
+          blockType,
+          lookingData.newCubePos as Vector3D,
+          extraBlockData,
+        );
+
         this.world.addBlock(newCube);
         return;
       }
 
-      case IActionType.removeBlock: {
-        const payload = action.payload;
-        this.world.removeBlock(new Vector3D(payload.blockPos));
-        break;
+      case GameActionType.RemoveBlock: {
+        console.log("Removing Block");
+        const { cameraData } = action;
+        const lookingData = this.world.lookingAt(cameraData);
+        if (!lookingData) return;
+        const cube = lookingData.entity as Cube;
+        this.world.removeBlock(cube.pos);
+        return;
       }
 
-      case IActionType.playerSetPos: {
-        const payload = action.payload;
-        const entity = findEntity<MovableEntity>(payload.uid);
-        if (!entity) {
-          console.log("Couldn't find entity", payload.uid);
-          return;
-        }
-        entity.pos = new Vector3D(payload.pos);
-        return payload.uid;
+      case GameActionType.SetPlayerPos: {
+        const { playerUid, pos } = action;
+        const player = this.entities.get<Player>(playerUid);
+        player.pos = new Vector3D(pos);
+        return;
       }
 
-      case IActionType.setEntVel: {
-        const payload = action.payload;
-        const entity = findEntity(payload.uid) as MovableEntity;
-        if (!entity) {
-          console.log("Couldn't find entity", payload.uid);
-          return;
-        }
-        entity.vel = new Vector3D(payload.vel);
-        return payload.uid;
+      case GameActionType.Move: {
+        const { direction, playerRot, playerUid } = action;
+        const player = this.entities.get<Player>(playerUid);
+        // TODO this might be unnecessary
+        player.rot = new Vector3D(playerRot);
+        player.moveInDirection(direction);
       }
-
-      case IActionType.playerFireball: {
-        const payload = action.playerFireball!
-        const player = findEntity(payload.uid) as Player;
-        player.fireball();
-        return payload.uid;
-      }
-
-      case IActionType.hurtEntity: {
-        const payload = action.payload;
-        const entity = findEntity(payload.uid) as Player;
-        if (!entity) {
-          console.log("Entity not found", payload.uid);
-          return;
-        }
-        entity.hurt(payload.amount);
-        break;
-      }
-
-      default:
-        return false;
     }
-
-    return true;
   }
 
 
   /** Currently only sent by server. Will quickly update the state of the game */
   public handleStateDiff(stateDiff: IGameDiff) {
-
-  }
-
-  addAction(action: IAction) {
-    this.actions.push(action);
-  }
-
-  addActions(actions: IAction[]) {
-    this.actions.push(...actions);
+    // TODO
   }
 
   addPlayer(realness: boolean, uid: string): Player {
@@ -228,19 +228,10 @@ export class Game {
   }
 
   removeEntity(uid: string) {
-    this.onRemoveEntity(uid);
     this.entities.remove(uid);
   }
 
   save() {
     this.worldModel.saveWorld(this);
   }
-
-  // for the subclasses to override so they can "listen" to events
-  onNewEntity(_entity: Entity) {/* NO-OP */ }
-  onRemoveEntity(_uid: string) {/* NO-OP */ }
-  onActions(_actions: IAction[]) {/* NO-OP */ }
-  // these are just actions that can be handled by the client (related to rendering and such)
-  clientActionListener(_action: IAction) {/* NO-OP */ }
-  sendMessageToServer(_message: ISocketMessage) {/* NO-OP */ }
 }

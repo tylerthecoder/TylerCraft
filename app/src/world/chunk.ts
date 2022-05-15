@@ -1,12 +1,12 @@
 import { Cube, getCubeObscuringPositions, isCubeFaceVisible } from "../entities/cube";
 import { Entity } from "../entities/entity";
-import { IDim, IActionType, IAction } from "../types";
+import { IDim } from "../types";
 import { arrayMul, arrayAdd, arrayDot, arrayScalarMul, roundToNPlaces, arrayDistSquared } from "../utils";
 import { CONFIG } from "../config";
 import { Vector3D, Vector, Vector2D } from "../utils/vector";
 import { BlockType, BLOCK_DATA } from "../blockdata";
 import { ISerializedCube } from "../serializer";
-import { Camera } from "../camera";
+import { ICameraData } from "../camera";
 import { BlockHolder } from "./blockHolder";
 import { faceVectorToFaceNumber, getOppositeCubeFace } from "../utils/face";
 import { World } from "./world";
@@ -194,11 +194,11 @@ export class Chunk {
     this.visibleCubesFaces = Array.from(visibleCubePosMap.values());
   }
 
-  lookingAt(camera: Camera): ILookingAtData | false {
+  lookingAt(camera: ICameraData): ILookingAtData | false {
     let firstIntersection: IDim;
 
-    const cameraPos = camera.pos.data;
-    const cameraDir = camera.rotCart.multiply(new Vector3D([1, -1, 1])).data;
+    const cameraPos = camera.pos;
+    const cameraDir = new Vector3D(camera.rotCart).multiply(new Vector3D([1, -1, 1])).data;
 
     // [dist, newCubePos( a vector, when added to the cubes pos, gives you the pos of a new cube if placed on this block)]
     const defaultBest: [number, IDim, Vector3D, Cube?] = [Infinity, [-1, -1, -1], Vector3D.zero];
@@ -272,13 +272,13 @@ export class Chunk {
     }
   }
 
-  getBlockUpdateAction(): IAction {
-    return {
-      type: IActionType.blockUpdate,
-      blockUpdate: {
-        chunkId: this.uid,
-      }
-    }
-  }
+  // getBlockUpdateAction(): IAction {
+  //   return {
+  //     type: IActionType.blockUpdate,
+  //     blockUpdate: {
+  //       chunkId: this.uid,
+  //     }
+  //   }
+  // }
 
 }

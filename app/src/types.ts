@@ -132,12 +132,12 @@ export interface ISocketMessage {
   // playerLeavePayload?: {
   //   uid: string,
   // },
-  // setChunkPayload?: {
-  //   pos: string,
-  //   data: ISerializedChunk,
-  // }
+  setChunkPayload?: {
+    pos: string,
+    data: ISerializedChunk,
+  }
   gameDiffPayload?: IGameDiff;
 
   // from either
-  actionPayload?: GameAction[];
+  actionPayload?: GameAction;
 }

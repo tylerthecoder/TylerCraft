@@ -14,11 +14,13 @@ const addRoutes = (app: Application) => {
   });
 }
 
+export let SocketInterface: SocketServer;
+
 const main = async (client: MongoClient, wss: wSocket.Server) => {
   db = client.db("games");
   console.log("Database Connected");
-  const SocketInterface = new SocketServer(wss);
-  worldManager = new WorldManager(SocketInterface);
+  SocketInterface = new SocketServer(wss);
+  worldManager = new WorldManager();
 }
 
 const TylerCraftApp = {

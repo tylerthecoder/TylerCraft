@@ -1,4 +1,5 @@
 import { BLOCKS, ExtraBlockData } from "./blockdata";
+import { ICameraData } from "./camera";
 import { IDim } from "./types";
 import { Direction } from "./utils/vector";
 
@@ -14,25 +15,23 @@ export enum GameActionType {
 	ChangeName
 }
 
-export interface IBasePlayerAction {
+interface BaseAction {
 	type: GameActionType;
+}
+
+export interface IBasePlayerAction extends BaseAction {
 	playerUid: string;
-	// dontSendToServer?: boolean;
-	// isFromServer?: boolean;
 }
 
 export interface IPlaceBlockAction extends IBasePlayerAction {
 	type: GameActionType.PlaceBlock;
 	blockType: BLOCKS;
-	blockData?: ExtraBlockData;
-	/** The server should already have this but just in case it is behind */
-	playerRot: IDim;
+	cameraData: ICameraData;
 }
 
 export interface IRemoveBlockAction extends IBasePlayerAction {
 	type: GameActionType.RemoveBlock;
-	/** The server should already have this but just in case it is behind */
-	playerRot: IDim;
+	cameraData: ICameraData;
 }
 
 export interface IPlayerJumpAction extends IBasePlayerAction {
@@ -51,14 +50,15 @@ export interface IPlayerSetPosAction extends IBasePlayerAction {
 }
 
 export interface IPlayerRotAction extends IBasePlayerAction {
+	type: GameActionType.Rotate;
 	playerRot: IDim;
 }
 
-export interface IGameActionSave {
+export interface IGameActionSave extends BaseAction {
 	type: GameActionType.Save;
 }
 
-export interface IChangeNameGameAction {
+export interface IChangeNameGameAction extends BaseAction {
 	type: GameActionType.ChangeName;
 	name: string
 }

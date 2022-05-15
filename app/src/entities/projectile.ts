@@ -1,6 +1,6 @@
 import { Entity, FaceLocater, IEntityType } from "./entity";
 import { MovableEntity } from "./moveableEntity";
-import { IAction, IActionType, IDim } from "../types";
+import { IDim } from "../types";
 import { Vector3D } from "../utils/vector";
 import { Cube } from "./cube";
 import Random from "../utils/random";
@@ -14,8 +14,6 @@ export interface ISerializedProjectile {
 
 export class Projectile extends MovableEntity {
   gravitable = false;
-
-  private actions: IAction[] = [];
 
   constructor(
     public pos: Vector3D,
@@ -39,48 +37,43 @@ export class Projectile extends MovableEntity {
     this.baseUpdate(delta);
   }
 
-  getActions(): IAction[] {
-    const actions = this.actions;
-    this.actions = [];
-    return actions;
-  }
-
   hit(ent: Entity, _where: FaceLocater) {
+    // TODO remove block on world instead of returning action
     // do damage or delete block
-    if (ent instanceof Cube) {
-      this.actions.push(
-        {
-          dontSendToServer: true,
-          type: IActionType.removeBlock,
-          removeBlock: {
-            blockPos: ent.pos.data as IDim,
-          },
-        },
-        {
-          dontSendToServer: true,
-          type: IActionType.removeEntity,
-          removeEntity: {
-            uid: this.uid,
-          }
-        }
-      )
-    } else {
-      this.actions.push(
-        {
-          type: IActionType.hurtEntity,
-          hurtEntity: {
-            uid: ent.uid,
-            amount: 5,
-          }
-        },
-        {
-          dontSendToServer: true,
-          type: IActionType.removeEntity,
-          removeEntity: {
-            uid: this.uid,
-          }
-        }
-      )
-    }
+    // if (ent instanceof Cube) {
+    //   this.actions.push(
+    //     {
+    //       dontSendToServer: true,
+    //       type: IActionType.removeBlock,
+    //       removeBlock: {
+    //         blockPos: ent.pos.data as IDim,
+    //       },
+    //     },
+    //     {
+    //       dontSendToServer: true,
+    //       type: IActionType.removeEntity,
+    //       removeEntity: {
+    //         uid: this.uid,
+    //       }
+    //     }
+    //   )
+    // } else {
+    //   this.actions.push(
+    //     {
+    //       type: IActionType.hurtEntity,
+    //       hurtEntity: {
+    //         uid: ent.uid,
+    //         amount: 5,
+    //       }
+    //     },
+    //     {
+    //       dontSendToServer: true,
+    //       type: IActionType.removeEntity,
+    //       removeEntity: {
+    //         uid: this.uid,
+    //       }
+    //     }
+    //   )
+    // }
   }
 }

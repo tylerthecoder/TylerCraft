@@ -1,5 +1,5 @@
 import { Entity, FaceLocater } from "./entity";
-import { IDim, IAction, IActionType } from "../types";
+import { IDim } from "../types";
 import Random from "../utils/random";
 import { Vector3D } from "../utils/vector";
 import { MovableEntity } from "./moveableEntity";
@@ -16,26 +16,26 @@ export class Spectator extends MovableEntity {
     this.uid = Random.randomString()
   }
 
-  getActions(): IAction[] {
-    const actions: IAction[] = [];
+  // getActions(): IAction[] {
+  //   const actions: IAction[] = [];
 
-    const wasdVel = this.getWasdVel();
-    const vertVel = this.getVerticalVel();
+  //   const wasdVel = this.getWasdVel();
+  //   const vertVel = this.getVerticalVel();
 
-    const totVel = wasdVel.add(vertVel);
+  //   const totVel = wasdVel.add(vertVel);
 
-    if (!totVel.equals(this.vel)) {
-      actions.push({
-        type: IActionType.setEntVel,
-        setEntVel: {
-          vel: totVel.data as IDim,
-          uid: this.uid,
-        }
-      })
-    }
+  //   if (!totVel.equals(this.vel)) {
+  //     actions.push({
+  //       type: IActionType.setEntVel,
+  //       setEntVel: {
+  //         vel: totVel.data as IDim,
+  //         uid: this.uid,
+  //       }
+  //     })
+  //   }
 
-    return actions;
-  }
+  //   return actions;
+  // }
 
   update(delta: number) {
     this.baseUpdate(delta)

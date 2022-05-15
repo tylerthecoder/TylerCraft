@@ -1,72 +1,95 @@
 import Players from "./players";
 import * as wSocket from "ws";
+import { ISocketMessage, ISocketMessageType } from "../src/types";
+import { Vector2D } from "../src/utils/vector";
+import { AbstractScript } from "../src/scripts/AbstractScript";
+import { GameAction } from "../src/gameActions";
 import { Game } from "../src/game";
-import { IAction, ISocketMessage, ISocketMessageType, IWorldData, WorldModel } from "../src/types";
-import { Vector, Vector2D, Vector3D } from "../src/utils/vector";
-import SocketServer from "./socket";
+import { GameStateDiff } from "../src/gameStateDiff";
+import { MapArray } from "../src/utils";
+import { SocketInterface } from "./app";
 
-export class ServerGame extends Game {
-  clients: Players;
+export class ServerGame extends AbstractScript {
+  public clients: Players;
+  public actionMap: MapArray<wSocket, GameAction> = new MapArray();
 
-  actionQueue: Array<{
-    from: wSocket,
-    action: IAction
-  }> = [];
 
   constructor(
-    private SocketInterface: SocketServer,
-    worldModel: WorldModel,
-    worldData: IWorldData
+    public game: Game,
   ) {
-    super(worldModel, worldData);
+    super(game);
 
-    this.clients = new Players(this, SocketInterface);
-    this.loop();
+    this.clients = new Players(this.game);
   }
 
-  loop(): void {
-    if (this.actionQueue.length > 100) {
-      console.log(this.actionQueue);
-      throw new Error("To Many actions")
+  async load(): Promise<void> {
+    // NO-OP
+  }
+
+  onActions(_action: GameAction): void {
+    // throw new Error("Method not implemented.");
+  }
+
+  update(_delta: number): void {
+    // Send the initial state diff to all clients
+    // This state diff has no client sent actions so it should
+    // only be passive things (An entity spawning)
+    this.clients.sendMessageToAll({
+      type: ISocketMessageType.gameDiff,
+      gameDiffPayload: this.game.stateDiff.get(),
+    });
+
+    this.game.stateDiff.clear();
+
+    // Run through each client's actions and save the combined state diff
+    // from the other client's actions. Combining them lets us send all client
+    // updates as one socket message.
+
+    // Set the initial state diff for each client
+    const clientDiffs = new Map<wSocket, GameStateDiff>();
+    for (const ws of this.actionMap.keys()) {
+      clientDiffs.set(ws, this.game.stateDiff.copy());
     }
 
-    const sortedActions: Map<wSocket, IAction[]> = new Map();
-    this.actionQueue.forEach(({ action, from }) => {
-      if (sortedActions.has(from)) {
-        sortedActions.get(from)!.push(action);
-      } else {
-        sortedActions.set(from, [action]);
+    for (const [ws, actions] of this.actionMap.entries()) {
+      this.game.stateDiff.clear();
+
+      // Handle all the actions. The new diff should only have updates
+      // for the player who made them and chunk they might have affected
+      for (const action of actions) {
+        this.game.handleAction(action);
       }
-    });
 
-    // make sure we don't send actions back to the player who sent them
-    for (const [ws, actions] of sortedActions) {
-      this.clients.sendMessageToAll({
-        type: ISocketMessageType.actions,
-        actionPayload: actions,
-      }, ws);
+      // Append the diff to all clients but the one that sent the actions
+      this.clients
+        .getSockets()
+        .filter(s => s !== ws)
+        .forEach(s => {
+          clientDiffs.get(s)?.append(this.game.stateDiff);
+        });
     }
 
-    // handle the actions
-    this.actionQueue.forEach(({ action }) => {
-      this.handleAction(action);
-    });
 
-    this.actionQueue = [];
+    // Send the combined state diff to all clients
+    for (const [ws, diff] of clientDiffs.entries()) {
+      SocketInterface.send(ws, {
+        type: ISocketMessageType.gameDiff,
+        gameDiffPayload: diff.get(),
+      });
+    }
 
-    setTimeout(this.loop.bind(this), 1000 / 60);
   }
 
   private async sendChunkTo(chunkPosString: string, ws: wSocket) {
     const chunkPos = Vector2D.fromIndex(chunkPosString);
-    let chunk = this.world.getChunkFromPos(chunkPos);
+    let chunk = this.game.world.getChunkFromPos(chunkPos);
     if (!chunk) {
-      await this.world.loadChunk(chunkPos);
-      chunk = this.world.getChunkFromPos(chunkPos);
+      await this.game.world.loadChunk(chunkPos);
+      chunk = this.game.world.getChunkFromPos(chunkPos);
     }
     if (!chunk) throw new Error("Chunk wasn't found");
     const serializedData = chunk.serialize();
-    this.SocketInterface.send(ws, {
+    SocketInterface.send(ws, {
       type: ISocketMessageType.setChunk,
       setChunkPayload: {
         pos: chunkPosString,
@@ -78,17 +101,12 @@ export class ServerGame extends Game {
   addSocket(uid: string, ws: wSocket): void {
     this.clients.addPlayer(uid, ws);
 
-    this.SocketInterface.listenTo(ws, (message: ISocketMessage) => {
+    SocketInterface.listenTo(ws, (message: ISocketMessage) => {
       console.log("Got Message", message);
       switch (message.type) {
         case ISocketMessageType.actions: {
           const payload = message.actionPayload!;
-          this.actionQueue.push(...payload.map(
-            a => ({
-              action: a,
-              from: ws
-            })
-          ));
+          this.actionMap.append(ws, payload);
           break;
         }
         case ISocketMessageType.getChunk: {

@@ -7,8 +7,9 @@ import { MovableEntity } from "../../src/entities/moveableEntity";
 import { CONFIG } from "../../src/config";
 import { GameActionType } from "@tylercraft/src/gameActions";
 import { Direction } from "@tylercraft/src/utils/vector";
+import { GameController } from "./controller";
 
-export class MouseAndKeyController {
+export class MouseAndKeyController extends GameController {
   private keys = new Set();
   private keysPressed = new Set();
   private numOfUpdates = 0;
@@ -21,6 +22,8 @@ export class MouseAndKeyController {
   private eSaveButton = document.getElementById("saveButton") as HTMLButtonElement;
 
   constructor(public game: ClientGame) {
+    super(game);
+
 
     window.addEventListener("keydown", ({ key }) => {
       this.keys.add(key.toLowerCase());

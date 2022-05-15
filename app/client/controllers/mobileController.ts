@@ -1,7 +1,7 @@
 import { MetaAction } from "../../src/entities/entity";
 import { Vector2D } from "../../src/utils/vector";
 import { ClientGame } from "../clientGame";
-import { Controller } from "./controller";
+import { Controller, GameController } from "./controller";
 
 
 interface IMobileState {
@@ -10,7 +10,7 @@ interface IMobileState {
   }
 }
 
-export class MobileController extends Controller {
+export class MobileController extends GameController {
   private state: IMobileState = {
     pressing: {
       up: false,
@@ -25,22 +25,22 @@ export class MobileController extends Controller {
 
 
   constructor(
-    public controlled: ClientGame,
+    public game: ClientGame,
   ) {
-    super();
+    super(game);
 
     let lastWindowTouch: Touch;
     const lastTouchStartPos = new Vector2D([0, 0]);
     window.addEventListener("touchstart", (e: TouchEvent) => {
       e.preventDefault();
       lastWindowTouch = e.changedTouches.item(0)!;
-      lastTouchStartPos.data = [lastWindowTouch.clientX, lastWindowTouch.clientY ];
-    }, {passive: false});
+      lastTouchStartPos.data = [lastWindowTouch.clientX, lastWindowTouch.clientY];
+    }, { passive: false });
 
     window.addEventListener("touchmove", (e: TouchEvent) => {
       e.preventDefault();
-      let touch: Touch|null = null;
-      for (let i = 0; i < e.changedTouches.length; i ++) {
+      let touch: Touch | null = null;
+      for (let i = 0; i < e.changedTouches.length; i++) {
         const checkingTouch = e.changedTouches.item(i);
         if (checkingTouch?.identifier === lastWindowTouch.identifier) {
           touch = checkingTouch;
@@ -55,12 +55,12 @@ export class MobileController extends Controller {
 
 
 
-      this.controlled.camera.rotateBy(-dx, -dy);
-    }, {passive: false})
+      this.game.camera.rotateBy(-dx, -dy);
+    }, { passive: false })
 
     window.addEventListener("touchend", (e: TouchEvent) => {
       e.preventDefault();
-    }, {passive: false});
+    }, { passive: false });
 
     // handle jump button
     let jumpTouches: Touch[] = [];
@@ -74,7 +74,7 @@ export class MobileController extends Controller {
         jumpTouches.push(touches.item(i)!);
       }
 
-      this.controlled.mainPlayer.metaActions.add(MetaAction.jump);
+      this.game.mainPlayer.metaActions.add(MetaAction.jump);
     });
 
     this.eJumpButton.addEventListener("touchmove", (e: TouchEvent) => {
@@ -94,7 +94,7 @@ export class MobileController extends Controller {
       }
 
       if (shouldJump) {
-        this.controlled.mainPlayer.metaActions.add(MetaAction.jump);
+        this.game.mainPlayer.metaActions.add(MetaAction.jump);
       }
 
       e.preventDefault();
@@ -112,7 +112,7 @@ export class MobileController extends Controller {
       }
 
       // e.touches.
-      this.controlled.mainPlayer.metaActions.delete(MetaAction.jump);
+      this.game.mainPlayer.metaActions.delete(MetaAction.jump);
     })
 
     // handle forward button
@@ -121,7 +121,7 @@ export class MobileController extends Controller {
       e.preventDefault();
       e.stopPropagation();
       lastForwardTouch = e.changedTouches.item(0)!;
-      this.controlled.mainPlayer.metaActions.add(MetaAction.forward);
+      this.game.mainPlayer.metaActions.add(MetaAction.forward);
     });
 
     this.eForwardButton.addEventListener("touchmove", (e: TouchEvent) => {
@@ -134,9 +134,9 @@ export class MobileController extends Controller {
         const diffY = lastForwardTouch.clientY - touch.clientY;
 
         if (diffY > 50) {
-          this.controlled.mainPlayer.metaActions.add(MetaAction.jump);
+          this.game.mainPlayer.metaActions.add(MetaAction.jump);
         } else {
-          this.controlled.mainPlayer.metaActions.delete(MetaAction.jump);
+          this.game.mainPlayer.metaActions.delete(MetaAction.jump);
         }
       }
     });
@@ -144,15 +144,15 @@ export class MobileController extends Controller {
     this.eForwardButton.addEventListener("touchend", (e: TouchEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      this.controlled.mainPlayer.metaActions.delete(MetaAction.forward);
-      this.controlled.mainPlayer.metaActions.delete(MetaAction.jump);
+      this.game.mainPlayer.metaActions.delete(MetaAction.forward);
+      this.game.mainPlayer.metaActions.delete(MetaAction.jump);
     });
 
 
     // item selection
     this.eToolbeltItems.forEach((item, index) => {
       item.addEventListener("touchstart", () => {
-        this.controlled.selectedBlock = index;
+        this.game.selectedBlock = index;
       });
     });
 
@@ -160,7 +160,7 @@ export class MobileController extends Controller {
     this.eUseItemButton.addEventListener("touchstart", (e: TouchEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      this.controlled.placeBlock();
+      this.game.placeBlock();
     });
 
     this.eUseItemButton.addEventListener("touchmove", (e: TouchEvent) => {
@@ -177,7 +177,7 @@ export class MobileController extends Controller {
       e.preventDefault();
       e.stopPropagation();
       console.log("Removing")
-      this.controlled.removeBlock();
+      this.game.removeBlock();
     });
 
     this.eUseItemButton2.addEventListener("touchmove", (e: TouchEvent) => {

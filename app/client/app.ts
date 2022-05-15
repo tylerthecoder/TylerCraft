@@ -1,4 +1,4 @@
-import { IGameMetadata } from "../src/game";
+import { Game, IGameMetadata } from "../src/game";
 import { ClientDb } from "./worldModels/clientdb";
 import { NetworkWorldModel } from "./worldModels/serverSaver";
 import { ClientGame } from "./clientGame";
@@ -9,7 +9,7 @@ import { WorldModel } from "../src/types";
 
 interface IExtendedWindow extends Window {
   clientDb?: ClientDb;
-  game?: ClientGame
+  game?: Game;
 }
 
 export const IS_MOBILE = /Mobi/.test(window.navigator.userAgent);
@@ -111,7 +111,8 @@ export async function loadWorldById(worldId: string) {
   const clientHasWorld = clientWorlds.some(world => world.gameId === worldId);
   if (clientHasWorld) {
     const clientWorld = await clientWorldModel.getWorld(worldId);
-    startGame(new ClientGame(
+    startGame(new Game(
+      ClientGame,
       clientWorldModel,
       clientWorld
     ));
@@ -123,7 +124,8 @@ export async function loadWorldById(worldId: string) {
   const serverHasWorld = serverWorlds.some(world => world.gameId === worldId);
   if (serverHasWorld) {
     const serverWorld = await serverWorldModel.getWorld(worldId);
-    startGame(new ClientGame(
+    startGame(new Game(
+      ClientGame,
       serverWorldModel,
       serverWorld!
     ));
@@ -216,7 +218,8 @@ async function showWorldPicker(worldModel: WorldModel, currentHash: string, next
       const worldData = await worldModel.getWorld(worldId);
       if (!worldData) throw new Error("World wasn't found. Db must be effed up");
 
-      const clientGame = new ClientGame(
+      const clientGame = new Game(
+        ClientGame,
         worldModel,
         worldData,
       );
@@ -327,7 +330,8 @@ function showWorldOptionsScreen(worldModel: WorldModel, onBack: () => void) {
       gameName: formData.get("name") as string,
     });
 
-    const game = new ClientGame(
+    const game = new Game(
+      ClientGame,
       worldModel,
       newWorldData,
     );
@@ -336,7 +340,7 @@ function showWorldOptionsScreen(worldModel: WorldModel, onBack: () => void) {
   });
 }
 
-export function startGame(game: ClientGame) {
+export function startGame(game: Game) {
   history.pushState("Game", "", `?worldId=${game.gameId}`);
   console.log("Starting game", game);
   (window as IExtendedWindow).game = game;

@@ -60,44 +60,44 @@ export abstract class MovableEntity extends Entity {
     this.rotCart = this.rot.toCartesianCoords();
   }
 
-  getWasdVel() {
-    for (const metaAction of this.metaActions) {
-      const baseSpeed = CONFIG.player.speed;
-      switch (metaAction) {
-        case MetaAction.forward:
-          return new Vector3D([
-            -baseSpeed, this.rot.get(1), Math.PI / 2,
-          ]).toCartesianCoords();
-        case MetaAction.backward:
-          return new Vector3D([
-            baseSpeed, this.rot.get(1), Math.PI / 2,
-          ]).toCartesianCoords();
-        case MetaAction.left:
-          return new Vector3D([
-            baseSpeed, this.rot.get(1) + Math.PI / 2, Math.PI / 2
-          ]).toCartesianCoords();
-        case MetaAction.right:
-          return new Vector3D([
-            baseSpeed, this.rot.get(1) - Math.PI / 2, Math.PI / 2
-          ]).toCartesianCoords();
-      }
-    }
-    return new Vector3D([0, 0, 0]);
-  }
+  // getWasdVel() {
+  //   for (const metaAction of this.metaActions) {
+  //     const baseSpeed = CONFIG.player.speed;
+  //     switch (metaAction) {
+  //       case MetaAction.forward:
+  //         return new Vector3D([
+  //           -baseSpeed, this.rot.get(1), Math.PI / 2,
+  //         ]).toCartesianCoords();
+  //       case MetaAction.backward:
+  //         return new Vector3D([
+  //           baseSpeed, this.rot.get(1), Math.PI / 2,
+  //         ]).toCartesianCoords();
+  //       case MetaAction.left:
+  //         return new Vector3D([
+  //           baseSpeed, this.rot.get(1) + Math.PI / 2, Math.PI / 2
+  //         ]).toCartesianCoords();
+  //       case MetaAction.right:
+  //         return new Vector3D([
+  //           baseSpeed, this.rot.get(1) - Math.PI / 2, Math.PI / 2
+  //         ]).toCartesianCoords();
+  //     }
+  //   }
+  //   return new Vector3D([0, 0, 0]);
+  // }
 
-  getVerticalVel() {
-    for (const metaAction of this.metaActions) {
-      const baseSpeed = CONFIG.player.speed;
-      switch (metaAction) {
-        case MetaAction.up:
-          return new Vector3D([0, baseSpeed, 0]);
-        case MetaAction.down:
-          return new Vector3D([0, -baseSpeed, 0]);
-      }
-    }
+  // getVerticalVel() {
+  //   for (const metaAction of this.metaActions) {
+  //     const baseSpeed = CONFIG.player.speed;
+  //     switch (metaAction) {
+  //       case MetaAction.up:
+  //         return new Vector3D([0, baseSpeed, 0]);
+  //       case MetaAction.down:
+  //         return new Vector3D([0, -baseSpeed, 0]);
+  //     }
+  //   }
 
-    return new Vector3D([0, 0, 0]);
-  }
+  //   return new Vector3D([0, 0, 0]);
+  // }
 
   getJumpVel(): Vector3D {
     if (this.metaActions.has(MetaAction.jump)) {
