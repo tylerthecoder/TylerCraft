@@ -2,12 +2,17 @@ import { IDim } from "../types";
 import { CONFIG } from "../config";
 import { bindValue } from "../utils";
 import { Vector3D } from "../utils/vector";
-import { Entity, IEntityType, ISerializedEntity, MetaAction } from "./entity";
+import { Entity, EntityDto, MetaAction } from "./entity";
 
+export interface MovableEntityDto extends EntityDto {
+  vel: IDim;
+}
 
-export abstract class MovableEntity extends Entity {
+export abstract class MovableEntity<T extends MovableEntityDto> extends Entity<T> {
   vel = Vector3D.zero;
-  // (radius (1), theta: [0, 2pi], phi: [0, pi])
+  /**
+   * (radius (1), theta: [0, 2pi], phi: [0, pi])
+   */
   rot = Vector3D.zero;
   rotCart: Vector3D = this.rot.toCartesianCoords();
 
@@ -17,12 +22,17 @@ export abstract class MovableEntity extends Entity {
 
   metaActions = new Set<MetaAction>();
 
-  public serialize(type: IEntityType): ISerializedEntity {
+  protected baseDto(): MovableEntityDto {
     return {
-      uid: this.uid,
-      pos: this.pos.data as IDim,
-      vel: this.vel.data as IDim,
-      type: type,
+      ...super.baseDto(),
+      vel: this.vel.data as IDim
+    }
+  }
+
+  protected baseSet(data: Partial<MovableEntityDto>) {
+    this.baseSet(data);
+    if (data.vel) {
+      this.vel = new Vector3D(data.vel);
     }
   }
 

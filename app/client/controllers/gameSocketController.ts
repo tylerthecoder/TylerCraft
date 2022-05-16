@@ -15,6 +15,7 @@ export class SocketGameHandler {
   update() { /* NO-OP */ }
 
   onMessage(message: ISocketMessage) {
+    console.log("Socket Message", message);
     if (message.type === ISocketMessageType.gameDiff) {
       this.controlled.game.handleStateDiff(message.gameDiffPayload!);
     }

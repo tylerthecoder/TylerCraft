@@ -1,5 +1,7 @@
 import { IDim } from "../types";
 import { Vector3D } from "../utils/vector";
+import CubeHelpers from "./cube";
+import { IEntityType } from "./entityHolder";
 
 export enum RenderType {
   CUBE,
@@ -22,30 +24,55 @@ export enum MetaAction {
   fireball,
 }
 
-export const enum IEntityType {
-  Player = 0,
-  Projectile = 1,
-}
-
-export interface ISerializedEntity {
+export interface EntityDto {
   uid: string;
   pos: IDim;
-  vel?: IDim;
+  dim: IDim;
+  type: IEntityType
+}
+
+
+/**
+ * Should be extended by all non-abstract sub classes
+ * */
+export interface IEntity {
   type: IEntityType;
 }
 
-
-export abstract class Entity {
+export abstract class Entity<DTO extends EntityDto = EntityDto, DtoNoType = Omit<DTO, "type">> {
   pos: Vector3D = new Vector3D([0, 0, 0]);
   dim: IDim = [1, 1, 1];
   uid = "";
 
-  public serialize(type: IEntityType): ISerializedEntity {
+  constructor(dto: Partial<DtoNoType>) {
+    this.set(dto);
+  }
+
+  // TODO make the allowable entities generic
+  abstract type: IEntityType;
+
+  abstract getDto(): DTO;
+
+  protected baseDto(): EntityDto {
     return {
       uid: this.uid,
       pos: this.pos.data as IDim,
-      // change this when we have another entity type that we need to send
-      type,
+      dim: this.dim,
+      type: this.type
+    }
+  }
+
+  abstract set(data: Partial<DtoNoType>): void;
+
+  protected baseSet(data: Partial<EntityDto>) {
+    if (data.pos) {
+      this.pos = new Vector3D(data.pos);
+    }
+    if (data.dim) {
+      this.dim = data.dim;
+    }
+    if (data.uid) {
+      this.uid = data.uid;
     }
   }
 
@@ -57,26 +84,7 @@ export abstract class Entity {
   }
 
   isCollide(ent: Entity) {
-    // loop through each dimension. Consider each edge along that dimension a line segment
-    // check to see if my (this) line segment overlaps the entities (ent) line segment
-    for (let i = 0; i < 3; i++) {
-      if (
-        this.pos.get(i) <= ent.pos.get(i) && // ent line is front
-        ent.pos.get(i) >= this.pos.get(i) + this.dim[i] // and ent is not contained in my (this) line segment
-      ) {
-        // not possible for these to be intersecting since one dimension is too far away
-        return false
-      }
-
-      if (
-        ent.pos.get(i) <= this.pos.get(i) && // My (this) line is front
-        this.pos.get(i) >= ent.pos.get(i) + ent.dim[i] // and ent is not contained in my (this) line segment
-      ) {
-        // not possible for these to be intersecting since one dimension is too far away
-        return false
-      }
-    }
-    return true;
+    return CubeHelpers.isCollide(this, ent)
   }
 
   // push me (this) out of the supplied entity (ent)

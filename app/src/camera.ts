@@ -1,6 +1,5 @@
 import { Entity, FaceLocater } from "./entities/entity";
 import { Vector3D } from "./utils/vector";
-import { MovableEntity } from "./entities/moveableEntity";
 import { IDim } from "./types";
 
 export interface ICameraData {
@@ -8,15 +7,11 @@ export interface ICameraData {
   rotCart: IDim;
 }
 
-export abstract class Camera extends MovableEntity {
+export abstract class Camera {
   // (x, y, z)
   abstract pos: Vector3D;
   // (dist, theta: [0, 2pi], phi: [0, pi])
   abstract rot: Vector3D;
-
-  constructor() {
-    super();
-  }
 
   getCameraData(): ICameraData {
     return {

@@ -262,7 +262,9 @@ export class Vector2D extends Vector<[number, number]> {
   }
 }
 export class Vector3D extends Vector<[number, number, number]> {
-  static zero = new Vector3D([0, 0, 0]);
+  static get zero() {
+    return new Vector3D([0, 0, 0]);
+  }
 
   static unitVectors = [
     [1, 0, 0],

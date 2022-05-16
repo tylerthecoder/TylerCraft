@@ -145,6 +145,8 @@ export class MouseAndKeyController extends GameController {
       this.currentMoveDirections.add(Direction.Left);
     } else if (key === "d") {
       this.currentMoveDirections.add(Direction.Right);
+    } else if (key === "p") {
+      this.game.handleAction(GameAction.Save, undefined)
     }
   }
 
@@ -173,7 +175,6 @@ export class MouseAndKeyController extends GameController {
       this.ifHasKeyThenAddMeta(spectator, "shift", MetaAction.down);
     } else {
       const player = this.clientGame.mainPlayer;
-
 
       // check if previous directions is different than current directions
       let areDifferent = false;
@@ -236,10 +237,6 @@ export class MouseAndKeyController extends GameController {
 
     this.ifHasKeyThen("m", () => {
       this.openMenu();
-    })
-
-    this.ifHasKeyThen("p", () => {
-      this.game.handleAction(GameAction.Save, undefined)
     })
 
     this.ifHasKeyThen("1", () => {

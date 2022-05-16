@@ -18,6 +18,7 @@ export default class Players {
   }
 
   sendMessageToAll(message: ISocketMessage, exclude?: wSocket) {
+    console.log("Sending message to all", message);
     for (const socket of this.players.keys()) {
       if (exclude && socket === exclude) continue;
       SocketInterface.send(socket, message);
@@ -59,7 +60,7 @@ export default class Players {
     // If they leave, KILL THEM
     ws.on("close", this.removePlayer.bind(this, ws));
 
-    console.log(`New player! ${this.game.entities.getActivePlayers().length} players`);
+    console.log(`New player! ${uid} ${this.game.entities.getActivePlayers().length} players`);
   }
 
   removePlayer(ws: wSocket): void {

@@ -1,18 +1,26 @@
-import { Entity, FaceLocater, IEntityType, ISerializedEntity, MetaAction } from "./entity";
+import { Entity, FaceLocater, IEntity } from "./entity";
 import { arrayAdd, arrayScalarMul } from "../utils";
 import { IDim } from "../types";
-import { Projectile } from "./projectile";
-import { MovableEntity } from "./moveableEntity";
+import { MovableEntity, MovableEntityDto } from "./moveableEntity";
 import { CONFIG } from "../config";
 import { Direction, Vector3D } from "../utils/vector";
+import { IEntityType } from "./entityHolder";
 
-export interface ISerializedPlayer extends ISerializedEntity {
-  vel: IDim;
-  isReal: boolean;
+export interface PlayerDto extends MovableEntityDto {
+  type: IEntityType.Player;
+  health: {
+    current: number;
+    max: number;
+  }
 }
 
+
 // A controller / PlayerHandler will append actions to Player
-export class Player extends MovableEntity {
+export class Player extends MovableEntity<PlayerDto> implements IEntity {
+  // abstract values
+  static readonly type = IEntityType.Player;
+  get type() { return Player.type; }
+
   // Entity overrides
   pos: Vector3D = new Vector3D([0, 50, 0]);
   dim: IDim = [.8, 2, .8];
@@ -42,35 +50,25 @@ export class Player extends MovableEntity {
 
   moveDirections: Direction[] = [];
 
-  constructor(
-    /** Means that the player is controlled by the current user */
-    public isReal: boolean,
-    uid?: string
-  ) {
-    super();
-    this.setCreative(false);
-    if (uid) {
-      this.uid = uid;
-    }
+  static create(id: string): Player {
+    return new Player({
+      uid: id,
+    });
   }
 
-  serialize(type: IEntityType): ISerializedPlayer {
+  getDto(): PlayerDto {
     return {
-      uid: this.uid,
-      pos: this.pos.data as IDim,
-      vel: this.vel.data as IDim,
-      isReal: this.isReal,
-      type: type,
+      ...this.baseDto(),
+      type: IEntityType.Player,
+      health: this.health,
     }
   }
 
-  static deserialize(data: ISerializedPlayer): Player {
-    const player = new Player(data.isReal);
-    player.pos = new Vector3D(data.pos);
-    player.vel = new Vector3D(data.vel);
-    player.uid = data.uid;
-    player.isReal = data.isReal;
-    return player;
+  set(player: Partial<PlayerDto>) {
+    super.baseSet(player);
+    if (player.health) {
+      this.health = player.health;
+    }
   }
 
   moveInDirections() {
@@ -120,7 +118,7 @@ export class Player extends MovableEntity {
     }
 
     // If we don't have a y comp then use the current one
-    if (!newVel.get(1)) {
+    if (newVel.get(1) === 0) {
       newVel.set(1, this.vel.get(1));
     }
 
@@ -157,6 +155,12 @@ export class Player extends MovableEntity {
     }
 
     this.baseUpdate(delta);
+
+    if (this.pos.get(1) < -10) {
+      this.pos.set(1, 0);
+      this.vel.set(1, -.1);
+    }
+
   }
 
   hit(_entity: Entity, where: FaceLocater) {
@@ -172,7 +176,7 @@ export class Player extends MovableEntity {
 
     const vel = this.rotCart.scalarMultiply(-.4).data as IDim;
     const pos = arrayAdd(arrayAdd(this.pos.data, arrayScalarMul(vel, 4)), [.5, 2, .5]) as IDim;
-    const ball = new Projectile(new Vector3D(pos), new Vector3D(vel));
+    // const ball = new Projectile(new Vector3D(pos), new Vector3D(vel));
 
     // this.actions.push({
     //   type: IActionType.addEntity,

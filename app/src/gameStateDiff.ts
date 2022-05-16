@@ -1,12 +1,12 @@
-import { ISerializedEntity } from "./entities/entity";
+import { EntityDto } from "./entities/EntityDto";
 import { Game } from "./game";
 import { getEntityType } from "./serializer";
 import { ISerializedChunk } from "./world/chunk";
 
-export interface IGameDiff {
+export interface GameDiffDto {
 	entities: {
-		add?: ISerializedEntity[];
-		update?: ISerializedEntity[];
+		add?: EntityDto[];
+		update?: EntityDto[];
 		remove?: string[];
 	},
 	chunks: {
@@ -40,6 +40,13 @@ export class GameStateDiff {
 	private updateEntitiesIds: string[] = [];
 	private removeEntitiesIds: string[] = [];
 	private updateChunkIds: string[] = [];
+
+	public hasData(): boolean {
+		return this.addEntitiesIds.length > 0 ||
+			this.updateEntitiesIds.length > 0 ||
+			this.removeEntitiesIds.length > 0 ||
+			this.updateChunkIds.length > 0;
+	}
 
 
 	public addEntity(entityId: string) {
@@ -81,8 +88,8 @@ export class GameStateDiff {
 		this.updateChunkIds = [];
 	}
 
-	public get(): IGameDiff {
-		const diff: IGameDiff = {
+	public get(): GameDiffDto {
+		const diff: GameDiffDto = {
 			entities: {},
 			chunks: {},
 		};
@@ -124,6 +131,13 @@ export class GameStateDiff {
 		this.updateEntitiesIds = this.updateEntitiesIds.concat(diff.getUpdatedEntities());
 		this.removeEntitiesIds = this.removeEntitiesIds.concat(diff.getRemovedEntities());
 		this.updateChunkIds = this.updateChunkIds.concat(diff.getDirtyChunks());
+	}
+
+	public appendDto(dto: GameDiffDto) {
+		this.addEntitiesIds.push(...dto.entities.add?.map(e => e.uid) || []);
+		this.updateChunkIds.push(...dto.chunks.update?.map(c => c.chunkId) || []);
+		this.removeEntitiesIds.push(...dto.entities.remove || []);
+		this.updateEntitiesIds.push(...dto.entities.update?.map(e => e.uid) || []);
 	}
 
 

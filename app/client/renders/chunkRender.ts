@@ -3,7 +3,6 @@ import { Camera } from "../../src/camera";
 import { Chunk } from "../../src/world/chunk";
 import { arraySub } from "../../src/utils";
 import TextureMapper from "../textureMapper";
-import { World } from "../../src/world/world";
 import { BlockType, getBlockData } from "../../src/blockdata";
 import TextureService from "../services/textureService";
 import { ImageRenderer } from "./imageRender";
@@ -13,10 +12,10 @@ import { faceVectorToFaceNumber } from "../../src/utils/face";
 export class ChunkRenderer extends Renderer {
   private otherRenders: Renderer[] = [];
 
-  constructor(public chunk: Chunk, world: World) {
+  constructor(public chunk: Chunk) {
     super();
     this.setActiveTexture(TextureService.textureAtlas);
-    this.getBufferData(world);
+    this.getBufferData();
 
     // this.otherRenders.push(
     //   new ImageRenderer(
@@ -65,10 +64,8 @@ export class ChunkRenderer extends Renderer {
    * Gets the position of each of the vertices in this chunk and adds them to the buffer
    * @param world
    */
-  getBufferData(world: World): void {
-    this.chunk.calculateVisibleFaces(world);
-
-    console.log("Getting Buffer Data");
+  getBufferData(): void {
+    // console.log("Getting Buffer Data");
 
     this.otherRenders = [];
 

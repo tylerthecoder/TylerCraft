@@ -41,6 +41,14 @@ export class World {
       // this.terrainGenerator = new TerrainGenerator(this.hasChunk.bind(this), this.getChunkFromPos.bind(this));
       this.chunks = new Map();
     }
+
+    // Compute all the chunk faces
+    // TODO think this through better. Might take a long time to start if there are a lot of chunks
+    for (const chunk of this.chunks.values()) {
+      chunk.calculateVisibleFaces(this);
+    }
+
+
   }
 
   // We just aren't going to serialize the terrain generator for now. Hopefully later we find a better way to do this
@@ -89,6 +97,13 @@ export class World {
     this.loadedChunks.add(chunkPos.toIndex());
   }
 
+  updateChunk(chunkPos: Vector2D, chunkData: ISerializedChunk) {
+    const chunk = this.getChunkFromPos(chunkPos);
+    if (!chunk) return;
+    chunk.set(chunkData);
+    chunk.calculateVisibleFaces(this);
+  }
+
   getChunks(): IterableIterator<Chunk> {
     return this.chunks.values();
   }
@@ -102,6 +117,7 @@ export class World {
     if (this.loadingChunks.has(chunkPos.toIndex())) {
       return;
     }
+
     this.loadingChunks.add(chunkPos.toIndex());
     return new Promise(resolve => {
       this.chunkReader.getChunk(chunkPos.toIndex()).then(chunk => {
@@ -109,6 +125,7 @@ export class World {
         // and on the server side when multiplayer
         // if (!chunk) chunk = this.terrainGenerator.generateChunk(chunkPos);
         this.setChunkAtPos(chunk, chunkPos);
+        chunk.calculateVisibleFaces(this);
         resolve();
       })
     });
@@ -127,25 +144,6 @@ export class World {
     return null;
   }
 
-  // updateChunk(chunkPos: Vector2D) {
-  //   const chunkToUpdate = this.chunks.get(chunkPos.add(new Vector2D([0, 1])).toIndex());
-  //   if (chunkToUpdate) {
-  //     this.game.addAction({
-  //       type: IActionType.blockUpdate,
-  //       blockUpdate: {
-  //         chunkId: chunkToUpdate.chunkPos.toIndex(),
-  //       }
-  //     });
-  //   }
-  // }
-
-  // private generateChunk(chunkPos: Vector2D) {
-  //   console.log("Generating chunk", chunkPos, this.game.gameId);
-  //   const generatedChunk = this.terrainGenerator.generateChunk(chunkPos);
-  //   this.setChunkAtPos(generatedChunk, chunkPos);
-  //   return generatedChunk;
-  // }
-
   // load the starting chunks
   async load() {
     const loadPromises: Promise<void>[] = [];
@@ -163,7 +161,7 @@ export class World {
 
   update(entities: Entity[]) {
     for (const entity of entities) {
-      if ((entity as Spectator).intangible) return;
+      // if ((entity as Spectator).intangible) return;
 
       this.pushOut(entity);
 
@@ -196,7 +194,6 @@ export class World {
   }
 
   private checkSurroundingChunkForUpdate(chunk: Chunk, pos: Vector3D) {
-    console.log("POS", pos)
     Vector3D.edgeVectorsStripY.forEach(indexVec => {
       const checkCubePos = pos.add(indexVec);
       const otherChunk = this.getChunkFromWorldPoint(checkCubePos);
@@ -214,7 +211,7 @@ export class World {
     const chunk = this.getChunkFromWorldPoint(cube.pos);
     if (!chunk) return;
     chunk.blocks.add(cube);
-    // TODO recalculate faces
+    chunk.calculateVisibleFaces(this);
     this.game.stateDiff.updateChunk(chunk.uid);
     this.checkSurroundingChunkForUpdate(chunk, cube.pos);
   }
@@ -222,7 +219,7 @@ export class World {
   removeBlock(cubePos: Vector3D) {
     const chunk = this.getChunkFromWorldPoint(cubePos);
     if (!chunk) return;
-    // TODO recalculate faces
+    chunk.calculateVisibleFaces(this);
     this.checkSurroundingChunkForUpdate(chunk, cubePos);
     chunk.blocks.remove(cubePos)
     this.game.stateDiff.updateChunk(chunk.uid);
@@ -238,7 +235,6 @@ export class World {
       if (!isReachable) continue;
 
       const cubeData = chunk.lookingAt(camera);
-      console.log(cubeData);
       if (cubeData && closestDist > cubeData.dist && cubeData.dist < CONFIG.player.reach) {
         closestDist = cubeData.dist;
         closestCube = cubeData;
@@ -247,7 +243,4 @@ export class World {
 
     return closestCube;
   }
-
-
-
 }

@@ -1,5 +1,5 @@
 import { Game } from "../game";
-import { GameAction } from "../gameActions";
+import { GameAction, GameActionHolder } from "../gameActions";
 import { GameStateDiff } from "../gameStateDiff";
 
 
@@ -18,6 +18,6 @@ export abstract class AbstractScript {
 	/** This should not try to apply the actions to the game state
 	 * only redirect the actions (i.e to a socket)
 	 */
-	abstract onAction(action: GameAction): void;
+	abstract onAction(action: GameActionHolder): void;
 
 }

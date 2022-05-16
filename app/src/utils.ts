@@ -125,25 +125,12 @@ export function getRandEle<T>(arr: Array<T>): T {
 
 
 
-export class MapArray<T, S> {
-  private map: Map<T, S[]> = new Map();
-
-  public get(key: T) {
-    return this.map.get(key);
-  }
-
-  public keys() {
-    return this.map.keys();
-  }
+export class MapArray<T, S> extends Map<T, S[]> {
 
   public append(key: T, value: S) {
-    const currentValue = this.map.get(key) ?? [];
+    const currentValue = this.get(key) ?? [];
     const newValue = [...currentValue, value];
-    this.map.set(key, newValue);
-  }
-
-  public entries() {
-    return this.map.entries();
+    this.set(key, newValue);
   }
 
 }

@@ -1,12 +1,36 @@
 import { Game } from "../game";
 import { deserializeEntity, getEntityType } from "../serializer";
 import { World } from "../world/world";
-import { Entity, ISerializedEntity } from "./entity";
+import { Entity, EntityDto } from "./entity";
 import { Player } from "./player";
+import { Projectile } from "./projectile";
+
+export const enum IEntityType {
+  Player = 0,
+  Projectile = 1
+}
+
+// Types that need to be updated
+export const GameEntityClassMap = {
+  [IEntityType.Player]: Player,
+  [IEntityType.Projectile]: Projectile,
+}
+
+// Helper Types
+type ValueOfClass<C extends GameEntityClass> = C extends (new (...args: any[]) => infer T) ? T : never;
+export type GameEntityDtoMap = {
+  [key in keyof typeof GameEntityClassMap]: ValueOfClass<typeof GameEntityClassMap[key]> extends Entity<infer DTO> ? DTO : never;
+}
+export type GameEntityDto = GameEntityDtoMap[keyof GameEntityDtoMap];
+export type GameEntityClass = typeof GameEntityClassMap[keyof typeof GameEntityClassMap];
+type GameEntityClassTypeLookup<T extends IEntityType> = ValueOfClass<typeof GameEntityClassMap[T]>;
+
+
 
 export interface ISerializedEntities {
-  entities: ISerializedEntity[],
+  entities: GameEntityDto[],
 }
+
 
 export class EntityHolder {
   private entities: Map<string, Entity> = new Map(); // this includes players
@@ -29,15 +53,54 @@ export class EntityHolder {
     }
   }
 
+  //=======================
+  // Getters
+  //========================
+  tryGet<T extends GameEntityDto>(uid: string): T | undefined {
+    return this.entities.get(uid) as T | undefined;
+  }
+
+  get<T extends GameEntityDto>(id: string): T {
+    const ent = this.tryGet<T>(id);
+    if (!ent) {
+      throw new Error(`Entity ${id} not found`);
+    }
+    return ent;
+  }
+
+  getActivePlayers() {
+    return Array.from(this.players.values());
+  }
+
+
+  //=======================
+  //    Create
+  //=======================
+
+  createEntity<T extends EntityDto, S extends GameEntityClassTypeLookup<T['type']>>(entity: T): S {
+    const entClass = GameEntityClassMap[entity.type];
+    return new entClass(entity) as S;
+  }
+
+  //=======================
+  // Update
+  //========================
+
   update(world: World, delta: number) {
     const entityArray = Array.from(this.entities.values());
     entityArray.forEach(entity => entity.update(delta));
     world.update(entityArray);
   }
 
+  setEntity(entityDto: GameEntityDto) {
+    const entity = this.createEntity(entityDto);
+    this.entities.set(entity.uid, entity);
+    this.game.stateDiff.updateEntity(entity.uid);
+  }
+
   serialize(): ISerializedEntities {
     return {
-      entities: Array.from(this.players.values()).map((p) => p.serialize(getEntityType(p)!)),
+      entities: Array.from(this.players.values()).map((p) => p.getDto()),
     }
   }
 
@@ -47,17 +110,16 @@ export class EntityHolder {
     this.game.stateDiff.addEntity(entity.uid);
   }
 
-  createOrGetPlayer(real: boolean, uid: string): Player {
+  createOrGetPlayer(uid: string): Player {
     // looking to see if we have already loaded this player, if so then return it
     const player = this.players.get(uid);
     if (player) {
-      player.isReal = real;
       // send an event to the game
       this.game.stateDiff.addEntity(player.uid);
       return player;
     }
 
-    const newPlayer = new Player(real, uid);
+    const newPlayer = Player.create(uid);
     this.players.set(newPlayer.uid, newPlayer);
     this.add(newPlayer);
     return newPlayer;
@@ -76,22 +138,6 @@ export class EntityHolder {
     }
     // if (entity instanceof Player)
     this.entities.delete(entity.uid);
-  }
-
-  tryGet<T extends Entity>(uid: string): T | undefined {
-    return this.entities.get(uid) as T | undefined;
-  }
-
-  get<T extends Entity>(id: string): T {
-    const ent = this.tryGet<T>(id);
-    if (!ent) {
-      throw new Error(`Entity ${id} not found`);
-    }
-    return ent;
-  }
-
-  getActivePlayers() {
-    return Array.from(this.players.values());
   }
 
   iterable() {

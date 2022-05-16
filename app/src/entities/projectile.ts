@@ -1,36 +1,28 @@
-import { Entity, FaceLocater, IEntityType } from "./entity";
-import { MovableEntity } from "./moveableEntity";
-import { IDim } from "../types";
-import { Vector3D } from "../utils/vector";
-import { Cube } from "./cube";
-import Random from "../utils/random";
+import { Entity, FaceLocater, IEntity } from "./entity";
+import { IEntityType } from "./entityHolder";
+import { MovableEntity, MovableEntityDto } from "./moveableEntity";
 
-export interface ISerializedProjectile {
-  uid: string;
-  pos: IDim;
-  vel: IDim;
-  type: IEntityType;
+
+export interface ProjectileDto extends MovableEntityDto {
+  type: IEntityType.Projectile;
 }
 
-export class Projectile extends MovableEntity {
+export class Projectile extends MovableEntity<ProjectileDto> implements IEntity {
+  // abstract values
+  static readonly type = IEntityType.Projectile;
+  get type() { return Projectile.type; }
+
   gravitable = false;
 
-  constructor(
-    public pos: Vector3D,
-    public vel: Vector3D,
-    public dim: IDim = [.2, .2, .2],
-  ) {
-    super();
-    this.uid = Random.randomString();
+  getDto(): ProjectileDto {
+    return {
+      ...this.baseDto(),
+      type: Projectile.type,
+    }
   }
 
-  static deserialize(data: ISerializedProjectile): Projectile {
-    const ent = new Projectile(
-      new Vector3D(data.pos),
-      new Vector3D(data.vel),
-    )
-
-    return ent;
+  set(data: ProjectileDto): void {
+    this.baseSet(data);
   }
 
   update(delta: number) {

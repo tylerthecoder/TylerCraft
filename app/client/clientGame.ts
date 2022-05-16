@@ -13,7 +13,7 @@ import { Player } from "../src/entities/player";
 import { XrCamera } from "./cameras/xrCamera";
 import { AbstractScript } from "@tylercraft/src/scripts/AbstractScript"
 import { GameStateDiff } from "@tylercraft/src/gameStateDiff";
-import { GameAction } from "@tylercraft/src/gameActions";
+import { GameAction, GameActionHolder } from "@tylercraft/src/gameActions";
 
 
 // This class should only read game and not write.
@@ -88,8 +88,6 @@ export class ClientGame extends AbstractScript {
 
   // Called by Game each tick,
   update(delta: number, stateDiff: GameStateDiff) {
-    // Update the controllers so they can append game actions
-    this.controllers.update(delta);
 
     for (const dirtyChunkId of stateDiff.getDirtyChunks()) {
       this.worldRenderer.blockUpdate(dirtyChunkId);
@@ -107,6 +105,8 @@ export class ClientGame extends AbstractScript {
 
   renderLoop(time: number) {
     const delta = time - this.totTime;
+    // Update the controllers so they can append game actions
+    this.controllers.update(delta);
     this.worldRenderer.render(this);
     this.pastDeltas.push(delta);
     this.totTime = time;
@@ -114,11 +114,17 @@ export class ClientGame extends AbstractScript {
 
   // this will be called by the super class when actions are received
   // Don't need to filter actions because they all originate from this class
-  onAction(action: GameAction) {
+  onAction(actionHolder: GameActionHolder) {
+    // Don't send rotate actions just yet
+    if (actionHolder.isType(GameAction.PlayerRotate)) {
+      return;
+    }
+
+
     if (this.game.multiPlayer) {
       SocketInterface.send({
         type: ISocketMessageType.actions,
-        actionPayload: action
+        actionPayload: actionHolder.getDto(),
       });
     }
   }

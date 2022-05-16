@@ -33,7 +33,7 @@ export default class WorldRenderer {
 
   blockUpdate(chunkId: string) {
     const chunkToUpdate = this.chunkRenderers.get(chunkId);
-    if (chunkToUpdate) chunkToUpdate.getBufferData(this.world);
+    if (chunkToUpdate) chunkToUpdate.getBufferData();
   }
 
   getFilter(camera: Camera): Vector3D | null {
@@ -55,7 +55,6 @@ export default class WorldRenderer {
       const renderer = new PlayerRenderer(entity);
       this.entityRenderers.set(entity.uid, renderer);
     } else if (
-      entity instanceof Cube ||
       entity instanceof Projectile
     ) {
       const renderer = new CubeRenderer(entity);
@@ -93,7 +92,7 @@ export default class WorldRenderer {
       this.blockUpdate(chunkPos.add(new Vector2D([0, -1])).toIndex());
       this.blockUpdate(chunkPos.add(new Vector2D([-1, 0])).toIndex());
 
-      chunkRenderer = new ChunkRenderer(chunk, this.world);
+      chunkRenderer = new ChunkRenderer(chunk);
       this.chunkRenderers.set(chunkPos.toIndex(), chunkRenderer);
     }
 
@@ -137,7 +136,7 @@ export default class WorldRenderer {
     const realRenderDistance = CONFIG.terrain.chunkSize * CONFIG.renderDistance;
     const cameraChunkPos = World.worldPosToChunkPos(camera.pos);
 
-    const cameraRotNorm = camera.rotCart.normalize();
+    const cameraRotNorm = camera.rot.toCartesianCoords().normalize();
 
     // this will hold the coords of ever chunk that was rendered.
     const renderedSet = new Set<string>();

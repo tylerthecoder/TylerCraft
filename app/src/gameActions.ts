@@ -47,7 +47,12 @@ export interface GameActionData extends Record<GameAction, unknown> {
 	[GameAction.Save]: undefined,
 }
 
-export class GameActionHolder<T extends GameAction> {
+export class GameActionDto<T extends GameAction = GameAction> {
+	readonly action: T;
+	readonly data: GameActionData[T];
+}
+
+export class GameActionHolder<T extends GameAction = GameAction> {
 	static create<T extends GameAction>(type: T, data: GameActionData[T]): GameActionHolder<T> {
 		return new GameActionHolder(type, data);
 	}
@@ -56,6 +61,13 @@ export class GameActionHolder<T extends GameAction> {
 		public type: T,
 		public data: GameActionData[T],
 	) { }
+
+	getDto(): GameActionDto<T> {
+		return {
+			action: this.type,
+			data: this.data,
+		};
+	}
 
 
 	isType<U extends GameAction>(type: U): this is GameActionHolder<U> {
@@ -146,6 +158,10 @@ export class GameActionHandler {
 			// TODO this might be unnecessary
 			player.rot = new Vector3D(playerRot);
 			player.moveDirections = directions;
+		}
+
+		if (action.isType(GameAction.Save)) {
+			this.game.save();
 		}
 	}
 

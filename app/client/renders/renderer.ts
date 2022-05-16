@@ -22,7 +22,7 @@ export class RenderData implements IRenderData {
 
   public pushData(renData: Partial<RenderData>) {
     if (this.shouldLog) {
-      console.log(renData);
+      // console.log(renData);
     }
     this.indices.push(...renData.indices ?? []);
     this.positions.push(...renData.positions ?? []);

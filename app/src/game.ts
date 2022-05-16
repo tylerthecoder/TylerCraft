@@ -5,8 +5,9 @@ import { CONFIG, IConfig, setConfig } from "./config";
 import { EntityHolder, ISerializedEntities } from "./entities/entityHolder";
 import Random from "./utils/random";
 import { GameAction, GameActionData, GameActionHandler, GameActionHolder } from "./gameActions";
-import { GameStateDiff, IGameDiff } from "./gameStateDiff";
+import { GameStateDiff, GameDiffDto } from "./gameStateDiff";
 import { AbstractScript } from "./scripts/AbstractScript";
+import { Vector2D } from "./utils/vector";
 
 export interface ISerializedGame {
   config: IConfig;
@@ -126,14 +127,13 @@ export class Game {
 
     this.gameScript.update(delta, this.stateDiff);
 
-    // TODO keep track of if an entity modifies a chunk and return it here
     this.entities.update(this.world, delta);
 
     this.stateDiff.clear();
 
     this.previousTime = now;
 
-    setTimeout(this.update.bind(this), 1000 / 20);
+    setTimeout(this.update.bind(this), 1000 / 40);
   }
 
 
@@ -142,15 +142,33 @@ export class Game {
   public handleAction<T extends GameAction, U extends GameActionData[T]>(action: T, actionData: U) {
     // console.log("Handling Action", action, actionData);
 
-    this.gameScript.onAction(action);
     const actionHolder = GameActionHolder.create(action, actionData)
+    this.gameScript.onAction(actionHolder);
     this.gameActionHandler.handle(actionHolder);
   }
 
 
   /** Currently only sent by server. Will quickly update the state of the game */
-  public handleStateDiff(stateDiff: IGameDiff) {
-    // TODO
+  public handleStateDiff(stateDiff: GameDiffDto) {
+    // Might not have to do this because the updating below will append the updates
+    this.stateDiff.appendDto(stateDiff);
+
+    console.log("Handling State Diff", stateDiff);
+    if (stateDiff.chunks.update) {
+      const updates = stateDiff.chunks.update;
+      for (const update of updates) {
+        const chunkPos = Vector2D.fromIndex(update.chunkPos);
+        this.world.updateChunk(chunkPos, update);
+      }
+    }
+
+    if (stateDiff.entities.update) {
+      const updates = stateDiff.entities.update;
+      for (const update of updates) {
+        this.entities.updateEntity(update);
+      }
+    }
+
   }
 
   addPlayer(realness: boolean, uid: string): Player {

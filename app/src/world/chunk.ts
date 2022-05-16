@@ -1,4 +1,4 @@
-import { Cube, getCubeObscuringPositions, isCubeFaceVisible } from "../entities/cube";
+import CubeHelpers, { Cube } from "../entities/cube";
 import { Entity } from "../entities/entity";
 import { IDim } from "../types";
 import { arrayMul, arrayAdd, arrayDot, arrayScalarMul, roundToNPlaces, arrayDistSquared } from "../utils";
@@ -10,7 +10,6 @@ import { ICameraData } from "../camera";
 import { BlockHolder } from "./blockHolder";
 import { faceVectorToFaceNumber, getOppositeCubeFace } from "../utils/face";
 import { World } from "./world";
-import { isPointInsideOfCube } from "../entities/cube"
 
 export interface ILookingAtData {
   newCubePos: Vector3D,
@@ -25,6 +24,7 @@ export interface ILookingAtData {
 export interface ISerializedChunk {
   chunkPos: string,
   cubes: ISerializedCube[],
+  chunkId: string;
   // vis: SerializedVisibleData,
 }
 
@@ -40,7 +40,7 @@ export class Chunk {
   pos: Vector3D;
 
   constructor(
-    public chunkPos: Vector2D,
+    public chunkPos: Vector2D
   ) {
     this.uid = this.chunkPos.toIndex();
     this.blocks = new BlockHolder(this);
@@ -51,11 +51,16 @@ export class Chunk {
     ]);
   }
 
-  serialize() {
+  serialize(): ISerializedChunk {
     return {
       chunkPos: this.chunkPos.toIndex(),
       cubes: this.blocks.serialize(),
+      chunkId: this.uid,
     }
+  }
+
+  set(data: ISerializedChunk) {
+    this.blocks = BlockHolder.deserialize(data.cubes, this);
   }
 
   static deserialize(chunkData: ISerializedChunk) {
@@ -97,7 +102,7 @@ export class Chunk {
 
       const cubeData = BLOCK_DATA.get(cube.type)!;
 
-      if (!cube.isCollide(ent)) return;
+      if (!CubeHelpers.isCollide(cube, ent)) return;
       if (!cubeData) return;
       if (cubeData.intangible) return;
 
@@ -137,37 +142,6 @@ export class Chunk {
     // scale cubes position by chunk size
     const scaledPos = worldPos.data.map(dim => Math.floor(dim / CONFIG.terrain.chunkSize));
     return scaledPos[0] === this.chunkPos.get(0) && scaledPos[2] === this.chunkPos.get(1);
-  }
-
-  private isFaceVisible(world: World, direction: Vector3D, currentCube: Cube): boolean {
-    const newFacePos = currentCube.pos.add(direction);
-
-    // This is outside of the world, so we don't have to show this face
-    if (newFacePos.get(1) < 0) return true;
-
-    const cube = world.getBlockFromWorldPoint(newFacePos);
-    // There isn't a block, so we should show the face
-    if (cube === null) return true;
-
-    const blockData = BLOCK_DATA.get(cube.type)!;
-    const currentBlockData = BLOCK_DATA.get(currentCube.type)!;
-
-    if (blockData.blockType === BlockType.fluid && currentBlockData.blockType === BlockType.fluid) {
-      return true;
-    }
-
-    if (blockData.blockType === BlockType.flat && currentCube.extraData) {
-      const faceIndex = faceVectorToFaceNumber(direction);
-      if (faceIndex === currentCube.extraData.face) {
-        return true
-      }
-    }
-
-    if (blockData.transparent) {
-      return false;
-    }
-
-    return true;
   }
 
   calculateVisibleFaces(world: World) {

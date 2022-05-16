@@ -1,9 +1,9 @@
 import { IConfig } from "./config";
-import { ISerializedEntity } from "./entities/entity";
+import { EntityDto } from "./entities/EntityDto";
 import { ISerializedEntities } from "./entities/entityHolder";
 import { Game, IGameMetadata, ISerializedGame } from "./game";
-import { GameAction } from "./gameActions";
-import { IGameDiff } from "./gameStateDiff";
+import { GameAction, GameActionDto } from "./gameActions";
+import { GameDiffDto } from "./gameStateDiff";
 import { Chunk, ISerializedChunk } from "./world/chunk";
 
 export type IDim = [number, number, number];
@@ -24,12 +24,12 @@ export enum StateUpdateType {
 
 export interface IAddEntityStateUpdate {
   action: StateUpdateType.AddEntity;
-  ent: ISerializedEntity;
+  ent: EntityDto;
 }
 
 export interface IUpdateEntityStateUpdate {
   action: StateUpdateType.UpdateEntity;
-  ent: Partial<ISerializedEntity>;
+  ent: Partial<EntityDto>;
 }
 
 export interface IEntityRemoveStateUpdate {
@@ -136,8 +136,8 @@ export interface ISocketMessage {
     pos: string,
     data: ISerializedChunk,
   }
-  gameDiffPayload?: IGameDiff;
+  gameDiffPayload?: GameDiffDto;
 
   // from either
-  actionPayload?: GameAction;
+  actionPayload?: GameActionDto;
 }
