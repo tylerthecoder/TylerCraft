@@ -1,11 +1,9 @@
 import { BLOCKS, ExtraBlockData } from "../blockdata";
-import { Cube } from "../entities/cube";
-import { deserializeCube, ISerializedCube, serializeCube } from "../serializer";
+import CubeHelpers, { Cube, CubeDto } from "../entities/cube";
 import { Vector3D } from "../utils/vector";
 import { Chunk } from "./chunk";
 
-export type ISerializedBlockerHolder = ISerializedCube[]
-
+export type ISerializedBlockerHolder = CubeDto[]
 
 export class BlockHolder {
   private blocks: Uint8Array;
@@ -22,10 +20,10 @@ export class BlockHolder {
   }
 
   serialize(): ISerializedBlockerHolder {
-    const blockData: ISerializedCube[] = [];
+    const blockData: CubeDto[] = [];
 
     this.iterate(cube => {
-      blockData.push(serializeCube(cube, cube.pos.toIndex()));
+      blockData.push(CubeHelpers.serialize(cube));
     });
 
     return blockData;
@@ -34,9 +32,8 @@ export class BlockHolder {
   static deserialize(blockData: ISerializedBlockerHolder, chunk: Chunk): BlockHolder {
     const blockHolder = new BlockHolder(chunk);
 
-    blockData.forEach(cubeData => {
-      const cube = deserializeCube(cubeData);
-      blockHolder.add(cube);
+    blockData.forEach(cube => {
+      blockHolder.add(CubeHelpers.deserialize(cube));
     });
 
     return blockHolder;
@@ -64,7 +61,7 @@ export class BlockHolder {
     const index = this.worldPosToIndex(worldPos);
     const block = this.blocks[index];
     if (block === BLOCKS.void) return null;
-    return new Cube(block, worldPos);
+    return CubeHelpers.createCube(block, worldPos);
   }
 
   getBlockData(worldPos: Vector3D) {
@@ -89,7 +86,7 @@ export class BlockHolder {
     this.blocks.forEach((blockType, index) => {
       if (blockType === BLOCKS.void) return;
       const blockPos = this.indexToWorldPos(index);
-      const cube = new Cube(blockType, blockPos);
+      const cube = CubeHelpers.createCube(blockType, blockPos);
       predicate(cube);
     });
   }
@@ -98,7 +95,7 @@ export class BlockHolder {
     this.blocks.forEach((blockType, index) => {
       if (blockType === BLOCKS.void) return;
       const blockPos = this.indexToWorldPos(index);
-      const cube = new Cube(blockType, blockPos);
+      const cube = CubeHelpers.createCube(blockType, blockPos);
       predicate(cube, index);
     });
   }

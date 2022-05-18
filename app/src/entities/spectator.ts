@@ -4,7 +4,7 @@ import Random from "../utils/random";
 import { Vector3D } from "../utils/vector";
 import { MovableEntity } from "./moveableEntity";
 
-export class Spectator extends MovableEntity {
+export class Spectator {
   // Entity overrides
   pos = new Vector3D([0, 5, 0]);
   dim: IDim = [1, 2, 1];
@@ -12,8 +12,8 @@ export class Spectator extends MovableEntity {
   intangible = true;
 
   constructor() {
-    super();
-    this.uid = Random.randomString()
+    // super();
+    // this.uid = Random.randomString()
   }
 
   // getActions(): IAction[] {
@@ -38,7 +38,7 @@ export class Spectator extends MovableEntity {
   // }
 
   update(delta: number) {
-    this.baseUpdate(delta)
+    // this.baseUpdate(delta)
   }
 
   hit(_entity: Entity, _where: FaceLocater) {/* NO-OP */ }

@@ -1,6 +1,6 @@
-import { EntityDto } from "./entities/EntityDto";
+import { EntityDto } from "./entities/entity";
+import { GameEntityDto } from "./entities/entityHolder";
 import { Game } from "./game";
-import { getEntityType } from "./serializer";
 import { ISerializedChunk } from "./world/chunk";
 
 export interface GameDiffDto {
@@ -95,7 +95,7 @@ export class GameStateDiff {
 		};
 
 		if (this.addEntitiesIds.length > 0) {
-			diff.entities.add = this.addEntitiesIds.map(id => this.game.entities.get(id)).map(entity => entity.serialize(getEntityType(entity)!));
+			diff.entities.add = this.addEntitiesIds.map(id => this.game.entities.get(id)).map(entity => entity.getDto());
 		}
 
 		if (this.removeEntitiesIds.length > 0) {
@@ -103,7 +103,7 @@ export class GameStateDiff {
 		}
 
 		if (this.updateEntitiesIds.length > 0) {
-			diff.entities.update = this.updateEntitiesIds.map(id => this.game.entities.get(id)).map(entity => entity.serialize(getEntityType(entity)!));
+			diff.entities.update = this.updateEntitiesIds.map(id => this.game.entities.get(id)).map(entity => entity.getDto());
 		}
 
 		if (this.updateChunkIds.length > 0) {

@@ -46,7 +46,7 @@ export class ClientGame extends AbstractScript {
     // Temp
     this.worldRenderer.shouldRenderMainPlayer = false;
 
-    this.mainPlayer = this.game.entities.createOrGetPlayer(true, getMyUid());
+    this.mainPlayer = this.game.entities.createOrGetPlayer(getMyUid());
 
     console.log("My UID", getMyUid());
 
@@ -156,11 +156,11 @@ export class ClientGame extends AbstractScript {
   }
 
   setUpSpectator() {
-    this.isSpectating = true;
-    this.spectator = new Spectator();
+    // this.isSpectating = true;
+    // this.spectator = new Spectator();
     // this.entities.add(this.spectator);
-    this.camera = new EntityCamera(this.spectator);
-    this.worldRenderer.shouldRenderMainPlayer = true;
+    // this.camera = new EntityCamera(this.spectator);
+    // this.worldRenderer.shouldRenderMainPlayer = true;
   }
 
   toggleCreative() {

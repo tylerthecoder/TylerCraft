@@ -166,13 +166,13 @@ export class MouseAndKeyController extends GameController {
 
   update(_delta: number) {
     if (this.clientGame.isSpectating) {
-      const spectator = this.clientGame.spectator;
-      this.ifHasKeyThenAddMeta(spectator, "w", MetaAction.forward);
-      this.ifHasKeyThenAddMeta(spectator, "s", MetaAction.backward);
-      this.ifHasKeyThenAddMeta(spectator, "d", MetaAction.right);
-      this.ifHasKeyThenAddMeta(spectator, "a", MetaAction.left);
-      this.ifHasKeyThenAddMeta(spectator, " ", MetaAction.up);
-      this.ifHasKeyThenAddMeta(spectator, "shift", MetaAction.down);
+      // const spectator = this.clientGame.spectator;
+      // this.ifHasKeyThenAddMeta(spectator, "w", MetaAction.forward);
+      // this.ifHasKeyThenAddMeta(spectator, "s", MetaAction.backward);
+      // this.ifHasKeyThenAddMeta(spectator, "d", MetaAction.right);
+      // this.ifHasKeyThenAddMeta(spectator, "a", MetaAction.left);
+      // this.ifHasKeyThenAddMeta(spectator, " ", MetaAction.up);
+      // this.ifHasKeyThenAddMeta(spectator, "shift", MetaAction.down);
     } else {
       const player = this.clientGame.mainPlayer;
 

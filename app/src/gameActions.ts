@@ -1,6 +1,6 @@
 import { BLOCKS, ExtraBlockData } from "./blockdata";
 import { ICameraData } from "./camera";
-import { Cube, isPointInsideOfCube } from "./entities/cube";
+import CubeHelpers, { Cube } from "./entities/cube";
 import { Player } from "./entities/player";
 import { Game } from "./game";
 import { IDim } from "./types";
@@ -100,16 +100,16 @@ export class GameActionHandler {
 		}
 
 		if (action.isType(GameAction.PlaceBlock)) {
-			console.log("Placing Block");
 			const { blockType, cameraData } = action.data;
 
 			const lookingData = this.game.world.lookingAt(cameraData);
 			if (!lookingData) return;
-			const cube = lookingData.entity as Cube;
+			const { cube } = lookingData;
+			if (!cube) return;
 
 			// check to see if any entity is in block
 			for (const entity of this.game.entities.iterable()) {
-				if (isPointInsideOfCube(cube, entity.pos)) {
+				if (CubeHelpers.isPointInsideOfCube(cube, entity.pos)) {
 					return;
 				}
 			}
@@ -123,7 +123,7 @@ export class GameActionHandler {
 				}
 			}
 
-			const newCube = new Cube(
+			const newCube = CubeHelpers.createCube(
 				blockType,
 				lookingData.newCubePos as Vector3D,
 				extraBlockData,
@@ -140,7 +140,8 @@ export class GameActionHandler {
 			const { cameraData } = action.data;
 			const lookingData = this.game.world.lookingAt(cameraData);
 			if (!lookingData) return;
-			const cube = lookingData.entity as Cube;
+			const cube = lookingData.cube;
+			if (!cube) return;
 			this.game.world.removeBlock(cube.pos);
 			return;
 		}

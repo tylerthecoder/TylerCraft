@@ -1,19 +1,18 @@
-import CubeHelpers, { Cube } from "../entities/cube";
+import CubeHelpers, { Cube, CUBE_DIM } from "../entities/cube";
 import { Entity } from "../entities/entity";
 import { IDim } from "../types";
 import { arrayMul, arrayAdd, arrayDot, arrayScalarMul, roundToNPlaces, arrayDistSquared } from "../utils";
 import { CONFIG } from "../config";
-import { Vector3D, Vector, Vector2D } from "../utils/vector";
-import { BlockType, BLOCK_DATA } from "../blockdata";
-import { ISerializedCube } from "../serializer";
+import { Vector3D, Vector2D } from "../utils/vector";
+import { BLOCK_DATA } from "../blockdata";
 import { ICameraData } from "../camera";
-import { BlockHolder } from "./blockHolder";
+import { BlockHolder, ISerializedBlockerHolder } from "./blockHolder";
 import { faceVectorToFaceNumber, getOppositeCubeFace } from "../utils/face";
 import { World } from "./world";
 
 export interface ILookingAtData {
   newCubePos: Vector3D,
-  entity?: Entity,
+  cube?: Cube,
   // The face number (0 - 5) that is being looked at
   face: number;
   dist: number;
@@ -23,7 +22,7 @@ export interface ILookingAtData {
 
 export interface ISerializedChunk {
   chunkPos: string,
-  cubes: ISerializedCube[],
+  cubes: ISerializedBlockerHolder,
   chunkId: string;
   // vis: SerializedVisibleData,
 }
@@ -92,7 +91,9 @@ export class Chunk {
   }
 
   // pass an entity and I'll push it out of me :)
-  pushOut(ent: Entity) {
+  pushOut(ent: Entity | Cube) {
+
+    const entDim = ent instanceof Entity ? ent.dim : CUBE_DIM;
 
     const ifCubeExistThenPushOut = (pos: Vector3D) => {
       pos.data = pos.data.map(Math.floor);
@@ -106,15 +107,17 @@ export class Chunk {
       if (!cubeData) return;
       if (cubeData.intangible) return;
 
-      ent.pushOut(cube);
+      if (ent instanceof Entity) {
+        ent.pushOut(cube);
+      }
     }
 
     // check the edges of the ent to see if it is intersecting the cubes
-    for (let x = 0; x < ent.dim[0]; x++) {
+    for (let x = 0; x < entDim[0]; x++) {
       const centerX = x + .5;
-      for (let y = 0; y < ent.dim[1]; y++) {
+      for (let y = 0; y < entDim[1]; y++) {
         const centerY = y + .5;
-        for (let z = 0; z < ent.dim[2]; z++) {
+        for (let z = 0; z < entDim[2]; z++) {
           const centerZ = z + .5;
           const center = ent.pos.add(new Vector3D([centerX, centerY, centerZ]));
 
@@ -160,8 +163,8 @@ export class Chunk {
     }
 
     this.blocks.iterate(cube => {
-      getCubeObscuringPositions(cube)
-        .filter(direction => isCubeFaceVisible(cube, world, direction))
+      CubeHelpers.getCubeObscuringPositions(cube)
+        .filter(direction => CubeHelpers.isCubeFaceVisible(cube, world, direction))
         .forEach(direction => addVisibleFace(cube, direction));
     });
 
@@ -182,7 +185,7 @@ export class Chunk {
       cubeData.faceVectors.forEach(directionVector => {
         const faceNormal = directionVector.data as IDim;
         // a vector that is normalized by the cubes dimensions
-        const faceVector = arrayMul(cube.dim, faceNormal.map(n => n === 1 ? 1 : 0) as IDim);
+        const faceVector = arrayMul(CUBE_DIM, faceNormal.map(n => n === 1 ? 1 : 0) as IDim);
 
         const pointOnFace = arrayAdd(cube.pos.data, faceVector);
 
@@ -209,7 +212,7 @@ export class Chunk {
         }
 
         // check to see if this intersection is within the face (Doing the whole cube for now, will switch to face later)
-        const hit = isPointInsideOfCube(cube, new Vector3D(roundedIntersection));
+        const hit = CubeHelpers.isPointInsideOfCube(cube, new Vector3D(roundedIntersection));
 
         if (hit) {
           // we have determined that the camera is looking at this face, now see if this is the point
@@ -219,7 +222,7 @@ export class Chunk {
           const pointDist = Math.abs(arrayDistSquared(cameraPos, roundedIntersection));
 
           if (pointDist < bestFace[0]) {
-            const newCubePos = arrayAdd(cube.pos.data, arrayMul(cube.dim, faceNormal)) as IDim;
+            const newCubePos = arrayAdd(cube.pos.data, arrayMul(CUBE_DIM, faceNormal)) as IDim;
             bestFace = [pointDist, newCubePos, directionVector, cube];
           }
         }
@@ -229,14 +232,14 @@ export class Chunk {
     }, defaultBest)
 
     // this means we didn't find a block
-    if (newCubePosData[0] === Infinity) {
+    if (newCubePosData[0] === Infinity || newCubePosData[3] === undefined) {
       return false;
     }
 
     return {
       newCubePos: new Vector3D(newCubePosData[1]),
       face: getOppositeCubeFace(faceVectorToFaceNumber(newCubePosData[2])),
-      entity: newCubePosData[3],
+      cube: newCubePosData[3],
       dist: newCubePosData[0],
     }
   }

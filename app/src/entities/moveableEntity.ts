@@ -8,7 +8,7 @@ export interface MovableEntityDto extends EntityDto {
   vel: IDim;
 }
 
-export abstract class MovableEntity<T extends MovableEntityDto> extends Entity<T> {
+export abstract class MovableEntity<T extends MovableEntityDto = MovableEntityDto> extends Entity<T> {
   vel = Vector3D.zero;
   /**
    * (radius (1), theta: [0, 2pi], phi: [0, pi])
@@ -30,7 +30,7 @@ export abstract class MovableEntity<T extends MovableEntityDto> extends Entity<T
   }
 
   protected baseSet(data: Partial<MovableEntityDto>) {
-    this.baseSet(data);
+    super.baseSet(data);
     if (data.vel) {
       this.vel = new Vector3D(data.vel);
     }

@@ -28,7 +28,7 @@ export default class Players {
   addPlayer(uid: string, ws: wSocket): void {
     // generate a random ID for the new player
 
-    const player = this.game.addPlayer(true, uid);
+    const player = this.game.addPlayer(uid);
 
     // send a welcoming message to the new player
     const welcomeMessage: ISocketMessage = {
@@ -81,7 +81,7 @@ export default class Players {
     this.sendMessageToAll(newPlayerMessage, ws);
 
     // FINISH THEM!
-    this.game.removeEntity(player.uid);
+    this.game.entities.remove(player.uid);
     this.players.delete(ws);
 
     console.log(`Remove Player! ${this.game.entities.getActivePlayers().length} players`);

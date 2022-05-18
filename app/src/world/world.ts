@@ -7,6 +7,7 @@ import { CONFIG } from "../config";
 import { Vector3D, Vector2D } from "../utils/vector";
 import { ICameraData } from "../camera";
 import { Spectator } from "../entities/spectator";
+import { GameEntity } from "../entities/entityHolder";
 
 export interface ISerializedWorld {
   chunks: ISerializedChunk[];
@@ -217,11 +218,12 @@ export class World {
   }
 
   removeBlock(cubePos: Vector3D) {
+    console.log("Removing block", cubePos);
     const chunk = this.getChunkFromWorldPoint(cubePos);
     if (!chunk) return;
+    chunk.blocks.remove(cubePos)
     chunk.calculateVisibleFaces(this);
     this.checkSurroundingChunkForUpdate(chunk, cubePos);
-    chunk.blocks.remove(cubePos)
     this.game.stateDiff.updateChunk(chunk.uid);
   }
 

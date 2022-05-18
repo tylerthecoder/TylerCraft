@@ -1,6 +1,6 @@
 import { IDim } from "../types";
 import { Vector3D } from "../utils/vector";
-import CubeHelpers from "./cube";
+import CubeHelpers, { Cube, CUBE_DIM, HitBox } from "./cube";
 import { IEntityType } from "./entityHolder";
 
 export enum RenderType {
@@ -62,7 +62,7 @@ export abstract class Entity<DTO extends EntityDto = EntityDto, DtoNoType = Omit
     }
   }
 
-  abstract set(data: Partial<DtoNoType>): void;
+  abstract set<T extends Partial<DtoNoType>>(data: T): void;
 
   protected baseSet(data: Partial<EntityDto>) {
     if (data.pos) {
@@ -77,7 +77,7 @@ export abstract class Entity<DTO extends EntityDto = EntityDto, DtoNoType = Omit
   }
 
   abstract update(delta: number): void;
-  abstract hit(entity: Entity, where: FaceLocater): void;
+  abstract hit(entity: Entity | Cube, where: FaceLocater): void;
 
   setUid(uid: string) {
     this.uid = uid;
@@ -88,17 +88,19 @@ export abstract class Entity<DTO extends EntityDto = EntityDto, DtoNoType = Omit
   }
 
   // push me (this) out of the supplied entity (ent)
-  pushOut(ent: Entity): FaceLocater {
+  pushOut(ent: Entity | Cube): FaceLocater {
     let min = [Infinity];
 
     // 0 -> 1, 1 -> 0
     const switchDir = (dir: number) => (dir + 1) % 2;
 
+    const entDim = ent instanceof Entity ? ent.dim : CUBE_DIM;
+
     for (let i = 0; i < 3; i++) {
       for (let dir = 0; dir <= 1; dir++) {
         // calculate the distance from a face on the player to a face on the ent
         const p = this.pos.get(i) + this.dim[i] * dir;
-        const c = ent.pos.get(i) + ent.dim[i] * switchDir(dir);
+        const c = ent.pos.get(i) + entDim[i] * switchDir(dir);
         const dist = Math.abs(c - p);
         // find the shortest distance (that is best one to move)
         if (dist < min[0]) {
@@ -109,7 +111,7 @@ export abstract class Entity<DTO extends EntityDto = EntityDto, DtoNoType = Omit
 
     const [, i, dir] = min;
 
-    const newPos = ent.pos.get(i) + ent.dim[i] * switchDir(dir) - this.dim[i] * dir;
+    const newPos = ent.pos.get(i) + entDim[i] * switchDir(dir) - this.dim[i] * dir;
 
     this.pos.set(i, newPos);
 
@@ -117,10 +119,13 @@ export abstract class Entity<DTO extends EntityDto = EntityDto, DtoNoType = Omit
       side: i,
       dir: dir as 0 | 1,
     });
-    ent.hit(this, {
-      side: i,
-      dir: dir as 0 | 1,
-    })
+
+    if (ent instanceof Entity) {
+      ent.hit(this, {
+        side: i,
+        dir: dir as 0 | 1,
+      })
+    }
 
     return {
       side: i,

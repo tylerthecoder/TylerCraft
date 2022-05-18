@@ -10,10 +10,8 @@ import { SphereRenderer } from "./sphereRender";
 import { CONFIG } from "../../src/config";
 import { Vector2D, Vector3D } from "../../src/utils/vector";
 import { Camera } from "../../src/camera";
-import { Cube } from "../../src/entities/cube";
 import { Player } from "../../src/entities/player";
 import { Projectile } from "../../src/entities/projectile";
-import { Ball } from "../../src/entities/ball";
 import { BLOCKS } from "../../src/blockdata";
 import { PlayerRenderer } from "./playerRender";
 
@@ -56,11 +54,6 @@ export default class WorldRenderer {
       this.entityRenderers.set(entity.uid, renderer);
     } else if (
       entity instanceof Projectile
-    ) {
-      const renderer = new CubeRenderer(entity);
-      this.entityRenderers.set(entity.uid, renderer);
-    } else if (
-      entity instanceof Ball
     ) {
       const renderer = new SphereRenderer(entity);
       this.entityRenderers.set(entity.uid, renderer);

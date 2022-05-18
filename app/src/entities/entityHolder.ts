@@ -1,5 +1,4 @@
 import { Game } from "../game";
-import { deserializeEntity, getEntityType } from "../serializer";
 import { World } from "../world/world";
 import { Entity, EntityDto } from "./entity";
 import { Player } from "./player";
@@ -17,12 +16,15 @@ export const GameEntityClassMap = {
 }
 
 // Helper Types
-type ValueOfClass<C extends GameEntityClass> = C extends (new (...args: any[]) => infer T) ? T : never;
+type ValueOfClass<C extends GameEntityTypeOfClass> = C extends (new (...args: any[]) => infer T) ? T : never;
+type Distribute<U> = U extends GameEntityTypeOfClass ? ValueOfClass<U> : never;
+
 export type GameEntityDtoMap = {
   [key in keyof typeof GameEntityClassMap]: ValueOfClass<typeof GameEntityClassMap[key]> extends Entity<infer DTO> ? DTO : never;
 }
 export type GameEntityDto = GameEntityDtoMap[keyof GameEntityDtoMap];
-export type GameEntityClass = typeof GameEntityClassMap[keyof typeof GameEntityClassMap];
+export type GameEntityTypeOfClass = typeof GameEntityClassMap[keyof typeof GameEntityClassMap];
+export type GameEntity = Distribute<GameEntityTypeOfClass>;
 type GameEntityClassTypeLookup<T extends IEntityType> = ValueOfClass<typeof GameEntityClassMap[T]>;
 
 
@@ -42,7 +44,7 @@ export class EntityHolder {
   ) {
     if (data) {
       const entityMapData: [uid: string, entity: Entity][] = data.entities.
-        map(e => [e.uid, deserializeEntity(e)]);
+        map(e => [e.uid, this.createEntity(e)]);
       this.entities = new Map(entityMapData);
 
       const playersMapData: [uid: string, player: Player][] = Array.from(this.entities.values()).
@@ -56,11 +58,11 @@ export class EntityHolder {
   //=======================
   // Getters
   //========================
-  tryGet<T extends GameEntityDto>(uid: string): T | undefined {
+  tryGet<T extends Entity>(uid: string): T | undefined {
     return this.entities.get(uid) as T | undefined;
   }
 
-  get<T extends GameEntityDto>(id: string): T {
+  get<T extends Entity>(id: string): T {
     const ent = this.tryGet<T>(id);
     if (!ent) {
       throw new Error(`Entity ${id} not found`);
@@ -92,7 +94,13 @@ export class EntityHolder {
     world.update(entityArray);
   }
 
-  setEntity(entityDto: GameEntityDto) {
+  updateEntity<T extends EntityDto>(entityDto: Partial<T> & { uid: string }) {
+    const entity = this.entities.get(entityDto.uid);
+    if (!entity) return;
+    entity.set(entityDto as any);
+  }
+
+  setEntity(entityDto: EntityDto) {
     const entity = this.createEntity(entityDto);
     this.entities.set(entity.uid, entity);
     this.game.stateDiff.updateEntity(entity.uid);

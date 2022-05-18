@@ -21,7 +21,7 @@ export class Projectile extends MovableEntity<ProjectileDto> implements IEntity 
     }
   }
 
-  set(data: ProjectileDto): void {
+  set(data: Partial<ProjectileDto>): void {
     this.baseSet(data);
   }
 

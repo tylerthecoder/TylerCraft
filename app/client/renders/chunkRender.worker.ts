@@ -1,5 +1,5 @@
 import { BlockType, BLOCK_DATA } from "../../src/blockdata";
-import { Cube } from "../../src/entities/cube";
+import { Cube, CUBE_DIM } from "../../src/entities/cube";
 import { arrayAdd, arrayMul, arraySub } from "../../src/utils";
 import { Vector, Vector3D } from "../../src/utils/vector";
 import { Chunk, ISerializedChunk } from "../../src/world/chunk";
@@ -127,7 +127,7 @@ const getDataForBlock = (chunk: Chunk, cube: Cube, offset: number, surroundingCh
           // add the 3 dimension to the square
           edge.splice(dim, 0, dir);
 
-          const size = cube.dim;
+          const size = CUBE_DIM;
 
           // multiply edges by dimensions
           const cords = arrayMul(edge, size);

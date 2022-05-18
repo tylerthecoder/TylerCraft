@@ -35,10 +35,8 @@ export class EntityCamera extends Camera {
     // set my rot as my entities rot
     if (this.perspective === PlayerPerspective.ThirdPersonFront) {
       this.rot = this.entity.rot.add(new Vector3D([0, Math.PI, 0]));
-      this.rotCart = this.rot.toCartesianCoords();
     } else {
       this.rot = this.entity.rot.copy();
-      this.rotCart = this.entity.rotCart.copy();
     }
   }
 

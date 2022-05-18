@@ -171,12 +171,8 @@ export class Game {
 
   }
 
-  addPlayer(realness: boolean, uid: string): Player {
-    return this.entities.createOrGetPlayer(realness, uid);
-  }
-
-  removeEntity(uid: string) {
-    this.entities.remove(uid);
+  addPlayer(uid: string): Player {
+    return this.entities.createOrGetPlayer(uid);
   }
 
   save() {

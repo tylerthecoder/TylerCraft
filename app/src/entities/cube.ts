@@ -3,7 +3,13 @@ import { Vector3D } from "../utils/vector";
 import { faceNumberToFaceVector, faceVectorToFaceNumber } from "../utils/face";
 import { World } from "../world/world";
 import { IDim } from "../types";
+import { Entity, FaceLocater } from "./entity";
 
+export type CubeDto = {
+  type: BLOCKS;
+  pos: IDim;
+  extraData?: ExtraBlockData;
+}
 
 export type Cube = {
   type: BLOCKS;
@@ -18,11 +24,11 @@ export type Box = {
 
 export type HitBox = Box & {
   dim: IDim;
-  hit: (entity: Entity, where: FaceLocater) => void;
+  hit?: (entity: Entity, where: FaceLocater) => void;
 }
 
 
-const CUBE_DIM: IDim = [1, 1, 1];
+export const CUBE_DIM: IDim = [1, 1, 1];
 
 class CubeHelpersClass {
 
@@ -32,6 +38,22 @@ class CubeHelpersClass {
       pos,
       extraData,
     };
+  }
+
+  deserialize(cubeDto: CubeDto): Cube {
+    return {
+      type: cubeDto.type,
+      pos: new Vector3D(cubeDto.pos),
+      extraData: cubeDto.extraData,
+    }
+  }
+
+  serialize(cube: Cube): CubeDto {
+    return {
+      type: cube.type,
+      pos: cube.pos.data as IDim,
+      extraData: cube.extraData,
+    }
   }
 
   isPointInsideOfCube(cube: Cube, point: Vector3D) {

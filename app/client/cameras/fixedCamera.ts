@@ -10,6 +10,6 @@ export class FixedCamera extends Camera {
     const speed = 0.002;
     const dx = x * speed;
     const dy = y * speed;
-    this.rotate(new Vector3D([1, dx, dy]));
+    this.rot = new Vector3D([1, dx, dy]);
   }
 }

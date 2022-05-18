@@ -1,8 +1,6 @@
 import { RenderData, Renderer } from "./renderer";
-import { canvas } from "../canvas";
 import { Camera } from "../../src/camera";
 import { Entity } from "../../src/entities/entity";
-import { Ball } from "../../src/entities/ball";
 
 export class SphereRenderer extends Renderer {
   radius = 1;
@@ -10,7 +8,7 @@ export class SphereRenderer extends Renderer {
   constructor(public entity: Entity) {
     super();
 
-    this.radius = (entity as Ball).radius;
+    this.radius = entity.dim[0];
 
     this.setup();
   }

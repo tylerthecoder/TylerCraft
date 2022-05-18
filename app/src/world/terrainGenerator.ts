@@ -5,13 +5,12 @@ import { Chunk } from "./chunk";
 import { BLOCKS } from "../blockdata";
 import CubeHelpers, { Cube } from "../entities/cube";
 import { World } from "./world";
-import { serializeCube, deserializeCube, ISerializedCube } from "../serializer";
 import { BiomeGenerator, Biome } from "./biome";
 
 export interface ISerializedTerrainGenerator {
   blocksToRender: Array<{
     chunkPos: string;
-    cubes: ISerializedCube[];
+    cubes: Cube[];
   }>
 }
 
@@ -28,7 +27,7 @@ export class TerrainGenerator {
   ) {
     if (serializedData) {
       const blocksToRender = serializedData.blocksToRender.map(({ chunkPos, cubes }) => {
-        return [chunkPos, cubes.map(deserializeCube)] as [string, Cube[]];
+        return [chunkPos, cubes] as [string, Cube[]];
       });
 
       this.blocksToRender = new Map(blocksToRender);
@@ -43,7 +42,7 @@ export class TerrainGenerator {
       blocksToRender: Array.from(this.blocksToRender.entries()).map(([chunkPos, cubes]) => {
         return {
           chunkPos,
-          cubes: cubes.map(cube => serializeCube(cube))
+          cubes,
         }
       }),
     }
