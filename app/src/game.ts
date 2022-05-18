@@ -162,6 +162,14 @@ export class Game {
       }
     }
 
+    if (stateDiff.entities?.add) {
+      const adds = stateDiff.entities.add;
+      for (const add of adds) {
+        const ent = this.entities.createEntity(add);
+        this.entities.add(ent);
+      }
+    }
+
     if (stateDiff.entities.update) {
       const updates = stateDiff.entities.update;
       for (const update of updates) {
@@ -169,6 +177,12 @@ export class Game {
       }
     }
 
+    if (stateDiff.entities.remove) {
+      const removes = stateDiff.entities.remove;
+      for (const remove of removes) {
+        this.entities.remove(remove);
+      }
+    }
   }
 
   addPlayer(uid: string): Player {

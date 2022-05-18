@@ -80,6 +80,7 @@ export class EntityHolder {
   //=======================
 
   createEntity<T extends EntityDto, S extends GameEntityClassTypeLookup<T['type']>>(entity: T): S {
+    console.log("Creating entity of type: ", entity.type);
     const entClass = GameEntityClassMap[entity.type];
     return new entClass(entity) as S;
   }

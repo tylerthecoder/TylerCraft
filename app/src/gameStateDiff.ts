@@ -1,5 +1,4 @@
 import { EntityDto } from "./entities/entity";
-import { GameEntityDto } from "./entities/entityHolder";
 import { Game } from "./game";
 import { ISerializedChunk } from "./world/chunk";
 
@@ -139,6 +138,4 @@ export class GameStateDiff {
 		this.removeEntitiesIds.push(...dto.entities.remove || []);
 		this.updateEntitiesIds.push(...dto.entities.update?.map(e => e.uid) || []);
 	}
-
-
 }

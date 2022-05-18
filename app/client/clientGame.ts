@@ -116,9 +116,9 @@ export class ClientGame extends AbstractScript {
   // Don't need to filter actions because they all originate from this class
   onAction(actionHolder: GameActionHolder) {
     // Don't send rotate actions just yet
-    if (actionHolder.isType(GameAction.PlayerRotate)) {
-      return;
-    }
+    // if (actionHolder.isType(GameAction.PlayerRotate)) {
+    //   return;
+    // }
 
 
     if (this.game.multiPlayer) {

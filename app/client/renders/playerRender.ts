@@ -139,13 +139,13 @@ export class PlayerRenderer extends Renderer {
 
 
     // Draw hands if they have them
-    if (this.player.rightHandPosition) {
-      this.drawHand(this.player.rightHandPosition);
-    }
+    // if (this.player.rightHandPosition) {
+    //   this.drawHand(this.player.rightHandPosition);
+    // }
 
-    if (this.player.leftHandPosition) {
-      this.drawHand(this.player.leftHandPosition);
-    }
+    // if (this.player.leftHandPosition) {
+    //   this.drawHand(this.player.leftHandPosition);
+    // }
 
 
 

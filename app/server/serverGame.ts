@@ -83,10 +83,11 @@ export class ServerGame extends AbstractScript {
     // Send the combined state diff to all clients
     for (const [ws, diff] of clientDiffs.entries()) {
       if (diff.hasData()) {
-        console.log("Sending diff", diff)
+        const diffData = diff.get();
+        console.log("Sending diff", diffData)
         SocketInterface.send(ws, {
           type: ISocketMessageType.gameDiff,
-          gameDiffPayload: diff.get(),
+          gameDiffPayload: diffData,
         });
       }
     }

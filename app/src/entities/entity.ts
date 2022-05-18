@@ -40,6 +40,22 @@ export interface IEntity {
 }
 
 export abstract class Entity<DTO extends EntityDto = EntityDto, DtoNoType = Omit<DTO, "type">> {
+  // Used to mark this entity as changed.
+  // This will then be sent to the server
+  dirty = false;
+
+  /* make dirty
+  * TODO pass in the properties that have changed
+  */
+  protected soil() {
+    this.dirty = true
+  }
+
+  public get isDirty() {
+    return this.dirty;
+  }
+
+
   pos: Vector3D = new Vector3D([0, 0, 0]);
   dim: IDim = [1, 1, 1];
   uid = "";
@@ -65,6 +81,7 @@ export abstract class Entity<DTO extends EntityDto = EntityDto, DtoNoType = Omit
   abstract set<T extends Partial<DtoNoType>>(data: T): void;
 
   protected baseSet(data: Partial<EntityDto>) {
+    this.soil();
     if (data.pos) {
       this.pos = new Vector3D(data.pos);
     }
@@ -126,6 +143,8 @@ export abstract class Entity<DTO extends EntityDto = EntityDto, DtoNoType = Omit
         dir: dir as 0 | 1,
       })
     }
+
+    this.soil();
 
     return {
       side: i,

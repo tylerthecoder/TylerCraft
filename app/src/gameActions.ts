@@ -1,6 +1,6 @@
 import { BLOCKS, ExtraBlockData } from "./blockdata";
 import { ICameraData } from "./camera";
-import CubeHelpers, { Cube } from "./entities/cube";
+import CubeHelpers from "./entities/cube";
 import { Player } from "./entities/player";
 import { Game } from "./game";
 import { IDim } from "./types";
@@ -89,6 +89,7 @@ export class GameActionHandler {
 			const { playerRot, playerUid } = action.data;
 			const player = this.getPlayer(playerUid);
 			player.rot = new Vector3D(playerRot);
+			this.game.stateDiff.updateEntity(player.uid);
 			return;
 		}
 
@@ -96,6 +97,7 @@ export class GameActionHandler {
 			const { playerUid } = action.data;
 			const player = this.getPlayer(playerUid);
 			player.tryJump();
+			this.game.stateDiff.updateEntity(player.uid);
 			return;
 		}
 
@@ -150,6 +152,7 @@ export class GameActionHandler {
 			const { playerUid, pos } = action.data;
 			const player = this.game.entities.get<Player>(playerUid);
 			player.pos = new Vector3D(pos);
+			this.game.stateDiff.updateEntity(player.uid);
 			return;
 		}
 
@@ -159,6 +162,7 @@ export class GameActionHandler {
 			// TODO this might be unnecessary
 			player.rot = new Vector3D(playerRot);
 			player.moveDirections = directions;
+			this.game.stateDiff.updateEntity(player.uid);
 		}
 
 		if (action.isType(GameAction.Save)) {

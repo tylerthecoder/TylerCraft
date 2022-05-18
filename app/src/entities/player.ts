@@ -8,6 +8,8 @@ import { IEntityType } from "./entityHolder";
 
 export interface PlayerDto extends MovableEntityDto {
   type: IEntityType.Player;
+  moveDirections: Direction[];
+  rot: IDim;
   health: {
     current: number;
     max: number;
@@ -61,6 +63,8 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
       ...this.baseDto(),
       type: IEntityType.Player,
       health: this.health,
+      rot: this.rot.data as IDim,
+      moveDirections: this.moveDirections,
     }
   }
 
@@ -68,6 +72,12 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     super.baseSet(player);
     if (player.health) {
       this.health = player.health;
+    }
+    if (player.moveDirections) {
+      this.moveDirections = player.moveDirections;
+    }
+    if (player.rot) {
+      this.rot = new Vector3D(player.rot);
     }
   }
 
@@ -157,10 +167,9 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     this.baseUpdate(delta);
 
     if (this.pos.get(1) < -10) {
-      this.pos.set(1, 0);
+      this.pos.set(1, 2);
       this.vel.set(1, -.1);
     }
-
   }
 
   hit(_entity: Entity, where: FaceLocater) {

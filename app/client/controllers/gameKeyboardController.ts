@@ -24,9 +24,12 @@ export class MouseAndKeyController extends GameController {
   private eGameNameInput = document.getElementById("gameNameInput") as HTMLInputElement;
   private eSaveButton = document.getElementById("saveButton") as HTMLButtonElement;
 
+  private hasMouseMoved = false;
 
 
-
+  get player() {
+    return this.clientGame.mainPlayer;
+  }
 
   constructor(
     clientGame: ClientGame
@@ -74,11 +77,8 @@ export class MouseAndKeyController extends GameController {
 
         this.clientGame.camera.rotateBy(moveX, moveY);
 
-        // Send this data to the server
-        this.game.handleAction(GameAction.PlayerRotate, {
-          playerRot: this.clientGame.mainPlayer.rot.data as IDim,
-          playerUid: this.clientGame.mainPlayer.uid,
-        });
+        this.hasMouseMoved = true;
+
       }
     });
 
@@ -147,6 +147,10 @@ export class MouseAndKeyController extends GameController {
       this.currentMoveDirections.add(Direction.Right);
     } else if (key === "p") {
       this.game.handleAction(GameAction.Save, undefined)
+    } else if (key === " ") {
+      this.game.handleAction(GameAction.PlayerJump, {
+        playerUid: this.player.uid,
+      })
     }
   }
 
@@ -165,6 +169,18 @@ export class MouseAndKeyController extends GameController {
   }
 
   update(_delta: number) {
+
+    if (this.hasMouseMoved) {
+      // Send this data to the server
+      this.game.handleAction(GameAction.PlayerRotate, {
+        playerRot: this.clientGame.mainPlayer.rot.data as IDim,
+        playerUid: this.clientGame.mainPlayer.uid,
+      });
+      this.hasMouseMoved = false;
+    }
+
+
+
     if (this.clientGame.isSpectating) {
       // const spectator = this.clientGame.spectator;
       // this.ifHasKeyThenAddMeta(spectator, "w", MetaAction.forward);
@@ -217,7 +233,7 @@ export class MouseAndKeyController extends GameController {
       }
 
       // if there were any actions performed
-      if (player.metaActions.size > 0) {
+      if (player.moveDirections.length > 0) {
         this.numOfUpdates++;
 
         if (this.numOfUpdates > 10) {
