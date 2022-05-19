@@ -2,10 +2,10 @@ import { IDim } from "./types";
 
 
 export function roundToNPlaces(num: number, n: number) {
-  // return Math.round((num + Number.EPSILON) * powerOfTen) / powerOfTen
-  // const t = Math.round(num * powerOfTen) / powerOfTen
-  // return t;
-  return parseFloat(num.toFixed(n));
+  // // const t = Math.round(num * powerOfTen) / powerOfTen
+  // // return t;
+  // return parseFloat(num.toFixed(n));
+  return Math.round((num + Number.EPSILON) * 10 ** n) / 10 ** n
 }
 
 export function bindValue(number: number, min: number, max: number, wrap?: boolean) {

@@ -1,4 +1,4 @@
-import { Cube } from "../entities/cube";
+import CubeHelpers, { Cube } from "../entities/cube";
 import { Chunk, ILookingAtData, ISerializedChunk } from "./chunk";
 import { Entity } from "../entities/entity";
 import { Game } from "../game";
@@ -6,8 +6,6 @@ import { IChunkReader } from "../types";
 import { CONFIG } from "../config";
 import { Vector3D, Vector2D } from "../utils/vector";
 import { ICameraData } from "../camera";
-import { Spectator } from "../entities/spectator";
-import { GameEntity } from "../entities/entityHolder";
 
 export interface ISerializedWorld {
   chunks: ISerializedChunk[];
@@ -208,6 +206,14 @@ export class World {
   }
 
   addBlock(cube: Cube) {
+    // Check if an entity is in the way
+    for (const entity of this.game.entities.iterable()) {
+      if (CubeHelpers.isPointInsideOfCube(cube, entity.pos)) {
+        console.log("Not adding block, entity in the way");
+        return;
+      }
+    }
+
     console.log("Adding block", cube, this.game.gameId);
     const chunk = this.getChunkFromWorldPoint(cube.pos);
     if (!chunk) return;

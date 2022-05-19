@@ -107,7 +107,7 @@ export class HudRenderer extends Renderer {
     ));
 
     this.eToolbeltItems.forEach((item, index) => {
-      if (index === this.game.selectedBlock) {
+      if (index === this.game.mainPlayer?.belt.selectedIndex) {
         item.classList.add("selected")
       } else {
         item.classList.remove("selected");
@@ -125,7 +125,7 @@ export class HudRenderer extends Renderer {
   }
 
   drawHealthBar() {
-    const { current, max } = this.game.mainPlayer.health;
+    const { current, max } = this.game.mainPlayer?.health;
     const healthPercent = current / max;
     this.eHealthBar.style.width = `${healthPercent * 100}%`;
   }
@@ -144,9 +144,9 @@ export class HudRenderer extends Renderer {
 
     this.drawStats(camera);
 
-    if (this.lastSelected !== this.game.selectedBlock) {
+    if (this.lastSelected !== this.game.mainPlayer.belt.selectedIndex) {
       this.drawBelt();
-      this.lastSelected = this.game.selectedBlock;
+      this.lastSelected = this.game.mainPlayer.belt.selectedIndex;
     }
 
     // draw selected items

@@ -19,6 +19,9 @@ Make entities with logic
 - One entity that stays in place and knows the entities around it
 - One entity that moves around
 
+Make fireball game on the engine
+After fireball game publish to internet
+
 - Add path finding algorithm
 
 # 3d

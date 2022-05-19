@@ -24,7 +24,7 @@ export class ClientGame extends AbstractScript {
   spectator: Spectator;
   isSpectating = false;
   camera: Camera;
-  selectedBlock: BLOCKS = BLOCKS.stone;
+  // selectedBlock: BLOCKS = BLOCKS.stone;
   numOfBlocks = 10;
   totTime = 0;
   pastDeltas: number[] = [];
@@ -131,8 +131,8 @@ export class ClientGame extends AbstractScript {
 
   placeBlock() {
     this.game.handleAction(GameAction.PlaceBlock, {
-      blockType: this.selectedBlock,
       cameraData: this.camera.getCameraData(),
+      playerUid: this.mainPlayer.uid,
     });
   }
 

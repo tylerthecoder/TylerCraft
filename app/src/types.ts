@@ -1,5 +1,6 @@
 import { IConfig } from "./config";
-import { GameEntityDto, ISerializedEntities } from "./entities/entityHolder";
+import { EntityDto } from "./entities/entity";
+import { ISerializedEntities } from "./entities/entityHolder";
 import { Game, IGameMetadata, ISerializedGame } from "./game";
 import { GameActionDto } from "./gameActions";
 import { GameDiffDto } from "./gameStateDiff";
@@ -23,12 +24,12 @@ export enum StateUpdateType {
 
 export interface IAddEntityStateUpdate {
   action: StateUpdateType.AddEntity;
-  ent: GameEntityDto;
+  ent: EntityDto;
 }
 
 export interface IUpdateEntityStateUpdate {
   action: StateUpdateType.UpdateEntity;
-  ent: Partial<GameEntityDto>;
+  ent: Partial<EntityDto>;
 }
 
 export interface IEntityRemoveStateUpdate {

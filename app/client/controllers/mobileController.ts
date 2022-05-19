@@ -1,3 +1,4 @@
+import { GameAction } from "@tylercraft/src/gameActions";
 import { MetaAction } from "../../src/entities/entity";
 import { Vector2D } from "../../src/utils/vector";
 import { ClientGame } from "../clientGame";
@@ -152,7 +153,10 @@ export class MobileController extends GameController {
     // item selection
     this.eToolbeltItems.forEach((item, index) => {
       item.addEventListener("touchstart", () => {
-        this.clientGame.selectedBlock = index;
+        this.clientGame.game.handleAction(GameAction.PlayerSetBeltIndex, {
+          playerUid: this.clientGame.mainPlayer.uid,
+          index,
+        })
       });
     });
 

@@ -1,6 +1,4 @@
-import { BLOCKS, ExtraBlockData } from "./blockdata";
 import { ICameraData } from "./camera";
-import CubeHelpers from "./entities/cube";
 import { Player } from "./entities/player";
 import { Game } from "./game";
 import { IDim } from "./types";
@@ -13,6 +11,9 @@ export enum GameAction {
 	PlayerMove = "move",
 	PlayerRotate = "rotate",
 	PlayerSetPos = "setPlayerPos",
+	PlayerBeltLeft = "playerBeltLeft",
+	PlayerBeltRight = "playerBeltRight",
+	PlayerSetBeltIndex = "playerSetBeltIndex",
 	Save = "save",
 	ChangeName = "changeName",
 }
@@ -27,6 +28,16 @@ export interface GameActionData extends Record<GameAction, unknown> {
 		playerRot: IDim;
 		directions: Direction[];
 	}
+	[GameAction.PlayerSetBeltIndex]: {
+		playerUid: string;
+		index: number;
+	}
+	[GameAction.PlayerBeltLeft]: {
+		playerUid: string;
+	}
+	[GameAction.PlayerBeltRight]: {
+		playerUid: string;
+	}
 	[GameAction.PlayerJump]: {
 		playerUid: string;
 	},
@@ -35,16 +46,18 @@ export interface GameActionData extends Record<GameAction, unknown> {
 		pos: IDim;
 	},
 	[GameAction.PlaceBlock]: {
-		blockType: BLOCKS;
+		playerUid: string;
 		cameraData: ICameraData;
 	},
 	[GameAction.RemoveBlock]: {
+		playerUid: string;
 		cameraData: ICameraData;
 	}
 	[GameAction.ChangeName]: {
 		name: string;
 	}
 	[GameAction.Save]: undefined,
+
 }
 
 export class GameActionDto<T extends GameAction = GameAction> {
@@ -68,7 +81,6 @@ export class GameActionHolder<T extends GameAction = GameAction> {
 			data: this.data,
 		};
 	}
-
 
 	isType<U extends GameAction>(type: U): this is GameActionHolder<U> {
 		return (type as GameAction) === this.type;
@@ -102,38 +114,9 @@ export class GameActionHandler {
 		}
 
 		if (action.isType(GameAction.PlaceBlock)) {
-			const { blockType, cameraData } = action.data;
-
-			const lookingData = this.game.world.lookingAt(cameraData);
-			if (!lookingData) return;
-			const { cube } = lookingData;
-			if (!cube) return;
-
-			// check to see if any entity is in block
-			for (const entity of this.game.entities.iterable()) {
-				if (CubeHelpers.isPointInsideOfCube(cube, entity.pos)) {
-					return;
-				}
-			}
-
-			let extraBlockData: ExtraBlockData | undefined = undefined;
-
-			if (blockType === BLOCKS.image) {
-				extraBlockData = {
-					galleryIndex: 0,
-					face: lookingData.face,
-				}
-			}
-
-			const newCube = CubeHelpers.createCube(
-				blockType,
-				lookingData.newCubePos as Vector3D,
-				extraBlockData,
-			);
-
-			console.log(newCube)
-
-			this.game.world.addBlock(newCube);
+			const { cameraData, playerUid } = action.data;
+			const player = this.getPlayer(playerUid);
+			player.useItem(this.game.world, cameraData);
 			return;
 		}
 
@@ -168,6 +151,28 @@ export class GameActionHandler {
 		if (action.isType(GameAction.Save)) {
 			this.game.save();
 		}
+
+		if (action.isType(GameAction.PlayerBeltLeft)) {
+			const { playerUid } = action.data;
+			const player = this.getPlayer(playerUid);
+			player.belt.moveLeft();
+			this.game.stateDiff.updateEntity(player.uid);
+		}
+
+		if (action.isType(GameAction.PlayerBeltRight)) {
+			const { playerUid } = action.data;
+			const player = this.getPlayer(playerUid);
+			player.belt.moveRight();
+			this.game.stateDiff.updateEntity(player.uid);
+		}
+
+		if (action.isType(GameAction.PlayerSetBeltIndex)) {
+			const { playerUid, index } = action.data;
+			const player = this.getPlayer(playerUid);
+			player.belt.setIndex(index);
+			this.game.stateDiff.updateEntity(player.uid);
+		}
+
 	}
 
 }

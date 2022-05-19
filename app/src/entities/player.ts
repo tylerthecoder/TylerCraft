@@ -5,11 +5,67 @@ import { MovableEntity, MovableEntityDto } from "./moveableEntity";
 import { CONFIG } from "../config";
 import { Direction, Vector3D } from "../utils/vector";
 import { IEntityType } from "./entityHolder";
+import { BLOCKS, ExtraBlockData } from "../blockdata";
+import { World } from "../world/world";
+import { ICameraData } from "../camera";
+import CubeHelpers from "./cube";
+
+
+export interface BeltDto {
+  selectedBlock: BLOCKS
+}
+
+class Belt {
+  public selectedIndex = 0;
+  public items: [BLOCKS, number][] = [];
+
+  constructor() {
+    console.log("Constructing", this.selectedIndex);
+    this.items = [
+      [BLOCKS.cloud, 1],
+      [BLOCKS.gold, 1],
+      [BLOCKS.grass, 1],
+      [BLOCKS.leaf, 1],
+      [BLOCKS.stone, 1],
+      [BLOCKS.redFlower, 1],
+      [BLOCKS.wood, 1],
+      [BLOCKS.water, 1],
+    ];
+  }
+
+  get selectedBlock() {
+    return this.items[this.selectedIndex][0]
+  }
+
+  getDto(): BeltDto {
+    return {
+      selectedBlock: this.selectedBlock,
+    }
+  }
+
+  public moveLeft() {
+    this.selectedIndex = (this.selectedIndex - 1 + this.items.length) % this.items.length;
+    console.log("Moved left", this.selectedIndex);
+  }
+
+  public moveRight() {
+    this.selectedIndex = (this.selectedIndex + 1) % this.items.length;
+    console.log("Moved right", this.selectedIndex);
+  }
+
+  public setIndex(index: number) {
+    this.selectedIndex = index;
+    console.log("Set index", this.selectedIndex);
+  }
+}
+
+
 
 export interface PlayerDto extends MovableEntityDto {
   type: IEntityType.Player;
   moveDirections: Direction[];
   rot: IDim;
+  belt: BeltDto;
   health: {
     current: number;
     max: number;
@@ -34,6 +90,8 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
   jumpCount = 0;
   distanceMoved = 0; // used for animating the arms and legs. Reset to zero when not moving
 
+  belt = new Belt();
+
   leftHandPosition = new Vector3D([1, 1, 0]);
   rightHandPosition = new Vector3D([1, 1, 1]);
 
@@ -52,6 +110,8 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
 
   moveDirections: Direction[] = [];
 
+  inventoryIndex = 0;
+
   static create(id: string): Player {
     return new Player({
       uid: id,
@@ -65,6 +125,7 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
       health: this.health,
       rot: this.rot.data as IDim,
       moveDirections: this.moveDirections,
+      belt: this.belt.getDto(),
     }
   }
 
@@ -178,6 +239,35 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
       this.onGround = true;
       this.jumpCount = 0;
     }
+  }
+
+  // TODO get camera data from the player's rot
+  useItem(world: World, cameraData: ICameraData) {
+    const lookingData = world.lookingAt(cameraData);
+    if (!lookingData) return;
+    const { cube } = lookingData;
+    if (!cube) return;
+
+    const blockType = this.belt.selectedBlock;
+
+    let extraBlockData: ExtraBlockData | undefined = undefined;
+
+    if (blockType === BLOCKS.image) {
+      extraBlockData = {
+        galleryIndex: 0,
+        face: lookingData.face,
+      }
+    }
+
+    const newCube = CubeHelpers.createCube(
+      blockType,
+      lookingData.newCubePos as Vector3D,
+      extraBlockData,
+    );
+
+    console.log(newCube)
+
+    world.addBlock(newCube);
   }
 
   fireball() {

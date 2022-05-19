@@ -9,6 +9,45 @@ import { GameAction } from "@tylercraft/src/gameActions";
 import { Direction } from "@tylercraft/src/utils/vector";
 import { GameController } from "./controller";
 
+const makeWheelScroller = (game: ClientGame) => {
+  let totalWheelDelta = 0;
+
+  window.addEventListener("wheel", (e: WheelEvent) => {
+    if (e.deltaY > 0) {
+      // game.selectedBlock = (this.clientGame.selectedBlock + 1) % this.clientGame.numOfBlocks;
+
+      if (totalWheelDelta < 0) {
+        totalWheelDelta = 0;
+      }
+      totalWheelDelta += e.deltaY;
+    }
+
+    if (e.deltaY < 0) {
+      // this.clientGame.selectedBlock = ((this.clientGame.selectedBlock - 1) + this.clientGame.numOfBlocks) % this.clientGame.numOfBlocks;
+      if (totalWheelDelta > 0) {
+        totalWheelDelta = 0;
+      }
+      totalWheelDelta += e.deltaY;
+    }
+
+
+    if (totalWheelDelta > 100) {
+      totalWheelDelta = 0;
+      game.game.handleAction(GameAction.PlayerBeltLeft, {
+        playerUid: game.mainPlayer.uid,
+      })
+    }
+
+    if (totalWheelDelta < -100) {
+      totalWheelDelta = 0;
+      game.game.handleAction(GameAction.PlayerBeltRight, {
+        playerUid: game.mainPlayer.uid,
+      })
+    }
+  })
+}
+
+
 export class MouseAndKeyController extends GameController {
   private keys = new Set();
   private keysPressed = new Set();
@@ -26,7 +65,6 @@ export class MouseAndKeyController extends GameController {
 
   private hasMouseMoved = false;
 
-
   get player() {
     return this.clientGame.mainPlayer;
   }
@@ -38,6 +76,7 @@ export class MouseAndKeyController extends GameController {
 
     this.game = clientGame.game;
 
+    makeWheelScroller(clientGame);
 
     window.addEventListener("keydown", ({ key }) => {
       this.handleKeyDown(key)
@@ -61,7 +100,6 @@ export class MouseAndKeyController extends GameController {
         return;
       }
 
-
       if (e.which === 3) { // right click
         this.clientGame.placeBlock();
       } else if (e.which === 1) { // left click
@@ -81,16 +119,6 @@ export class MouseAndKeyController extends GameController {
 
       }
     });
-
-    window.addEventListener("wheel", (e: WheelEvent) => {
-      if (e.deltaY > 0) {
-        this.clientGame.selectedBlock = (this.clientGame.selectedBlock + 1) % this.clientGame.numOfBlocks;
-      }
-
-      if (e.deltaY < 0) {
-        this.clientGame.selectedBlock = ((this.clientGame.selectedBlock - 1) + this.clientGame.numOfBlocks) % this.clientGame.numOfBlocks;
-      }
-    })
 
     this.fullScreenButton.addEventListener("click", () => {
       console.log("Toggling full screen");
@@ -255,40 +283,48 @@ export class MouseAndKeyController extends GameController {
       this.openMenu();
     })
 
+    const selectBelt = (pos: number) => {
+      this.game.handleAction(GameAction.PlayerSetBeltIndex, {
+        playerUid: this.clientGame.mainPlayer.uid,
+        index: pos,
+      });
+
+    }
+
     this.ifHasKeyThen("1", () => {
-      this.clientGame.selectedBlock = BLOCKS.grass;
+      selectBelt(0);
     })
 
     this.ifHasKeyThen("2", () => {
-      this.clientGame.selectedBlock = BLOCKS.stone;
+      selectBelt(1);
     })
 
     this.ifHasKeyThen("3", () => {
-      this.clientGame.selectedBlock = BLOCKS.wood;
+      selectBelt(2);
     })
 
     this.ifHasKeyThen("4", () => {
-      this.clientGame.selectedBlock = BLOCKS.leaf;
+      selectBelt(3);
     })
 
     this.ifHasKeyThen("5", () => {
-      this.clientGame.selectedBlock = BLOCKS.cloud;
+      selectBelt(4);
     })
 
     this.ifHasKeyThen("6", () => {
-      this.clientGame.selectedBlock = BLOCKS.gold;
+      selectBelt(5);
     })
 
     this.ifHasKeyThen("7", () => {
-      this.clientGame.selectedBlock = BLOCKS.redFlower;
+      selectBelt(6);
     })
 
     this.ifHasKeyThen("8", () => {
-      this.clientGame.selectedBlock = BLOCKS.image;
+      selectBelt(7);
     });
 
     this.ifHasKeyThen("9", () => {
-      this.clientGame.selectedBlock = BLOCKS.image;
+      selectBelt(8);
     });
   }
 

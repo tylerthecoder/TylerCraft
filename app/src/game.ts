@@ -22,11 +22,10 @@ export interface IGameMetadata {
   name: string;
 }
 
-
 // Receives client actions from somewhere.
 // Generate dirty entities and dirty chunks.
 
-export class Game {
+export class Game<Actions = GameAction> {
   public gameId: string;
   public name: string;
   public entities: EntityHolder;
@@ -39,6 +38,11 @@ export class Game {
   private worldModel: WorldModel;
 
   private previousTime = Date.now();
+
+
+  public get mainPlayer() {
+    return this.entities.get;
+  }
 
   constructor(
     /**
@@ -138,15 +142,11 @@ export class Game {
 
 
   /** This happens on a fast loop. Mark things that change as dirty */
-
   public handleAction<T extends GameAction, U extends GameActionData[T]>(action: T, actionData: U) {
-    // console.log("Handling Action", action, actionData);
-
     const actionHolder = GameActionHolder.create(action, actionData)
     this.gameScript.onAction(actionHolder);
     this.gameActionHandler.handle(actionHolder);
   }
-
 
   /** Currently only sent by server. Will quickly update the state of the game */
   public handleStateDiff(stateDiff: GameDiffDto) {
