@@ -1,28 +1,30 @@
 import Players from "./players";
 import * as wSocket from "ws";
-import { ISocketMessage, ISocketMessageType } from "../src/types";
+import { ISocketMessage, ISocketMessageType, IWorldData, WorldModel } from "../src/types";
 import { Vector2D } from "../src/utils/vector";
-import { AbstractScript } from "../src/scripts/AbstractScript";
 import { GameActionDto, GameActionHolder } from "../src/gameActions";
 import { Game } from "../src/game";
 import { GameStateDiff } from "../src/gameStateDiff";
 import { MapArray } from "../src/utils";
 import { SocketInterface } from "./app";
+import { GameController } from "@tylercraft/src/controllers/controller";
 
-export class ServerGame extends AbstractScript {
+export class ServerGame extends Game {
   public clients: Players;
   public actionMap: MapArray<wSocket, GameActionDto> = new MapArray();
 
 
   constructor(
-    public game: Game,
+    controller: (game: Game) => GameController,
+    worldModel: WorldModel,
+    worldData: IWorldData,
   ) {
-    super(game);
+    super(controller, worldModel, worldData);
 
-    this.clients = new Players(this.game);
+    this.clients = new Players(this);
   }
 
-  async init(): Promise<void> {
+  async load(): Promise<void> {
     // NO-OP
   }
 
@@ -34,14 +36,14 @@ export class ServerGame extends AbstractScript {
     // Send the initial state diff to all clients
     // This state diff has no client sent actions so it should
     // only be passive things (An entity spawning)
-    if (this.game.stateDiff.hasData()) {
+    if (this.stateDiff.hasData()) {
       this.clients.sendMessageToAll({
         type: ISocketMessageType.gameDiff,
-        gameDiffPayload: this.game.stateDiff.get(),
+        gameDiffPayload: this.stateDiff.get(),
       });
     }
 
-    this.game.stateDiff.clear();
+    this.stateDiff.clear();
 
     // Run through each client's actions and save the combined state diff
     // from the other client's actions. Combining them lets us send all client
@@ -50,7 +52,7 @@ export class ServerGame extends AbstractScript {
     // Set the initial state diff for each client
     const clientDiffs = new Map<wSocket, GameStateDiff>();
     for (const ws of this.clients.getSockets()) {
-      clientDiffs.set(ws, this.game.stateDiff.copy());
+      clientDiffs.set(ws, this.stateDiff.copy());
     }
 
     if (this.actionMap.size > 0) {
@@ -60,22 +62,22 @@ export class ServerGame extends AbstractScript {
     }
 
     for (const [ws, actions] of this.actionMap.entries()) {
-      this.game.stateDiff.clear();
+      this.stateDiff.clear();
 
       // Handle all the actions. The new diff should only have updates
       // for the player who made them and chunk they might have affected
       for (const action of actions) {
-        this.game.handleAction(action.action, action.data);
+        this.handleAction(action.action, action.data);
       }
 
-      console.log("Diff after actions", this.game.stateDiff.get());
+      console.log("Diff after actions", this.stateDiff.get());
 
       // Append the diff to all clients but the one that sent the actions
       this.clients
         .getSockets()
         .filter(s => s !== ws)
         .forEach(s => {
-          clientDiffs.get(s)?.append(this.game.stateDiff);
+          clientDiffs.get(s)?.append(this.stateDiff);
         });
 
     }
@@ -97,10 +99,10 @@ export class ServerGame extends AbstractScript {
 
   private async sendChunkTo(chunkPosString: string, ws: wSocket) {
     const chunkPos = Vector2D.fromIndex(chunkPosString);
-    let chunk = this.game.world.getChunkFromPos(chunkPos);
+    let chunk = this.world.getChunkFromPos(chunkPos);
     if (!chunk) {
-      await this.game.world.loadChunk(chunkPos);
-      chunk = this.game.world.getChunkFromPos(chunkPos);
+      await this.world.loadChunk(chunkPos);
+      chunk = this.world.getChunkFromPos(chunkPos);
     }
     if (!chunk) throw new Error("Chunk wasn't found");
     const serializedData = chunk.serialize();

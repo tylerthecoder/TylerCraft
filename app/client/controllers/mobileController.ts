@@ -2,8 +2,7 @@ import { GameAction } from "@tylercraft/src/gameActions";
 import { MetaAction } from "../../src/entities/entity";
 import { Vector2D } from "../../src/utils/vector";
 import { ClientGame } from "../clientGame";
-import { Controller, GameController } from "./controller";
-
+import { GameController } from "@tylercraft/src/controllers/controller";
 
 interface IMobileState {
   pressing: {
@@ -153,7 +152,7 @@ export class MobileController extends GameController {
     // item selection
     this.eToolbeltItems.forEach((item, index) => {
       item.addEventListener("touchstart", () => {
-        this.clientGame.game.handleAction(GameAction.PlayerSetBeltIndex, {
+        this.game.handleAction(GameAction.PlayerSetBeltIndex, {
           playerUid: this.clientGame.mainPlayer.uid,
           index,
         })
@@ -164,7 +163,10 @@ export class MobileController extends GameController {
     this.eUseItemButton.addEventListener("touchstart", (e: TouchEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      this.clientGame.placeBlock();
+      this.game.handleAction(GameAction.PlaceBlock, {
+        cameraData: this.clientGame.camera.getCameraData(),
+        playerUid: this.clientGame.mainPlayer.uid,
+      });
     });
 
     this.eUseItemButton.addEventListener("touchmove", (e: TouchEvent) => {
@@ -181,7 +183,10 @@ export class MobileController extends GameController {
       e.preventDefault();
       e.stopPropagation();
       console.log("Removing")
-      this.clientGame.removeBlock();
+      this.game.handleAction(GameAction.RemoveBlock, {
+        cameraData: this.clientGame.camera.getCameraData(),
+        playerUid: this.clientGame.mainPlayer.uid,
+      });
     });
 
     this.eUseItemButton2.addEventListener("touchmove", (e: TouchEvent) => {

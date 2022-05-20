@@ -2,11 +2,11 @@ import { DbWorldModel } from "./dbWorldModel";
 import { ServerGame } from "./serverGame";
 import { ICreateWorldOptions, ISocketMessage, ISocketMessageType } from "../src/types";
 import * as wSocket from "ws";
-import { Game } from "../src/game";
 import { SocketInterface } from "./app";
+import { EmptyController } from "../src/controllers/emptyController"
 
 export class WorldManager {
-  private worlds: Map<string, Game> = new Map();
+  private worlds: Map<string, ServerGame> = new Map();
   private worldModel = new DbWorldModel();
 
   constructor() {
@@ -16,18 +16,16 @@ export class WorldManager {
         if (message.type === ISocketMessageType.joinWorld) {
           const { worldId, myUid } = message.joinWorldPayload!;
           const world = await this.getWorld(worldId);
-          const serverGame = world?.gameScript as ServerGame;
-          if (!serverGame) {
+          if (!world) {
             return;
           }
           // this function sends a welcome message to the client
-          serverGame.addSocket(myUid, ws);
+          world.addSocket(myUid, ws);
         } else if (message.type === ISocketMessageType.newWorld) {
           const payload = message.newWorldPayload!;
           const world = await this.createWorld(payload);
-          const serverGame = world.gameScript as ServerGame;
           console.log("Create Id: ", world.gameId);
-          serverGame.addSocket(payload.myUid, ws);
+          world.addSocket(payload.myUid, ws);
         } else if (message.type === ISocketMessageType.saveWorld) {
           const payload = message.saveWorldPayload!
           const world = this.worlds.get(payload.worldId);
@@ -41,7 +39,7 @@ export class WorldManager {
     });
   }
 
-  async getWorld(worldId: string): Promise<Game | null> {
+  async getWorld(worldId: string): Promise<ServerGame | null> {
     const world = this.worlds.get(worldId);
     if (world) {
       return world;
@@ -53,8 +51,8 @@ export class WorldManager {
     if (!loadedWorldData) return null;
 
     // add the world to our local list
-    const serverWorld = new Game(
-      ServerGame,
+    const serverWorld = new ServerGame(
+      game => new EmptyController(game),
       this.worldModel,
       loadedWorldData,
     );
@@ -70,12 +68,12 @@ export class WorldManager {
     return this.worldModel.getAllWorlds();
   }
 
-  async createWorld(createWorldOptions: ICreateWorldOptions): Promise<Game> {
+  async createWorld(createWorldOptions: ICreateWorldOptions): Promise<ServerGame> {
     console.log(createWorldOptions);
     const worldData = await this.worldModel.createWorld(createWorldOptions);
 
-    const newWorld = new Game(
-      ServerGame,
+    const newWorld = new ServerGame(
+      (game) => new EmptyController(game),
       this.worldModel,
       worldData,
     );

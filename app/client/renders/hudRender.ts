@@ -91,9 +91,7 @@ export class HudRenderer extends Renderer {
       this.lastStats = statsString;
     }
 
-    const gameController = this.game.controllers.getGameController();
-
-    if (gameController instanceof Quest2Controller) {
+    if (this.game.controller instanceof Quest2Controller) {
       const rotVec = new Vector2D([camera.rot.get(0), camera.rot.get(1)]);
       rotVec.data = rotVec.data.map(n => Math.floor(n * 100) / 100);
       this.drawText(rotVec.toIndex(), 0, 70);

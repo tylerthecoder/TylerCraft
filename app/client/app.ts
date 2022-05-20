@@ -10,6 +10,7 @@ import { SocketHandler } from "./socket";
 import { CONFIG } from "../src/config";
 import { camelCaseToNormalCase } from "../src/utils";
 import { WorldModel } from "../src/types";
+import { GameStarter } from "./clientGameStarter";
 
 export interface IExtendedWindow extends Window {
   clientDb?: ClientDb;
@@ -18,6 +19,8 @@ export interface IExtendedWindow extends Window {
 }
 
 export const IS_MOBILE = /Mobi/.test(window.navigator.userAgent);
+
+const gameStarter = new GameStarter();
 
 console.log("Is Mobile: ", IS_MOBILE)
 
@@ -49,9 +52,9 @@ export function getMyUid() {
 // Get all of the elements
 const ePlayLocalButton = document.getElementById("playLocalButton")!;
 const ePlayOnlineButton = document.getElementById("playOnlineButton")!;
-const eStartMenu = document.getElementById("startMenu")!;
+export const eStartMenu = document.getElementById("startMenu")!;
 const eGameTypeScreen = document.getElementById("pickGameTypeScreen")!;
-const ePickWorldScreen = document.getElementById("pickWorldScreen")!;
+export const ePickWorldScreen = document.getElementById("pickWorldScreen")!;
 const eBackButton = document.getElementById("backButton")!;
 const eWorldOptionsScreen = document.getElementById("worldOptionsScreen")!;
 const eConfigForm = document.getElementById("configForm") as HTMLFormElement;
@@ -115,12 +118,9 @@ export async function loadWorldById(worldId: string) {
   const clientWorlds = await clientWorldModel.getAllWorlds();
   const clientHasWorld = clientWorlds.some(world => world.gameId === worldId);
   if (clientHasWorld) {
+    console.log("Found World");
     const clientWorld = await clientWorldModel.getWorld(worldId);
-    startGame(new Game(
-      ClientGame,
-      clientWorldModel,
-      clientWorld
-    ));
+    gameStarter.start(clientWorldModel, clientWorld);
     return;
   }
 
@@ -129,11 +129,10 @@ export async function loadWorldById(worldId: string) {
   const serverHasWorld = serverWorlds.some(world => world.gameId === worldId);
   if (serverHasWorld) {
     const serverWorld = await serverWorldModel.getWorld(worldId);
-    startGame(new Game(
-      ClientGame,
-      serverWorldModel,
-      serverWorld!
-    ));
+    if (serverWorld) {
+      console.log("Found World");
+      gameStarter.start(serverWorldModel, serverWorld);
+    }
     return;
   }
 
@@ -223,13 +222,7 @@ async function showWorldPicker(worldModel: WorldModel, currentHash: string, next
       const worldData = await worldModel.getWorld(worldId);
       if (!worldData) throw new Error("World wasn't found. Db must be effed up");
 
-      const clientGame = new Game(
-        ClientGame,
-        worldModel,
-        worldData,
-      );
-
-      startGame(clientGame);
+      gameStarter.start(worldModel, worldData);
     });
   });
 }
@@ -335,20 +328,6 @@ function showWorldOptionsScreen(worldModel: WorldModel, onBack: () => void) {
       gameName: formData.get("name") as string,
     });
 
-    const game = new Game(
-      ClientGame,
-      worldModel,
-      newWorldData,
-    );
-
-    startGame(game);
+    gameStarter.start(worldModel, newWorldData);
   });
-}
-
-export function startGame(game: Game) {
-  history.pushState("Game", "", `?worldId=${game.gameId}`);
-  console.log("Starting game", game);
-  (window as IExtendedWindow).game = game;
-  ePickWorldScreen.classList.add("fade");
-  eStartMenu.classList.add("fade");
 }

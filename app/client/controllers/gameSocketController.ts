@@ -8,16 +8,9 @@ export class SocketGameHandler {
   constructor(
     public controlled: ClientGame
   ) {
-    SocketInterface.addListener(this.onMessage.bind(this));
   }
 
   // maybe perform the actions in here so they aren't async
   update() { /* NO-OP */ }
 
-  onMessage(message: ISocketMessage) {
-    console.log("Socket Message", message);
-    if (message.type === ISocketMessageType.gameDiff) {
-      this.controlled.game.handleStateDiff(message.gameDiffPayload!);
-    }
-  }
 }

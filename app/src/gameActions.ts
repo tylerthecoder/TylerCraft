@@ -18,6 +18,10 @@ export enum GameAction {
 	ChangeName = "changeName",
 }
 
+export type GameActions = {
+	[Prop in GameAction]: Prop;
+}
+
 export interface GameActionData extends Record<GameAction, unknown> {
 	[GameAction.PlayerRotate]: {
 		playerUid: string;

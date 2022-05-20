@@ -2,24 +2,21 @@ import { Camera } from "../src/camera";
 import { EntityCamera } from "./cameras/entityCamera";
 import { Game } from "../src/game";
 import { canvas } from "./canvas";
-import { ISocketMessageType } from "../src/types";
+import { ISocketMessage, ISocketMessageType, IWorldData, WorldModel } from "../src/types";
 import WorldRenderer from "./renders/worldRender";
-import { BLOCKS } from "../src/blockdata";
-import { ControllerHolder } from "./controllers/controllerHolder";
 import { Spectator } from "../src/entities/spectator";
-import { SocketGameHandler } from "./controllers/gameSocketController";
-import { getMyUid, IExtendedWindow, SocketInterface } from "./app";
+import { getMyUid, IExtendedWindow, IS_MOBILE, SocketInterface } from "./app";
 import { Player } from "../src/entities/player";
 import { XrCamera } from "./cameras/xrCamera";
-import { AbstractScript } from "@tylercraft/src/scripts/AbstractScript"
 import { GameStateDiff } from "@tylercraft/src/gameStateDiff";
-import { GameAction, GameActionHolder } from "@tylercraft/src/gameActions";
+import { GameActionHolder } from "@tylercraft/src/gameActions";
+import { GameController } from "@tylercraft/src/controllers/controller";
 
 
 // This class should only read game and not write.
 // It uses game data to draw the game to the screen and handle user input
-export class ClientGame extends AbstractScript {
-  controllers: ControllerHolder;
+export class ClientGame extends Game {
+  controller: GameController;
   worldRenderer: WorldRenderer;
   spectator: Spectator;
   isSpectating = false;
@@ -31,27 +28,27 @@ export class ClientGame extends AbstractScript {
   mainPlayer: Player;
 
   constructor(
-    public game: Game,
+    controller: (game: ClientGame) => GameController,
+    worldModel: WorldModel,
+    worldData: IWorldData,
   ) {
-    super(game);
+    super(controller, worldModel, worldData);
 
     (window as IExtendedWindow).clientGame = this;
 
     console.log("ClientGame created", this);
 
-    this.controllers = new ControllerHolder();
-
-    this.worldRenderer = new WorldRenderer(this.game.world, this);
+    this.worldRenderer = new WorldRenderer(this.world, this);
 
     // Temp
     this.worldRenderer.shouldRenderMainPlayer = false;
 
-    this.mainPlayer = this.game.entities.createOrGetPlayer(getMyUid());
+    this.mainPlayer = this.entities.createOrGetPlayer(getMyUid());
 
     console.log("My UID", getMyUid());
 
     // Create renderers for initial entities
-    for (const entity of this.game.entities.iterable()) {
+    for (const entity of this.entities.iterable()) {
       this.worldRenderer.addEntity(entity);
     }
   }
@@ -64,13 +61,11 @@ export class ClientGame extends AbstractScript {
     return fps;
   }
 
-  async init() {
+  async load() {
     await canvas.loadProgram();
-    this.controllers.init(this);
 
-    if (this.game.multiPlayer) {
-      const socketController = new SocketGameHandler(this);
-      this.controllers.add(socketController);
+    if (this.multiPlayer) {
+      SocketInterface.addListener(this.onSocketMessage.bind(this));
     }
 
     this.setUpPlayer();
@@ -85,6 +80,13 @@ export class ClientGame extends AbstractScript {
     canvas.loop(this.renderLoop.bind(this))
   }
 
+  onSocketMessage(message: ISocketMessage) {
+    console.log("Socket Message", message);
+    if (message.type === ISocketMessageType.gameDiff) {
+      this.handleStateDiff(message.gameDiffPayload!);
+    }
+  }
+
 
   // Called by Game each tick,
   update(delta: number, stateDiff: GameStateDiff) {
@@ -94,7 +96,7 @@ export class ClientGame extends AbstractScript {
     }
 
     for (const entityId of stateDiff.getNewEntities()) {
-      const entity = this.game.entities.get(entityId);
+      const entity = this.entities.get(entityId);
       this.worldRenderer.addEntity(entity);
     }
 
@@ -106,41 +108,18 @@ export class ClientGame extends AbstractScript {
   renderLoop(time: number) {
     const delta = time - this.totTime;
     // Update the controllers so they can append game actions
-    this.controllers.update(delta);
     this.worldRenderer.render(this);
     this.pastDeltas.push(delta);
     this.totTime = time;
   }
 
-  // this will be called by the super class when actions are received
-  // Don't need to filter actions because they all originate from this class
   onAction(actionHolder: GameActionHolder) {
-    // Don't send rotate actions just yet
-    // if (actionHolder.isType(GameAction.PlayerRotate)) {
-    //   return;
-    // }
-
-
-    if (this.game.multiPlayer) {
+    if (this.multiPlayer) {
       SocketInterface.send({
         type: ISocketMessageType.actions,
         actionPayload: actionHolder.getDto(),
       });
     }
-  }
-
-  placeBlock() {
-    this.game.handleAction(GameAction.PlaceBlock, {
-      cameraData: this.camera.getCameraData(),
-      playerUid: this.mainPlayer.uid,
-    });
-  }
-
-  removeBlock() {
-    this.game.handleAction(GameAction.RemoveBlock, {
-      cameraData: this.camera.getCameraData(),
-      playerUid: this.mainPlayer.uid,
-    })
   }
 
   toggleThirdPerson() {

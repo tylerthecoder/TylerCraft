@@ -9,6 +9,7 @@
     "strictNullChecks": true,
     "target": "es6",
     "declaration": true,
+    // "strict": true,
     "lib": ["es2019", "dom"]
   },
   "exclude": ["node_modules", "**/*.spec.ts", "dist"]

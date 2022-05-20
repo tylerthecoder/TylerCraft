@@ -1,5 +1,4 @@
 import { ClientGame } from "../clientGame";
-import { BLOCKS } from "../../src/blockdata";
 import { canvas } from "../canvas";
 import { MetaAction } from "../../src/entities/entity";
 import { IDim } from "../../src/types";
@@ -7,7 +6,7 @@ import { MovableEntity } from "../../src/entities/moveableEntity";
 import { CONFIG } from "../../src/config";
 import { GameAction } from "@tylercraft/src/gameActions";
 import { Direction } from "@tylercraft/src/utils/vector";
-import { GameController } from "./controller";
+import { GameController } from "@tylercraft/src/controllers/controller";
 
 const makeWheelScroller = (game: ClientGame) => {
   let totalWheelDelta = 0;
@@ -33,14 +32,14 @@ const makeWheelScroller = (game: ClientGame) => {
 
     if (totalWheelDelta > 100) {
       totalWheelDelta = 0;
-      game.game.handleAction(GameAction.PlayerBeltLeft, {
+      game.handleAction(GameAction.PlayerBeltLeft, {
         playerUid: game.mainPlayer.uid,
       })
     }
 
     if (totalWheelDelta < -100) {
       totalWheelDelta = 0;
-      game.game.handleAction(GameAction.PlayerBeltRight, {
+      game.handleAction(GameAction.PlayerBeltRight, {
         playerUid: game.mainPlayer.uid,
       })
     }
@@ -48,7 +47,7 @@ const makeWheelScroller = (game: ClientGame) => {
 }
 
 
-export class MouseAndKeyController extends GameController {
+export class MouseAndKeyController extends GameController<GameAction[]> {
   private keys = new Set();
   private keysPressed = new Set();
   private numOfUpdates = 0;
@@ -69,12 +68,8 @@ export class MouseAndKeyController extends GameController {
     return this.clientGame.mainPlayer;
   }
 
-  constructor(
-    clientGame: ClientGame
-  ) {
+  constructor(private clientGame: ClientGame) {
     super(clientGame);
-
-    this.game = clientGame.game;
 
     makeWheelScroller(clientGame);
 
@@ -101,9 +96,9 @@ export class MouseAndKeyController extends GameController {
       }
 
       if (e.which === 3) { // right click
-        this.clientGame.placeBlock();
+        this.placeBlock();
       } else if (e.which === 1) { // left click
-        this.clientGame.removeBlock();
+        this.removeBlock();
       }
       e.preventDefault();
     });
@@ -116,7 +111,6 @@ export class MouseAndKeyController extends GameController {
         this.clientGame.camera.rotateBy(moveX, moveY);
 
         this.hasMouseMoved = true;
-
       }
     });
 
@@ -147,8 +141,12 @@ export class MouseAndKeyController extends GameController {
     });
 
     this.eSaveButton.addEventListener("click", () => {
-      this.game.handleAction(GameAction.Save, undefined);
+      this.save();
     })
+  }
+
+  save() {
+    this.game.handleAction(GameAction.Save, undefined);
   }
 
   sendPos() {
@@ -156,6 +154,20 @@ export class MouseAndKeyController extends GameController {
       playerUid: this.clientGame.mainPlayer.uid,
       pos: this.clientGame.mainPlayer.pos.data as IDim,
     });
+  }
+
+  placeBlock() {
+    this.game.handleAction(GameAction.PlaceBlock, {
+      cameraData: this.clientGame.camera.getCameraData(),
+      playerUid: this.clientGame.mainPlayer.uid,
+    });
+  }
+
+  removeBlock() {
+    this.game.handleAction(GameAction.RemoveBlock, {
+      cameraData: this.clientGame.camera.getCameraData(),
+      playerUid: this.clientGame.mainPlayer.uid,
+    })
   }
 
 

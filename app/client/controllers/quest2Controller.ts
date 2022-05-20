@@ -2,10 +2,18 @@ import { MetaAction } from "@tylercraft/src/entities/entity";
 import { Vector3D } from "@tylercraft/src/utils/vector";
 import { quat } from "gl-matrix";
 import { canvas } from "../canvas";
-import { GameController } from "./controller";
+import { ClientGame } from "../clientGame";
+import { GameController } from "@tylercraft/src/controllers/controller";
 
 
 export class Quest2Controller extends GameController {
+
+	constructor(
+		protected clientGame: ClientGame
+	) {
+		super(clientGame);
+	}
+
 	update(_delta: number) {
 		const { webXrSession, currentXRFrame, xrRefSpace } = canvas;
 

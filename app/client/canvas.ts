@@ -3,9 +3,6 @@ import { Vector3D } from "../src/utils/vector";
 import TextureService from "./services/textureService";
 declare const mat4: any;
 import type { Navigator, XRSession, XRFrame, XRWebGLLayer, XRReferenceSpace } from 'webxr';
-import { getLocalWorldModel, startGame } from "./app";
-import { ClientGame } from "./clientGame";
-// import {mat4} from "gl-matrix";
 
 const WebGlLayer = (window as any).XRWebGLLayer as typeof XRWebGLLayer;
 

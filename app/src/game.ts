@@ -6,8 +6,8 @@ import { EntityHolder, ISerializedEntities } from "./entities/entityHolder";
 import Random from "./utils/random";
 import { GameAction, GameActionData, GameActionHandler, GameActionHolder } from "./gameActions";
 import { GameStateDiff, GameDiffDto } from "./gameStateDiff";
-import { AbstractScript } from "./scripts/AbstractScript";
 import { Vector2D } from "./utils/vector";
+import { GameController } from "./controllers/controller";
 
 export interface ISerializedGame {
   config: IConfig;
@@ -25,37 +25,29 @@ export interface IGameMetadata {
 // Receives client actions from somewhere.
 // Generate dirty entities and dirty chunks.
 
-export class Game<Actions = GameAction> {
+export abstract class Game<Action = GameAction> {
   public gameId: string;
   public name: string;
   public entities: EntityHolder;
   public world: World;
   public multiPlayer: boolean;
   public stateDiff: GameStateDiff;
-  public gameScript: AbstractScript;
+  public controller: GameController<Action>;
 
   private gameActionHandler: GameActionHandler;
   private worldModel: WorldModel;
-
   private previousTime = Date.now();
 
 
-  public get mainPlayer() {
-    return this.entities.get;
-  }
-
   constructor(
-    /**
-      The main script to control the game
-      Usually will be the ClientGame
-    */
-    gameScript: { new(game: Game): AbstractScript },
+    controller: (game: Game) => GameController,
     worldModel: WorldModel,
     worldData: IWorldData,
   ) {
-    this.worldModel = worldModel;
     Random.setSeed(worldData.config.seed);
 
+    this.worldModel = worldModel;
+    this.controller = controller(this);
     this.stateDiff = new GameStateDiff(this);
     this.gameActionHandler = new GameActionHandler(this);
 
@@ -93,23 +85,23 @@ export class Game<Actions = GameAction> {
       });
     }
 
-    // Generate this last so the game script has access to all the Game's data
-    this.gameScript = new gameScript(this);
-
     this.load();
   }
 
 
-  async load() {
+  abstract load(): Promise<void>;
+  async baseLoad() {
     await this.world.load();
     console.log("World Loaded");
 
-    await this.gameScript.init();
+    await this.load();
 
     // Setup timer
     this.previousTime = Date.now();
-    this.update();
+    this.baseUpdate();
   }
+
+
 
   public serialize(): ISerializedGame {
     return {
@@ -125,11 +117,14 @@ export class Game<Actions = GameAction> {
   /**
    * Called 20 times a second
    */
-  public update() {
+  abstract update(delta: number, stateDiff: GameStateDiff): void
+  public baseUpdate() {
     const now = Date.now();
     const delta = now - this.previousTime;
 
-    this.gameScript.update(delta, this.stateDiff);
+    this.controller.update(delta);
+
+    this.update(delta, this.stateDiff);
 
     this.entities.update(this.world, delta);
 
@@ -137,14 +132,16 @@ export class Game<Actions = GameAction> {
 
     this.previousTime = now;
 
-    setTimeout(this.update.bind(this), 1000 / 40);
+    setTimeout(this.baseUpdate.bind(this), 1000 / 40);
   }
 
 
+
   /** This happens on a fast loop. Mark things that change as dirty */
+  abstract onAction(action: GameActionHolder): void;
   public handleAction<T extends GameAction, U extends GameActionData[T]>(action: T, actionData: U) {
     const actionHolder = GameActionHolder.create(action, actionData)
-    this.gameScript.onAction(actionHolder);
+    this.onAction(actionHolder);
     this.gameActionHandler.handle(actionHolder);
   }
 
