@@ -6,22 +6,16 @@ import TerrainWorker from "worker-loader!../../terrain-generation/terrain.worker
 import { Vector2D } from "../../src/utils/vector";
 
 export class ClientDb extends WorldModel {
-  private db: IDBDatabase;
 
   private terrainWorker: TerrainWorker;
 
-  private WORLDS_OBS = "worlds";
+  private static WORLDS_OBS = "worlds";
 
-  constructor() {
-    super();
-    this.terrainWorker = new TerrainWorker();
-  }
-
-  async loadDb() {
-    return new Promise<void>((resolve, reject) => {
+  static async factory() {
+    const db = await new Promise<IDBDatabase>((resolve, reject) => {
       const openRequest = window.indexedDB.open("TylerCraftDB", 4);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      openRequest.onerror = function (event: any) {
+      openRequest.onerror = (event: any) => {
         // Do something with request.errorCode!
         console.log(event.target);
         console.error("Database error: " + event.target.errorCode);
@@ -30,8 +24,7 @@ export class ClientDb extends WorldModel {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       openRequest.onsuccess = (event: any) => {
         // Do something with request.result!
-        this.db = event.target.result;
-        resolve();
+        resolve(event.target.result);
       };
       openRequest.onupgradeneeded = () => {
         console.log("Upgrading database");
@@ -47,6 +40,15 @@ export class ClientDb extends WorldModel {
         // add a "name" properties to worlds and make it searchable
       };
     });
+
+    return new ClientDb(db);
+  }
+
+  private constructor(
+    private db: IDBDatabase,
+  ) {
+    super();
+    this.terrainWorker = new TerrainWorker();
   }
 
   async createWorld(createWorldOptions: ICreateWorldOptions): Promise<IWorldData> {
@@ -95,8 +97,8 @@ export class ClientDb extends WorldModel {
 
   getAllWorlds(): Promise<IGameMetadata[]> {
     return new Promise((resolve) => {
-      const transaction = this.db.transaction([this.WORLDS_OBS]);
-      const objectStore = transaction.objectStore(this.WORLDS_OBS);
+      const transaction = this.db.transaction([ClientDb.WORLDS_OBS]);
+      const objectStore = transaction.objectStore(ClientDb.WORLDS_OBS);
 
       const getAllRequest = objectStore.getAll();
       getAllRequest.onsuccess = (event: any) => {
@@ -117,8 +119,8 @@ export class ClientDb extends WorldModel {
 
   async getWorld(worldId: string): Promise<IWorldData> {
     const world: ISerializedGame = await new Promise((resolve) => {
-      const transaction = this.db.transaction([this.WORLDS_OBS]);
-      const objectStore = transaction.objectStore(this.WORLDS_OBS);
+      const transaction = this.db.transaction([ClientDb.WORLDS_OBS]);
+      const objectStore = transaction.objectStore(ClientDb.WORLDS_OBS);
 
       const request = objectStore.get(worldId);
 
@@ -175,7 +177,7 @@ export class ClientDb extends WorldModel {
   }
 
   async saveWorld(data: Game) {
-    const transaction = this.db.transaction([this.WORLDS_OBS], "readwrite");
+    const transaction = this.db.transaction([ClientDb.WORLDS_OBS], "readwrite");
 
     console.log(data);
 
@@ -191,7 +193,7 @@ export class ClientDb extends WorldModel {
   }
 
   async deleteWorld(gameId: string) {
-    const transaction = this.db.transaction([this.WORLDS_OBS], "readwrite");
+    const transaction = this.db.transaction([ClientDb.WORLDS_OBS], "readwrite");
 
     transaction.oncomplete = () => {
       console.log("All done!");

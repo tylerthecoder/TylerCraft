@@ -52,7 +52,6 @@ export class WorldManager {
 
     // add the world to our local list
     const serverWorld = new ServerGame(
-      game => new EmptyController(game),
       this.worldModel,
       loadedWorldData,
     );
@@ -73,7 +72,6 @@ export class WorldManager {
     const worldData = await this.worldModel.createWorld(createWorldOptions);
 
     const newWorld = new ServerGame(
-      (game) => new EmptyController(game),
       this.worldModel,
       worldData,
     );

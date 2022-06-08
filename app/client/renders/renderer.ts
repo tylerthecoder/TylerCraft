@@ -46,18 +46,16 @@ export class RenderData implements IRenderData {
 
 export abstract class Renderer {
 
-  canvas: CanvasProgram;
+  posBuffer: WebGLBuffer | null = null;
+  indexBuffer: WebGLBuffer | null = null;
+  textureBuffer: WebGLBuffer | null = null;
+  transPosBuffer: WebGLBuffer | null = null;
+  transIndexBuffer: WebGLBuffer | null = null;
+  transTextureBuffer: WebGLBuffer | null = null;
 
-  posBuffer: WebGLBuffer;
-  indexBuffer: WebGLBuffer;
-  textureBuffer: WebGLBuffer;
-  transPosBuffer: WebGLBuffer;
-  transIndexBuffer: WebGLBuffer;
-  transTextureBuffer: WebGLBuffer;
-
-  texture: WebGLTexture;
-  amount: number;
-  transAmount: number;
+  texture: WebGLTexture | null = null;
+  amount = 0;
+  transAmount = 0
 
   protected setBuffers(
     renData: IRenderData,

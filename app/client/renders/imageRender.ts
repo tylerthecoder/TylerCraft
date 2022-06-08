@@ -1,7 +1,7 @@
 import { Camera } from "../../src/camera";
 import { Vector3D } from "../../src/utils/vector";
+import { canvas } from "../canvas";
 import ShapeBuilder from "../services/shapeBuilder";
-import TextureService from "../services/textureService";
 import { RenderData, Renderer } from "./renderer";
 
 
@@ -29,7 +29,7 @@ export class ImageRenderer extends Renderer {
   }
 
   render(camera: Camera): void {
-    this.setActiveTexture(TextureService.getGalleryTexture(this.galleryIndex));
+    this.setActiveTexture(canvas.getGalleryTexture(this.galleryIndex));
     this.renderObject(this.pos.data, camera)
   }
 }

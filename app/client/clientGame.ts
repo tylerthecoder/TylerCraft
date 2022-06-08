@@ -4,35 +4,33 @@ import { Game } from "../src/game";
 import { canvas } from "./canvas";
 import { ISocketMessage, ISocketMessageType, IWorldData, WorldModel } from "../src/types";
 import WorldRenderer from "./renders/worldRender";
-import { Spectator } from "../src/entities/spectator";
 import { getMyUid, IExtendedWindow, IS_MOBILE, SocketInterface } from "./app";
 import { Player } from "../src/entities/player";
 import { XrCamera } from "./cameras/xrCamera";
 import { GameStateDiff } from "@tylercraft/src/gameStateDiff";
-import { GameActionHolder } from "@tylercraft/src/gameActions";
+import { GameAction, GameActionHolder } from "@tylercraft/src/gameActions";
 import { GameController } from "@tylercraft/src/controllers/controller";
+import { MobileController } from "./controllers/mobileController";
+import { Quest2Controller } from "./controllers/quest2Controller";
+import { MouseAndKeyController } from "./controllers/gameKeyboardController";
 
 
 // This class should only read game and not write.
 // It uses game data to draw the game to the screen and handle user input
 export class ClientGame extends Game {
-  controller: GameController;
   worldRenderer: WorldRenderer;
-  spectator: Spectator;
   isSpectating = false;
   camera: Camera;
-  // selectedBlock: BLOCKS = BLOCKS.stone;
   numOfBlocks = 10;
   totTime = 0;
   pastDeltas: number[] = [];
   mainPlayer: Player;
 
   constructor(
-    controller: (game: ClientGame) => GameController,
     worldModel: WorldModel,
     worldData: IWorldData,
   ) {
-    super(controller, worldModel, worldData);
+    super(worldModel, worldData);
 
     (window as IExtendedWindow).clientGame = this;
 
@@ -51,18 +49,6 @@ export class ClientGame extends Game {
     for (const entity of this.entities.iterable()) {
       this.worldRenderer.addEntity(entity);
     }
-  }
-
-  get frameRate() {
-    this.pastDeltas = this.pastDeltas.slice(-100);
-    const totTime = this.pastDeltas.reduce((acc, cur) => acc + cur, 0);
-    const averageMs = totTime / Math.min(this.pastDeltas.length, 100);
-    const fps = 1 / (averageMs / 1000);
-    return fps;
-  }
-
-  async load() {
-    await canvas.loadProgram();
 
     if (this.multiPlayer) {
       SocketInterface.addListener(this.onSocketMessage.bind(this));
@@ -80,13 +66,33 @@ export class ClientGame extends Game {
     canvas.loop(this.renderLoop.bind(this))
   }
 
+  makeController(): GameController<GameAction> {
+    const getClass = () => {
+      if (IS_MOBILE) {
+        return MobileController;
+      } else if (canvas.isXr) {
+        return Quest2Controller;
+      } else {
+        return MouseAndKeyController;
+      }
+    }
+    return new (getClass())(this);
+  }
+
+  get frameRate() {
+    this.pastDeltas = this.pastDeltas.slice(-100);
+    const totTime = this.pastDeltas.reduce((acc, cur) => acc + cur, 0);
+    const averageMs = totTime / Math.min(this.pastDeltas.length, 100);
+    const fps = 1 / (averageMs / 1000);
+    return fps;
+  }
+
   onSocketMessage(message: ISocketMessage) {
     console.log("Socket Message", message);
     if (message.type === ISocketMessageType.gameDiff) {
       this.handleStateDiff(message.gameDiffPayload!);
     }
   }
-
 
   // Called by Game each tick,
   update(delta: number, stateDiff: GameStateDiff) {
@@ -132,14 +138,6 @@ export class ClientGame extends Game {
     this.isSpectating = false;
     this.camera = new EntityCamera(this.mainPlayer);
     this.worldRenderer.addEntity(this.mainPlayer);
-  }
-
-  setUpSpectator() {
-    // this.isSpectating = true;
-    // this.spectator = new Spectator();
-    // this.entities.add(this.spectator);
-    // this.camera = new EntityCamera(this.spectator);
-    // this.worldRenderer.shouldRenderMainPlayer = true;
   }
 
   toggleCreative() {

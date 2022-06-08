@@ -90,8 +90,7 @@ if (location.hash === "#local") {
 }
 
 export async function getLocalWorldModel() {
-  const clientDb = new ClientDb();
-  await clientDb.loadDb();
+  const clientDb = await ClientDb.factory();
   (window as IExtendedWindow).clientDb = clientDb;
   return clientDb;
 }
@@ -330,4 +329,8 @@ function showWorldOptionsScreen(worldModel: WorldModel, onBack: () => void) {
 
     gameStarter.start(worldModel, newWorldData);
   });
+}
+
+export class AppClass {
+  // private texture
 }

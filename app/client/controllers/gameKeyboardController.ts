@@ -132,7 +132,7 @@ export class MouseAndKeyController extends GameController<GameAction[]> {
     });
 
     this.eGameNameInput.value = this.game.name;
-    this.eGameNameInput.addEventListener("change", (e: KeyboardEvent) => {
+    this.eGameNameInput.addEventListener("change", (e: Event) => {
       if (!e.target) return;
       // TODO debounce this
       this.game.handleAction(GameAction.ChangeName, {

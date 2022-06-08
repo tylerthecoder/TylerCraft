@@ -43,6 +43,7 @@ export class Chunk {
   ) {
     this.uid = this.chunkPos.toIndex();
     this.blocks = new BlockHolder(this);
+    this.visibleCubesFaces = [];
     this.pos = new Vector3D([
       this.chunkPos.get(0) * CONFIG.terrain.chunkSize,
       0,

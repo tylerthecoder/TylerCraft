@@ -38,16 +38,18 @@ export abstract class Game<Action = GameAction> {
   private worldModel: WorldModel;
   private previousTime = Date.now();
 
+  abstract makeController(): GameController<Action>;
+
 
   constructor(
-    controller: (game: Game) => GameController,
+    // controller: (game: G) => GameController,
     worldModel: WorldModel,
     worldData: IWorldData,
   ) {
     Random.setSeed(worldData.config.seed);
 
     this.worldModel = worldModel;
-    this.controller = controller(this);
+    this.controller = this.makeController();
     this.stateDiff = new GameStateDiff(this);
     this.gameActionHandler = new GameActionHandler(this);
 
@@ -85,16 +87,15 @@ export abstract class Game<Action = GameAction> {
       });
     }
 
-    this.load();
+    // this.load();
   }
 
 
-  abstract load(): Promise<void>;
+  // abstract load(): Promise<void>;
   async baseLoad() {
     await this.world.load();
     console.log("World Loaded");
 
-    await this.load();
 
     // Setup timer
     this.previousTime = Date.now();

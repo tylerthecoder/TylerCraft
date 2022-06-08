@@ -3,8 +3,8 @@ import { Camera } from "../../src/camera";
 import TextureMapper from "../textureMapper";
 import { RenderData, Renderer } from "./renderer";
 import { Vector3D } from "../../src/utils/vector";
-import TextureService from "../services/textureService";
 import ShapeBuilder from "../services/shapeBuilder";
+import { canvas } from "../canvas";
 
 export class PlayerRenderer extends Renderer {
 
@@ -12,7 +12,7 @@ export class PlayerRenderer extends Renderer {
 
   constructor(public player: Player) {
     super();
-    this.setActiveTexture(TextureService.textureAtlas);
+    this.setActiveTexture(canvas.textureAtlas);
   }
 
   render(camera: Camera) {

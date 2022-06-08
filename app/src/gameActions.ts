@@ -65,8 +65,8 @@ export interface GameActionData extends Record<GameAction, unknown> {
 }
 
 export class GameActionDto<T extends GameAction = GameAction> {
-	readonly action: T;
-	readonly data: GameActionData[T];
+	readonly action: T = undefined as any;
+	readonly data: GameActionData[T] = undefined as any;
 }
 
 export class GameActionHolder<T extends GameAction = GameAction> {

@@ -1,15 +1,14 @@
 import { RenderData, Renderer } from "./renderer";
 import { Camera } from "../../src/camera";
 import { Entity } from "../../src/entities/entity";
-import { arrayMul } from "../../src/utils";
 import TextureMapper from "../textureMapper";
-import TextureService from "../services/textureService";
 import ShapeBuilder from "../services/shapeBuilder";
+import { canvas } from "../canvas";
 
 export class CubeRenderer extends Renderer {
   constructor(public entity: Entity) {
     super();
-    this.setActiveTexture(TextureService.textureAtlas);
+    this.setActiveTexture(canvas.textureAtlas);
     this.setup();
   }
 

@@ -2,12 +2,13 @@ import Players from "./players";
 import * as wSocket from "ws";
 import { ISocketMessage, ISocketMessageType, IWorldData, WorldModel } from "../src/types";
 import { Vector2D } from "../src/utils/vector";
-import { GameActionDto, GameActionHolder } from "../src/gameActions";
+import { GameAction, GameActionDto, GameActionHolder } from "../src/gameActions";
 import { Game } from "../src/game";
 import { GameStateDiff } from "../src/gameStateDiff";
 import { MapArray } from "../src/utils";
 import { SocketInterface } from "./app";
-import { GameController } from "@tylercraft/src/controllers/controller";
+import { GameController } from "../src/controllers/controller";
+import { EmptyController } from "../src/controllers/emptyController";
 
 export class ServerGame extends Game {
   public clients: Players;
@@ -15,17 +16,16 @@ export class ServerGame extends Game {
 
 
   constructor(
-    controller: (game: Game) => GameController,
     worldModel: WorldModel,
     worldData: IWorldData,
   ) {
-    super(controller, worldModel, worldData);
+    super(worldModel, worldData);
 
     this.clients = new Players(this);
   }
 
-  async load(): Promise<void> {
-    // NO-OP
+  makeController(): GameController<GameAction> {
+    return new EmptyController(this);
   }
 
   onAction(_action: GameActionHolder): void {

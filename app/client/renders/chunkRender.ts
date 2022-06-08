@@ -4,17 +4,17 @@ import { Chunk } from "../../src/world/chunk";
 import { arraySub } from "../../src/utils";
 import TextureMapper from "../textureMapper";
 import { BlockType, getBlockData } from "../../src/blockdata";
-import TextureService from "../services/textureService";
 import { ImageRenderer } from "./imageRender";
 import ShapeBuilder from "../services/shapeBuilder";
 import { faceVectorToFaceNumber } from "../../src/utils/face";
+import { canvas } from "../canvas";
 
 export class ChunkRenderer extends Renderer {
   private otherRenders: Renderer[] = [];
 
   constructor(public chunk: Chunk) {
     super();
-    this.setActiveTexture(TextureService.textureAtlas);
+    this.setActiveTexture(canvas.textureAtlas);
     this.getBufferData();
 
     // this.otherRenders.push(
@@ -50,7 +50,7 @@ export class ChunkRenderer extends Renderer {
 
   render(camera: Camera, trans?: boolean): void {
     // if (!this.isLoaded) return;
-    this.setActiveTexture(TextureService.textureAtlas);
+    this.setActiveTexture(canvas.textureAtlas);
 
     this.renderObject(this.chunk.pos.data, camera, trans);
 

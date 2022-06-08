@@ -1,5 +1,3 @@
-import { ISocketMessage, ISocketMessageType } from "../../src/types";
-import { SocketInterface } from "../app";
 import { ClientGame } from "../clientGame";
 
 /** This class will bypass the client actions and directly change

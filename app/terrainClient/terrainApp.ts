@@ -1,7 +1,3 @@
-
-/*
-  This file contains logic for the terrain viewer app
-**/
 import { BLOCKS } from "../src/blockdata";
 import { CONFIG } from "../src/config";
 import Random from "../src/utils/random";
@@ -10,6 +6,10 @@ import { BIOME_SIZE } from "../src/world/biome";
 import { Chunk } from "../src/world/chunk";
 import { TerrainGenerator } from "../src/world/terrainGenerator";
 import { World } from "../src/world/world";
+
+/*
+  This file contains logic for the terrain viewer app
+**/
 
 const LOAD_DIST = 6;
 const SCALE_FACTOR = 10;

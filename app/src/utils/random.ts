@@ -4,8 +4,10 @@ import { CONFIG } from "../config";
 import simplexNoise from "simplex-noise";
 
 class RandomClass {
-  private _rndNoise: simplexNoise;
+  private _rndNoise: simplexNoise = new simplexNoise();
   private jagFactor = CONFIG.terrain.jagFactor;
+
+
 
   setSeed(seed: string) {
     console.log("Setting random seed", seed);

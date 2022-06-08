@@ -9,8 +9,12 @@
     "strictNullChecks": true,
     "target": "es6",
     "declaration": true,
-    // "strict": true,
+    "strict": true,
+    "allowSyntheticDefaultImports": true,
     "lib": ["es2019", "dom"]
+  },
+  "resolve": {
+    "extensions": [".js", ".ts", ".glsl"] // Add extension if you want to raw-load without typing extension
   },
   "exclude": ["node_modules", "**/*.spec.ts", "dist"]
 }

@@ -1,11 +1,8 @@
-import { TerrainGenerator } from "../../src/world/terrainGenerator";
 import { INullableChunkReader } from "../types";
-import { Vector2D } from "../utils/vector";
 import { Chunk } from "./chunk";
 
 
 export class ChunkReader {
-  private terrainGenerator: TerrainGenerator;
 
   constructor(
     private chunkReader?: INullableChunkReader
@@ -21,11 +18,11 @@ export class ChunkReader {
       if (chunk) return chunk;
     }
 
-    const chunkPosVec = Vector2D.fromIndex(chunkPos);
+    throw new Error("Chunk not found");
 
+    // const chunkPosVec = Vector2D.fromIndex(chunkPos);
 
-
-    return this.terrainGenerator.generateChunk(chunkPosVec);
+    // return this.terrainGenerator.generateChunk(chunkPosVec);
   }
 }
 

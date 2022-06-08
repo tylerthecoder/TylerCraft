@@ -11,7 +11,7 @@ import { Quest2Controller } from "./controllers/quest2Controller";
 
 export class GameStarter {
 
-	private game: ClientGame | null;
+	private game: ClientGame | null = null;
 
 	private static getController(clientGame: ClientGame): GameController {
 		const getClass = () => {
@@ -31,10 +31,9 @@ export class GameStarter {
 		worldData: IWorldData,
 	) {
 		console.log("Loading Canvas");
-		await canvas.loadProgram();
 		console.log("Canvas Loaded");
 
-		this.game = new ClientGame(GameStarter.getController, worldModel, worldData);
+		this.game = new ClientGame(worldModel, worldData);
 
 		console.log("Starting game", this.game);
 		(window as IExtendedWindow).game = this.game;
@@ -45,13 +44,5 @@ export class GameStarter {
 		ePickWorldScreen.classList.add("fade");
 		eStartMenu.classList.add("fade");
 	}
-
-
-
-
-
-
-
-
 }
 

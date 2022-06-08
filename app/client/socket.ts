@@ -3,7 +3,7 @@ import { ISocketMessage, } from "../src/types";
 export type SocketListener = (message: ISocketMessage) => void;
 
 export class SocketHandler {
-  private socket: WebSocket;
+  private socket: WebSocket | null = null;
   private listeners: SocketListener[] = [];
 
   private get wssUrl() {
@@ -32,10 +32,16 @@ export class SocketHandler {
   }
 
   send(obj: ISocketMessage) {
+    if (!this.socket) {
+      throw new Error("Socket is not connected");
+    }
     this.socket.send(JSON.stringify(obj));
   }
 
   startListening() {
+    if (!this.socket) {
+      throw new Error("Socket is not connected");
+    }
     this.socket.onmessage = e => {
       const message = JSON.parse(e.data) as ISocketMessage;
       // console.log("Message from server", message);
