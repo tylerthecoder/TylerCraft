@@ -1,0 +1,7 @@
+{
+	"name": "@craft/terrain-gen-worker",
+	"version": "1.0.0",
+	"dependencies": {
+		"@craft/engine": "1.0.0"
+	}
+}

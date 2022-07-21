@@ -1,3 +1,7 @@
+# Current work
+
+- Need to figure out how to make vscode autocomplete not import from "@craft/engine/\*"
+
 # TODO
 
 ## Tower Defense Project

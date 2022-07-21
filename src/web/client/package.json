@@ -1,0 +1,26 @@
+{
+	"name": "@craft/web-client",
+	"version": "1.0.0",
+	"scripts": {
+		"build": "webpack",
+		"dev": "webpack --watch"
+	},
+	"dependencies": {
+		"@craft/engine": "1.0.0",
+		"@craft/terrain-gen-worker": "1.0.0",
+		"gl-matrix": "2.4.0"
+	},
+	"devDependencies": {
+		"@types/gl-matrix": "^2.4.5",
+		"@types/webxr": "^0.2.3",
+		"copy-webpack-plugin": "^5.0.3",
+		"html-webpack-plugin": "^3.2.0",
+		"pnp-webpack-plugin": "^1.7.0",
+		"raw-loader": "^4.0.2",
+		"ts-loader": "^8.0.2",
+		"webpack": "^4.35.2",
+		"webpack-build-notifier": "^2.1.1",
+		"webpack-cli": "^3.3.5",
+		"worker-loader": "^3.0.8"
+	}
+}
