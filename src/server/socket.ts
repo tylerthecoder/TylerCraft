@@ -1,7 +1,7 @@
 import * as wSocket from "ws";
-import { ISocketMessage } from "@craft/engine/types";
 import { IncomingMessage } from "http";
 import URL from "url";
+import { ISocketMessage } from "@craft/engine";
 
 type ConnectionListener = (ws: wSocket) => void;
 type MessageListener = (message: ISocketMessage) => void;

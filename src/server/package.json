@@ -3,7 +3,7 @@
 	"version": "1.0.0",
 	"scripts": {
 		"start": "yarn node ./dist/server.js",
-		"build": "tsc",
+		"build": "tsc -b",
 		"dev": "nodemon --exec 'yarn build && yarn start'"
 	},
 	"dependencies": {

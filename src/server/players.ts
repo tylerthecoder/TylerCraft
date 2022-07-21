@@ -1,9 +1,5 @@
+import { CONFIG, Game, GameStateDiff, ISocketMessage, ISocketMessageType, Player } from "@craft/engine";
 import * as wSocket from "ws";
-import { CONFIG } from "@craft/engine/config";
-import { Player } from "@craft/engine/entities/player";
-import { Game } from "@craft/engine/game";
-import { GameStateDiff } from "@craft/engine/gameStateDiff";
-import { ISocketMessage, ISocketMessageType } from "@craft/engine/types";
 import { SocketInterface } from "./app";
 
 export default class Players {

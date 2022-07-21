@@ -4,5 +4,6 @@
     "outDir": "./dist"
   },
   "include": ["./**/*.ts"],
-  "exclude": ["dist/**"]
+  "exclude": ["dist/**"],
+  "references": [{ "path": "../engine" }]
 }
