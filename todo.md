@@ -1,8 +1,8 @@
-# Current work
-
-- Need to figure out how to make vscode autocomplete not import from "@craft/engine/\*"
-
 # TODO
+
+## Deployable
+
+I want to be easily be able to deploy this app anywhere. Create script to deploy to different places
 
 ## Tower Defense Project
 
@@ -46,3 +46,10 @@ We want to get this to be able to be loaded on my site for a "3D view"
 - Make shooting fireballs work
 - Make fireballs break one block
 - Move in 4 spacial dimensions
+
+# Web Assembly
+
+## Idea
+
+I want to convert some of the app over to web assembly so it run quicker.
+Use Rust as my lower level language.
