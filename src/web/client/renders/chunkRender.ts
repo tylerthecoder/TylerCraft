@@ -1,12 +1,8 @@
 import { Renderer, RenderData } from "./renderer";
-import { Camera } from "@craft/engine/camera";
-import { Chunk } from "@craft/engine/world/chunk";
-import { arraySub } from "@craft/engine/utils";
+import { Camera, Chunk, arraySub, BlockType, getBlockData, faceVectorToFaceNumber } from "@craft/engine";
 import TextureMapper from "../textureMapper";
-import { BlockType, getBlockData } from "@craft/engine/blockdata";
 import { ImageRenderer } from "./imageRender";
 import ShapeBuilder from "../services/shapeBuilder";
-import { faceVectorToFaceNumber } from "@craft/engine/utils/face";
 import { canvas } from "../canvas";
 
 export class ChunkRenderer extends Renderer {

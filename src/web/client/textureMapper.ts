@@ -1,4 +1,4 @@
-import { BLOCKS } from "@craft/engine/blockdata";
+import { BLOCKS } from "@craft/engine";
 
 const TEXTURE_ATLAS_WIDTH = 3;
 const TEXTURE_ATLAS_HEIGHT = 4;

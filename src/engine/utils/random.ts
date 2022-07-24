@@ -48,5 +48,4 @@ class RandomClass {
 }
 
 
-const Random = new RandomClass();
-export default Random;
+export const Random = new RandomClass();

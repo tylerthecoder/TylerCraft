@@ -1,4 +1,4 @@
-import { ISocketMessage, } from "@craft/engine/types";
+import { ISocketMessage, } from "@craft/engine";
 
 export type SocketListener = (message: ISocketMessage) => void;
 

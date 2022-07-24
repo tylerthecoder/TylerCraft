@@ -1,5 +1,4 @@
-import { Camera } from "@craft/engine/camera";
-import { Vector3D } from "@craft/engine/utils/vector";
+import { Camera, Vector3D } from "@craft/engine";
 
 export class FixedCamera extends Camera {
   constructor(public pos: Vector3D, public rot: Vector3D) {

@@ -1,8 +1,17 @@
 {
   "extends": "../../../tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../dist",
-    "lib": ["es2019", "dom", "WebWorker"]
+    "outDir": "./dist",
+    "lib": ["es2019", "dom", "WebWorker"],
+    "skipLibCheck": true
   },
-  "include": ["./**/*.ts"]
+  "include": ["./**/*.ts"],
+  "references": [
+    {
+      "path": "../../engine"
+    },
+    {
+      "path": "../workers/terrain-generation"
+    }
+  ]
 }

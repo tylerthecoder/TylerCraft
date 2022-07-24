@@ -1,8 +1,6 @@
 import { Entity, FaceLocater } from "./entity";
 import { IDim } from "../types";
-import Random from "../utils/random";
 import { Vector3D } from "../utils/vector";
-import { MovableEntity } from "./moveableEntity";
 
 export class Spectator {
   // Entity overrides

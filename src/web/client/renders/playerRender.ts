@@ -1,10 +1,8 @@
-import { Player } from "@craft/engine/entities/player";
-import { Camera } from "@craft/engine/camera";
-import TextureMapper from "../textureMapper";
+import { Player, Camera, Vector3D } from "@craft/engine";
 import { RenderData, Renderer } from "./renderer";
-import { Vector3D } from "@craft/engine/utils/vector";
 import ShapeBuilder from "../services/shapeBuilder";
 import { canvas } from "../canvas";
+import TextureMapper from "../textureMapper";
 
 export class PlayerRenderer extends Renderer {
 

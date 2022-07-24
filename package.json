@@ -21,7 +21,8 @@
   "scripts": {
     "engine": "yarn workspace @craft/engine",
     "web-client": "yarn workspace @craft/web-client",
-    "server": "yarn workspace @craft/server"
+    "server": "yarn workspace @craft/server",
+    "terrain-worker": "yarn workspace @craft/terrain-gen-worker"
   },
   "dependencies": {
     "dotenv": "^8.2.0"

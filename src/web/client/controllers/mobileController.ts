@@ -1,8 +1,5 @@
-import { GameAction } from "@craft/engine/gameActions";
-import { MetaAction } from "@craft/engine/entities/entity";
-import { Vector2D } from "@craft/engine/utils/vector";
+import { GameAction, MetaAction, Vector2D, GameController } from "@craft/engine";
 import { ClientGame } from "../clientGame";
-import { GameController } from "@craft/engine/controllers/controller";
 
 interface IMobileState {
   pressing: {

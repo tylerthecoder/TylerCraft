@@ -1,8 +1,4 @@
-import { IConfig, setConfig } from "@craft/engine/config";
-import Random from "@craft/engine/utils/random";
-import { Vector2D } from "@craft/engine/utils/vector";
-import { Chunk, ISerializedChunk } from "@craft/engine/world/chunk";
-import { TerrainGenerator } from "@craft/engine/world/terrainGenerator";
+import { IConfig, setConfig, Vector2D, Chunk, ISerializedChunk, TerrainGenerator, Random } from "@craft/engine";
 // import terrainService from "./build/terrain2.js";
 
 // let terrainServiceInstance: any;

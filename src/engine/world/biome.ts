@@ -1,4 +1,4 @@
-import Random from "../utils/random";
+import { Random } from "../utils/random";
 import { Vector2D, VectorIndex } from "../utils/vector";
 
 

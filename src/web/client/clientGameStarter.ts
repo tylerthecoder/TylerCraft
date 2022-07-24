@@ -1,13 +1,10 @@
-import { IWorldData, WorldModel } from "@craft/engine/types";
+import { GameController, IWorldData, WorldModel } from "@craft/engine";
 import { ePickWorldScreen, eStartMenu, IExtendedWindow, IS_MOBILE } from "./app";
 import { canvas } from "./canvas"
 import { ClientGame } from "./clientGame";
-import { GameController } from "@craft/engine/controllers/controller";
 import { MouseAndKeyController } from "./controllers/gameKeyboardController";
 import { MobileController } from "./controllers/mobileController";
 import { Quest2Controller } from "./controllers/quest2Controller";
-
-
 
 export class GameStarter {
 

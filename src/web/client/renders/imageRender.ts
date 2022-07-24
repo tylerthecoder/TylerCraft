@@ -1,5 +1,4 @@
-import { Camera } from "@craft/engine/camera";
-import { Vector3D } from "@craft/engine/utils/vector";
+import { Vector3D, Camera } from "@craft/engine";
 import { canvas } from "../canvas";
 import ShapeBuilder from "../services/shapeBuilder";
 import { RenderData, Renderer } from "./renderer";

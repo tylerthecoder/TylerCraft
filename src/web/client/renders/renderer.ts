@@ -1,6 +1,5 @@
 import { canvas } from "../canvas";
-import { Camera } from "@craft/engine/camera";
-import { arraySub } from "@craft/engine/utils";
+import { Camera, arraySub } from "@craft/engine";
 import { mat4, vec3 } from "gl-matrix";
 
 interface IRenderData {

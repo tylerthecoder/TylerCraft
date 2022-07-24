@@ -1,5 +1,4 @@
-import { arrayAdd, arrayScalarMul } from "@craft/engine/utils";
-import { Vector, Vector3D } from "@craft/engine/utils/vector";
+import { arrayAdd, arrayScalarMul, Vector, Vector3D } from "@craft/engine";
 import { RenderData } from "../renders/renderer";
 
 

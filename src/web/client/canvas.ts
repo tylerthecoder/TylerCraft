@@ -1,5 +1,4 @@
-import { CONFIG } from "@craft/engine/config";
-import { Vector3D } from "@craft/engine/utils/vector";
+import { CONFIG, Vector3D } from "@craft/engine";
 import type { Navigator, XRSession, XRFrame, XRWebGLLayer, XRReferenceSpace } from 'webxr';
 import { mat4 } from "gl-matrix";
 import VertexShader from "!!raw-loader!../assets/shaders/vertex.glsl";

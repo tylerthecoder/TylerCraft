@@ -1,6 +1,6 @@
 import { Vector2D, Vector3D } from "../utils/vector";
 import { CONFIG } from "../config";
-import Random from "../utils/random";
+import { Random } from "../utils/random";
 import { Chunk } from "./chunk";
 import { BLOCKS } from "../blockdata";
 import CubeHelpers, { Cube } from "../entities/cube";

@@ -1,8 +1,12 @@
 {
   "extends": "../../../../tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../dist",
-    "lib": ["esnext", "WebWorker"]
+    "outDir": "./dist",
+    "lib": ["esnext", "WebWorker"],
+    "composite": true,
+    "skipLibCheck": true
   },
-  "include": ["./**/*.ts"]
+  "include": ["./**/*.ts"],
+  "exclude": ["dist/**"],
+  "references": [{ "path": "../../../engine" }]
 }

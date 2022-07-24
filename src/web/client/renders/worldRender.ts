@@ -1,18 +1,10 @@
-import { World } from "@craft/engine/world/world";
+import { World, Entity, CONFIG, Camera, Player, Projectile, BLOCKS, Vector2D, Vector3D } from "@craft/engine";
 import { Renderer } from "./renderer";
 import { canvas } from "../canvas";
 import { ChunkRenderer } from "./chunkRender";
 import { HudRenderer } from "./hudRender";
-import { CubeRenderer } from "./cubeRender";
 import { ClientGame } from "../clientGame";
-import { Entity } from "@craft/engine/entities/entity";
 import { SphereRenderer } from "./sphereRender";
-import { CONFIG } from "@craft/engine/config";
-import { Vector2D, Vector3D } from "@craft/engine/utils/vector";
-import { Camera } from "@craft/engine/camera";
-import { Player } from "@craft/engine/entities/player";
-import { Projectile } from "@craft/engine/entities/projectile";
-import { BLOCKS } from "@craft/engine/blockdata";
 import { PlayerRenderer } from "./playerRender";
 
 export default class WorldRenderer {

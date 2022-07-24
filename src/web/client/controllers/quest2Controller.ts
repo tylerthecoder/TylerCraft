@@ -1,9 +1,7 @@
-import { MetaAction } from "@craft/engine/entities/entity";
-import { Vector3D } from "@craft/engine/utils/vector";
+import { MetaAction, Vector3D, GameController } from "@craft/engine";
 import { quat } from "gl-matrix";
 import { canvas } from "../canvas";
 import { ClientGame } from "../clientGame";
-import { GameController } from "@craft/engine/controllers/controller";
 
 
 export class Quest2Controller extends GameController {

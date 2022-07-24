@@ -1,7 +1,6 @@
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyPlugin = require("copy-webpack-plugin");
 const WebpackBuildNotifierPlugin = require('webpack-build-notifier');
-const PnpWebpackPlugin = require(`pnp-webpack-plugin`);
 const path = require("path");
 
 
@@ -42,9 +41,6 @@ module.exports = {
     filename: '[name].js',
   },
   resolve: {
-    plugins: [
-      PnpWebpackPlugin,
-    ],
     extensions: ['.ts', '.tsx', '.js'],
   },
   module: {
@@ -53,7 +49,8 @@ module.exports = {
         test: /\.tsx?$/,
         loader: require.resolve('ts-loader'),
         options: {
-          configFile: './tsconfig.json'
+          configFile: './tsconfig.json',
+          projectReferences: true,
         }
       },
       {
@@ -64,11 +61,6 @@ module.exports = {
         test: /\.glsl$/,
         use: 'raw-loader'
       }
-    ],
-  },
-  resolveLoader: {
-    plugins: [
-      PnpWebpackPlugin.moduleLoader(module),
     ],
   },
 };

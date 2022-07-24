@@ -1,6 +1,4 @@
-import { Camera } from "@craft/engine/camera";
-import { MovableEntity } from "@craft/engine/entities/moveableEntity";
-import { Vector3D } from "@craft/engine/utils/vector";
+import { Camera, MovableEntity, Vector3D } from "@craft/engine";
 
 export class XrCamera extends Camera {
 

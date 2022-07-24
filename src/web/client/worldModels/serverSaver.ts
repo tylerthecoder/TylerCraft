@@ -1,7 +1,4 @@
-import { CONFIG } from "@craft/engine/config";
-import { IGameMetadata, Game } from "@craft/engine/game";
-import { Chunk, } from "@craft/engine/world/chunk";
-import { ICreateWorldOptions, ISocketMessage, ISocketMessageType, ISocketWelcomePayload, IWorldData, WorldModel, IChunkReader } from "@craft/engine/types";
+import { CONFIG, IGameMetadata, Game, Chunk, ICreateWorldOptions, ISocketMessage, ISocketMessageType, ISocketWelcomePayload, IWorldData, WorldModel, IChunkReader } from "@craft/engine";
 import { getMyUid, SocketInterface } from "../app";
 import { SocketListener } from "../socket";
 

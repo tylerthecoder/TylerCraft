@@ -1,7 +1,4 @@
-import { Vector3D } from "@craft/engine/utils/vector";
-import { MovableEntity } from "@craft/engine/entities/moveableEntity";
-import { CONFIG } from "@craft/engine/config";
-import { Camera } from "@craft/engine/camera";
+import { Vector3D, MovableEntity, CONFIG, Camera } from "@craft/engine";
 
 export enum PlayerPerspective {
   FirstPerson,

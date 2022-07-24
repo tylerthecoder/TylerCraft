@@ -10,6 +10,8 @@ export * from "./gameActions";
 export * from "./types";
 export * from "./world";
 export * from "./utils/vector"
+export * from "./utils/face"
+export * from "./utils/random"
 export * from "./utils"
 export * from "./entities/cube"
 export * from "./entities/entity"

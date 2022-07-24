@@ -3,7 +3,7 @@ import { ISerializedWorld, World } from "./world/world";
 import { IWorldData, WorldModel } from "./types";
 import { CONFIG, IConfig, setConfig } from "./config";
 import { EntityHolder, ISerializedEntities } from "./entities/entityHolder";
-import Random from "./utils/random";
+import { Random } from "./utils/random";
 import { GameAction, GameActionData, GameActionHandler, GameActionHolder } from "./gameActions";
 import { GameStateDiff, GameDiffDto } from "./gameStateDiff";
 import { Vector2D } from "./utils/vector";

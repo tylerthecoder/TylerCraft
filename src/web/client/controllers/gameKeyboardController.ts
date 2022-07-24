@@ -1,12 +1,6 @@
+import { MetaAction, MovableEntity, CONFIG, GameAction, Direction, GameController, IDim } from "@craft/engine";
 import { ClientGame } from "../clientGame";
 import { canvas } from "../canvas";
-import { MetaAction } from "@craft/engine/entities/entity";
-import { IDim } from "@craft/engine/types";
-import { MovableEntity } from "@craft/engine/entities/moveableEntity";
-import { CONFIG } from "@craft/engine/config";
-import { GameAction } from "@craft/engine/gameActions";
-import { Direction } from "@craft/engine/utils/vector";
-import { GameController } from "@craft/engine/controllers/controller";
 
 const makeWheelScroller = (game: ClientGame) => {
   let totalWheelDelta = 0;

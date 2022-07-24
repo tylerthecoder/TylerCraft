@@ -1,15 +1,9 @@
-import { Camera } from "@craft/engine/camera";
+import { Camera, Game, ISocketMessage, ISocketMessageType, IWorldData, WorldModel, Player, GameStateDiff, GameAction, GameActionHolder, GameController } from "@craft/engine";
 import { EntityCamera } from "./cameras/entityCamera";
-import { Game } from "@craft/engine/game";
 import { canvas } from "./canvas";
-import { ISocketMessage, ISocketMessageType, IWorldData, WorldModel } from "@craft/engine/types";
 import WorldRenderer from "./renders/worldRender";
 import { getMyUid, IExtendedWindow, IS_MOBILE, SocketInterface } from "./app";
-import { Player } from "@craft/engine/entities/player";
 import { XrCamera } from "./cameras/xrCamera";
-import { GameStateDiff } from "@craft/engine/gameStateDiff";
-import { GameAction, GameActionHolder } from "@craft/engine/gameActions";
-import { GameController } from "@craft/engine/controllers/controller";
 import { MobileController } from "./controllers/mobileController";
 import { Quest2Controller } from "./controllers/quest2Controller";
 import { MouseAndKeyController } from "./controllers/gameKeyboardController";

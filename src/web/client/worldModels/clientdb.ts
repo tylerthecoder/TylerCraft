@@ -1,9 +1,5 @@
-import { Game, IGameMetadata, ISerializedGame } from "@craft/engine/game";
-import { ICreateWorldOptions, INullableChunkReader, IWorldData, WorldModel } from "@craft/engine/types";
-import { Chunk, ISerializedChunk } from "@craft/engine/world/chunk";
-import { ChunkReader } from "@craft/engine/world/chunkReader";
+import { Game, IGameMetadata, ISerializedGame, ICreateWorldOptions, INullableChunkReader, IWorldData, WorldModel, Chunk, ISerializedChunk, ChunkReader, Vector2D } from "@craft/engine";
 import TerrainWorker from "worker-loader!@craft/terrain-gen-worker/terrain.worker";
-import { Vector2D } from "@craft/engine/utils/vector";
 
 export class ClientDb extends WorldModel {
 
