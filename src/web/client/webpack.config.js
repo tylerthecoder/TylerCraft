@@ -1,27 +1,14 @@
-const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyPlugin = require("copy-webpack-plugin");
 const WebpackBuildNotifierPlugin = require('webpack-build-notifier');
 const path = require("path");
 
-
 module.exports = {
   entry: {
-    index: './app.ts',
-    // terrain: './app/terrainClient/terrainApp.ts'
+    index: './src/bootstrap.ts',
   },
   mode: "development",
   devtool: 'inline-source-map',
   plugins: [
-    new HtmlWebpackPlugin({
-      template: '../assets/index.html',
-      chunks: ["index"],
-      filename: "index.html",
-    }),
-    // new HtmlWebpackPlugin({
-    //   template: 'app/assets/terrain.html',
-    //   chunks: ["terrain"],
-    //   filename: "terrain.html",
-    // }),
     new CopyPlugin([
       {
         from: "../assets/img",
@@ -31,6 +18,10 @@ module.exports = {
         from: "../assets/css",
         to: "css/",
       },
+      {
+        from: "index.html",
+        to: "index.html"
+      }
     ]),
     new WebpackBuildNotifierPlugin({
       title: "Tylercraft",
@@ -49,18 +40,22 @@ module.exports = {
         test: /\.tsx?$/,
         loader: require.resolve('ts-loader'),
         options: {
-          configFile: './tsconfig.json',
+          configFile: 'tsconfig.json',
           projectReferences: true,
         }
       },
       {
-        test: /\.worker\.js$/,
-        use: { loader: "worker-loader" },
-      },
-      {
         test: /\.glsl$/,
-        use: 'raw-loader'
+        type: "asset/source"
       }
+      // {
+      //   test: /\.worker\.js$/,
+      //   use: { loader: "worker-loader" },
+      // },
     ],
   },
+  experiments: {
+    asyncWebAssembly: true,
+    syncWebAssembly: true
+  }
 };

@@ -8,6 +8,12 @@ import { GameAction, GameActionData, GameActionHandler, GameActionHolder } from 
 import { GameStateDiff, GameDiffDto } from "./gameStateDiff";
 import { Vector2D } from "./utils/vector";
 import { GameController } from "./controllers/controller";
+import wasm from "@craft/world"
+
+
+console.log("Wasm", wasm);
+
+(wasm as any).then((data: any) => console.log(data));
 
 export interface ISerializedGame {
   config: IConfig;
