@@ -9,6 +9,7 @@
 		"clean": "rm -rf dist"
 	},
 	"dependencies": {
+		"@craft/world": "../world/pkg",
 		"random": "^2.2.0",
 		"seedrandom": "^3.0.5",
 		"simplex-noise": "^2.4.0"

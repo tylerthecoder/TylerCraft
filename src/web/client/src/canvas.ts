@@ -1,8 +1,8 @@
 import { CONFIG, Vector3D } from "@craft/engine";
 import type { Navigator, XRSession, XRFrame, XRWebGLLayer, XRReferenceSpace } from 'webxr';
 import { mat4 } from "gl-matrix";
-import VertexShader from "!!raw-loader!../assets/shaders/vertex.glsl";
-import FragmentShader from "!!raw-loader!../assets/shaders/fragment.glsl";
+import VertexShader from "../shaders/vertex.glsl";
+import FragmentShader from "../shaders/fragment.glsl";
 
 console.log(VertexShader);
 

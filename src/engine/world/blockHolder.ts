@@ -2,6 +2,8 @@ import { BLOCKS, ExtraBlockData } from "../blockdata";
 import CubeHelpers, { Cube, CubeDto } from "../entities/cube";
 import { Vector3D } from "../utils/vector";
 import { Chunk } from "./chunk";
+import { Chunk as WasmChunk } from "@craft/world"
+
 
 export type ISerializedBlockerHolder = CubeDto[]
 
@@ -16,6 +18,8 @@ export class BlockHolder {
   constructor(
     private chunk: Chunk
   ) {
+    console.log(WasmChunk)
+    const t = WasmChunk.new();
     this.blocks = new Uint8Array(new ArrayBuffer(16 * 64 * 16));
   }
 
