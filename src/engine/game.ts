@@ -8,12 +8,10 @@ import { GameAction, GameActionData, GameActionHandler, GameActionHolder } from 
 import { GameStateDiff, GameDiffDto } from "./gameStateDiff";
 import { Vector2D } from "./utils/vector";
 import { GameController } from "./controllers/controller";
-import wasm from "@craft/world"
+import * as Modules from "./modules";
 
-
-console.log("Wasm", wasm);
-
-(wasm as any).then((data: any) => console.log(data));
+// TODO need to await this somehow
+Modules.LoadModules()
 
 export interface ISerializedGame {
   config: IConfig;

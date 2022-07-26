@@ -2,25 +2,23 @@ import { BLOCKS, ExtraBlockData } from "../blockdata";
 import CubeHelpers, { Cube, CubeDto } from "../entities/cube";
 import { Vector3D } from "../utils/vector";
 import { Chunk } from "./chunk";
-import { Chunk as WasmChunk } from "@craft/world"
+import * as Modules from "../modules";
 
 
 export type ISerializedBlockerHolder = CubeDto[]
 
 export class BlockHolder {
-  private blocks: Uint8Array;
 
-  // Will have to check performance on this
+  private blocks: ReturnType<typeof Modules.World.Chunk.new>;
+
   private blockData: {
-    [index: number]: ExtraBlockData
+    [index: string]: ExtraBlockData
   } = {};
 
   constructor(
     private chunk: Chunk
   ) {
-    console.log(WasmChunk)
-    const t = WasmChunk.new();
-    this.blocks = new Uint8Array(new ArrayBuffer(16 * 64 * 16));
+    this.blocks = Modules.World.Chunk.new();
   }
 
   serialize(): ISerializedBlockerHolder {
@@ -43,69 +41,83 @@ export class BlockHolder {
     return blockHolder;
   }
 
-  private worldPosToIndex(pos: Vector3D) {
+  private getChunkPos(pos: Vector3D) {
     const adjustedX = ((pos.get(0) % 16) + 16) % 16;
     const adjustedZ = ((pos.get(2) % 16) + 16) % 16;
-    const part1 = adjustedX << (4 + 6);
-    const part2 = pos.get(1) << 4;
-    const part3 = adjustedZ;
-    return part1 + part2 + part3;
-  }
-
-  private indexToWorldPos(index: number) {
-    const part1 = index >> (4 + 6);
-    const part2 = (index - (part1 << (4 + 6))) >> 4;
-    const part3 = index - ((part1 << (4 + 6)) + (part2 << 4));
-    return new Vector3D([part1, part2, part3])
-      .add(this.chunk.pos);
+    return [adjustedX, pos.get(1), adjustedZ];
   }
 
   get(worldPos: Vector3D): Cube | null {
     if (!this.chunk.containsWorldPos(worldPos)) return null; // DEV ONLY
-    const index = this.worldPosToIndex(worldPos);
-    const block = this.blocks[index];
-    if (block === BLOCKS.void) return null;
-    return CubeHelpers.createCube(block, worldPos);
+    const pos = this.getChunkPos(worldPos);
+
+    try {
+
+      const block: BLOCKS = this.blocks.get_block(
+        pos[0],
+        pos[1],
+        pos[2]
+      );
+
+      if (block === BLOCKS.void) return null;
+      return CubeHelpers.createCube(block, worldPos);
+    } catch (err) {
+      console.warn("Couldn't get", pos)
+      return null;
+    }
   }
 
   getBlockData(worldPos: Vector3D) {
-    const index = this.worldPosToIndex(worldPos);
-    return this.blockData[index] ?? null;
+    return this.blockData[worldPos.toIndex()] ?? null;
   }
 
   add(cube: Cube): void {
-    const index = this.worldPosToIndex(cube.pos);
-    this.blocks[index] = cube.type;
+    const pos = this.getChunkPos(cube.pos);
+
+    try {
+      this.blocks.add_block(
+        pos[0],
+        pos[1],
+        pos[2],
+        cube.type
+      );
+    } catch (err) {
+      console.warn("Couldn't add", pos, cube.type)
+    }
     if (cube.extraData) {
-      this.blockData[index] = cube.extraData;
+      this.blockData[cube.pos.toIndex()] = cube.extraData;
     }
   }
 
   remove(worldPos: Vector3D): void {
-    const index = this.worldPosToIndex(worldPos);
-    this.blocks[index] = BLOCKS.void;
+    const pos = this.getChunkPos(worldPos);
+    this.blocks.remove_block(
+      pos[0],
+      pos[1],
+      pos[2],
+    );
   }
 
   iterate(predicate: (cube: Cube) => void): void {
-    this.blocks.forEach((blockType, index) => {
-      if (blockType === BLOCKS.void) return;
-      const blockPos = this.indexToWorldPos(index);
-      const cube = CubeHelpers.createCube(blockType, blockPos);
-      predicate(cube);
-    });
-  }
-
-  iterate2(predicate: (cube: Cube, index: number) => void): void {
-    this.blocks.forEach((blockType, index) => {
-      if (blockType === BLOCKS.void) return;
-      const blockPos = this.indexToWorldPos(index);
-      const cube = CubeHelpers.createCube(blockType, blockPos);
-      predicate(cube, index);
-    });
+    for (let x = 0; x < 16; x++) {
+      for (let y = 0; y < 64; y++) {
+        for (let z = 0; z < 16; z++) {
+          const block: BLOCKS = this.blocks.get_block(x, y, z);
+          if (block === BLOCKS.void) continue;
+          const worldPos = new Vector3D([x, y, z]).add(this.chunk.pos);
+          const cube = CubeHelpers.createCube(block, worldPos);
+          predicate(cube);
+        }
+      }
+    }
   }
 
   has(worldPos: Vector3D): boolean {
-    const index = this.worldPosToIndex(worldPos);
-    return this.blocks[index] !== BLOCKS.void;
+    const block: BLOCKS = this.blocks.get_block(
+      worldPos.get(0),
+      worldPos.get(1),
+      worldPos.get(2)
+    );
+    return block !== BLOCKS.void;
   }
 }

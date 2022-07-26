@@ -5,7 +5,8 @@
     "src/engine",
     "src/server",
     "src/web/client",
-    "src/web/workers/terrain-generation"
+    "src/web/workers/terrain-generation",
+    "src/world"
   ],
   "license": "MIT",
   "version": "1.0.7",
@@ -22,7 +23,8 @@
     "engine": "yarn workspace @craft/engine",
     "web-client": "yarn workspace @craft/web-client",
     "server": "yarn workspace @craft/server",
-    "terrain-worker": "yarn workspace @craft/terrain-gen-worker"
+    "terrain-worker": "yarn workspace @craft/terrain-gen-worker",
+    "world": "yarn workspace @craft/rust-world"
   },
   "dependencies": {
     "dotenv": "^8.2.0"
