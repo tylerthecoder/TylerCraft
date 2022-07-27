@@ -1,6 +1,6 @@
 import seedrandom from "seedrandom";
 import random from "random";
-import { CONFIG } from "../config";
+import { CONFIG } from "../config.js";
 import simplexNoise from "simplex-noise";
 
 class RandomClass {

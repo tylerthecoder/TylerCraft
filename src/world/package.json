@@ -1,7 +1,12 @@
 {
 	"name": "@craft/rust-world",
+	"version": "1.0.0",
 	"scripts": {
 		"build": "wasm-pack build",
+		"build:node": "wasm-pack build --target nodejs --out-dir pkg-nodejs",
 		"test": "wasm-pack test --firefox --headless"
-	}
+	},
+	"module": "./pkg/world.js",
+	"main": "./pkg-nodejs/world.js",
+	"types": "pkg-nodejs/world.d.ts"
 }

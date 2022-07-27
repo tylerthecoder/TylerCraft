@@ -1,14 +1,14 @@
-import { Entity, FaceLocater, IEntity } from "./entity";
-import { arrayAdd, arrayScalarMul } from "../utils";
-import { IDim } from "../types";
-import { MovableEntity, MovableEntityDto } from "./moveableEntity";
-import { CONFIG } from "../config";
-import { Direction, Vector3D } from "../utils/vector";
-import { IEntityType } from "./entityHolder";
-import { BLOCKS, ExtraBlockData } from "../blockdata";
-import { World } from "../world/world";
-import { ICameraData } from "../camera";
-import CubeHelpers from "./cube";
+import { Entity, FaceLocater, IEntity } from "./entity.js";
+import { arrayAdd, arrayScalarMul } from "../utils.js";
+import { IDim } from "../types.js";
+import { MovableEntity, MovableEntityDto } from "./moveableEntity.js";
+import { CONFIG } from "../config.js";
+import { Direction, Vector3D } from "../utils/vector.js";
+import { IEntityType } from "./entityHolder.js";
+import { BLOCKS, ExtraBlockData } from "../blockdata.js";
+import { World } from "../world/world.js";
+import { ICameraData } from "../camera.js";
+import CubeHelpers from "./cube.js";
 
 
 export interface BeltDto {

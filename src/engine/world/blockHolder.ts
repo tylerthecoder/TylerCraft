@@ -1,8 +1,8 @@
-import { BLOCKS, ExtraBlockData } from "../blockdata";
-import CubeHelpers, { Cube, CubeDto } from "../entities/cube";
-import { Vector3D } from "../utils/vector";
-import { Chunk } from "./chunk";
-import * as Modules from "../modules";
+import { BLOCKS, ExtraBlockData } from "../blockdata.js";
+import CubeHelpers, { Cube, CubeDto } from "../entities/cube.js";
+import { Vector3D } from "../utils/vector.js";
+import { Chunk } from "./chunk.js";
+import * as Modules from "../modules.js";
 
 
 export type ISerializedBlockerHolder = CubeDto[]

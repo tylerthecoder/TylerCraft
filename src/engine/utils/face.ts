@@ -1,4 +1,4 @@
-import { Vector3D } from "./vector";
+import { Vector3D } from "./vector.js";
 
 
 export function getOppositeCubeFace(face: number) {

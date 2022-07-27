@@ -1,12 +1,15 @@
 /** Entry point for the browser app
  * Controls string UI and creating the game
  */
+import * as Engine from "@craft/engine";
+console.log("Engine", Engine, (Engine as any).default);
 import { camelCaseToNormalCase, CONFIG, Game, IGameMetadata, WorldModel } from "@craft/engine";
 import { ClientDb } from "./worldModels/clientdb";
 import { NetworkWorldModel } from "./worldModels/serverSaver";
 import { ClientGame } from "./clientGame";
 import { SocketHandler } from "./socket";
 import { GameStarter } from "./clientGameStarter";
+
 
 export interface IExtendedWindow extends Window {
   clientDb?: ClientDb;

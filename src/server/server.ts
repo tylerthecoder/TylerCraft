@@ -1,9 +1,11 @@
 import express from "express";
-import TylerCraftApp from "./app";
-import * as wSocket from "ws";
-import { MongoClient } from "mongodb";
+import TylerCraftApp from "./app.js";
+import { WebSocketServer } from "ws";
+import mongodb from "mongodb";
 import cors from "cors";
 import path from "path";
+import { fileURLToPath } from 'url';
+
 
 export const PORT = process.env.PORT ?? 3000;
 export const DB_URL = process.env.DB_URL;
@@ -19,6 +21,9 @@ app.use(express.urlencoded({ extended: false }))
 app.use(express.json({ limit: "50mb" }));
 
 
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
+
 // Serve the web client
 const webClientPath = path.resolve(__dirname, "../../web/client/dist");
 console.log("Serving web client. ath", webClientPath)
@@ -28,11 +33,13 @@ TylerCraftApp.addRoutes(app);
 
 export const server = app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 
-const wss = new wSocket.Server({ server });
+console.log(WebSocketServer);
+
+const wss = new WebSocketServer({ server });
 
 const start = async () => {
   // create the mongo client
-  const client = await MongoClient.connect(DB_URL, {
+  const client = await mongodb.MongoClient.connect(DB_URL, {
     // useNewUrlParser: true,
     useUnifiedTopology: true,
     // useCreateIndex: true,

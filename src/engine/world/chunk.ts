@@ -1,14 +1,14 @@
-import CubeHelpers, { Cube, CUBE_DIM } from "../entities/cube";
-import { Entity } from "../entities/entity";
-import { IDim } from "../types";
-import { arrayMul, arrayAdd, arrayDot, arrayScalarMul, roundToNPlaces, arrayDistSquared } from "../utils";
-import { CONFIG } from "../config";
-import { Vector3D, Vector2D } from "../utils/vector";
-import { BLOCK_DATA } from "../blockdata";
-import { ICameraData } from "../camera";
-import { BlockHolder, ISerializedBlockerHolder } from "./blockHolder";
-import { faceVectorToFaceNumber, getOppositeCubeFace } from "../utils/face";
-import { World } from "./world";
+import CubeHelpers, { Cube, CUBE_DIM } from "../entities/cube.js";
+import { Entity } from "../entities/entity.js";
+import { IDim } from "../types.js";
+import { arrayMul, arrayAdd, arrayDot, arrayScalarMul, roundToNPlaces, arrayDistSquared } from "../utils.js";
+import { CONFIG } from "../config.js";
+import { Vector3D, Vector2D } from "../utils/vector.js";
+import { BLOCK_DATA } from "../blockdata.js";
+import { ICameraData } from "../camera.js";
+import { BlockHolder, ISerializedBlockerHolder } from "./blockHolder.js";
+import { faceVectorToFaceNumber, getOppositeCubeFace } from "../utils/face.js";
+import { World } from "./world.js";
 
 export interface ILookingAtData {
   newCubePos: Vector3D,

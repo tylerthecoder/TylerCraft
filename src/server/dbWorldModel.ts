@@ -1,5 +1,5 @@
 import { Chunk, Game, IChunkReader, ICreateWorldOptions, IGameMetadata, ISerializedChunk, ISerializedGame, IWorldData, TerrainGenerator, Vector2D, WorldModel } from "@craft/engine";
-import { db } from "./app";
+import { db } from "./app.js";
 
 
 export class RamChunkReader implements IChunkReader {

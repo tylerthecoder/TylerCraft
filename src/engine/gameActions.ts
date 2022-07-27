@@ -1,8 +1,8 @@
-import { ICameraData } from "./camera";
-import { Player } from "./entities/player";
-import { Game } from "./game";
-import { IDim } from "./types";
-import { Direction, Vector3D } from "./utils/vector";
+import { ICameraData } from "./camera.js";
+import { Player } from "./entities/player.js";
+import { Game } from "./game.js";
+import { IDim } from "./types.js";
+import { Direction, Vector3D } from "./utils/vector.js";
 
 export enum GameAction {
 	PlayerJump = "jump",

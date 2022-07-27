@@ -1,16 +1,16 @@
-import * as wSocket from "ws";
+import WebSocket from "ws";
 import { IncomingMessage } from "http";
 import URL from "url";
 import { ISocketMessage } from "@craft/engine";
 
-type ConnectionListener = (ws: wSocket) => void;
+type ConnectionListener = (ws: WebSocket) => void;
 type MessageListener = (message: ISocketMessage) => void;
 
 export default class SocketServer {
   connectionListeners: ConnectionListener[] = [];
 
   constructor(
-    private server: wSocket.Server
+    private server: WebSocket.WebSocketServer
   ) {
     this.server.on("connection", this.newConnection.bind(this));
   }
@@ -19,7 +19,7 @@ export default class SocketServer {
     this.connectionListeners.push(listener);
   }
 
-  newConnection(ws: wSocket, request: IncomingMessage): void {
+  newConnection(ws: WebSocket, request: IncomingMessage): void {
     const queryParams = URL.parse(request.url!, true).query;
 
     // only accept socket connections if they were meant for me
@@ -34,7 +34,7 @@ export default class SocketServer {
     });
   }
 
-  listenTo(ws: wSocket, func: MessageListener): void {
+  listenTo(ws: WebSocket, func: MessageListener): void {
     ws.on("message", (data: string) => {
       const message: ISocketMessage | undefined = (() => {
         try {
@@ -51,7 +51,7 @@ export default class SocketServer {
     });
   }
 
-  send(ws: wSocket, message: ISocketMessage): void {
+  send(ws: WebSocket, message: ISocketMessage): void {
     ws.send(JSON.stringify(message));
   }
 }

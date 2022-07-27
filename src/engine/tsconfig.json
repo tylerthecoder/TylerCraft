@@ -4,6 +4,7 @@
     "outDir": "./dist",
     "composite": true,
     "skipLibCheck": true
+    // "module": "NodeNext"
   },
   "exclude": ["dist/**"],
   "include": ["./**/*.ts"]
