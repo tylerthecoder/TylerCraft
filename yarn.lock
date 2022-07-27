@@ -36,7 +36,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@craft/engine@workspace:src/engine"
   dependencies:
-    "@craft/world": ../world/pkg
+    "@craft/rust-world": 1.0.0
     "@types/mongodb": ^3.5.27
     "@types/random": ^2.1.1
     "@types/seedrandom": ^2.4.28
@@ -46,7 +46,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@craft/rust-world@workspace:src/world":
+"@craft/rust-world@1.0.0, @craft/rust-world@workspace:src/world":
   version: 0.0.0-use.local
   resolution: "@craft/rust-world@workspace:src/world"
   languageName: unknown
@@ -60,7 +60,7 @@ __metadata:
     "@types/cors": ^2.8.9
     "@types/express": ^4.17.7
     "@types/mongodb": 3.x
-    "@types/ws": ^6.0.1
+    "@types/ws": ^8.5.3
     cors: ^2.8.5
     express: ^4.18.1
     mongodb: 3.x
@@ -97,13 +97,6 @@ __metadata:
     worker-loader: ^3.0.8
   languageName: unknown
   linkType: soft
-
-"@craft/world@file:../world/pkg::locator=%40craft%2Fengine%40workspace%3Asrc%2Fengine":
-  version: 0.1.0
-  resolution: "@craft/world@file:../world/pkg#../world/pkg::hash=f1365e&locator=%40craft%2Fengine%40workspace%3Asrc%2Fengine"
-  checksum: 4c3c6a433908c61bf5166bfcf6c8e1638bdfd202bd6befed38cf81c7cbca3c1f6d775d772df347d8afb7f24d3c843165000ebdba520f5d300551dca4c4da5d66
-  languageName: node
-  linkType: hard
 
 "@discoveryjs/json-ext@npm:^0.5.0":
   version: 0.5.7
@@ -467,12 +460,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/ws@npm:^6.0.1":
-  version: 6.0.4
-  resolution: "@types/ws@npm:6.0.4"
+"@types/ws@npm:^8.5.3":
+  version: 8.5.3
+  resolution: "@types/ws@npm:8.5.3"
   dependencies:
     "@types/node": "*"
-  checksum: b2656a76bfad0c17bb1e3fc237ba7122431c1373669977ed8edef45934c82f71c75d8c71f0a576dc6d98b0954fd94cae0166c6b4ccb40f7e0ee29cc92673519c
+  checksum: 0ce46f850d41383fcdc2149bcacc86d7232fa7a233f903d2246dff86e31701a02f8566f40af5f8b56d1834779255c04ec6ec78660fe0f9b2a69cf3d71937e4ae
   languageName: node
   linkType: hard
 
@@ -6804,6 +6797,12 @@ __metadata:
   checksum: 84f4a7eeb2a1d8b9704425837e017c91eedfae67ac89e0b866a2dcf283323c1dcabe0258196278b7d5fd0041392da895c8a0c59ddf3a94f1b2e003df68ddfec3
   languageName: node
   linkType: hard
+
+"world@workspace:src/world/pkg":
+  version: 0.0.0-use.local
+  resolution: "world@workspace:src/world/pkg"
+  languageName: unknown
+  linkType: soft
 
 "wrappy@npm:1":
   version: 1.0.2

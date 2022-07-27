@@ -1,15 +1,15 @@
-import { DbWorldModel } from "./dbWorldModel";
+import { DbWorldModel } from "./dbWorldModel.js";
 import { ICreateWorldOptions, ISocketMessage, ISocketMessageType } from "@craft/engine";
-import { ServerGame } from "./serverGame";
-import * as wSocket from "ws";
-import { SocketInterface } from "./app";
+import { ServerGame } from "./serverGame.js";
+import Websocket from "ws";
+import { SocketInterface } from "./app.js";
 
 export class WorldManager {
   private worlds: Map<string, ServerGame> = new Map();
   private worldModel = new DbWorldModel();
 
   constructor() {
-    SocketInterface.listenForConnection((ws: wSocket) => {
+    SocketInterface.listenForConnection((ws: Websocket) => {
       SocketInterface.listenTo(ws, async (message: ISocketMessage) => {
         // console.log(message);
         if (message.type === ISocketMessageType.joinWorld) {

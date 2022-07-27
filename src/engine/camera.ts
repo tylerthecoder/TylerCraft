@@ -1,6 +1,6 @@
-import { Entity, FaceLocater } from "./entities/entity";
-import { Vector3D } from "./utils/vector";
-import { IDim } from "./types";
+import { Entity, FaceLocater } from "./entities/entity.js";
+import { Vector3D } from "./utils/vector.js";
+import { IDim } from "./types.js";
 
 export interface ICameraData {
   pos: IDim;

@@ -1,10 +1,10 @@
-import { IConfig } from "./config";
-import { EntityDto } from "./entities/entity";
-import { ISerializedEntities } from "./entities/entityHolder";
-import { Game, IGameMetadata, ISerializedGame } from "./game";
-import { GameActionDto } from "./gameActions";
-import { GameDiffDto } from "./gameStateDiff";
-import { Chunk, ISerializedChunk } from "./world/chunk";
+import { IConfig } from "./config.js";
+import { EntityDto } from "./entities/entity.js";
+import { ISerializedEntities } from "./entities/entityHolder.js";
+import { Game, IGameMetadata, ISerializedGame } from "./game.js";
+import { GameActionDto } from "./gameActions.js";
+import { GameDiffDto } from "./gameStateDiff.js";
+import { Chunk, ISerializedChunk } from "./world/chunk.js";
 
 export type IDim = [number, number, number];
 

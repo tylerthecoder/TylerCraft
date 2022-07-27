@@ -1,4 +1,4 @@
-import { IDim } from "./types";
+import { IDim } from "./types.js";
 
 
 export function roundToNPlaces(num: number, n: number) {

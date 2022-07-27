@@ -1,8 +1,8 @@
-import { Game } from "../game";
-import { World } from "../world/world";
-import { Entity, EntityDto } from "./entity";
-import { Player } from "./player";
-import { Projectile } from "./projectile";
+import { Game } from "../game.js";
+import { World } from "../world/world.js";
+import { Entity, EntityDto } from "./entity.js";
+import { Player } from "./player.js";
+import { Projectile } from "./projectile.js";
 
 export const enum IEntityType {
   Player = 0,

@@ -1,11 +1,11 @@
-import { Vector2D, Vector3D } from "../utils/vector";
-import { CONFIG } from "../config";
-import { Random } from "../utils/random";
-import { Chunk } from "./chunk";
-import { BLOCKS } from "../blockdata";
-import CubeHelpers, { Cube } from "../entities/cube";
-import { World } from "./world";
-import { BiomeGenerator, Biome } from "./biome";
+import { Vector2D, Vector3D } from "../utils/vector.js";
+import { CONFIG } from "../config.js";
+import { Random } from "../utils/random.js";
+import { Chunk } from "./chunk.js";
+import { BLOCKS } from "../blockdata.js";
+import CubeHelpers, { Cube } from "../entities/cube.js";
+import { World } from "./world.js";
+import { BiomeGenerator, Biome } from "./biome.js";
 
 export interface ISerializedTerrainGenerator {
   blocksToRender: Array<{

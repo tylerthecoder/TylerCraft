@@ -1,7 +1,7 @@
 import { Request, Response, Application } from "express";
-import { WorldManager } from "./worldManager";
-import SocketServer from "./socket";
-import * as wSocket from "ws";
+import { WorldManager } from "./worldManager.js";
+import SocketServer from "./socket.js";
+import WebSocket from "ws";
 import { Db, MongoClient } from "mongodb";
 
 let worldManager: WorldManager;
@@ -16,7 +16,7 @@ const addRoutes = (app: Application) => {
 
 export let SocketInterface: SocketServer;
 
-const main = async (client: MongoClient, wss: wSocket.Server) => {
+const main = async (client: MongoClient, wss: WebSocket.WebSocketServer) => {
   db = client.db("games");
   console.log("Database Connected");
   SocketInterface = new SocketServer(wss);

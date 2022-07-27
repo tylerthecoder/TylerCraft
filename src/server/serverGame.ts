@@ -1,12 +1,11 @@
-import Players from "./players";
-import * as wSocket from "ws";
-import { SocketInterface } from "./app";
-import { EmptyController, Game, GameAction, GameActionDto, GameActionHolder, GameStateDiff, ISocketMessage, ISocketMessageType, IWorldData, MapArray, Vector2D, WorldModel } from "@craft/engine";
-import { GameController } from "@craft/engine/controllers/controller";
+import Players from "./players.js";
+import WebSocket from "ws";
+import { SocketInterface } from "./app.js";
+import { EmptyController, Game, GameAction, GameActionDto, GameActionHolder, GameStateDiff, ISocketMessage, ISocketMessageType, IWorldData, MapArray, Vector2D, WorldModel, GameController } from "@craft/engine";
 
 export class ServerGame extends Game {
   public clients: Players;
-  public actionMap: MapArray<wSocket, GameActionDto> = new MapArray();
+  public actionMap: MapArray<WebSocket, GameActionDto> = new MapArray();
 
 
   constructor(
@@ -44,7 +43,7 @@ export class ServerGame extends Game {
     // updates as one socket message.
 
     // Set the initial state diff for each client
-    const clientDiffs = new Map<wSocket, GameStateDiff>();
+    const clientDiffs = new Map<WebSocket, GameStateDiff>();
     for (const ws of this.clients.getSockets()) {
       clientDiffs.set(ws, this.stateDiff.copy());
     }
@@ -91,7 +90,7 @@ export class ServerGame extends Game {
     this.actionMap.clear();
   }
 
-  private async sendChunkTo(chunkPosString: string, ws: wSocket) {
+  private async sendChunkTo(chunkPosString: string, ws: WebSocket) {
     const chunkPos = Vector2D.fromIndex(chunkPosString);
     let chunk = this.world.getChunkFromPos(chunkPos);
     if (!chunk) {
@@ -109,7 +108,7 @@ export class ServerGame extends Game {
     });
   }
 
-  addSocket(uid: string, ws: wSocket): void {
+  addSocket(uid: string, ws: WebSocket): void {
     this.clients.addPlayer(uid, ws);
 
     SocketInterface.listenTo(ws, (message: ISocketMessage) => {

@@ -1,14 +1,14 @@
-import { Player } from "./entities/player";
-import { ISerializedWorld, World } from "./world/world";
-import { IWorldData, WorldModel } from "./types";
-import { CONFIG, IConfig, setConfig } from "./config";
-import { EntityHolder, ISerializedEntities } from "./entities/entityHolder";
-import { Random } from "./utils/random";
-import { GameAction, GameActionData, GameActionHandler, GameActionHolder } from "./gameActions";
-import { GameStateDiff, GameDiffDto } from "./gameStateDiff";
-import { Vector2D } from "./utils/vector";
-import { GameController } from "./controllers/controller";
-import * as Modules from "./modules";
+import { Player } from "./entities/player.js";
+import { ISerializedWorld, World } from "./world/world.js";
+import { IWorldData, WorldModel } from "./types.js";
+import { CONFIG, IConfig, setConfig } from "./config.js";
+import { EntityHolder, ISerializedEntities } from "./entities/entityHolder.js";
+import { Random } from "./utils/random.js";
+import { GameAction, GameActionData, GameActionHandler, GameActionHolder } from "./gameActions.js";
+import { GameStateDiff, GameDiffDto } from "./gameStateDiff.js";
+import { Vector2D } from "./utils/vector.js";
+import { GameController } from "./controllers/controller.js";
+import * as Modules from "./modules.js";
 
 // TODO need to await this somehow
 Modules.LoadModules()

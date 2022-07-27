@@ -1,6 +1,6 @@
-import { EntityDto } from "./entities/entity";
-import { Game } from "./game";
-import { ISerializedChunk } from "./world/chunk";
+import { EntityDto } from "./entities/entity.js";
+import { Game } from "./game.js";
+import { ISerializedChunk } from "./world/chunk.js";
 
 export interface GameDiffDto {
 	entities: {

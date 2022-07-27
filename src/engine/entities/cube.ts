@@ -1,9 +1,9 @@
-import { BLOCKS, BlockType, ExtraBlockData, getBlockData } from "../blockdata";
-import { Vector3D } from "../utils/vector";
-import { faceNumberToFaceVector, faceVectorToFaceNumber } from "../utils/face";
-import { World } from "../world/world";
-import { IDim } from "../types";
-import { Entity, FaceLocater } from "./entity";
+import { BLOCKS, BlockType, ExtraBlockData, getBlockData } from "../blockdata.js";
+import { Vector3D } from "../utils/vector.js";
+import { faceNumberToFaceVector, faceVectorToFaceNumber } from "../utils/face.js";
+import { World } from "../world/world.js";
+import { IDim } from "../types.js";
+import { Entity, FaceLocater } from "./entity.js";
 
 export type CubeDto = {
   type: BLOCKS;

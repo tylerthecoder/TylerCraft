@@ -1,15 +1,19 @@
-import WorldWasm from "@craft/world"
-
+import * as WorldWasm from "@craft/rust-world"
 
 export let World: typeof WorldWasm;
 
 export async function LoadModules() {
-	const worldPromise = (WorldWasm as unknown as Promise<typeof WorldWasm>)
-		.then(
+	const wasm = WorldWasm as any;
+
+	if (wasm.default?.then) {
+		(wasm as { default: Promise<typeof WorldWasm> }).default.then(
 			data => World = data
+		).then(
+			() => console.log("Modules Loaded ES6", World)
 		)
+	} else {
+		World = wasm
+		console.log("Modules Loaded node", World)
+	}
 
-	await worldPromise;
-
-	console.log("Modules Loaded", World);
 }

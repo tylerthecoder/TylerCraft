@@ -1,5 +1,5 @@
-import { Game } from "@craft/engine/game";
-import { GameAction } from "@craft/engine/gameActions";
+import { Game } from "../game.js";
+import { GameAction } from "../gameActions.js";
 
 export abstract class GameController<Action = GameAction> {
   protected game: Game<Action>;

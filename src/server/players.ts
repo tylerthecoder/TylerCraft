@@ -1,19 +1,19 @@
 import { CONFIG, Game, GameStateDiff, ISocketMessage, ISocketMessageType, Player } from "@craft/engine";
-import * as wSocket from "ws";
-import { SocketInterface } from "./app";
+import WebSocket from "ws";
+import { SocketInterface } from "./app.js";
 
 export default class Players {
-  players: Map<wSocket, Player> = new Map();
+  players: Map<WebSocket, Player> = new Map();
 
   constructor(
     public game: Game,
   ) { }
 
-  getSockets(): wSocket[] {
+  getSockets(): WebSocket[] {
     return Array.from(this.players.keys());
   }
 
-  sendMessageToAll(message: ISocketMessage, exclude?: wSocket) {
+  sendMessageToAll(message: ISocketMessage, exclude?: WebSocket) {
     console.log("Sending message to all", message);
     for (const socket of this.players.keys()) {
       if (exclude && socket === exclude) continue;
@@ -21,7 +21,7 @@ export default class Players {
     }
   }
 
-  addPlayer(uid: string, ws: wSocket): void {
+  addPlayer(uid: string, ws: WebSocket): void {
     // generate a random ID for the new player
 
     const player = this.game.addPlayer(uid);
@@ -59,7 +59,7 @@ export default class Players {
     console.log(`New player! ${uid} ${this.game.entities.getActivePlayers().length} players`);
   }
 
-  removePlayer(ws: wSocket): void {
+  removePlayer(ws: WebSocket): void {
     const player = this.players.get(ws);
 
     if (!player) {

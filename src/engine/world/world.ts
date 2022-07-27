@@ -1,11 +1,11 @@
-import CubeHelpers, { Cube } from "../entities/cube";
-import { Chunk, ILookingAtData, ISerializedChunk } from "./chunk";
-import { Entity } from "../entities/entity";
-import { Game } from "../game";
-import { IChunkReader } from "../types";
-import { CONFIG } from "../config";
-import { Vector3D, Vector2D } from "../utils/vector";
-import { ICameraData } from "../camera";
+import CubeHelpers, { Cube } from "../entities/cube.js";
+import { Chunk, ILookingAtData, ISerializedChunk } from "./chunk.js";
+import { Entity } from "../entities/entity.js";
+import { Game } from "../game.js";
+import { IChunkReader } from "../types.js";
+import { CONFIG } from "../config.js";
+import { Vector3D, Vector2D } from "../utils/vector.js";
+import { ICameraData } from "../camera.js";
 
 export interface ISerializedWorld {
   chunks: ISerializedChunk[];

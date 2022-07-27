@@ -1,6 +1,6 @@
-import { Entity, FaceLocater } from "./entity";
-import { IDim } from "../types";
-import { Vector3D } from "../utils/vector";
+import { Entity, FaceLocater } from "./entity.js";
+import { IDim } from "../types.js";
+import { Vector3D } from "../utils/vector.js";
 
 export class Spectator {
   // Entity overrides

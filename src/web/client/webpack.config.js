@@ -33,12 +33,15 @@ module.exports = {
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js'],
+    alias: {
+      "@craft/rust-world": path.resolve(__dirname, "../../world/pkg")
+    }
   },
   module: {
     rules: [
       {
         test: /\.tsx?$/,
-        loader: require.resolve('ts-loader'),
+        loader: "ts-loader",
         options: {
           configFile: 'tsconfig.json',
           projectReferences: true,
@@ -56,6 +59,5 @@ module.exports = {
   },
   experiments: {
     asyncWebAssembly: true,
-    syncWebAssembly: true
   }
 };

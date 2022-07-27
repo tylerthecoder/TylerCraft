@@ -1,8 +1,8 @@
-import { IDim } from "../types";
-import { CONFIG } from "../config";
-import { bindValue } from "../utils";
-import { Vector3D } from "../utils/vector";
-import { Entity, EntityDto, MetaAction } from "./entity";
+import { IDim } from "../types.js";
+import { CONFIG } from "../config.js";
+import { bindValue } from "../utils.js";
+import { Vector3D } from "../utils/vector.js";
+import { Entity, EntityDto, MetaAction } from "./entity.js";
 
 export interface MovableEntityDto extends EntityDto {
   vel: IDim;

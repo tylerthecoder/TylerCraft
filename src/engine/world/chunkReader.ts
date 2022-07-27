@@ -1,5 +1,5 @@
-import { INullableChunkReader } from "../types";
-import { Chunk } from "./chunk";
+import { INullableChunkReader } from "../types.js";
+import { Chunk } from "./chunk.js";
 
 
 export class ChunkReader {
