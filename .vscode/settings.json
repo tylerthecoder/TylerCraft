@@ -21,6 +21,9 @@
     "**/.yarn": true,
     "**/.pnp.*": true
   },
+
+  "editor.suggestSelection": "first",
+
   "eslint.nodePath": ".yarn/sdks",
   "typescript.enablePromptUseWorkspaceTsdk": true
 }
