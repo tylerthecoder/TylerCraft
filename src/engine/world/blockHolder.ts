@@ -51,6 +51,8 @@ export class BlockHolder {
     if (!this.chunk.containsWorldPos(worldPos)) return null; // DEV ONLY
     const pos = this.getChunkPos(worldPos);
 
+    if (pos[1] < 0) return null;
+
     try {
 
       const block: BLOCKS = this.blocks.get_block(
@@ -82,7 +84,7 @@ export class BlockHolder {
         cube.type
       );
     } catch (err) {
-      console.warn("Couldn't add", pos, cube.type)
+      console.warn("Couldn't add", pos, cube.type, cube, this.chunk, err)
     }
     if (cube.extraData) {
       this.blockData[cube.pos.toIndex()] = cube.extraData;

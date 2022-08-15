@@ -1,8 +1,11 @@
 # TODO
 
-## Deployable
+## Current "Sprint"
 
-I want to be easily be able to deploy this app anywhere. Create script to deploy to different places
+- Creating adding and getting blocks from the world.
+- Make a "Universe" module that holds all the "Universe" code
+- Move over everything to esmodules
+- Add hot reloading of the world when the rust changes
 
 ## Tower Defense Project
 
@@ -19,6 +22,8 @@ Make system more dev friendly:
 - Test different chunk sizing. Make load chunks and chunk sizing act more as expected
 
 Make entities with logic
+
+- Make a block that explodes
 
 - One entity that stays in place and knows the entities around it
 - One entity that moves around

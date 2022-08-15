@@ -1,10 +1,14 @@
 # Tylercraft
 
-This is my version of Minecraft. I tried to make minecraft for web using just webGL.
+This is Tylercraft, a version of minecraft written using webgl.
+
+# Development
+
+Dev commands `yarn server dev`, `yarn client dev`, `yarn world dev`
 
 # Deploying
 
-The server lives on my raspberry pi. The whole app can be deployed by running: `yarn start:prod`
+The server lives on my raspberry pi. The whole app can be deployed by running `make deploy-pi` when on the same network as the pi.
 
 # Random Docs
 
@@ -28,3 +32,20 @@ The Game class controls all game logic. Game will have a property that is a Prog
 EntityHandlers control entities by pushing MicroActions to them. Entities take these MicroActions and generate a diff.
 
 WorldModels are pre game. They create the game by either asking the client storage or the server.
+
+## Project structure
+
+- src
+  - web - Front end and rendering code - Deps: game
+    - assets - All the images and whatnot
+    - shared - The shared rendering and game logic - Deps: game, assets
+    - app - Starts the game and displays to screen. Contains build code - Deps: web/shared [moduleName]
+    - workers
+      - terrain
+    - terrain-map-app - a separate app for viewing terrain - Deps: assets
+  - server - Backend code - Deps: game
+  - logic - Logic for everything - Deps: none
+  - modules
+    - [moduleName] - More game logic - Deps: web/shared, game
+      - web
+      - logic

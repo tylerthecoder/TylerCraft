@@ -4,7 +4,9 @@
 	"scripts": {
 		"build": "wasm-pack build",
 		"build:node": "wasm-pack build --target nodejs --out-dir pkg-nodejs",
-		"test": "wasm-pack test --firefox --headless"
+		"test": "wasm-pack test --firefox --headless",
+		"test2": "cargo test -- --nocapture",
+		"dev": "cargo watch -i pkg -i pkg-nodejs -s 'yarn build && yarn build:node'"
 	},
 	"module": "./pkg/world.js",
 	"main": "./pkg-nodejs/world.js",
