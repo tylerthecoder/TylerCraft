@@ -1,14 +1,15 @@
 import CubeHelpers, { Cube, CUBE_DIM } from "../entities/cube.js";
-import { Entity } from "../entities/entity.js";
 import { IDim } from "../types.js";
 import { arrayMul, arrayAdd, arrayDot, arrayScalarMul, roundToNPlaces, arrayDistSquared } from "../utils.js";
 import { CONFIG } from "../config.js";
-import { Vector3D, Vector2D } from "../utils/vector.js";
-import { BLOCK_DATA } from "../blockdata.js";
+import { Vector3D, Vector2D, Direction } from "../utils/vector.js";
+import { BlockType } from "../blockdata.js";
 import { ICameraData } from "../camera.js";
-import { BlockHolder, ISerializedBlockerHolder } from "./blockHolder.js";
 import { faceVectorToFaceNumber, getOppositeCubeFace } from "../utils/face.js";
 import { World } from "./world.js";
+import WasmWorld from "@craft/rust-world"
+
+
 
 export interface ILookingAtData {
   newCubePos: Vector3D,
@@ -21,56 +22,64 @@ export interface ILookingAtData {
 // type SerializedVisibleData = Array<[pos: string, visible: Array<IDim>]>;
 
 export interface ISerializedChunk {
-  chunkPos: string,
-  cubes: ISerializedBlockerHolder,
-  chunkId: string;
+  chunkPos: Vector2D,
+  cubes: BlockType[],
+  block_data: Record<string, 'None' | { Image: string }>
+  // chunkId: string;
   // vis: SerializedVisibleData,
 }
 
+
+
+export type ISerializedVisibleFaces = Array<{
+  pos: { x: 0, y: 0, z: 0 },
+  faces: [boolean, boolean, boolean, boolean, boolean, boolean]
+}>
+
 export class Chunk {
-  blocks: BlockHolder;
+  // private blocks: BlockHolder;
   visibleCubesFaces: Array<{
     cube: Cube,
     faceVectors: Vector3D[],
   }>
 
-
   uid: string;
-  pos: Vector3D;
 
   constructor(
-    public chunkPos: Vector2D
+    private world: World,
+    private wasmWorld: WasmWorld.World,
+    private pos: Vector2D
   ) {
-    this.uid = this.chunkPos.toIndex();
-    this.blocks = new BlockHolder(this);
+    this.uid = pos.toIndex();
+
+    // this.blocks = new BlockHolder(this);
     this.visibleCubesFaces = [];
-    this.pos = new Vector3D([
-      this.chunkPos.get(0) * CONFIG.terrain.chunkSize,
-      0,
-      this.chunkPos.get(1) * CONFIG.terrain.chunkSize
-    ]);
   }
 
   serialize(): ISerializedChunk {
-    return {
-      chunkPos: this.chunkPos.toIndex(),
-      cubes: this.blocks.serialize(),
-      chunkId: this.uid,
-    }
+    return this.wasmWorld.serialize_chunk(this.pos.get(0), this.pos.get(1))
   }
 
   set(data: ISerializedChunk) {
-    this.blocks = BlockHolder.deserialize(data.cubes, this);
+    this.wasmWorld.set_chunk_at_pos(data);
+    // this.blocks = BlockHolder.deserialize(data.cubes, this);
   }
 
-  static deserialize(chunkData: ISerializedChunk) {
-    const chunkPos = Vector2D.fromIndex(chunkData.chunkPos);
+  // getBlock(pos: Vector3D): Cube {
+  //   return this.chunk.
 
-    const chunk = new Chunk(chunkPos);
-    chunk.blocks = BlockHolder.deserialize(chunkData.cubes, chunk);
+  //   return this.blocks.get(pos);
+  // }
 
-    return chunk;
-  }
+
+  // static deserialize(chunkData: ISerializedChunk) {
+  //   const chunkPos = Vector2D.fromIndex(chunkData.chunkPos);
+
+  //   const chunk = new Chunk(chunkPos);
+  //   chunk.blocks = BlockHolder.deserialize(chunkData.cubes, chunk);
+
+  //   return chunk;
+  // }
 
 
   circleIntersect(circlePos: Vector3D, radius: number): boolean {
@@ -92,84 +101,97 @@ export class Chunk {
   }
 
   // pass an entity and I'll push it out of me :)
-  pushOut(ent: Entity | Cube) {
+  // pushOut(ent: Entity | Cube) {
 
-    const entDim = ent instanceof Entity ? ent.dim : CUBE_DIM;
+  //   const entDim = ent instanceof Entity ? ent.dim : CUBE_DIM;
 
-    const ifCubeExistThenPushOut = (pos: Vector3D) => {
-      pos.data = pos.data.map(Math.floor);
+  //   const ifCubeExistThenPushOut = (pos: Vector3D) => {
+  //     pos.data = pos.data.map(Math.floor);
 
-      const cube = this.blocks.get(pos);
-      if (!cube) return;
+  //     const cube = this.blocks.get(pos);
+  //     if (!cube) return;
 
-      const cubeData = BLOCK_DATA.get(cube.type)!;
+  //     const cubeData = BLOCK_DATA.get(cube.type)!;
 
-      if (!CubeHelpers.isCollide(cube, ent)) return;
-      if (!cubeData) return;
-      if (cubeData.intangible) return;
+  //     if (!CubeHelpers.isCollide(cube, ent)) return;
+  //     if (!cubeData) return;
+  //     if (cubeData.intangible) return;
 
-      if (ent instanceof Entity) {
-        ent.pushOut(cube);
-      }
-    }
+  //     if (ent instanceof Entity) {
+  //       ent.pushOut(cube);
+  //     }
+  //   }
 
-    // check the edges of the ent to see if it is intersecting the cubes
-    for (let x = 0; x < entDim[0]; x++) {
-      const centerX = x + .5;
-      for (let y = 0; y < entDim[1]; y++) {
-        const centerY = y + .5;
-        for (let z = 0; z < entDim[2]; z++) {
-          const centerZ = z + .5;
-          const center = ent.pos.add(new Vector3D([centerX, centerY, centerZ]));
+  //   // check the edges of the ent to see if it is intersecting the cubes
+  //   for (let x = 0; x < entDim[0]; x++) {
+  //     const centerX = x + .5;
+  //     for (let y = 0; y < entDim[1]; y++) {
+  //       const centerY = y + .5;
+  //       for (let z = 0; z < entDim[2]; z++) {
+  //         const centerZ = z + .5;
+  //         const center = ent.pos.add(new Vector3D([centerX, centerY, centerZ]));
 
-          // check the unit vectors first
-          for (const vec of Vector3D.unitVectors) {
-            const checkingPos = center.add(vec);
-            ifCubeExistThenPushOut(checkingPos);
-          }
+  //         // check the unit vectors first
+  //         for (const vec of Vector3D.unitVectors) {
+  //           const checkingPos = center.add(vec);
+  //           ifCubeExistThenPushOut(checkingPos);
+  //         }
 
-          for (const vec of Vector3D.edgeVectors) {
-            const checkingPos = center.add(vec);
-            ifCubeExistThenPushOut(checkingPos);
-          }
+  //         for (const vec of Vector3D.edgeVectors) {
+  //           const checkingPos = center.add(vec);
+  //           ifCubeExistThenPushOut(checkingPos);
+  //         }
 
-          for (const vec of Vector3D.cornerVectors) {
-            const checkingPos = center.add(vec);
-            ifCubeExistThenPushOut(checkingPos);
-          }
-        }
-      }
-    }
-  }
+  //         for (const vec of Vector3D.cornerVectors) {
+  //           const checkingPos = center.add(vec);
+  //           ifCubeExistThenPushOut(checkingPos);
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
 
   containsWorldPos(worldPos: Vector3D) {
     // scale cubes position by chunk size
     const scaledPos = worldPos.data.map(dim => Math.floor(dim / CONFIG.terrain.chunkSize));
-    return scaledPos[0] === this.chunkPos.get(0) && scaledPos[2] === this.chunkPos.get(1);
+    return scaledPos[0] === this.pos.get(0) && scaledPos[2] === this.pos.get(1);
   }
 
   calculateVisibleFaces(world: World) {
-    const visibleCubePosMap = new Map<string, { cube: Cube, faceVectors: Vector3D[] }>();
+    // const visibleCubePosMap = new Map<string, { cube: Cube, faceVectors: Vector3D[] }>();
 
-    const addVisibleFace = (cube: Cube, directionVector: Vector3D) => {
-      const visibleCubePos =
-        visibleCubePosMap.get(cube.pos.toIndex()) ??
-        {
-          cube: cube,
-          faceVectors: []
-        };
+    // const addVisibleFace = (cube: Cube, directionVector: Vector3D) => {
+    //   const visibleCubePos =
+    //     visibleCubePosMap.get(cube.pos.toIndex()) ??
+    //     {
+    //       cube: cube,
+    //       faceVectors: []
+    //     };
 
-      visibleCubePos.faceVectors.push(directionVector);
-      visibleCubePosMap.set(cube.pos.toIndex(), visibleCubePos);
-    }
+    //   visibleCubePos.faceVectors.push(directionVector);
+    //   visibleCubePosMap.set(cube.pos.toIndex(), visibleCubePos);
+    // }
 
-    this.blocks.iterate(cube => {
-      CubeHelpers.getCubeObscuringPositions(cube)
-        .filter(direction => CubeHelpers.isCubeFaceVisible(cube, world, direction))
-        .forEach(direction => addVisibleFace(cube, direction));
-    });
+    // this.blocks.iterate(cube => {
+    //   CubeHelpers.getCubeObscuringPositions(cube)
+    //     .filter(direction => CubeHelpers.isCubeFaceVisible(cube, world, direction))
+    //     .forEach(direction => addVisibleFace(cube, direction));
+    // });
 
-    this.visibleCubesFaces = Array.from(visibleCubePosMap.values());
+    // this.visibleCubesFaces = Array.from(visibleCubePosMap.values());
+
+    // const faces
+
+
+    const faces = this.wasmWorld.get_chunk_visible_faces(this.pos.get(0), this.pos.get(1)) as ISerializedVisibleFaces;
+
+    // convert to real faces
+
+    this.visibleCubesFaces = faces.map(face => ({
+      cube: this.world.getBlockFromWorldPoint(new Vector3D([face.pos.x, face.pos.y, face.pos.z]))!,
+      faceVectors: (Object.values(Direction) as Direction[]).filter((_dir, index) => face.faces[index]).map(Vector3D.fromDirection)
+    }));
+
   }
 
   lookingAt(camera: ICameraData): ILookingAtData | false {

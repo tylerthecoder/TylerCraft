@@ -1,13 +1,12 @@
 use crate::direction::{Direction};
-use std::ops::{ Add, Mul, AddAssign, SubAssign };
+use std::{ops::{ Add, Mul, AddAssign, SubAssign }, fmt::Display};
 use num::One;
+use serde::{Serialize, Deserialize};
 use wasm_bindgen::prelude::wasm_bindgen;
 
 
 
-
-
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct Vec2<T> {
 	pub x: T,
 	pub y: T,
@@ -19,6 +18,12 @@ impl<T> Vec2<T> {
 			x,
 			y,
 		}
+	}
+
+	pub fn to_index(&self) -> String
+		where T: Display
+	{
+		format!("{} {}", self.x, self.y).as_str().to_owned()
 	}
 
 	pub fn scalar_mul(&self, val: T) -> Vec2<T>
@@ -54,7 +59,7 @@ impl<T> Vec2<T> {
 
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Vec3<T> {
 	pub x: T,
 	pub y: T,
@@ -68,6 +73,12 @@ impl<T> Vec3<T> {
 			y,
 			z,
 		}
+	}
+
+	pub fn to_index(&self) -> String
+		where T: Display
+	{
+		format!("{} {} {}", self.x, self.y, self.z).as_str().to_owned()
 	}
 
 	pub fn from_direction(direction: &Direction) -> Vec3<i32>{

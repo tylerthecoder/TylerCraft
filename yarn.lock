@@ -6798,12 +6798,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"world@workspace:src/world/pkg":
-  version: 0.0.0-use.local
-  resolution: "world@workspace:src/world/pkg"
-  languageName: unknown
-  linkType: soft
-
 "wrappy@npm:1":
   version: 1.0.2
   resolution: "wrappy@npm:1.0.2"

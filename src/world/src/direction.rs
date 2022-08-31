@@ -1,9 +1,10 @@
+use serde::{Serialize, Deserialize};
 use wasm_bindgen::prelude::wasm_bindgen;
 
 use crate::vec::Vec3;
 
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[wasm_bindgen]
 pub enum Direction {
     North = 0,

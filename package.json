@@ -21,7 +21,7 @@
   ],
   "scripts": {
     "engine": "yarn workspace @craft/engine",
-    "web-client": "yarn workspace @craft/web-client",
+    "web": "yarn workspace @craft/web-client",
     "server": "yarn workspace @craft/server",
     "terrain-worker": "yarn workspace @craft/terrain-gen-worker",
     "world": "yarn workspace @craft/rust-world"

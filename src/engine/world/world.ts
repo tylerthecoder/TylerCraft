@@ -1,10 +1,12 @@
-import CubeHelpers, { Cube } from "../entities/cube.js";
+import CubeHelpers, { Cube, CUBE_DIM } from "../entities/cube.js";
 import { Chunk, ILookingAtData, ISerializedChunk } from "./chunk.js";
 import { Entity } from "../entities/entity.js";
 import { Game } from "../game.js";
 import { IChunkReader } from "../types.js";
 import { CONFIG } from "../config.js";
 import { Vector3D, Vector2D } from "../utils/vector.js";
+import { WasmWorld } from "../modules.js";
+import { BLOCK_DATA } from "../blockdata.js";
 import { ICameraData } from "../camera.js";
 
 export interface ISerializedWorld {
@@ -18,19 +20,28 @@ export class World {
   public loadingChunks = new Set<string>();
   public loadedChunks = new Set<string>();
 
+  private wasmWorld: ReturnType<typeof WasmWorld.World.new_wasm>;
+
   constructor(
     private game: Game,
     private chunkReader: IChunkReader,
     data?: ISerializedWorld,
   ) {
+
+    this.wasmWorld = new WasmWorld.World();
+
+    console.log("WASM wordl", this.wasmWorld);
+
+
     if (data) {
       // this.terrainGenerator = new TerrainGenerator(this.hasChunk.bind(this), this.getChunkFromPos.bind(this), data.tg);
 
-      const chunks = data.chunks.map(Chunk.deserialize);
+      data.chunks.map(this.wasmWorld.deserialize_chunk);
 
       const chunksMap = new Map();
-      for (const chunk of chunks) {
-        chunksMap.set(chunk.chunkPos.toIndex(), chunk);
+      for (const chunk of data.chunks) {
+        const chunkClass = new Chunk(this, this.wasmWorld, chunk.chunkPos);
+        chunksMap.set(chunk.chunkPos.toIndex(), chunkClass);
       }
       this.chunks = chunksMap;
 
@@ -136,11 +147,12 @@ export class World {
   }
 
   getBlockFromWorldPoint(pos: Vector3D): Cube | null {
-    const chunk = this.getChunkFromWorldPoint(pos);
-    if (!chunk) return null;
-    const cube = chunk.blocks.get(pos.floor());
-    if (cube) return cube;
-    return null;
+    return this.wasmWorld.get_block_wasm(pos.get(0), pos.get(1), pos.get(2));
+    // const chunk = this.getChunkFromWorldPoint(pos);
+    // if (!chunk) return null;
+    // const cube = chunk.blocks.get(pos.floor());
+    // if (cube) return cube;
+    // return null;
   }
 
   // load the starting chunks
@@ -176,20 +188,69 @@ export class World {
 
   // soon only check chunks the entity is in
   pushOut(ent: Entity) {
-    const inChunk = this.getChunkFromWorldPoint(ent.pos);
-    if (!inChunk) return;
+    const entDim = ent instanceof Entity ? ent.dim : CUBE_DIM;
 
-    const chunksToCheck: Chunk[] = [inChunk];
+    const ifCubeExistThenPushOut = (pos: Vector3D) => {
+      pos.data = pos.data.map(Math.floor);
 
-    Vector2D.unitVectors.forEach(unitDir => {
-      const otherChunkPos = inChunk.chunkPos.add(unitDir);
-      const otherChunk = this.getChunkFromPos(otherChunkPos);
-      if (otherChunk) chunksToCheck.push(otherChunk);
-    });
+      const cube = this.getBlockFromWorldPoint(pos);
+      if (!cube) return;
 
-    for (const chunk of chunksToCheck) {
-      chunk.pushOut(ent);
+      const cubeData = BLOCK_DATA.get(cube.type)!;
+
+      if (!CubeHelpers.isCollide(cube, ent)) return;
+      if (!cubeData) return;
+      if (cubeData.intangible) return;
+
+      if (ent instanceof Entity) {
+        ent.pushOut(cube);
+      }
     }
+
+    // check the edges of the ent to see if it is intersecting the cubes
+    for (let x = 0; x < entDim[0]; x++) {
+      const centerX = x + .5;
+      for (let y = 0; y < entDim[1]; y++) {
+        const centerY = y + .5;
+        for (let z = 0; z < entDim[2]; z++) {
+          const centerZ = z + .5;
+          const center = ent.pos.add(new Vector3D([centerX, centerY, centerZ]));
+
+          // check the unit vectors first
+          for (const vec of Vector3D.unitVectors) {
+            const checkingPos = center.add(vec);
+            ifCubeExistThenPushOut(checkingPos);
+          }
+
+          for (const vec of Vector3D.edgeVectors) {
+            const checkingPos = center.add(vec);
+            ifCubeExistThenPushOut(checkingPos);
+          }
+
+          for (const vec of Vector3D.cornerVectors) {
+            const checkingPos = center.add(vec);
+            ifCubeExistThenPushOut(checkingPos);
+          }
+        }
+      }
+    }
+
+
+
+    // const inChunk = this.getChunkFromWorldPoint(ent.pos);
+    // if (!inChunk) return;
+
+    // const chunksToCheck: Chunk[] = [inChunk];
+
+    // Vector2D.unitVectors.forEach(unitDir => {
+    //   const otherChunkPos = inChunk.chunkPos.add(unitDir);
+    //   const otherChunk = this.getChunkFromPos(otherChunkPos);
+    //   if (otherChunk) chunksToCheck.push(otherChunk);
+    // });
+
+    // for (const chunk of chunksToCheck) {
+    //   chunk.pushOut(ent);
+    // }
   }
 
   private checkSurroundingChunkForUpdate(chunk: Chunk, pos: Vector3D) {
@@ -217,8 +278,19 @@ export class World {
     console.log("Adding block", cube, this.game.gameId);
     const chunk = this.getChunkFromWorldPoint(cube.pos);
     if (!chunk) return;
-    chunk.blocks.add(cube);
-    chunk.calculateVisibleFaces(this);
+    this.wasmWorld.add_block_wasm({
+      block_type: cube.type,
+      extra_data: cube.extraData,
+      world_pos: {
+        x: cube.pos.get(0),
+        y: cube.pos.get(1),
+        z: cube.pos.get(2),
+      }
+    });
+
+
+    // chunk.blocks.add(cube);
+    // chunk.calculateVisibleFaces(this);
     this.game.stateDiff.updateChunk(chunk.uid);
     this.checkSurroundingChunkForUpdate(chunk, cube.pos);
   }
@@ -227,7 +299,8 @@ export class World {
     console.log("Removing block", cubePos);
     const chunk = this.getChunkFromWorldPoint(cubePos);
     if (!chunk) return;
-    chunk.blocks.remove(cubePos)
+    this.wasmWorld.remove_block_wasm(cubePos.get(0), cubePos.get(1), cubePos.get(2));
+    // chunk.blocks.remove(cubePos)
     chunk.calculateVisibleFaces(this);
     this.checkSurroundingChunkForUpdate(chunk, cubePos);
     this.game.stateDiff.updateChunk(chunk.uid);

@@ -1,11 +1,14 @@
 
 use std::collections::HashMap;
+use std::convert::TryInto;
 
+use js_sys::{Object, Array};
+use serde::{Serialize, Deserialize};
 use wasm_bindgen::prelude::*;
-use crate::direction::Directions;
+use crate::direction::{Directions, Direction};
 use crate::vec::Vec3;
 use crate::world::{WorldPos, World, ChunkPos};
-use crate::block::{Block, BlockType, BlockData, BlockMetaData, cube_faces, get_visible_faces, WorldBlock};
+use crate::block::{ BlockType, BlockData, BlockMetaData, cube_faces, get_visible_faces, WorldBlock, WasmBlock, WasmImageData};
 
 
 pub const CHUNK_WIDTH: i16 = 16;
@@ -15,6 +18,7 @@ const CHUNK_MEM_SIZE: usize = (CHUNK_HEIGHT * CHUNK_WIDTH * CHUNK_WIDTH ) as usi
 
 pub type InnerChunkPos = Vec3<i8>;
 
+#[derive(Serialize, Deserialize)]
 pub struct BlockWithFaces {
     world_pos: WorldPos,
     /// true is the face is visible
@@ -23,36 +27,88 @@ pub struct BlockWithFaces {
 
 pub type VisibleFaces = Vec<BlockWithFaces>;
 
+
+
 #[wasm_bindgen]
+pub struct WasmChunkPos {
+	pub x: i16,
+	pub y: i16,
+}
+
+#[wasm_bindgen]
+pub struct WasmChunkInnerPos {
+	pub x: i32,
+	pub y: i32,
+	pub z: i32,
+}
+
+#[derive(Serialize, Deserialize)]
 pub struct WasmChunk {
-
-
+    pub blocks: Vec<BlockType>,
+    pub block_data: HashMap<usize, BlockData>,
+    pub position: ChunkPos
 }
 
-#[wasm_bindgen]
-impl WasmChunk {
-    pub fn new() -> WasmChunk {
-        WasmChunk {
+// #[wasm_bindgen]
+// impl WasmChunk {
 
-        }
-    }
+//     pub fn new(chunk_pos: WasmChunkPos) -> WasmChunk {
+//         let pos = ChunkPos {
+//             x: chunk_pos.x,
+//             y: chunk_pos.y,
+//         };
+//         WasmChunk {
+//             chunk: Chunk::new(pos),
+//             chunk_pos: pos,
+//         }
+//     }
+
+    // pub fn make(chunk_pos: WasmChunkPos, blocks: Array, block_data: Object) -> WasmChunk {
+    //     let pos = ChunkPos {
+    //         x: chunk_pos.x,
+    //         y: chunk_pos.y,
+    //     };
+    //     // let data_blocks: Vec<BlockType> = blocks.
+    //     let chunk  = Chunk::make(pos, blocks, block_data);
+    // }
+
+    // pub fn get_uuid(&self) -> String {
+    //     self.chunk.get_uuid()
+    // }
 
 
-     pub fn each(&self, f: &js_sys::Function) {
-        let this = JsValue::null();
-        for &x in &self.xs {
-            let x = JsValue::from(x);
-            let _ = f.call1(&this, &x);
-        }
-    }
-}
+    // pub fn get_block(&self, pos: WasmBlockPos) -> WasmBlock {
+    //     let world_pos = WorldPos {
+    //         x: pos.x,
+    //         y: pos.y,
+    //         z: pos.z,
+    //     };
+    //     let block = self.chunk.get_block(world_pos);
+
+    //     WasmBlock {
+    //         block_type: BlockType::Void,
+    //         extra_data: Some(WasmImageData {
+    //             dir: Direction::North,
+    //         }),
+    //     }
+
+    // }
+
+    // pub getVisibleFaces() {
+    //     let visible_faces = self.chunk.get_visible_faces();
+    //     let wasm_visible_faces = WasmVisibleFaces::new(visible_faces);
+    //     return wasm_visible_faces;
+    // }
+
+// }
 
 
 // #[derive(Clone)]
+// #[derive(Serialize, Deserialize)]
 pub struct Chunk {
     blocks: [BlockType; CHUNK_MEM_SIZE],
     block_data: HashMap<usize, BlockData>,
-    visible_faces: VisibleFaces,
+    pub visible_faces: VisibleFaces,
     pub position: ChunkPos
 }
 
@@ -71,10 +127,36 @@ impl Chunk {
         InnerChunkPos::new(x_part, y_part, z_part)
     }
 
+    pub fn new(position: ChunkPos) -> Chunk {
+        Chunk {
+            blocks: [BlockType::Void; CHUNK_MEM_SIZE],
+            block_data: HashMap::new(),
+            visible_faces: Vec::new(),
+            position,
+        }
+    }
+
+    pub fn make(chunk: &WasmChunk) -> Chunk {
+        Chunk {
+            visible_faces: Vec::new(),
+            block_data: chunk.block_data.to_owned(),
+            position: chunk.position.to_owned(),
+            blocks: chunk.blocks.to_owned().try_into().unwrap(),
+        }
+    }
+
+    pub fn serialize(&self) -> WasmChunk {
+        WasmChunk {
+            blocks: self.blocks.to_vec().to_owned(),
+            block_data: self.block_data.to_owned(),
+            position: self.position.to_owned()
+        }
+    }
+
     pub fn calculate_visible_faces(&mut self, world: &World) -> () {
         let data = self
             .blocks
-            .into_iter()
+            .iter()
             .filter(|&b| *b != BlockType::Void)
             .enumerate()
             .map(|(index, block_type)| {
@@ -91,13 +173,8 @@ impl Chunk {
     }
 
 
-    pub fn new(position: ChunkPos) -> Chunk {
-        Chunk {
-            blocks: [BlockType::Void; CHUNK_MEM_SIZE],
-            block_data: HashMap::new(),
-            visible_faces: Vec::new(),
-            position,
-        }
+    pub fn get_uuid(&self) -> String {
+        self.position.to_index()
     }
 
     pub fn add_block(&mut self, pos: &InnerChunkPos, block: BlockType, blockData: BlockData) {
@@ -138,10 +215,8 @@ impl Chunk {
         println!("CHUNK: world_pos, inner_chunk_pos {:?} {:?} {:?}", index, inner_chunk_pos, world_pos);
 
         WorldBlock {
-            block: Block {
-                block_type,
-                extra_data: *block_data
-            },
+            block_type,
+            extra_data: *block_data,
             world_pos,
         }
     }
