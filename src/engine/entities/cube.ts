@@ -1,5 +1,5 @@
 import { BLOCKS, BlockType, ExtraBlockData, getBlockData } from "../blockdata.js";
-import { Vector3D } from "../utils/vector.js";
+import { Direction, Vector3D } from "../utils/vector.js";
 import { faceNumberToFaceVector, faceVectorToFaceNumber } from "../utils/face.js";
 import { World } from "../world/world.js";
 import { IDim } from "../types.js";
@@ -17,6 +17,12 @@ export type Cube = {
   extraData?: ExtraBlockData;
 }
 
+export type WasmCube = {
+  type: BLOCKS;
+  pos: { x: number, y: number, z: number };
+  extraData?: { Image: Direction } | "None";
+}
+
 export type Box = {
   pos: Vector3D;
   dim?: IDim;
@@ -31,6 +37,17 @@ export type HitBox = Box & {
 export const CUBE_DIM: IDim = [1, 1, 1];
 
 class CubeHelpersClass {
+
+  fromWasmCube(cube: WasmCube): Cube {
+    return {
+      pos: new Vector3D([cube.pos.x, cube.pos.y, cube.pos.z]),
+      type: cube.type,
+      extraData: !cube.extraData || cube.extraData === "None" ? undefined : {
+        face: cube.extraData.Image,
+        galleryIndex: 0,
+      }
+    }
+  }
 
   createCube(type: BLOCKS, pos: Vector3D, extraData?: ExtraBlockData) {
     return {

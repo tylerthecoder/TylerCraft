@@ -1,6 +1,7 @@
 
 use wasm_bindgen::prelude::*;
 use crate::block::wasm::ImageData;
+use crate::direction::Direction;
 use crate::vec::{Vec3, Vec2};
 use std;
 use std::collections::HashMap;
@@ -19,6 +20,12 @@ pub struct WorldPosWasm {
 	pub z: i32,
 }
 
+#[wasm_bindgen]
+pub struct ChunkPosWasm {
+	pub x: i16,
+	pub y: i16,
+}
+
 
 #[wasm_bindgen]
 pub struct World {
@@ -35,21 +42,77 @@ impl World {
 		}
 	}
 
-	pub fn add_block_wasm(&mut self, block_world_pos: WorldPosWasm, block: BlockType, block_data: ImageData) {
-		let block_world_pos = WorldPos {
-			x: block_world_pos.x,
-			y: block_world_pos.y,
-			z: block_world_pos.z,
-		};
-
-		let data = if let ImageData { dir } = block_data {
-			BlockData::Image(dir)
-		} else {
-				BlockData::None
-		};
-
-		self.add_block(&block_world_pos, block, data);
+	pub fn add_block_wasm(&mut self, block: JsValue) {
+		let block: WorldBlock = block.into_serde().unwrap();
+		self.add_block(&block.world_pos, block.block_type, block.extra_data);
 	}
+
+
+	pub fn get_block_wasm(&self, x: i32, y: i32, z: i32) -> JsValue {
+		let block = self.get_block(&WorldPos {
+			x, y, z
+		});
+
+		JsValue::from_serde(&block).unwrap()
+	}
+
+	pub fn remove_block_wasm(&mut self, x: i32, y: i32, z: i32) {
+		self.remove_block(&WorldPos {
+			x, y, z
+		});
+	}
+
+	pub fn load_chunk_wasm(&mut self, x: i16, y: i16) -> () {
+		self.load_chunk(&ChunkPos {
+			x,
+			y
+		});
+
+		self.add_block(&WorldPos {x: 0, y:0, z:0}, BlockType::Image, BlockData::Image(Direction::Down));
+		self.add_block(&WorldPos {x: 0, y:0, z:1}, BlockType::Gold, BlockData::None);
+	}
+
+	pub fn deserialize_chunk(&mut self, chunk: &JsValue) {
+		let chunk: WasmChunk = chunk.into_serde().unwrap();
+
+		let chunk = Chunk::make(&chunk);
+
+		let index = Self::make_chunk_pos_index(&chunk.position);
+
+		self.chunks.insert(index, chunk);
+	}
+
+
+	pub fn serialize_chunk(&self, x: i16, y: i16) -> JsValue {
+		let chunk_pos = ChunkPos {
+			x,
+			y
+		};
+
+		let chunk = self.get_chunk(&chunk_pos).unwrap().serialize();
+
+		JsValue::from_serde(&chunk).unwrap()
+	}
+
+
+	pub fn get_chunk_visible_faces(&self, x: i16, y: i16) -> JsValue {
+		let chunk_pos = ChunkPos {
+			x,
+			y
+		};
+
+		let faces = &self.get_chunk(&chunk_pos).unwrap().visible_faces;
+
+		JsValue::from_serde(faces).unwrap()
+	}
+
+	pub fn set_chunk_at_pos(&mut self, chunk: &JsValue) {
+		let chunk: WasmChunk = chunk.into_serde().unwrap();
+		let chunk = Chunk::make(&chunk);
+		let index = Self::make_chunk_pos_index(&chunk.position);
+		self.chunks.insert(index, chunk);
+	}
+
 }
 
 
@@ -109,11 +172,18 @@ impl World {
 		self.chunks.get_mut(&index)
 	}
 
-	pub fn add_chunk(&mut self, chunk_pos: &ChunkPos) -> &mut Chunk {
+	pub fn load_chunk(&mut self, chunk_pos: &ChunkPos) -> &mut Chunk {
 		let chunk = Chunk::new(*chunk_pos);
 		let index = Self::make_chunk_pos_index(chunk_pos);
 		self.chunks.insert(index.to_owned(), chunk);
 		self.chunks.get_mut(&index.to_owned()).unwrap()
+	}
+
+	pub fn remove_block(&mut self, world_pos: &WorldPos) {
+		let chunk_pos = Self::world_pos_to_chunk_pos(world_pos);
+		let chunk = self.get_mut_chunk(&chunk_pos).unwrap();
+		let block_chunk_pos = Self::world_pos_to_inner_chunk_pos(&world_pos);
+		chunk.remove_block(&block_chunk_pos);
 	}
 
 	pub fn add_block(&mut self, block_world_pos: &WorldPos, block: BlockType, block_data: BlockData) {

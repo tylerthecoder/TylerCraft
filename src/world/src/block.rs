@@ -1,6 +1,7 @@
+use serde::{Serialize, Deserialize};
+use serde_repr::{Serialize_repr, Deserialize_repr};
 use wasm_bindgen::prelude::*;
 use std::collections::HashMap;
-use std::format;
 use lazy_static::lazy_static;
 use crate::direction::{Directions, ALL_DIRECTIONS, Direction, create_directions};
 use crate::world::{World, WorldPos};
@@ -11,35 +12,43 @@ trait BlockTrait {
 
 
 #[wasm_bindgen]
-#[derive(Eq, Hash, PartialEq, Clone, Copy, Debug)]
+#[derive(Eq, Hash, PartialEq, Clone, Copy, Debug, Serialize_repr, Deserialize_repr)]
+#[repr(u8)]
 pub enum BlockType {
-	Void,
-	Stone,
-	Wood,
-	Leaf,
-	Cloud,
-	Gold,
-	RedFlower,
-	Water,
-	Grass,
-	Image
+	Void = 0,
+	Stone = 1,
+	Wood = 2,
+	Leaf = 3,
+	Cloud = 4,
+	Gold = 5,
+	RedFlower = 6,
+	Water = 7,
+	Grass = 8,
+	Image = 9,
 }
 
-#[derive(Debug)]
-pub struct Block {
+#[wasm_bindgen]
+pub struct WasmBlock {
+	pub block_type: BlockType,
+	pub extra_data: Option<WasmImageData>,
+}
+
+#[wasm_bindgen]
+#[derive(Clone, Copy)]
+pub struct WasmImageData {
+	pub dir: Direction,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct WorldBlock {
 	pub block_type: BlockType,
 	pub extra_data: BlockData,
-}
-
-#[derive(Debug)]
-pub struct WorldBlock {
-	pub block: Block,
 	pub world_pos: WorldPos,
 }
 
 // Stuck in limbo https://github.com/rustwasm/wasm-bindgen/issues/2407
 // #[wasm_bindgen]
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub enum BlockData {
 	None,
 	Image(Direction),
@@ -212,13 +221,13 @@ pub fn get_visible_faces(block: &WorldBlock, world: &World) -> Directions {
 }
 
 pub fn cube_faces(world_block: &WorldBlock) -> Directions {
-	let block_data = BLOCK_DATA.get(&world_block.block.block_type).unwrap();
+	let block_data = BLOCK_DATA.get(&world_block.block_type).unwrap();
 
 	match block_data.shape {
 		BlockShape::Cube => ALL_DIRECTIONS,
 		BlockShape::X => ALL_DIRECTIONS,
 		BlockShape::Flat => {
-			match world_block.block.extra_data {
+			match world_block.extra_data {
 				BlockData::Image(direction) => {
 					create_directions(direction)
 				}
@@ -240,15 +249,15 @@ pub fn is_block_face_visible(world_block: &WorldBlock, world: &World, direction:
 
 	let new_block = new_block.unwrap();
 
-	if new_block.block.block_type == BlockType::Void {
+	if new_block.block_type == BlockType::Void {
 		return true;
 	}
 
 	println!("{:?}", new_block_pos);
 	println!("{:?}", new_block);
 
-	let block_data = get_block_data(world_block.block.block_type);
-	let new_block_data = get_block_data(new_block.block.block_type);
+	let block_data = get_block_data(world_block.block_type);
+	let new_block_data = get_block_data(new_block.block_type);
 
 	if block_data.fluid && new_block_data.fluid {
 		println!("They were both fluids");

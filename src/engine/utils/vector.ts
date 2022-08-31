@@ -328,6 +328,17 @@ export class Vector3D extends Vector<[number, number, number]> {
     return new Vector3D(ords);
   }
 
+  static fromDirection(direction: Direction): Vector3D {
+    switch (direction) {
+      case Direction.Forwards: return new Vector3D([0, 0, 1]);
+      case Direction.Backwards: return new Vector3D([0, 0, -1]);
+      case Direction.Right: return new Vector3D([1, 0, 0]);
+      case Direction.Left: return new Vector3D([-1, 0, 0]);
+      case Direction.Up: return new Vector3D([0, 1, 0]);
+      case Direction.Down: return new Vector3D([0, -1, 0]);
+    }
+  }
+
   toIndex(): VectorIndex {
     // const part1 = BigInt(this.data[0]) << (32n + 8n); // 32 bits
     // const part2 = BigInt(this.data[1]) << (32n); // 8 bits
