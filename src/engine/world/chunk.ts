@@ -22,10 +22,13 @@ export interface ILookingAtData {
 // type SerializedVisibleData = Array<[pos: string, visible: Array<IDim>]>;
 
 export interface ISerializedChunk {
-  chunkPos: Vector2D,
+  chunkPos: {
+    x: number,
+    y: number,
+  },
   cubes: BlockType[],
   block_data: Record<string, 'None' | { Image: string }>
-  // chunkId: string;
+  chunkId: string;
   // vis: SerializedVisibleData,
 }
 
@@ -45,10 +48,21 @@ export class Chunk {
 
   uid: string;
 
+  static fromSerialized(data: ISerializedChunk, world: World) {
+    const chunk = new Chunk(
+      world, 
+      world.wasmWorld,
+      new Vector2D([
+        data.chunkPos.x,
+        data.chunkPos.y
+      ]));
+    return chunk;
+  }
+
   constructor(
     private world: World,
     private wasmWorld: WasmWorld.World,
-    private pos: Vector2D
+    public pos: Vector2D
   ) {
     this.uid = pos.toIndex();
 
@@ -63,6 +77,15 @@ export class Chunk {
   set(data: ISerializedChunk) {
     this.wasmWorld.set_chunk_at_pos(data);
     // this.blocks = BlockHolder.deserialize(data.cubes, this);
+  }
+
+  addBlock(block: Cube) {
+    this.wasmWorld.add_block_wasm(block);
+  }
+
+  getBlockData(pos: Vector3D) {
+    const block = this.wasmWorld.get_block_wasm(pos.get(0), pos.get(1), pos.get(2)) as Cube;
+    return block.extraData;
   }
 
   // getBlock(pos: Vector3D): Cube {

@@ -1,4 +1,4 @@
-import { CONFIG, IGameMetadata, Game, Chunk, ICreateWorldOptions, ISocketMessage, ISocketMessageType, ISocketWelcomePayload, IWorldData, WorldModel, IChunkReader } from "@craft/engine";
+import { CONFIG, IGameMetadata, Game, Chunk, ICreateWorldOptions, ISocketMessage, ISocketMessageType, ISocketWelcomePayload, IWorldData, WorldModel, IChunkReader, World } from "@craft/engine";
 import { getMyUid, SocketInterface } from "../app";
 import { SocketListener } from "../socket";
 
@@ -106,7 +106,7 @@ class ServerGameReader implements IChunkReader {
 
   // send a socket message asking for the chunk then wait for the reply
   // this could also be a rest endpoint but that isn't as fun :) Plus the socket already has some identity to it
-  async getChunk(chunkPos: string) {
+  async getChunk(chunkPos: string, world: World) {
     // send the socket message
     SocketInterface.send({
       type: ISocketMessageType.getChunk,
@@ -121,7 +121,7 @@ class ServerGameReader implements IChunkReader {
         if (message.type === ISocketMessageType.setChunk) {
           const payload = message.setChunkPayload!;
           if (payload.pos !== chunkPos) return;
-          const chunk = Chunk.deserialize(payload.data);
+          const chunk = Chunk.fromSerialized(payload.data, world);
           resolve(chunk);
         }
       }

@@ -1,11 +1,11 @@
 import { Vector2D, Vector3D } from "../utils/vector.js";
 import { CONFIG } from "../config.js";
 import { Random } from "../utils/random.js";
-import { Chunk } from "./chunk.js";
 import { BLOCKS } from "../blockdata.js";
 import CubeHelpers, { Cube } from "../entities/cube.js";
 import { World } from "./world.js";
 import { BiomeGenerator, Biome } from "./biome.js";
+import {WasmWorld, WorldModuleTypes} from "../modules.js";
 
 export interface ISerializedTerrainGenerator {
   blocksToRender: Array<{
@@ -14,6 +14,8 @@ export interface ISerializedTerrainGenerator {
   }>
 }
 
+
+
 export class TerrainGenerator {
   private blocksToRender: Map<string, Cube[]>
   public biomeGenerator = new BiomeGenerator();
@@ -21,7 +23,7 @@ export class TerrainGenerator {
 
   constructor(
     private worldHasChunk: (chunkPos: Vector2D) => boolean,
-    private worldGetChunk: (chunkPos: Vector2D) => Chunk | undefined,
+    private worldGetChunk: (chunkPos: Vector2D) => WorldModuleTypes.Chunk | undefined,
     // take a chunk pos string (1, 2) to a list of cubes that need to be added to it
     serializedData?: ISerializedTerrainGenerator,
   ) {
@@ -57,7 +59,7 @@ export class TerrainGenerator {
       const chunk = this.worldGetChunk(chunkPos);
       if (!chunk) return;
       // we don't want this to be true
-      chunk.blocks.add(cube)
+      chunk.add_block_wasm(cube)
     }
 
     const currentBlocks = this.blocksToRender.get(chunkPos.toIndex()) || [];
@@ -89,10 +91,10 @@ export class TerrainGenerator {
     return BLOCKS.grass;
   }
 
-  generateChunk(chunkPos: Vector2D): Chunk {
-    const chunk = new Chunk(chunkPos);
+  generateChunk(chunkPos: Vector2D): WorldModuleTypes.Chunk {
+    const chunk = WasmWorld.Chunk.make_wasm(chunkPos.get(0), chunkPos.get(1));
 
-    const worldPos = chunk.pos.data;
+    const worldPos = World.chunkPosToWorldPos(chunkPos).data;
 
     // we need to make this into phases more
     // Phase 1, Generate bare terrain
@@ -114,7 +116,7 @@ export class TerrainGenerator {
           for (let k = y; k < 3; k++) {
             const cubePos = [x, k, z];
             const cube = CubeHelpers.createCube(BLOCKS.water, new Vector3D(cubePos));
-            chunk.blocks.add(cube);
+            chunk.add_block_wasm(cube);
           }
         }
 
@@ -125,13 +127,13 @@ export class TerrainGenerator {
 
           const blockType = k === y ? topBlock : Random.randomNum() > .9 ? BLOCKS.gold : BLOCKS.stone;
           const cube = CubeHelpers.createCube(blockType, new Vector3D(cubePos));
-          chunk.blocks.add(cube);
+          chunk.add_block_wasm(cube);
         }
 
         // add grass
         if (y >= CONFIG.terrain.waterLever && Random.randomNum() > .99 && CONFIG.terrain.flowers) {
           const cube = CubeHelpers.createCube(BLOCKS.redFlower, new Vector3D([x, y + 1, z]));
-          chunk.blocks.add(cube);
+          chunk.add_block_wasm(cube);
         }
       }
     }
@@ -139,15 +141,15 @@ export class TerrainGenerator {
     const chunkString = chunkPos.toIndex();
     if (this.blocksToRender.has(chunkString)) {
       this.blocksToRender.get(chunkString)!.forEach(cube => {
-        chunk.blocks.add(cube);
+        chunk.add_block_wasm(cube);
       });
       this.blocksToRender.delete(chunkString);
     }
 
-    chunk.blocks.add(CubeHelpers.createCube(BLOCKS.cloud, new Vector3D([0, 0, 0])));
-    chunk.blocks.add(CubeHelpers.createCube(BLOCKS.cloud, new Vector3D([0, 0, 15])));
-    chunk.blocks.add(CubeHelpers.createCube(BLOCKS.cloud, new Vector3D([15, 0, 15])));
-    chunk.blocks.add(CubeHelpers.createCube(BLOCKS.cloud, new Vector3D([15, 0, 0])));
+    chunk.add_block_wasm(CubeHelpers.createCube(BLOCKS.cloud, new Vector3D([0, 0, 0])));
+    chunk.add_block_wasm(CubeHelpers.createCube(BLOCKS.cloud, new Vector3D([0, 0, 15])));
+    chunk.add_block_wasm(CubeHelpers.createCube(BLOCKS.cloud, new Vector3D([15, 0, 15])));
+    chunk.add_block_wasm(CubeHelpers.createCube(BLOCKS.cloud, new Vector3D([15, 0, 0])));
 
     return chunk;
   }

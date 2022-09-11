@@ -1,5 +1,4 @@
 export * from "./biome.js"
-export * from "./blockHolder.js"
 export * from "./chunk.js"
 export * from "./chunkReader.js"
 export * from "./megaCunk.js"

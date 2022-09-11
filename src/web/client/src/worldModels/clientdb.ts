@@ -58,7 +58,7 @@ export class ClientDb extends WorldModel {
     });
 
     const chunkReader: INullableChunkReader = {
-      getChunk: async (chunkPos: string) => {
+      getChunk: async (chunkPos, world) => {
         let chunkPromise = chunkPromises[chunkPos];
         if (chunkPromise) return chunkPromise;
 
@@ -71,8 +71,12 @@ export class ClientDb extends WorldModel {
 
         chunkPromise = new Promise<Chunk>(resolve => {
           const onTerrainMessage = (data: { data: ISerializedChunk }) => {
-            if (data.data.chunkPos !== chunkPos) return;
-            resolve(Chunk.deserialize(data.data));
+
+            if (data.data.chunkId !== chunkPos) return;
+
+            const chunk = Chunk.fromSerialized(data.data, world);
+
+            resolve(chunk);
             this.terrainWorker.removeEventListener("message", onTerrainMessage);
           }
 
@@ -130,13 +134,13 @@ export class ClientDb extends WorldModel {
     // later have an entire object store to keep chunks in.
     const chunkMap = new Map<string, ISerializedChunk>();
     for (const chunk of world.world.chunks) {
-      chunkMap.set(chunk.chunkPos, chunk);
+      chunkMap.set(chunk.chunkId, chunk);
     }
 
     const chunkReader: INullableChunkReader = {
-      getChunk: async (chunkPos: string) => {
+      getChunk: async (chunkPos, world) => {
         const serializedChunk = chunkMap.get(chunkPos);
-        if (serializedChunk) return Chunk.deserialize(serializedChunk);
+        if (serializedChunk) return Chunk.fromSerialized(serializedChunk, world);
 
         const terrainVector = Vector2D.fromIndex(chunkPos);
         this.terrainWorker.postMessage({
@@ -145,7 +149,7 @@ export class ClientDb extends WorldModel {
         });
         return new Promise(resolve => {
           this.terrainWorker.addEventListener("message", (data: { data: ISerializedChunk }) => {
-            resolve(Chunk.deserialize(data.data));
+            resolve(Chunk.fromSerialized(data.data, world));
           })
         });
       }
