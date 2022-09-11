@@ -1,20 +1,20 @@
 import { INullableChunkReader } from "../types.js";
 import { Chunk } from "./chunk.js";
+import {World} from "./world.js";
 
 
 export class ChunkReader {
-
   constructor(
     private chunkReader?: INullableChunkReader
   ) {
 
   }
 
-  async getChunk(chunkPos: string) {
+  async getChunk(chunkPos: string, world: World) {
     let chunk: Chunk | null = null;
 
     if (this.chunkReader) {
-      chunk = await this.chunkReader.getChunk(chunkPos);
+      chunk = await this.chunkReader.getChunk(chunkPos, world);
       if (chunk) return chunk;
     }
 

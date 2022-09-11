@@ -1,6 +1,5 @@
 
 use wasm_bindgen::prelude::*;
-use crate::block::wasm::ImageData;
 use crate::direction::Direction;
 use crate::vec::{Vec3, Vec2};
 use std;
@@ -73,9 +72,7 @@ impl World {
 	}
 
 	pub fn deserialize_chunk(&mut self, chunk: &JsValue) {
-		let chunk: WasmChunk = chunk.into_serde().unwrap();
-
-		let chunk = Chunk::make(&chunk);
+		let chunk: Chunk = chunk.into_serde().unwrap();
 
 		let index = Self::make_chunk_pos_index(&chunk.position);
 
@@ -89,9 +86,7 @@ impl World {
 			y
 		};
 
-		let chunk = self.get_chunk(&chunk_pos).unwrap().serialize();
-
-		JsValue::from_serde(&chunk).unwrap()
+		self.get_chunk(&chunk_pos).unwrap().serialize()
 	}
 
 
@@ -107,8 +102,7 @@ impl World {
 	}
 
 	pub fn set_chunk_at_pos(&mut self, chunk: &JsValue) {
-		let chunk: WasmChunk = chunk.into_serde().unwrap();
-		let chunk = Chunk::make(&chunk);
+		let chunk: Chunk = chunk.into_serde().unwrap();
 		let index = Self::make_chunk_pos_index(&chunk.position);
 		self.chunks.insert(index, chunk);
 	}
@@ -140,7 +134,7 @@ impl World {
 		x + (y << 16)
 	}
 
-	fn world_pos_to_inner_chunk_pos(world_pos: &WorldPos) -> InnerChunkPos {
+	pub fn world_pos_to_inner_chunk_pos(world_pos: &WorldPos) -> InnerChunkPos {
 		let x = ((world_pos.x as i8 % 16) + 16) % 16;
 		let y = world_pos.y as i8;
 		let z = ((world_pos.z as i8 % 16) + 16) % 16;
@@ -152,7 +146,6 @@ impl World {
 		let y = world_pos.z / CHUNK_WIDTH as i32;
 		ChunkPos { x: x as i16, y: y as i16 }
 	}
-
 
 	// fn parse_index(index: &str) -> Vec3<i32> {
 	// 	let mut split = index.split(":");

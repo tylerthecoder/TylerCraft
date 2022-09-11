@@ -159,8 +159,8 @@ export abstract class Game<Action = GameAction> {
     if (stateDiff.chunks.update) {
       const updates = stateDiff.chunks.update;
       for (const update of updates) {
-        const chunkPos = Vector2D.fromIndex(update.chunkPos);
-        this.world.updateChunk(chunkPos, update);
+        this.world.updateChunk(
+          new Vector2D([update.chunkPos.x, update.chunkPos.y]), update);
       }
     }
 

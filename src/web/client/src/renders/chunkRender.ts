@@ -58,7 +58,6 @@ export class ChunkRenderer extends Renderer {
   // have an options to launch this on a worker thread (maybe always have it on a different thread)
   /**
    * Gets the position of each of the vertices in this chunk and adds them to the buffer
-   * @param world
    */
   getBufferData(): void {
     // console.log("Getting Buffer Data");
@@ -93,7 +92,7 @@ export class ChunkRenderer extends Renderer {
           break;
         }
         case BlockType.flat: {
-          const extraBlockData = this.chunk.blocks.getBlockData(cube.pos);
+          const extraBlockData = this.chunk.getBlockData(cube.pos);
           if (!extraBlockData) return;
           console.log(extraBlockData, cube.pos);
           const imageRender = new ImageRenderer(

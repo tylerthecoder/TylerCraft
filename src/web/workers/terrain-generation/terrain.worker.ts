@@ -1,4 +1,5 @@
-import { IConfig, setConfig, Vector2D, Chunk, ISerializedChunk, TerrainGenerator, Random } from "@craft/engine";
+import { IConfig, setConfig, Vector2D, ISerializedChunk, TerrainGenerator, Random } from "@craft/engine";
+import WasmWorld from "@craft/rust-world"
 // import terrainService from "./build/terrain2.js";
 
 // let terrainServiceInstance: any;
@@ -53,7 +54,7 @@ ctx.onmessage = function (e: IWorkerMessage) {
 
 // const CHUNK_DATA_LENGTH = 16 * 16 * 64;
 
-const chunks = new Map<string, Chunk>();
+const chunks = new Map<string, WasmWorld.Chunk>();
 
 const terrainGenerator = new TerrainGenerator(
   pos => chunks.has(pos.toIndex()),
@@ -68,7 +69,7 @@ const getChunk2 = (x: number, y: number): ISerializedChunk => {
 
   const chunk = terrainGenerator.generateChunk(pos);
 
-  chunks.set(chunk.chunkPos.toIndex(), chunk);
+  chunks.set(chunk.get_chunk_id(), chunk);
 
   return chunk.serialize();
 }

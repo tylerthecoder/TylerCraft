@@ -1,9 +1,10 @@
-import { Chunk, Game, IChunkReader, ICreateWorldOptions, IGameMetadata, ISerializedChunk, ISerializedGame, IWorldData, TerrainGenerator, Vector2D, WorldModel } from "@craft/engine";
+import { Chunk, Game, IChunkReader, ICreateWorldOptions, IGameMetadata, ISerializedChunk, ISerializedGame, IWorldData, TerrainGenerator, Vector2D, WasmWorld, World, WorldModel, WorldModuleTypes} from "@craft/engine";
 import { db } from "./app.js";
 
 
+
 export class RamChunkReader implements IChunkReader {
-  private chunkMap = new Map<string, ISerializedChunk>();
+  private chunkMap = new Map<string, WorldModuleTypes.Chunk>();
   private terrainGenerator: TerrainGenerator;
 
   constructor(
@@ -11,18 +12,22 @@ export class RamChunkReader implements IChunkReader {
   ) {
     this.terrainGenerator = new TerrainGenerator(
       (chunkPos) => this.chunkMap.has(chunkPos.toIndex()),
-      (chunkPos) => Chunk.deserialize(this.chunkMap.get(chunkPos.toIndex())!),
+      (chunkPos) => this.chunkMap.get(chunkPos.toIndex()),
     );
     if (!serializedGame) return;
     for (const chunk of serializedGame.world.chunks) {
-      this.chunkMap.set(chunk.chunkPos, chunk);
+      const wasmChunk = WasmWorld.Chunk.deserialize(chunk);
+      this.chunkMap.set(chunk.chunkId, wasmChunk);
     }
   }
 
-  async getChunk(chunkPos: string) {
-    const serializedChunk = this.chunkMap.get(chunkPos);
-    if (!serializedChunk) return this.terrainGenerator.generateChunk(Vector2D.fromIndex(chunkPos));
-    return Chunk.deserialize(serializedChunk);
+  async getChunk(chunkPos: string, world: World) {
+    let serializedChunk = this.chunkMap.get(chunkPos);
+    if (!serializedChunk) {
+      serializedChunk = this.terrainGenerator.generateChunk(Vector2D.fromIndex(chunkPos));
+    }
+
+    return Chunk.fromSerialized(serializedChunk.serialize() as ISerializedChunk, world);
   }
 }
 

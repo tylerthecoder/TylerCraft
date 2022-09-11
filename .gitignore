@@ -13,3 +13,4 @@ worlds
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+*.swp

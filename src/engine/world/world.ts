@@ -5,7 +5,7 @@ import { Game } from "../game.js";
 import { IChunkReader } from "../types.js";
 import { CONFIG } from "../config.js";
 import { Vector3D, Vector2D } from "../utils/vector.js";
-import { WasmWorld } from "../modules.js";
+import { WasmWorld, WorldModuleTypes } from "../modules.js";
 import { BLOCK_DATA } from "../blockdata.js";
 import { ICameraData } from "../camera.js";
 
@@ -20,17 +20,17 @@ export class World {
   public loadingChunks = new Set<string>();
   public loadedChunks = new Set<string>();
 
-  private wasmWorld: ReturnType<typeof WasmWorld.World.new_wasm>;
+  public wasmWorld: WorldModuleTypes.World;
 
   constructor(
     private game: Game,
     private chunkReader: IChunkReader,
     data?: ISerializedWorld,
   ) {
+    console.log(WasmWorld);
+    this.wasmWorld = WasmWorld.World.new_wasm();
 
-    this.wasmWorld = new WasmWorld.World();
-
-    console.log("WASM wordl", this.wasmWorld);
+    console.log("WASM world", this.wasmWorld);
 
 
     if (data) {
@@ -40,8 +40,8 @@ export class World {
 
       const chunksMap = new Map();
       for (const chunk of data.chunks) {
-        const chunkClass = new Chunk(this, this.wasmWorld, chunk.chunkPos);
-        chunksMap.set(chunk.chunkPos.toIndex(), chunkClass);
+        const chunkClass = Chunk.fromSerialized(chunk, this);
+        chunksMap.set(chunk.chunkId, chunkClass);
       }
       this.chunks = chunksMap;
 
@@ -130,7 +130,7 @@ export class World {
 
     this.loadingChunks.add(chunkPos.toIndex());
     return new Promise(resolve => {
-      this.chunkReader.getChunk(chunkPos.toIndex()).then(chunk => {
+      this.chunkReader.getChunk(chunkPos.toIndex(), this).then(chunk => {
         // this should only happen on the client side when single player
         // and on the server side when multiplayer
         // if (!chunk) chunk = this.terrainGenerator.generateChunk(chunkPos);

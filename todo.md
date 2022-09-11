@@ -56,8 +56,6 @@ We want to get this to be able to be loaded on my site for a "3D view"
 
 ## Idea
 
-I want to convert some of the app over to web assembly so it run quicker.
-Use Rust as my lower level language.
+NOTE FOR NEXT TIME
 
-Convert the world over to wasm. This means all chunks and blocks will be stored in the wasm linear memory.
-Will have to wrap the memory with a javascript class with methods like `getChunk` and `addBlock`
+- convert terrain gen back to wrker
