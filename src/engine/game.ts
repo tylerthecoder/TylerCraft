@@ -8,10 +8,10 @@ import { GameAction, GameActionData, GameActionHandler, GameActionHolder } from 
 import { GameStateDiff, GameDiffDto } from "./gameStateDiff.js";
 import { Vector2D } from "./utils/vector.js";
 import { GameController } from "./controllers/controller.js";
-import * as Modules from "./modules.js";
+import WorldModule from "./modules.js";
 
 // TODO need to await this somehow
-Modules.LoadModules()
+WorldModule.load();
 
 export interface ISerializedGame {
   config: IConfig;
@@ -60,13 +60,13 @@ export abstract class Game<Action = GameAction> {
     this.multiPlayer = Boolean(worldData.multiplayer);
 
     this.world = worldData.data ?
-      new World(
+      WorldModule.createWorld(
         this,
         worldData.chunkReader,
         worldData.data.world
       )
       :
-      new World(
+      WorldModule.createWorld(
         this,
         worldData.chunkReader
       );

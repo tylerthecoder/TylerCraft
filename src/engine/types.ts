@@ -5,7 +5,6 @@ import { Game, IGameMetadata, ISerializedGame } from "./game.js";
 import { GameActionDto } from "./gameActions.js";
 import { GameDiffDto } from "./gameStateDiff.js";
 import { Chunk, ISerializedChunk } from "./world/chunk.js";
-import {World} from "./world/world.js";
 
 export type IDim = [number, number, number];
 
@@ -55,11 +54,11 @@ export interface ICreateWorldOptions {
 }
 
 export interface IChunkReader {
-  getChunk(chunkPos: string, world: World): Promise<Chunk>;
+  getChunk(chunkPos: string): Promise<Chunk>;
 }
 
 export interface INullableChunkReader {
-  getChunk(chunkPos: string, world: World): Promise<Chunk | null>;
+  getChunk(chunkPos: string): Promise<Chunk | null>;
 }
 
 export interface IWorldData {

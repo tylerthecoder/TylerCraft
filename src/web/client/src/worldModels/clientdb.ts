@@ -1,4 +1,4 @@
-import { Game, IGameMetadata, ISerializedGame, ICreateWorldOptions, INullableChunkReader, IWorldData, WorldModel, Chunk, ISerializedChunk, ChunkReader, Vector2D } from "@craft/engine";
+import { Game, IGameMetadata, ISerializedGame, ICreateWorldOptions, INullableChunkReader, IWorldData, WorldModel, Chunk, ISerializedChunk, ChunkReader, Vector2D, WorldModule } from "@craft/engine";
 import TerrainWorker from "worker-loader!@craft/terrain-gen-worker/terrain.worker";
 
 export class ClientDb extends WorldModel {
@@ -58,7 +58,7 @@ export class ClientDb extends WorldModel {
     });
 
     const chunkReader: INullableChunkReader = {
-      getChunk: async (chunkPos, world) => {
+      getChunk: async (chunkPos) => {
         let chunkPromise = chunkPromises[chunkPos];
         if (chunkPromise) return chunkPromise;
 
@@ -71,10 +71,9 @@ export class ClientDb extends WorldModel {
 
         chunkPromise = new Promise<Chunk>(resolve => {
           const onTerrainMessage = (data: { data: ISerializedChunk }) => {
-
             if (data.data.chunkId !== chunkPos) return;
 
-            const chunk = Chunk.fromSerialized(data.data, world);
+            const chunk = WorldModule.createChunkFromSerialized(data.data);
 
             resolve(chunk);
             this.terrainWorker.removeEventListener("message", onTerrainMessage);
@@ -138,9 +137,10 @@ export class ClientDb extends WorldModel {
     }
 
     const chunkReader: INullableChunkReader = {
-      getChunk: async (chunkPos, world) => {
+      getChunk: async (chunkPos) => {
         const serializedChunk = chunkMap.get(chunkPos);
-        if (serializedChunk) return Chunk.fromSerialized(serializedChunk, world);
+
+        if (serializedChunk) return WorldModule.createChunkFromSerialized(serializedChunk);
 
         const terrainVector = Vector2D.fromIndex(chunkPos);
         this.terrainWorker.postMessage({
@@ -149,7 +149,9 @@ export class ClientDb extends WorldModel {
         });
         return new Promise(resolve => {
           this.terrainWorker.addEventListener("message", (data: { data: ISerializedChunk }) => {
-            resolve(Chunk.fromSerialized(data.data, world));
+            const chunk = WorldModule.createChunkFromSerialized(data.data);
+
+            resolve(chunk);
           })
         });
       }
