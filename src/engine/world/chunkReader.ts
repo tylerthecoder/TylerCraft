@@ -10,11 +10,11 @@ export class ChunkReader {
 
   }
 
-  async getChunk(chunkPos: string, world: World) {
+  async getChunk(chunkPos: string) {
     let chunk: Chunk | null = null;
 
     if (this.chunkReader) {
-      chunk = await this.chunkReader.getChunk(chunkPos, world);
+      chunk = await this.chunkReader.getChunk(chunkPos);
       if (chunk) return chunk;
     }
 

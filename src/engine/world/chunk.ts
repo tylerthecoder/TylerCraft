@@ -7,7 +7,7 @@ import { BlockType } from "../blockdata.js";
 import { ICameraData } from "../camera.js";
 import { faceVectorToFaceNumber, getOppositeCubeFace } from "../utils/face.js";
 import { World } from "./world.js";
-import WasmWorld from "@craft/rust-world"
+import {WorldModuleTypes} from "../modules.js";
 
 
 
@@ -40,7 +40,6 @@ export type ISerializedVisibleFaces = Array<{
 }>
 
 export class Chunk {
-  // private blocks: BlockHolder;
   visibleCubesFaces: Array<{
     cube: Cube,
     faceVectors: Vector3D[],
@@ -48,62 +47,38 @@ export class Chunk {
 
   uid: string;
 
-  static fromSerialized(data: ISerializedChunk, world: World) {
-    const chunk = new Chunk(
-      world, 
-      world.wasmWorld,
-      new Vector2D([
-        data.chunkPos.x,
-        data.chunkPos.y
-      ]));
-    return chunk;
-  }
-
   constructor(
-    private world: World,
-    private wasmWorld: WasmWorld.World,
-    public pos: Vector2D
+    private wasmChunk: WorldModuleTypes.Chunk,
+    public pos: Vector2D,
+    data?: ISerializedChunk
   ) {
     this.uid = pos.toIndex();
 
-    // this.blocks = new BlockHolder(this);
+    if (data) {
+      this.set(data);
+    }
+
     this.visibleCubesFaces = [];
   }
 
   serialize(): ISerializedChunk {
-    return this.wasmWorld.serialize_chunk(this.pos.get(0), this.pos.get(1))
+    const data = this.wasmChunk.serialize() as ISerializedChunk;
+    data.chunkId = this.uid;
+    return data;
   }
 
   set(data: ISerializedChunk) {
-    this.wasmWorld.set_chunk_at_pos(data);
-    // this.blocks = BlockHolder.deserialize(data.cubes, this);
+    this.wasmChunk.set(data);
   }
 
   addBlock(block: Cube) {
-    this.wasmWorld.add_block_wasm(block);
+    this.wasmChunk.add_block_wasm(block);
   }
 
   getBlockData(pos: Vector3D) {
-    const block = this.wasmWorld.get_block_wasm(pos.get(0), pos.get(1), pos.get(2)) as Cube;
+    const block = this.wasmChunk.get_block_wasm(pos.get(0), pos.get(1), pos.get(2)) as Cube;
     return block.extraData;
   }
-
-  // getBlock(pos: Vector3D): Cube {
-  //   return this.chunk.
-
-  //   return this.blocks.get(pos);
-  // }
-
-
-  // static deserialize(chunkData: ISerializedChunk) {
-  //   const chunkPos = Vector2D.fromIndex(chunkData.chunkPos);
-
-  //   const chunk = new Chunk(chunkPos);
-  //   chunk.blocks = BlockHolder.deserialize(chunkData.cubes, chunk);
-
-  //   return chunk;
-  // }
-
 
   circleIntersect(circlePos: Vector3D, radius: number): boolean {
     const testCords = circlePos.copy();
@@ -181,37 +156,12 @@ export class Chunk {
   }
 
   calculateVisibleFaces(world: World) {
-    // const visibleCubePosMap = new Map<string, { cube: Cube, faceVectors: Vector3D[] }>();
-
-    // const addVisibleFace = (cube: Cube, directionVector: Vector3D) => {
-    //   const visibleCubePos =
-    //     visibleCubePosMap.get(cube.pos.toIndex()) ??
-    //     {
-    //       cube: cube,
-    //       faceVectors: []
-    //     };
-
-    //   visibleCubePos.faceVectors.push(directionVector);
-    //   visibleCubePosMap.set(cube.pos.toIndex(), visibleCubePos);
-    // }
-
-    // this.blocks.iterate(cube => {
-    //   CubeHelpers.getCubeObscuringPositions(cube)
-    //     .filter(direction => CubeHelpers.isCubeFaceVisible(cube, world, direction))
-    //     .forEach(direction => addVisibleFace(cube, direction));
-    // });
-
-    // this.visibleCubesFaces = Array.from(visibleCubePosMap.values());
-
-    // const faces
-
-
-    const faces = this.wasmWorld.get_chunk_visible_faces(this.pos.get(0), this.pos.get(1)) as ISerializedVisibleFaces;
+    const faces = world.wasmWorld.get_chunk_visible_faces(this.pos.get(0), this.pos.get(1)) as ISerializedVisibleFaces;
 
     // convert to real faces
 
     this.visibleCubesFaces = faces.map(face => ({
-      cube: this.world.getBlockFromWorldPoint(new Vector3D([face.pos.x, face.pos.y, face.pos.z]))!,
+      cube: world.getBlockFromWorldPoint(new Vector3D([face.pos.x, face.pos.y, face.pos.z]))!,
       faceVectors: (Object.values(Direction) as Direction[]).filter((_dir, index) => face.faces[index]).map(Vector3D.fromDirection)
     }));
 

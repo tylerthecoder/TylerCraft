@@ -8,6 +8,7 @@ use crate::world::{WorldPos, World, ChunkPos};
 use crate::block::{ BlockType, BlockData, BlockMetaData, cube_faces, get_visible_faces, WorldBlock, WasmBlock, WasmImageData};
 
 
+
 pub const CHUNK_WIDTH: i16 = 16;
 pub const CHUNK_HEIGHT: i16 = 64;
 
@@ -35,6 +36,10 @@ impl Chunk {
         self.position.to_index()
     }
 
+    pub fn get_visible_faces(&self) -> JsValue {
+        JsValue::from_serde(&self.visible_faces).unwrap()
+    }
+
     pub fn add_block_wasm(&mut self, js_block: JsValue) -> () {
 		let world_block: WorldBlock = js_block.into_serde().unwrap();
 
@@ -47,13 +52,18 @@ impl Chunk {
         );
     }
 
-
     pub fn deserialize(js_value: JsValue) -> Chunk {
         js_value.into_serde().unwrap()
     }
 
     pub fn serialize(&self) -> JsValue {
 	    JsValue::from_serde(&self).unwrap()
+    }
+
+    // Need to see if this will mess up the hash map that is pointing to this chunk.
+    pub fn set(&mut self, js_value: JsValue) -> () {
+        let chunk: Chunk = js_value.into_serde().unwrap();
+        *self = chunk;
     }
 
     pub fn make_wasm(x: i16, y: i16) -> Chunk {
@@ -67,7 +77,6 @@ impl Chunk {
 #[wasm_bindgen]
 pub struct Chunk {
     #[serde(with = "BigArray")]
-    // #[serde(skip)]
     blocks: [BlockType; CHUNK_MEM_SIZE],
     block_data: HashMap<usize, BlockData>,
     #[wasm_bindgen(skip)]
