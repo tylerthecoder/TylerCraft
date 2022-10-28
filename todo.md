@@ -58,4 +58,4 @@ We want to get this to be able to be loaded on my site for a "3D view"
 
 NOTE FOR NEXT TIME
 
-- convert terrain gen back to wrker
+- I have to restart the dev server when the module is rebuilt

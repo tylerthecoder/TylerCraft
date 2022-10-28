@@ -7,6 +7,7 @@ use std::collections::HashMap;
 use crate::chunk::*;
 use crate::block::{BlockType, BlockData, WorldBlock};
 
+extern crate web_sys;
 
 pub type WorldPos = Vec3<i32>;
 pub type ChunkPos = Vec2<i16>;
@@ -91,14 +92,20 @@ impl World {
 
 
 	pub fn get_chunk_visible_faces(&self, x: i16, y: i16) -> JsValue {
+
 		let chunk_pos = ChunkPos {
 			x,
 			y
 		};
 
-		let faces = &self.get_chunk(&chunk_pos).unwrap().visible_faces;
+        // Log the x y passed in
+        web_sys::console::log_1(&JsValue::from_str(x.to_string().as_str()));
+        web_sys::console::log_1(&JsValue::from_str(y.to_string().as_str()));
 
-		JsValue::from_serde(faces).unwrap()
+        match self.get_chunk(&chunk_pos) {
+            Some(chunk) => JsValue::from_serde(&chunk.visible_faces).unwrap(),
+            None => JsValue::null()
+        }
 	}
 
 	pub fn set_chunk_at_pos(&mut self, chunk: &JsValue) {

@@ -24,7 +24,7 @@ export class World {
     public wasmWorld: WorldModuleTypes.World,
     private game: Game,
     private chunkReader: IChunkReader,
-    data?: ISerializedWorld,
+    data?: ISerializedWorld
   ) {
     console.log("WASM world", this.wasmWorld);
 
@@ -41,7 +41,6 @@ export class World {
       this.chunks = chunksMap;
 
       // this.chunks.forEach(chunk => this.updateChunk(chunk.chunkPos));
-
     } else {
       // this.terrainGenerator = new TerrainGenerator(this.hasChunk.bind(this), this.getChunkFromPos.bind(this));
       this.chunks = new Map();
@@ -52,18 +51,18 @@ export class World {
     for (const chunk of this.chunks.values()) {
       chunk.calculateVisibleFaces(this);
     }
-
-
   }
 
   // We just aren't going to serialize the terrain generator for now. Hopefully later we find a better way to do this
   serialize(): ISerializedWorld {
     // const serializedTG = this.terrainGenerator.serialize();
-    const serializedChunks = Array.from(this.chunks.values()).map(chunk => chunk.serialize());
+    const serializedChunks = Array.from(this.chunks.values()).map((chunk) =>
+      chunk.serialize()
+    );
     return {
       chunks: serializedChunks,
       // tg: serializedTG,
-    }
+    };
   }
 
   // Helper static methods
@@ -76,9 +75,11 @@ export class World {
 
   static chunkPosToWorldPos(pos: Vector2D, center = false): Vector3D {
     return new Vector3D([
-      pos.get(0) * CONFIG.terrain.chunkSize + (center ? CONFIG.terrain.chunkSize / 2 : 0),
+      pos.get(0) * CONFIG.terrain.chunkSize +
+        (center ? CONFIG.terrain.chunkSize / 2 : 0),
       0,
-      pos.get(1) * CONFIG.terrain.chunkSize + (center ? CONFIG.terrain.chunkSize / 2 : 0),
+      pos.get(1) * CONFIG.terrain.chunkSize +
+        (center ? CONFIG.terrain.chunkSize / 2 : 0),
     ]);
   }
 
@@ -124,15 +125,15 @@ export class World {
     }
 
     this.loadingChunks.add(chunkPos.toIndex());
-    return new Promise(resolve => {
-      this.chunkReader.getChunk(chunkPos.toIndex()).then(chunk => {
+    return new Promise((resolve) => {
+      this.chunkReader.getChunk(chunkPos.toIndex()).then((chunk) => {
         // this should only happen on the client side when single player
         // and on the server side when multiplayer
         // if (!chunk) chunk = this.terrainGenerator.generateChunk(chunkPos);
         this.setChunkAtPos(chunk, chunkPos);
         chunk.calculateVisibleFaces(this);
         resolve();
-      })
+      });
     });
   }
 
@@ -200,15 +201,15 @@ export class World {
       if (ent instanceof Entity) {
         ent.pushOut(cube);
       }
-    }
+    };
 
     // check the edges of the ent to see if it is intersecting the cubes
     for (let x = 0; x < entDim[0]; x++) {
-      const centerX = x + .5;
+      const centerX = x + 0.5;
       for (let y = 0; y < entDim[1]; y++) {
-        const centerY = y + .5;
+        const centerY = y + 0.5;
         for (let z = 0; z < entDim[2]; z++) {
-          const centerZ = z + .5;
+          const centerZ = z + 0.5;
           const center = ent.pos.add(new Vector3D([centerX, centerY, centerZ]));
 
           // check the unit vectors first
@@ -230,8 +231,6 @@ export class World {
       }
     }
 
-
-
     // const inChunk = this.getChunkFromWorldPoint(ent.pos);
     // if (!inChunk) return;
 
@@ -249,7 +248,7 @@ export class World {
   }
 
   private checkSurroundingChunkForUpdate(chunk: Chunk, pos: Vector3D) {
-    Vector3D.edgeVectorsStripY.forEach(indexVec => {
+    Vector3D.edgeVectorsStripY.forEach((indexVec) => {
       const checkCubePos = pos.add(indexVec);
       const otherChunk = this.getChunkFromWorldPoint(checkCubePos);
 
@@ -280,9 +279,8 @@ export class World {
         x: cube.pos.get(0),
         y: cube.pos.get(1),
         z: cube.pos.get(2),
-      }
+      },
     });
-
 
     // chunk.blocks.add(cube);
     // chunk.calculateVisibleFaces(this);
@@ -294,7 +292,11 @@ export class World {
     console.log("Removing block", cubePos);
     const chunk = this.getChunkFromWorldPoint(cubePos);
     if (!chunk) return;
-    this.wasmWorld.remove_block_wasm(cubePos.get(0), cubePos.get(1), cubePos.get(2));
+    this.wasmWorld.remove_block_wasm(
+      cubePos.get(0),
+      cubePos.get(1),
+      cubePos.get(2)
+    );
     // chunk.blocks.remove(cubePos)
     chunk.calculateVisibleFaces(this);
     this.checkSurroundingChunkForUpdate(chunk, cubePos);
@@ -307,11 +309,18 @@ export class World {
 
     // loop over all chunks and then check if they are reachable
     for (const chunk of this.chunks.values()) {
-      const isReachable = chunk.circleIntersect(new Vector3D(camera.pos), CONFIG.player.reach)
+      const isReachable = chunk.circleIntersect(
+        new Vector3D(camera.pos),
+        CONFIG.player.reach
+      );
       if (!isReachable) continue;
 
       const cubeData = chunk.lookingAt(camera);
-      if (cubeData && closestDist > cubeData.dist && cubeData.dist < CONFIG.player.reach) {
+      if (
+        cubeData &&
+        closestDist > cubeData.dist &&
+        cubeData.dist < CONFIG.player.reach
+      ) {
         closestDist = cubeData.dist;
         closestCube = cubeData;
       }

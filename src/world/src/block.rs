@@ -67,11 +67,6 @@ pub mod wasm {
 }
 
 
-
-
-
-
-
 #[wasm_bindgen]
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum BlockShape {
