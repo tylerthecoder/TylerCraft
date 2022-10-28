@@ -1,8 +1,20 @@
-import { Game, IGameMetadata, ISerializedGame, ICreateWorldOptions, INullableChunkReader, IWorldData, WorldModel, Chunk, ISerializedChunk, ChunkReader, Vector2D, WorldModule } from "@craft/engine";
+import {
+  Game,
+  IGameMetadata,
+  ISerializedGame,
+  ICreateWorldOptions,
+  INullableChunkReader,
+  IWorldData,
+  WorldModel,
+  Chunk,
+  ISerializedChunk,
+  ChunkReader,
+  Vector2D,
+  WorldModule,
+} from "@craft/engine";
 import TerrainWorker from "worker-loader!@craft/terrain-gen-worker/terrain.worker";
 
 export class ClientDb extends WorldModel {
-
   private terrainWorker: TerrainWorker;
 
   private static WORLDS_OBS = "worlds";
@@ -29,7 +41,10 @@ export class ClientDb extends WorldModel {
         // Create an objectStore for this database
         // world id will be the property on the world object used to identify the world
         if (!db.objectStoreNames.contains(this.WORLDS_OBS)) {
-          db.createObjectStore(this.WORLDS_OBS, { keyPath: "gameId", autoIncrement: true });
+          db.createObjectStore(this.WORLDS_OBS, {
+            keyPath: "gameId",
+            autoIncrement: true,
+          });
 
           // objectStore.createIndex("name", "name", { unique: false });
         }
@@ -40,14 +55,14 @@ export class ClientDb extends WorldModel {
     return new ClientDb(db);
   }
 
-  private constructor(
-    private db: IDBDatabase,
-  ) {
+  private constructor(private db: IDBDatabase) {
     super();
     this.terrainWorker = new TerrainWorker();
   }
 
-  async createWorld(createWorldOptions: ICreateWorldOptions): Promise<IWorldData> {
+  async createWorld(
+    createWorldOptions: ICreateWorldOptions
+  ): Promise<IWorldData> {
     const worldId = Math.random() + "";
 
     const chunkPromises: { [chunkPos: string]: Promise<Chunk> } = {};
@@ -69,29 +84,31 @@ export class ClientDb extends WorldModel {
           y: terrainVector.data[1],
         });
 
-        chunkPromise = new Promise<Chunk>(resolve => {
+        chunkPromise = new Promise<Chunk>((resolve) => {
           const onTerrainMessage = (data: { data: ISerializedChunk }) => {
             if (data.data.chunkId !== chunkPos) return;
+
+            console.log("Chunk data from worker", data);
 
             const chunk = WorldModule.createChunkFromSerialized(data.data);
 
             resolve(chunk);
             this.terrainWorker.removeEventListener("message", onTerrainMessage);
-          }
+          };
 
           this.terrainWorker.addEventListener("message", onTerrainMessage);
         });
         chunkPromises[chunkPos] = chunkPromise;
 
         return chunkPromise;
-      }
+      },
     };
     return {
       worldId,
       name: createWorldOptions.gameName,
       chunkReader: new ChunkReader(chunkReader),
       config: createWorldOptions.config,
-    }
+    };
   }
 
   getAllWorlds(): Promise<IGameMetadata[]> {
@@ -105,14 +122,14 @@ export class ClientDb extends WorldModel {
           console.log(event);
           const worlds = event.target.result as ISerializedGame[];
 
-          const worldData = worlds.map(world => ({
+          const worldData = worlds.map((world) => ({
             gameId: world.gameId,
             name: world.name,
           }));
 
           resolve(worldData);
         }
-      }
+      };
     });
   }
 
@@ -126,8 +143,8 @@ export class ClientDb extends WorldModel {
       request.onsuccess = (event: any) => {
         const data = event.target.result as ISerializedGame;
 
-        resolve(data)
-      }
+        resolve(data);
+      };
     });
 
     // later have an entire object store to keep chunks in.
@@ -140,21 +157,25 @@ export class ClientDb extends WorldModel {
       getChunk: async (chunkPos) => {
         const serializedChunk = chunkMap.get(chunkPos);
 
-        if (serializedChunk) return WorldModule.createChunkFromSerialized(serializedChunk);
+        if (serializedChunk)
+          return WorldModule.createChunkFromSerialized(serializedChunk);
 
         const terrainVector = Vector2D.fromIndex(chunkPos);
         this.terrainWorker.postMessage({
           x: terrainVector.data[0],
           y: terrainVector.data[1],
         });
-        return new Promise(resolve => {
-          this.terrainWorker.addEventListener("message", (data: { data: ISerializedChunk }) => {
-            const chunk = WorldModule.createChunkFromSerialized(data.data);
+        return new Promise((resolve) => {
+          this.terrainWorker.addEventListener(
+            "message",
+            (data: { data: ISerializedChunk }) => {
+              const chunk = WorldModule.createChunkFromSerialized(data.data);
 
-            resolve(chunk);
-          })
+              resolve(chunk);
+            }
+          );
         });
-      }
+      },
     };
 
     return {
@@ -175,7 +196,7 @@ export class ClientDb extends WorldModel {
       activePlayers: [],
       worldId,
       name: world.name,
-    }
+    };
   }
 
   async saveWorld(data: Game) {
@@ -188,7 +209,7 @@ export class ClientDb extends WorldModel {
     };
     transaction.onerror = () => {
       console.log("There was an error", event);
-    }
+    };
     const objStore = transaction.objectStore("worlds");
 
     objStore.put(data.serialize());
@@ -203,7 +224,7 @@ export class ClientDb extends WorldModel {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     transaction.onerror = (event: any) => {
       console.log("There was an error", event);
-    }
+    };
     const objStore = transaction.objectStore("worlds");
     objStore.delete(gameId);
   }

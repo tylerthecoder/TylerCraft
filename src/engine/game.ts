@@ -4,7 +4,12 @@ import { IWorldData, WorldModel } from "./types.js";
 import { CONFIG, IConfig, setConfig } from "./config.js";
 import { EntityHolder, ISerializedEntities } from "./entities/entityHolder.js";
 import { Random } from "./utils/random.js";
-import { GameAction, GameActionData, GameActionHandler, GameActionHolder } from "./gameActions.js";
+import {
+  GameAction,
+  GameActionData,
+  GameActionHandler,
+  GameActionHolder,
+} from "./gameActions.js";
 import { GameStateDiff, GameDiffDto } from "./gameStateDiff.js";
 import { Vector2D } from "./utils/vector.js";
 import { GameController } from "./controllers/controller.js";
@@ -44,11 +49,10 @@ export abstract class Game<Action = GameAction> {
 
   abstract makeController(): GameController<Action>;
 
-
   constructor(
     // controller: (game: G) => GameController,
     worldModel: WorldModel,
-    worldData: IWorldData,
+    worldData: IWorldData
   ) {
     Random.setSeed(worldData.config.seed);
 
@@ -59,27 +63,17 @@ export abstract class Game<Action = GameAction> {
 
     this.multiPlayer = Boolean(worldData.multiplayer);
 
-    this.world = worldData.data ?
-      WorldModule.createWorld(
-        this,
-        worldData.chunkReader,
-        worldData.data.world
-      )
-      :
-      WorldModule.createWorld(
-        this,
-        worldData.chunkReader
-      );
+    this.world = worldData.data
+      ? WorldModule.createWorld(
+          this,
+          worldData.chunkReader,
+          worldData.data.world
+        )
+      : WorldModule.createWorld(this, worldData.chunkReader);
 
-    this.entities = worldData.data ?
-      new EntityHolder(
-        this,
-        worldData.data.entities
-      )
-      :
-      new EntityHolder(
-        this
-      );
+    this.entities = worldData.data
+      ? new EntityHolder(this, worldData.data.entities)
+      : new EntityHolder(this);
 
     this.gameId = worldData.worldId;
     this.name = worldData.name;
@@ -94,19 +88,15 @@ export abstract class Game<Action = GameAction> {
     // this.load();
   }
 
-
   // abstract load(): Promise<void>;
   async baseLoad() {
     await this.world.load();
     console.log("World Loaded");
 
-
     // Setup timer
     this.previousTime = Date.now();
     this.baseUpdate();
   }
-
-
 
   public serialize(): ISerializedGame {
     return {
@@ -118,11 +108,10 @@ export abstract class Game<Action = GameAction> {
     };
   }
 
-
   /**
    * Called 20 times a second
    */
-  abstract update(delta: number, stateDiff: GameStateDiff): void
+  abstract update(delta: number, stateDiff: GameStateDiff): void;
   public baseUpdate() {
     const now = Date.now();
     const delta = now - this.previousTime;
@@ -140,12 +129,13 @@ export abstract class Game<Action = GameAction> {
     setTimeout(this.baseUpdate.bind(this), 1000 / 40);
   }
 
-
-
   /** This happens on a fast loop. Mark things that change as dirty */
   abstract onAction(action: GameActionHolder): void;
-  public handleAction<T extends GameAction, U extends GameActionData[T]>(action: T, actionData: U) {
-    const actionHolder = GameActionHolder.create(action, actionData)
+  public handleAction<T extends GameAction, U extends GameActionData[T]>(
+    action: T,
+    actionData: U
+  ) {
+    const actionHolder = GameActionHolder.create(action, actionData);
     this.onAction(actionHolder);
     this.gameActionHandler.handle(actionHolder);
   }
@@ -160,7 +150,9 @@ export abstract class Game<Action = GameAction> {
       const updates = stateDiff.chunks.update;
       for (const update of updates) {
         this.world.updateChunk(
-          new Vector2D([update.chunkPos.x, update.chunkPos.y]), update);
+          new Vector2D([update.position.x, update.position.y]),
+          update
+        );
       }
     }
 

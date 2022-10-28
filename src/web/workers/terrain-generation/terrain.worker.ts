@@ -1,8 +1,12 @@
-import { IConfig, setConfig, Vector2D, ISerializedChunk, TerrainGenerator, Random, Chunk } from "@craft/engine";
-import WorldModule from "@craft/engine/modules";
-// import terrainService from "./build/terrain2.js";
-
-// let terrainServiceInstance: any;
+import {
+  IConfig,
+  setConfig,
+  Vector2D,
+  ISerializedChunk,
+  TerrainGenerator,
+  Random,
+  Chunk,
+} from "@craft/engine";
 
 interface IGetChunkMessage {
   type: "getChunk";
@@ -19,9 +23,6 @@ interface IWorkerMessage {
   data: IGetChunkMessage | ISetConfigMessage;
 }
 
-
-WorldModule.load();
-
 // interface IWorkerResponse {
 //   data: Uint8Array;
 // }
@@ -32,24 +33,18 @@ WorldModule.load();
 // declare const self: DedicatedWorkerGlobalScope;
 // export { };
 
-
 // We alias self to ctx and give it our newly created type
 const ctx: Worker = self as any;
 
 ctx.onmessage = function (e: IWorkerMessage) {
-
   if (e.data.type === "getChunk") {
     const chunk = getChunk2(e.data.x, e.data.y);
 
-    postMessage(
-      chunk,
-    );
-
+    postMessage(chunk);
   } else if (e.data.type === "setConfig") {
     setConfig(e.data.config);
   }
-
-}
+};
 
 // terrainService().then((instance: any) => {
 //   terrainServiceInstance = instance;
@@ -60,8 +55,8 @@ ctx.onmessage = function (e: IWorkerMessage) {
 const chunks = new Map<string, Chunk>();
 
 const terrainGenerator = new TerrainGenerator(
-  pos => chunks.has(pos.toIndex()),
-  pos => chunks.get(pos.toIndex()),
+  (pos) => chunks.has(pos.toIndex()),
+  (pos) => chunks.get(pos.toIndex())
 );
 
 Random.setSeed("bungus");
@@ -74,7 +69,7 @@ const getChunk2 = (x: number, y: number): ISerializedChunk => {
   chunks.set(chunk.uid, chunk);
 
   return chunk.serialize();
-}
+};
 
 // const getChunk = (x: number, y: number): Uint8Array => {
 //   const chunkPtr = terrainServiceInstance._getChunkBlocks(2, 3);
@@ -92,4 +87,3 @@ const getChunk2 = (x: number, y: number): ISerializedChunk => {
 
 //   return blocksArray;
 // }
-
