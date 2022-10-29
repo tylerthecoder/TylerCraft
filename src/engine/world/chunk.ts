@@ -9,7 +9,7 @@ import {
   arrayDistSquared,
 } from "../utils.js";
 import { CONFIG } from "../config.js";
-import { Vector3D, Vector2D, Direction } from "../utils/vector.js";
+import { Vector3D, Vector2D, Direction, ALL_DIRECTIONS } from "../utils/vector.js";
 import { BlockType } from "../blockdata.js";
 import { ICameraData } from "../camera.js";
 import { faceVectorToFaceNumber, getOppositeCubeFace } from "../utils/face.js";
@@ -38,7 +38,7 @@ export interface ISerializedChunk {
 }
 
 export type ISerializedVisibleFaces = Array<{
-  pos: { x: 0; y: 0; z: 0 };
+  world_pos: { x: 0; y: 0; z: 0 };
   faces: [boolean, boolean, boolean, boolean, boolean, boolean];
 }>;
 
@@ -177,10 +177,14 @@ export class Chunk {
   }
 
   calculateVisibleFaces(world: World) {
-    const faces = world.wasmWorld.get_chunk_visible_faces(
-      this.pos.get(0),
-      this.pos.get(1)
-    ) as ISerializedVisibleFaces | null;
+    this.wasmChunk.calculate_visible_faces_wasm(world.wasmWorld);
+
+    const faces = this.wasmChunk.get_visible_faces_wasm() as ISerializedVisibleFaces | null;
+
+    // const faces = world.wasmWorld.get_chunk_visible_faces(
+    //   this.pos.get(0),
+    //   this.pos.get(1)
+    // ) as ISerializedVisibleFaces | null;
 
     if (!faces) {
       throw new Error("No faces found");
@@ -188,14 +192,25 @@ export class Chunk {
 
     // convert to real faces
 
+    console.log(faces[0])
+
+    console.log(new Vector3D([
+      faces[0].world_pos.x,
+      faces[0].world_pos.y,
+      faces[0].world_pos.z
+      ]))
+
+
     this.visibleCubesFaces = faces.map((face) => ({
       cube: world.getBlockFromWorldPoint(
-        new Vector3D([face.pos.x, face.pos.y, face.pos.z])
+        new Vector3D([face.world_pos.x, face.world_pos.y, face.world_pos.z])
       )!,
-      faceVectors: (Object.values(Direction) as Direction[])
+      faceVectors: ALL_DIRECTIONS
         .filter((_dir, index) => face.faces[index])
         .map(Vector3D.fromDirection),
     }));
+
+    console.log(this.visibleCubesFaces[0]);
   }
 
   lookingAt(camera: ICameraData): ILookingAtData | false {

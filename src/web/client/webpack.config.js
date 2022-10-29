@@ -7,7 +7,7 @@ module.exports = {
     index: './src/bootstrap.ts',
   },
   mode: "development",
-  devtool: 'inline-source-map',
+  devtool: 'eval-source-map',
   plugins: [
     new CopyPlugin([
       {
@@ -50,7 +50,12 @@ module.exports = {
       {
         test: /\.glsl$/,
         type: "asset/source"
-      }
+      },
+      {
+        test: /engine+/,
+        enforce: "pre",
+        use: ["source-map-loader"],
+      },
       // {
       //   test: /\.worker\.js$/,
       //   use: { loader: "worker-loader" },
