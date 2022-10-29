@@ -12,6 +12,15 @@ export enum Direction {
   Down = 5,
 }
 
+export const ALL_DIRECTIONS = [
+  Direction.Forwards,
+  Direction.Backwards,
+  Direction.Left,
+  Direction.Right,
+  Direction.Up,
+  Direction.Down,
+]
+
 export class Vector<T extends number[] = IDim> {
 
   static xVectors = [

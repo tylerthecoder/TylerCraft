@@ -18,6 +18,7 @@ class WorldModuleClass {
   }
 
   async load(): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const wasm = WorldWasm as any;
     if (wasm.default?.then) {
       (wasm as { default: Promise<typeof WorldWasm> }).default
