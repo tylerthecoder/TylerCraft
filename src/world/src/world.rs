@@ -199,9 +199,7 @@ impl World {
         match chunk {
             Some(x) => {
                 let chunk_internal_pos = Self::world_pos_to_inner_chunk_pos(block_world_pos);
-                println!("Chunk internal {:?}", chunk_internal_pos);
                 let block = x.get_full_block(&chunk_internal_pos);
-
                 Some(block)
             }
             None => None,

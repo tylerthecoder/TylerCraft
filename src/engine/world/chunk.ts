@@ -192,15 +192,6 @@ export class Chunk {
 
     // convert to real faces
 
-    console.log(faces[0])
-
-    console.log(new Vector3D([
-      faces[0].world_pos.x,
-      faces[0].world_pos.y,
-      faces[0].world_pos.z
-      ]))
-
-
     this.visibleCubesFaces = faces.map((face) => ({
       cube: world.getBlockFromWorldPoint(
         new Vector3D([face.world_pos.x, face.world_pos.y, face.world_pos.z])
@@ -209,8 +200,6 @@ export class Chunk {
         .filter((_dir, index) => face.faces[index])
         .map(Vector3D.fromDirection),
     }));
-
-    console.log(this.visibleCubesFaces[0]);
   }
 
   lookingAt(camera: ICameraData): ILookingAtData | false {

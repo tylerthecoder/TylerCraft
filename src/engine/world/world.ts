@@ -37,6 +37,7 @@ export class World {
       for (const chunk of data.chunks) {
         const chunkClass = WorldModule.createChunkFromSerialized(chunk);
         chunksMap.set(chunk.chunkId, chunkClass);
+        this.wasmWorld.set_chunk_at_pos(chunk);
       }
       this.chunks = chunksMap;
 
@@ -100,6 +101,7 @@ export class World {
 
   setChunkAtPos(chunk: Chunk, chunkPos: Vector2D) {
     this.chunks.set(chunkPos.toIndex(), chunk);
+    this.wasmWorld.set_chunk_at_pos(chunk.serialize());
     this.loadedChunks.add(chunkPos.toIndex());
   }
 
@@ -143,7 +145,9 @@ export class World {
   }
 
   getBlockFromWorldPoint(pos: Vector3D): Cube | null {
-    return this.wasmWorld.get_block_wasm(pos.get(0), pos.get(1), pos.get(2));
+    const block = this.wasmWorld.get_block_wasm(pos.get(0), pos.get(1), pos.get(2));
+    console.log(block);
+    return block;
     // const chunk = this.getChunkFromWorldPoint(pos);
     // if (!chunk) return null;
     // const cube = chunk.blocks.get(pos.floor());
