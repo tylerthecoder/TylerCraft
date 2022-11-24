@@ -1,10 +1,9 @@
 import express from "express";
 import TylerCraftApp from "./app.js";
 import { WebSocketServer } from "ws";
-import mongodb from "mongodb";
+import {MongoClient} from "mongodb";
 import cors from "cors";
 import path from "path";
-import { fileURLToPath } from 'url';
 
 
 export const PORT = process.env.PORT ?? 3000;
@@ -38,10 +37,15 @@ console.log(WebSocketServer);
 const wss = new WebSocketServer({ server });
 
 const start = async () => {
+  console.log("Tyler DB URI", DB_URL);
   // create the mongo client
-  const client = await mongodb.MongoClient.connect(DB_URL, {
+  const client = await MongoClient.connect(DB_URL, {
+    auth: {
+      username: "admin",
+      password: "admin",
+    },
     // useNewUrlParser: true,
-    useUnifiedTopology: true,
+    // useUnifiedTopology: true,
     // useCreateIndex: true,
     // useFindAndModify: true,
   });

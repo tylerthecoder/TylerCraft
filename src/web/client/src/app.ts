@@ -326,7 +326,10 @@ function showWorldOptionsScreen(worldModel: WorldModel, onBack: () => void) {
       gameName: formData.get("name") as string,
     });
 
-    gameStarter.start(worldModel, newWorldData);
+    gameStarter.start(worldModel, newWorldData).catch(err => {
+      console.log("Game Error")
+      console.error(err);
+    });
   });
 }
 

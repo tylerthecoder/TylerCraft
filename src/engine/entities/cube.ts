@@ -17,6 +17,12 @@ export type Cube = {
   extraData?: ExtraBlockData;
 }
 
+export type ISerializedCube = {
+  block_type: BLOCKS;
+  extra_data: "None";
+  world_pos: { x: number; y: number; z: number };
+}
+
 export type WasmCube = {
   type: BLOCKS;
   pos: { x: number, y: number, z: number };

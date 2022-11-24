@@ -1,5 +1,5 @@
 import { Renderer, RenderData } from "./renderer";
-import { Camera, Chunk, arraySub, BlockType, getBlockData, faceVectorToFaceNumber } from "@craft/engine";
+import { Camera, Chunk, arraySub, BlockType, getBlockData, faceVectorToFaceNumber, IDim } from "@craft/engine";
 import TextureMapper from "../textureMapper";
 import { ImageRenderer } from "./imageRender";
 import ShapeBuilder from "../services/shapeBuilder";
@@ -48,7 +48,7 @@ export class ChunkRenderer extends Renderer {
     // if (!this.isLoaded) return;
     this.setActiveTexture(canvas.textureAtlas);
 
-    this.renderObject(this.chunk.pos.data, camera, trans);
+    this.renderObject(this.chunk.pos.insert(0, 1).data as IDim, camera, trans);
 
     this.otherRenders.forEach(r => {
       r.render(camera)
@@ -70,7 +70,7 @@ export class ChunkRenderer extends Renderer {
     this.chunk.visibleCubesFaces.forEach((visibleFace) => {
       const { cube, faceVectors } = visibleFace;
 
-      const relativePos = arraySub(cube.pos.data, this.chunk.pos.data);
+      const relativePos = arraySub(cube.pos.data, this.chunk.pos.insert(0, 1).data);
       const blockData = getBlockData(cube.type);
       const blockRenData = blockData.transparent ? transRenData : renData;
 

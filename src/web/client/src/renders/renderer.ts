@@ -1,5 +1,5 @@
 import { canvas } from "../canvas";
-import { Camera, arraySub } from "@craft/engine";
+import { Camera, arraySub, IDim } from "@craft/engine";
 import { mat4, vec3 } from "gl-matrix";
 
 interface IRenderData {
@@ -220,7 +220,7 @@ export abstract class Renderer {
   }
 
 
-  renderObject(pos: number[], camera: Camera, trans?: boolean) {
+  renderObject(pos: IDim, camera: Camera, trans?: boolean) {
     if (canvas.currentXRFrame) {
       return this.renderXrObject(pos, camera, trans);
     }
