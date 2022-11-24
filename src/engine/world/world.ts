@@ -115,7 +115,6 @@ export class World {
     return chunk;
   }
 
-
   updateChunk(chunkPos: Vector2D, chunkData: ISerializedChunk) {
     const chunk = this.getChunkFromPos(chunkPos);
     if (!chunk) return;
@@ -159,7 +158,14 @@ export class World {
   }
 
   getBlockFromWorldPoint(pos: Vector3D): Cube | null {
-    const wasmBlock: ISerializedCube = this.wasmWorld.get_block_wasm(pos.get(0), pos.get(1), pos.get(2));
+
+    console.log(pos)
+
+    if (!this.wasmWorld.is_block_loaded_wasm(pos.toCartIntObj())) {
+      throw new Error("Getting block that hasn't been loaded")
+    }
+
+    const wasmBlock: ISerializedCube = this.wasmWorld.get_block_wasm(pos.toCartIntObj());
 
 
     const block: Cube = {

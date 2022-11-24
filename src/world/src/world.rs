@@ -5,7 +5,10 @@ use crate::vec::{Vec2, Vec3};
 use serde_wasm_bindgen;
 use std;
 use std::collections::HashMap;
+use std::error::Error;
 use wasm_bindgen::prelude::*;
+
+mod world_duct;
 
 extern crate web_sys;
 
@@ -28,91 +31,6 @@ pub struct ChunkPosWasm {
 #[wasm_bindgen]
 pub struct World {
     chunks: HashMap<i32, Chunk>,
-}
-
-// WASM public methods
-
-#[wasm_bindgen]
-impl World {
-    pub fn new_wasm() -> World {
-        World {
-            chunks: HashMap::new(),
-        }
-    }
-
-    pub fn add_block_wasm(&mut self, block: JsValue) {
-        let block: WorldBlock = block.into_serde().unwrap();
-        self.add_block(&block.world_pos, block.block_type, block.extra_data);
-    }
-
-    pub fn get_block_wasm(&self, x: i32, y: i32, z: i32) -> JsValue {
-        let block = self.get_block(&WorldPos { x, y, z });
-
-        JsValue::from_serde(&block).unwrap()
-    }
-
-    pub fn remove_block_wasm(&mut self, x: i32, y: i32, z: i32) {
-        self.remove_block(&WorldPos { x, y, z });
-    }
-
-    pub fn load_chunk_wasm(&mut self, x: i16, y: i16) -> () {
-        self.load_chunk(&ChunkPos { x, y });
-
-        self.add_block(
-            &WorldPos { x: 0, y: 0, z: 0 },
-            BlockType::Image,
-            BlockData::Image(Direction::Down),
-        );
-        self.add_block(
-            &WorldPos { x: 0, y: 0, z: 1 },
-            BlockType::Gold,
-            BlockData::None,
-        );
-    }
-
-    pub fn deserialize_chunk(&mut self, chunk: &JsValue) {
-        let chunk: Chunk = chunk.into_serde().unwrap();
-        self.insert_chunk(chunk);
-    }
-
-    pub fn has_chunk(&self, x: i16, y: i16) -> bool {
-        let chunk_pos = ChunkPos { x, y };
-        let index = Self::make_chunk_pos_index(&chunk_pos);
-        self.chunks.contains_key(&index)
-    }
-
-    pub fn get_chunk_visible_faces(&self, x: i16, y: i16) -> JsValue {
-        let chunk_pos = ChunkPos { x, y };
-
-        match self.get_chunk(&chunk_pos) {
-            Some(chunk) => JsValue::from_serde(&chunk.visible_faces).unwrap(),
-            None => JsValue::null(),
-        }
-    }
-
-    pub fn set_chunk_at_pos(&mut self, chunk: &JsValue) -> Result<(), JsValue> {
-        let mut chunk: Chunk = serde_wasm_bindgen::from_value(chunk.clone())?;
-        web_sys::console::log_1(&JsValue::from_str(&format!(
-            "set_chunk_at_pos: {:?}",
-            chunk.position
-        )));
-        chunk.calculate_visible_faces(self);
-        web_sys::console::log_1(&JsValue::from_str(&format!(
-            "set_chunk_at_pos visible faces: {:?}",
-            chunk.position
-        )));
-        let index = Self::make_chunk_pos_index(&chunk.position);
-        web_sys::console::log_1(&JsValue::from_str(&format!(
-            "set_chunk_at_pos index: {:?}",
-            chunk.position
-        )));
-        self.chunks.insert(index, chunk);
-        web_sys::console::log_1(&JsValue::from_str(&format!(
-            "set_chunk_at_pos insert: {:?}",
-            1
-        )));
-        Ok(())
-    }
 }
 
 impl World {
@@ -167,6 +85,11 @@ impl World {
         self.chunks.get(&index)
     }
 
+    pub fn get_chunk_from_world_pos(&self, world_pos: &WorldPos) -> Option<&Chunk> {
+        let chunk_pos = Self::world_pos_to_chunk_pos(world_pos);
+        self.get_chunk(&chunk_pos)
+    }
+
     pub fn insert_chunk(&mut self, chunk: Chunk) {
         let index = Self::make_chunk_pos_index(&chunk.position);
         self.chunks.insert(index, chunk);
@@ -209,15 +132,23 @@ impl World {
         }
     }
 
+    /** A block is loaded if the chunk it is in has been generated.
+     * Does not necessarily mean the block is visible.
+     */
+    pub fn is_block_loaded(&self, block_world_pos: &WorldPos) -> bool {
+        let chunk = self.get_chunk_from_world_pos(&block_world_pos);
+        chunk.is_some()
+    }
+
     /** Returns void block when the chunk isn't loaded */
     pub fn get_block(&self, block_world_pos: &WorldPos) -> WorldBlock {
         let chunk_pos = Self::world_pos_to_chunk_pos(block_world_pos);
         let chunk = self.get_chunk(&chunk_pos);
 
-        web_sys::console::log_1(&JsValue::from_str(&format!(
-            "get_block: {:?}",
-            chunk.is_some()
-        )));
+        // web_sys::console::log_1(&JsValue::from_str(&format!(
+        //     "get_block: {:?}",
+        //     chunk.is_some()
+        // )));
 
         match chunk {
             Some(x) => {
