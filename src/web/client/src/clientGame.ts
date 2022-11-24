@@ -1,4 +1,4 @@
-import { Camera, Game, ISocketMessage, ISocketMessageType, IWorldData, WorldModel, Player, GameStateDiff, GameAction, GameActionHolder, GameController } from "@craft/engine";
+import { Camera, Game, ISocketMessage, ISocketMessageType, IWorldData, WorldModel, Player, GameStateDiff, GameAction, GameActionHolder, GameController, World, EntityHolder } from "@craft/engine";
 import { EntityCamera } from "./cameras/entityCamera";
 import { canvas } from "./canvas";
 import WorldRenderer from "./renders/worldRender";
@@ -19,23 +19,44 @@ export class ClientGame extends Game {
   totTime = 0;
   pastDeltas: number[] = [];
   mainPlayer: Player;
+  controller: GameController<GameAction>;
 
-  constructor(
+  static async make(
+    worldData: IWorldData,
+    worldModel: WorldModel,
+  ): Promise<ClientGame> {
+
+    const entityHolder = new EntityHolder(worldData.data?.entities);
+    const world = await World.make(
+      worldData.chunkReader,
+      worldData.data?.world,
+    )
+
+    const game = new ClientGame(entityHolder, world, worldModel, worldData);
+
+    return game;
+  }
+
+  private constructor(
+    entities: EntityHolder,
+    world: World,
     worldModel: WorldModel,
     worldData: IWorldData,
   ) {
-    super(worldModel, worldData);
+    super(entities, world, worldModel, worldData);
 
     (window as IExtendedWindow).clientGame = this;
 
     console.log("ClientGame created", this);
+
+    this.controller = this.makeController();
 
     this.worldRenderer = new WorldRenderer(this.world, this);
 
     // Temp
     this.worldRenderer.shouldRenderMainPlayer = false;
 
-    this.mainPlayer = this.entities.createOrGetPlayer(getMyUid());
+    this.mainPlayer = entities.createOrGetPlayer(this.stateDiff, getMyUid());
 
     console.log("My UID", getMyUid());
 
@@ -60,7 +81,7 @@ export class ClientGame extends Game {
     canvas.loop(this.renderLoop.bind(this))
   }
 
-  makeController(): GameController<GameAction> {
+  private makeController(): GameController<GameAction> {
     const getClass = () => {
       if (IS_MOBILE) {
         return MobileController;

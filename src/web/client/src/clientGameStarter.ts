@@ -20,6 +20,7 @@ export class GameStarter {
 				return MouseAndKeyController;
 			}
 		}
+
 		return new (getClass())(clientGame);
 	}
 
@@ -27,12 +28,10 @@ export class GameStarter {
 		worldModel: WorldModel,
 		worldData: IWorldData,
 	) {
-		console.log("Loading Canvas");
-		console.log("Canvas Loaded");
+		console.log("Loading game");
+		this.game = await ClientGame.make(worldData, worldModel);
 
-		this.game = new ClientGame(worldModel, worldData);
-
-		console.log("Starting game", this.game);
+		console.log("Game Loaded, Starting game", this.game);
 		(window as IExtendedWindow).game = this.game;
 		history.pushState("Game", "", `?worldId=${this.game.gameId}`);
 

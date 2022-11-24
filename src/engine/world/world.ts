@@ -1,13 +1,14 @@
 import CubeHelpers, { Cube, CUBE_DIM, ISerializedCube } from "../entities/cube.js";
 import { Chunk, ILookingAtData, ISerializedChunk } from "./chunk.js";
 import { Entity } from "../entities/entity.js";
-import { Game } from "../game.js";
 import { IChunkReader } from "../types.js";
 import { CONFIG } from "../config.js";
 import { Vector3D, Vector2D } from "../utils/vector.js";
 import WorldModule, { WorldModuleTypes } from "../modules.js";
 import { BLOCK_DATA } from "../blockdata.js";
 import { ICameraData } from "../camera.js";
+import { GameStateDiff } from "../gameStateDiff.js";
+
 
 export interface ISerializedWorld {
   chunks: ISerializedChunk[];
@@ -54,9 +55,20 @@ export class World {
   private chunks = new ChunkHolder(this.wasmWorld);
   public loadingChunks = new Set<string>();
 
+  static async make(
+    chunkReader: IChunkReader,
+    data?: ISerializedWorld
+  ): Promise<World> {
+    console.log("Loading world")
+    const wasmWorld = WorldModule.module.World.new_wasm();
+    const world = new World(wasmWorld, chunkReader, data);
+    await world.load();
+    console.log("World loaded")
+    return world;
+  }
+
   constructor(
     public wasmWorld: WorldModuleTypes.World,
-    private game: Game,
     private chunkReader: IChunkReader,
     data?: ISerializedWorld
   ) {
@@ -134,6 +146,22 @@ export class World {
     return this.chunks.has(chunkPos);
   }
 
+  // load the starting chunks
+  // called before the world is passed on to the game
+  private async load() {
+    const loadPromises: Promise<void>[] = [];
+    for (let i = -CONFIG.loadDistance; i < CONFIG.loadDistance; i++) {
+      for (let j = -CONFIG.loadDistance; j < CONFIG.loadDistance; j++) {
+        const chunkPos = new Vector2D([i, j]);
+        if (!this.hasChunk(chunkPos)) {
+          const loadPromise = this.loadChunk(chunkPos);
+          loadPromises.push(loadPromise);
+        }
+      }
+    }
+    await Promise.all(loadPromises);
+  }
+
   async loadChunk(chunkPos: Vector2D): Promise<void> {
     // no repeat loading
     if (this.loadingChunks.has(chunkPos.toIndex())) {
@@ -160,6 +188,9 @@ export class World {
   getBlockFromWorldPoint(pos: Vector3D): Cube | null {
 
     console.log(pos)
+
+    // I think the error comes from calculating visible faces
+    // For some reason the block that we get back is not from thee correct chunk
 
     if (!this.wasmWorld.is_block_loaded_wasm(pos.toCartIntObj())) {
       throw new Error("Getting block that hasn't been loaded")
@@ -188,21 +219,6 @@ export class World {
     // const cube = chunk.blocks.get(pos.floor());
     // if (cube) return cube;
     // return null;
-  }
-
-  // load the starting chunks
-  async load() {
-    const loadPromises: Promise<void>[] = [];
-    for (let i = -CONFIG.loadDistance; i < CONFIG.loadDistance; i++) {
-      for (let j = -CONFIG.loadDistance; j < CONFIG.loadDistance; j++) {
-        const chunkPos = new Vector2D([i, j]);
-        if (!this.hasChunk(chunkPos)) {
-          const loadPromise = this.loadChunk(chunkPos);
-          loadPromises.push(loadPromise);
-        }
-      }
-    }
-    await Promise.all(loadPromises);
   }
 
   update(entities: Entity[]) {
@@ -287,31 +303,24 @@ export class World {
     // }
   }
 
-  private checkSurroundingChunkForUpdate(chunk: Chunk, pos: Vector3D) {
+  private checkSurroundingChunkForUpdate(stateDiff: GameStateDiff, chunk: Chunk, pos: Vector3D) {
     Vector3D.edgeVectorsStripY.forEach((indexVec) => {
       const checkCubePos = pos.add(indexVec);
       const otherChunk = this.getChunkFromWorldPoint(checkCubePos);
 
       // if this is a different chunk
       if (otherChunk && chunk !== otherChunk) {
-        this.game.stateDiff.updateChunk(chunk.uid);
+        stateDiff.updateChunk(chunk.uid);
         // TODO recalculate faces
       }
     });
   }
 
-  addBlock(cube: Cube) {
-    // Check if an entity is in the way
-    for (const entity of this.game.entities.iterable()) {
-      if (CubeHelpers.isPointInsideOfCube(cube, entity.pos)) {
-        console.log("Not adding block, entity in the way");
-        return;
-      }
-    }
-
-    console.log("Adding block", cube, this.game.gameId);
+  addBlock(stateDiff: GameStateDiff, cube: Cube) {
     const chunk = this.getChunkFromWorldPoint(cube.pos);
-    if (!chunk) return;
+    if (!chunk) {
+      throw new Error("Trying to place block in unloaded chunk");
+    }
     this.wasmWorld.add_block_wasm({
       block_type: cube.type,
       extra_data: cube.extraData,
@@ -324,11 +333,11 @@ export class World {
 
     // chunk.blocks.add(cube);
     // chunk.calculateVisibleFaces(this);
-    this.game.stateDiff.updateChunk(chunk.uid);
-    this.checkSurroundingChunkForUpdate(chunk, cube.pos);
+    stateDiff.updateChunk(chunk.uid);
+    this.checkSurroundingChunkForUpdate(stateDiff, chunk, cube.pos);
   }
 
-  removeBlock(cubePos: Vector3D) {
+  removeBlock(stateDiff: GameStateDiff, cubePos: Vector3D) {
     console.log("Removing block", cubePos);
     const chunk = this.getChunkFromWorldPoint(cubePos);
     if (!chunk) return;
@@ -339,8 +348,8 @@ export class World {
     );
     // chunk.blocks.remove(cubePos)
     chunk.calculateVisibleFaces(this);
-    this.checkSurroundingChunkForUpdate(chunk, cubePos);
-    this.game.stateDiff.updateChunk(chunk.uid);
+    this.checkSurroundingChunkForUpdate(stateDiff, chunk, cubePos);
+    stateDiff.updateChunk(chunk.uid);
   }
 
   lookingAt(camera: ICameraData): ILookingAtData | null {

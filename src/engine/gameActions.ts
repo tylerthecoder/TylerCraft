@@ -120,7 +120,7 @@ export class GameActionHandler {
 		if (action.isType(GameAction.PlaceBlock)) {
 			const { cameraData, playerUid } = action.data;
 			const player = this.getPlayer(playerUid);
-			player.useItem(this.game.world, cameraData);
+			player.useItem(this.game, cameraData);
 			return;
 		}
 
@@ -131,7 +131,7 @@ export class GameActionHandler {
 			if (!lookingData) return;
 			const cube = lookingData.cube;
 			if (!cube) return;
-			this.game.world.removeBlock(cube.pos);
+			this.game.world.removeBlock(this.game.stateDiff, cube.pos);
 			return;
 		}
 

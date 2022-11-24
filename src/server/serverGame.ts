@@ -1,24 +1,40 @@
 import Players from "./players.js";
 import WebSocket from "ws";
 import { SocketInterface } from "./app.js";
-import { EmptyController, Game, GameAction, GameActionDto, GameActionHolder, GameStateDiff, ISocketMessage, ISocketMessageType, IWorldData, MapArray, Vector2D, WorldModel, GameController } from "@craft/engine";
+import { EmptyController, Game, GameAction, GameActionDto, GameActionHolder, GameStateDiff, ISocketMessage, ISocketMessageType, IWorldData, MapArray, Vector2D, WorldModel, GameController, EntityHolder, World } from "@craft/engine";
 
 export class ServerGame extends Game {
   public clients: Players;
   public actionMap: MapArray<WebSocket, GameActionDto> = new MapArray();
 
+  public controller: GameController<GameAction> = new EmptyController(this);
+
+  static async make(
+    worldData: IWorldData,
+    worldModel: WorldModel,
+  ): Promise<ServerGame> {
+
+    const entityHolder = new EntityHolder(worldData.data?.entities);
+    const world = await World.make(
+      worldData.chunkReader,
+      worldData.data?.world,
+    )
+
+    const game = new ServerGame(entityHolder, world, worldModel, worldData);
+
+    return game;
+  }
+
 
   constructor(
+    entities: EntityHolder,
+    world: World,
     worldModel: WorldModel,
     worldData: IWorldData,
   ) {
-    super(worldModel, worldData);
+    super(entities, world, worldModel, worldData);
 
     this.clients = new Players(this);
-  }
-
-  makeController(): GameController<GameAction> {
-    return new EmptyController(this);
   }
 
   onAction(_action: GameActionHolder): void {

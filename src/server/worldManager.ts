@@ -4,8 +4,8 @@ import { ServerGame } from "./serverGame.js";
 import Websocket from "ws";
 import { SocketInterface } from "./app.js";
 
-export class WorldManager {
-  private worlds: Map<string, ServerGame> = new Map();
+export class GameManager {
+  private games: Map<string, ServerGame> = new Map();
   private worldModel = new DbWorldModel();
 
   constructor() {
@@ -27,7 +27,7 @@ export class WorldManager {
           world.addSocket(payload.myUid, ws);
         } else if (message.type === ISocketMessageType.saveWorld) {
           const payload = message.saveWorldPayload!
-          const world = this.worlds.get(payload.worldId);
+          const world = this.games.get(payload.worldId);
           if (!world) {
             console.log("That world doesn't exist", payload);
             return;
@@ -39,7 +39,7 @@ export class WorldManager {
   }
 
   async getWorld(worldId: string): Promise<ServerGame | null> {
-    const world = this.worlds.get(worldId);
+    const world = this.games.get(worldId);
     if (world) {
       return world;
     }
@@ -50,12 +50,12 @@ export class WorldManager {
     if (!loadedWorldData) return null;
 
     // add the world to our local list
-    const serverWorld = new ServerGame(
-      this.worldModel,
+    const serverWorld = await ServerGame.make(
       loadedWorldData,
+      this.worldModel,
     );
 
-    this.worlds.set(
+    this.games.set(
       worldId,
       serverWorld,
     );
@@ -70,12 +70,12 @@ export class WorldManager {
     console.log(createWorldOptions);
     const worldData = await this.worldModel.createWorld(createWorldOptions);
 
-    const newWorld = new ServerGame(
-      this.worldModel,
+    const newWorld = await ServerGame.make(
       worldData,
+      this.worldModel,
     );
 
-    this.worlds.set(
+    this.games.set(
       worldData.worldId,
       newWorld,
     );
