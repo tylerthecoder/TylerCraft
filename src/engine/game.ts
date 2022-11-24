@@ -49,6 +49,18 @@ export abstract class Game<Action = GameAction> {
 
   abstract makeController(): GameController<Action>;
 
+  // TODO: create a load factory for the game.
+  // We have to wait for some chunks to load before we start performing logic on chunks
+  // Could also wait for wasm modules to load here
+  // Make each class handle its own loading of wasm
+  // static async createGame(): Promise<Game> {
+  //   const worldModel = new WorldModel();
+  //   const worldData = await worldModel.createWorld();
+  //   return new Game(worldModel, worldData);
+  // }
+
+
+
   constructor(
     // controller: (game: G) => GameController,
     worldModel: WorldModel,

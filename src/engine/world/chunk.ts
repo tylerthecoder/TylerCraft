@@ -197,6 +197,8 @@ export class Chunk {
       }
 
       if (block.type === BLOCKS.void) {
+        // I think this error is happening because the chunk isn't loaded that the block is in,
+        // thus it is returning a void block
         throw new Error("visible face should not be void")
       }
 

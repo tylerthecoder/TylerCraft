@@ -116,7 +116,7 @@ export async function loadWorldById(worldId: string) {
   const clientWorlds = await clientWorldModel.getAllWorlds();
   const clientHasWorld = clientWorlds.some(world => world.gameId === worldId);
   if (clientHasWorld) {
-    console.log("Found World");
+    console.log("Found Client World");
     const clientWorld = await clientWorldModel.getWorld(worldId);
     gameStarter.start(clientWorldModel, clientWorld);
     return;
@@ -128,13 +128,18 @@ export async function loadWorldById(worldId: string) {
   if (serverHasWorld) {
     const serverWorld = await serverWorldModel.getWorld(worldId);
     if (serverWorld) {
-      console.log("Found World");
+      console.log("Found Server World");
       gameStarter.start(serverWorldModel, serverWorld);
     }
     return;
   }
 
-  throw new Error("Id not found");
+  console.log("Id not found")
+
+  // remove id from url
+  const url = new URL(location.href);
+  url.searchParams.delete("worldId");
+  history.replaceState(null, "", url.href);
 }
 
 

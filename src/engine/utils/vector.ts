@@ -357,6 +357,15 @@ export class Vector3D extends Vector<[number, number, number]> {
     return this.data.join(",");
   }
 
+  toCartIntObj(): {x: number, y: number, z: number} {
+    // convert numbers to ints
+    return {
+      x: Math.round(this.data[0]),
+      y: Math.round(this.data[1]),
+      z: Math.round(this.data[2]),
+    }
+  }
+
   add(vec: Vector3D): Vector3D {
     return new Vector3D(Vector._add(this, vec));
   }
