@@ -37,9 +37,9 @@ pub type InnerChunkPos = Vec3<i8>;
 
 #[derive(Serialize, Deserialize)]
 pub struct BlockWithFaces {
-    world_pos: WorldPos,
+    pub world_pos: WorldPos,
     // true is the face is visible
-    faces: Directions,
+    pub faces: Directions,
 }
 
 pub type VisibleFaces = Vec<BlockWithFaces>;
@@ -71,8 +71,8 @@ impl Chunk {
         js_value.into_serde().unwrap()
     }
 
-    pub fn serialize(&self) -> JsValue {
-        JsValue::from_serde(&self).unwrap()
+    pub fn serialize(&self) -> Result<JsValue, JsValue> {
+        Ok(serde_wasm_bindgen::to_value(&self)?)
     }
 
     // Need to see if this will mess up the hash map that is pointing to this chunk.
@@ -90,23 +90,7 @@ impl Chunk {
     }
 
     pub fn calculate_visible_faces_wasm(&mut self, world: &World) -> () {
-        let data: Vec<BlockWithFaces> = self
-            .blocks
-            .iter()
-            .filter(|&b| *b != BlockType::Void)
-            .enumerate()
-            .map(|(index, block_type)| {
-                let block = self.get_full_block_from_index(index);
-                BlockWithFaces {
-                    faces: get_visible_faces(&block, world),
-                    world_pos: block.world_pos,
-                }
-            })
-            .collect();
-
-        web_sys::console::log_1(&JsValue::from_str(data.len().to_string().as_str()));
-
-        self.visible_faces = data;
+        self.calculate_visible_faces(world);
     }
 }
 
@@ -150,10 +134,16 @@ impl Chunk {
         let data = self
             .blocks
             .iter()
-            .filter(|&b| *b != BlockType::Void)
             .enumerate()
+            .filter(|(_i, &b)| b != BlockType::Void)
             .map(|(index, block_type)| {
                 let block = self.get_full_block_from_index(index);
+                if block.block_type == BlockType::Void {
+                    web_sys::console::log_1(&JsValue::from_str(&format!(
+                        "Setting as void {:?}",
+                        block_type
+                    )));
+                }
                 BlockWithFaces {
                     faces: get_visible_faces(&block, world),
                     world_pos: block.world_pos,
@@ -201,11 +191,6 @@ impl Chunk {
 
         let world_pos = self.chunk_pos_to_world_pos(&inner_chunk_pos);
 
-        println!(
-            "CHUNK: world_pos, inner_chunk_pos {:?} {:?} {:?}",
-            index, inner_chunk_pos, world_pos
-        );
-
         WorldBlock {
             block_type,
             extra_data: *block_data,
@@ -235,9 +220,9 @@ impl Chunk {
 }
 
 mod tests {
-    use crate::world::{ChunkPos, WorldPos};
+    use crate::world::{World, WorldPos};
 
-    use super::{Chunk, InnerChunkPos};
+    use super::{Chunk, ChunkPos, InnerChunkPos};
 
     #[test]
     fn index_conversion() {

@@ -1,9 +1,11 @@
 use wasm_bindgen_test::*;
-use world::{chunk::{Chunk, InnerChunkPos}, world::{WorldPos, ChunkPos, World}, block::{BlockType, BlockData}};
-
+use world::{
+    block::{BlockData, BlockType},
+    chunk::{Chunk, InnerChunkPos},
+    world::{ChunkPos, World, WorldPos},
+};
 
 wasm_bindgen_test_configure!(run_in_browser);
-
 
 #[wasm_bindgen_test]
 fn stores_block() {
@@ -68,7 +70,6 @@ fn deletes_blocks() {
 
     chunk.add_block(&inner_chunk_pos, BlockType::Cloud, BlockData::None);
 
-
     chunk.remove_block(&inner_chunk_pos);
 
     let block = chunk.get_block(&inner_chunk_pos);
@@ -76,27 +77,33 @@ fn deletes_blocks() {
     assert_eq!(block, BlockType::Void)
 }
 
-
-#[test]
+#[wasm_bindgen_test]
 fn calculate_visible_faces() {
+    // Make a world
     let mut world = World::new();
 
-    world.add_chunk(&ChunkPos { x : 0, y : 0 });
+    // Make a chunk
+    let mut chunk = Chunk::new(ChunkPos { x: 0, y: 0 });
 
-    let chunk = world.get_chunk(&ChunkPos{ x : 0, y : 0 }).unwrap();
+    chunk.add_block(
+        &InnerChunkPos::new(0, 0, 0),
+        BlockType::Cloud,
+        BlockData::None,
+    );
 
+    chunk.calculate_visible_faces(&world);
 
-    // chunk.add_block(&InnerChunkPos { x: 1, y: 1, z: 1 }, BlockType::Cloud, BlockData::None);
+    world.insert_chunk(chunk);
 
+    let chunk = world.get_chunk(&ChunkPos { x: 0, y: 0 }).unwrap();
 
+    assert_eq!(chunk.visible_faces.len(), 1);
 
+    let block_with_faces = chunk.visible_faces.get(0).unwrap();
 
+    assert_eq!(block_with_faces.faces.len(), 6);
 
+    let block = world.get_block(&block_with_faces.world_pos);
 
-
-    // let faces = chunk.calculate_visible_faces(&world);
-
-
-
-
+    assert_eq!(block.block_type, BlockType::Cloud);
 }

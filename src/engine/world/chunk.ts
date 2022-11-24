@@ -10,7 +10,7 @@ import {
 } from "../utils.js";
 import { CONFIG } from "../config.js";
 import { Vector3D, Vector2D, Direction, ALL_DIRECTIONS } from "../utils/vector.js";
-import { BlockType } from "../blockdata.js";
+import { BLOCKS, BlockType } from "../blockdata.js";
 import { ICameraData } from "../camera.js";
 import { faceVectorToFaceNumber, getOppositeCubeFace } from "../utils/face.js";
 import { World } from "./world.js";
@@ -32,7 +32,7 @@ export interface ISerializedChunk {
     y: number;
   };
   blocks: BlockType[];
-  block_data: Record<string, "None" | { Image: string }>;
+  block_data: Map<string, "None" | { Image: string }>;
   chunkId: string;
   // vis: SerializedVisibleData,
 }
@@ -181,25 +181,31 @@ export class Chunk {
 
     const faces = this.wasmChunk.get_visible_faces_wasm() as ISerializedVisibleFaces | null;
 
-    // const faces = world.wasmWorld.get_chunk_visible_faces(
-    //   this.pos.get(0),
-    //   this.pos.get(1)
-    // ) as ISerializedVisibleFaces | null;
-
     if (!faces) {
       throw new Error("No faces found");
     }
 
     // convert to real faces
-
-    this.visibleCubesFaces = faces.map((face) => ({
-      cube: world.getBlockFromWorldPoint(
+    this.visibleCubesFaces = faces.map((face) => {
+      const block = world.getBlockFromWorldPoint(
         new Vector3D([face.world_pos.x, face.world_pos.y, face.world_pos.z])
-      )!,
+      );
+
+
+      if (!block) {
+        throw new Error("No block returned");
+      }
+
+      if (block.type === BLOCKS.void) {
+        throw new Error("visible face should not be void")
+      }
+
+      return  {
+        cube: block,
       faceVectors: ALL_DIRECTIONS
         .filter((_dir, index) => face.faces[index])
         .map(Vector3D.fromDirection),
-    }));
+    } });
   }
 
   lookingAt(camera: ICameraData): ILookingAtData | false {

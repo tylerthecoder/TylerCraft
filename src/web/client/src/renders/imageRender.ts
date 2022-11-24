@@ -1,4 +1,4 @@
-import { Vector3D, Camera } from "@craft/engine";
+import { Vector3D, Camera, IDim } from "@craft/engine";
 import { canvas } from "../canvas";
 import ShapeBuilder from "../services/shapeBuilder";
 import { RenderData, Renderer } from "./renderer";
@@ -29,6 +29,6 @@ export class ImageRenderer extends Renderer {
 
   render(camera: Camera): void {
     this.setActiveTexture(canvas.getGalleryTexture(this.galleryIndex));
-    this.renderObject(this.pos.data, camera)
+    this.renderObject(this.pos.data as IDim, camera)
   }
 }

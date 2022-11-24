@@ -1,5 +1,5 @@
 import { RenderData, Renderer } from "./renderer";
-import { Camera, Entity, } from "@craft/engine";
+import { Camera, Entity, IDim, } from "@craft/engine";
 import TextureMapper from "../textureMapper";
 import ShapeBuilder from "../services/shapeBuilder";
 import { canvas } from "../canvas";
@@ -12,7 +12,7 @@ export class CubeRenderer extends Renderer {
   }
 
   render(camera: Camera): void {
-    this.renderObject(this.entity.pos.data, camera);
+    this.renderObject(this.entity.pos.data as IDim, camera);
   }
 
   private setup() {

@@ -16,7 +16,7 @@
 		"simplex-noise": "^2.4.0"
 	},
 	"devDependencies": {
-		"@types/mongodb": "^3.5.27",
+		"@types/mongodb": "^4.0.7",
 		"@types/random": "^2.1.1",
 		"@types/seedrandom": "^2.4.28"
 	}

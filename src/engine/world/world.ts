@@ -1,4 +1,4 @@
-import CubeHelpers, { Cube, CUBE_DIM } from "../entities/cube.js";
+import CubeHelpers, { Cube, CUBE_DIM, ISerializedCube } from "../entities/cube.js";
 import { Chunk, ILookingAtData, ISerializedChunk } from "./chunk.js";
 import { Entity } from "../entities/entity.js";
 import { Game } from "../game.js";
@@ -14,11 +14,45 @@ export interface ISerializedWorld {
   // tg: ISerializedTerrainGenerator;
 }
 
+export class ChunkHolder {
+  private chunks = new Map<string, Chunk>();
+
+  constructor(
+    public wasmWorld: WorldModuleTypes.World,
+  ) {}
+
+  setAll(chunks: Chunk[], world: World): void {
+    this.chunks = new Map(chunks.map(c => [c.pos.toIndex(), c]));
+    console.log("Setting all");
+    chunks.forEach(c => this.wasmWorld.set_chunk_at_pos(c.serialize()));
+    chunks.forEach(c => c.calculateVisibleFaces(world));
+  }
+
+  addOrUpdate(chunk: Chunk, world: World): void {
+    console.log("Setting chunk at", chunk);
+    this.chunks.set(chunk.pos.toIndex(), chunk);
+    const serialized = chunk.serialize();
+    this.wasmWorld.set_chunk_at_pos(serialized);
+    chunk.calculateVisibleFaces(world);
+  }
+
+  has(pos: Vector2D): boolean {
+    return this.wasmWorld.has_chunk(pos.get(0), pos.get(1))
+  }
+
+  get(pos: Vector2D): Chunk | null {
+    return this.chunks.get(pos.toIndex()) ?? null;
+  }
+
+  getAll(): Chunk[] {
+    return Array.from(this.chunks.values());
+  }
+}
+
 export class World {
   // public terrainGenerator: TerrainGenerator;
-  private chunks: Map<string, Chunk>;
+  private chunks = new ChunkHolder(this.wasmWorld);
   public loadingChunks = new Set<string>();
-  public loadedChunks = new Set<string>();
 
   constructor(
     public wasmWorld: WorldModuleTypes.World,
@@ -30,34 +64,16 @@ export class World {
 
     if (data) {
       // this.terrainGenerator = new TerrainGenerator(this.hasChunk.bind(this), this.getChunkFromPos.bind(this), data.tg);
-
-      data.chunks.map(this.wasmWorld.deserialize_chunk);
-
-      const chunksMap = new Map();
-      for (const chunk of data.chunks) {
-        const chunkClass = WorldModule.createChunkFromSerialized(chunk);
-        chunksMap.set(chunk.chunkId, chunkClass);
-        this.wasmWorld.set_chunk_at_pos(chunk);
-      }
-      this.chunks = chunksMap;
-
-      // this.chunks.forEach(chunk => this.updateChunk(chunk.chunkPos));
+      this.chunks.setAll(data.chunks.map(WorldModule.createChunkFromSerialized), this);
     } else {
       // this.terrainGenerator = new TerrainGenerator(this.hasChunk.bind(this), this.getChunkFromPos.bind(this));
-      this.chunks = new Map();
-    }
-
-    // Compute all the chunk faces
-    // TODO think this through better. Might take a long time to start if there are a lot of chunks
-    for (const chunk of this.chunks.values()) {
-      chunk.calculateVisibleFaces(this);
     }
   }
 
   // We just aren't going to serialize the terrain generator for now. Hopefully later we find a better way to do this
   serialize(): ISerializedWorld {
     // const serializedTG = this.terrainGenerator.serialize();
-    const serializedChunks = Array.from(this.chunks.values()).map((chunk) =>
+    const serializedChunks = this.chunks.getAll().map((chunk) =>
       chunk.serialize()
     );
     return {
@@ -93,17 +109,12 @@ export class World {
   }
 
   getChunkFromPos(chunkPos: Vector2D, config?: { loadIfNotFound?: boolean }) {
-    const chunk = this.chunks.get(chunkPos.toIndex());
+    const chunk = this.chunks.get(chunkPos);
     if (!chunk && config?.loadIfNotFound) this.loadChunk(chunkPos);
     // if (!chunk && config?.generateIfNotFound) return this.generateChunk(chunkPos);
     return chunk;
   }
 
-  setChunkAtPos(chunk: Chunk, chunkPos: Vector2D) {
-    this.chunks.set(chunkPos.toIndex(), chunk);
-    this.wasmWorld.set_chunk_at_pos(chunk.serialize());
-    this.loadedChunks.add(chunkPos.toIndex());
-  }
 
   updateChunk(chunkPos: Vector2D, chunkData: ISerializedChunk) {
     const chunk = this.getChunkFromPos(chunkPos);
@@ -112,12 +123,16 @@ export class World {
     chunk.calculateVisibleFaces(this);
   }
 
-  getChunks(): IterableIterator<Chunk> {
-    return this.chunks.values();
+  addOrUpdateChunk(chunk: Chunk) {
+    this.chunks.addOrUpdate(chunk, this);
+  }
+
+  getChunks(): Chunk[] {
+    return this.chunks.getAll();
   }
 
   hasChunk(chunkPos: Vector2D): boolean {
-    return this.chunks.has(chunkPos.toIndex());
+    return this.chunks.has(chunkPos);
   }
 
   async loadChunk(chunkPos: Vector2D): Promise<void> {
@@ -132,8 +147,7 @@ export class World {
         // this should only happen on the client side when single player
         // and on the server side when multiplayer
         // if (!chunk) chunk = this.terrainGenerator.generateChunk(chunkPos);
-        this.setChunkAtPos(chunk, chunkPos);
-        chunk.calculateVisibleFaces(this);
+        this.addOrUpdateChunk(chunk);
         resolve();
       });
     });
@@ -145,8 +159,23 @@ export class World {
   }
 
   getBlockFromWorldPoint(pos: Vector3D): Cube | null {
-    const block = this.wasmWorld.get_block_wasm(pos.get(0), pos.get(1), pos.get(2));
-    console.log(block);
+    const wasmBlock: ISerializedCube = this.wasmWorld.get_block_wasm(pos.get(0), pos.get(1), pos.get(2));
+
+
+    const block: Cube = {
+      pos: new Vector3D([wasmBlock.world_pos.x, wasmBlock.world_pos.y, wasmBlock.world_pos.z]),
+      type: wasmBlock.block_type,
+      // We aren't passing on extra block data just quite yet
+      // extraData: wasmBlock.extra_data === "None" ? ,
+    }
+
+    // TODO
+
+
+    if (block === null) {
+      return null;
+    }
+
     return block;
     // const chunk = this.getChunkFromWorldPoint(pos);
     // if (!chunk) return null;
@@ -187,6 +216,7 @@ export class World {
   }
 
   // soon only check chunks the entity is in
+  // Only "loaded" chunks should be doing this
   pushOut(ent: Entity) {
     const entDim = ent instanceof Entity ? ent.dim : CUBE_DIM;
 
@@ -312,7 +342,7 @@ export class World {
     let closestCube: ILookingAtData | null = null;
 
     // loop over all chunks and then check if they are reachable
-    for (const chunk of this.chunks.values()) {
+    for (const chunk of this.chunks.getAll()) {
       const isReachable = chunk.circleIntersect(
         new Vector3D(camera.pos),
         CONFIG.player.reach

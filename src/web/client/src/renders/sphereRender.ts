@@ -1,5 +1,5 @@
 import { RenderData, Renderer } from "./renderer";
-import { Camera, Entity } from "@craft/engine";
+import { Camera, Entity, IDim } from "@craft/engine";
 
 export class SphereRenderer extends Renderer {
   radius = 1;
@@ -13,7 +13,7 @@ export class SphereRenderer extends Renderer {
   }
 
   render(camera: Camera) {
-    this.renderObject(this.entity.pos.data, camera);
+    this.renderObject(this.entity.pos.data as IDim, camera);
   }
 
   setup() {

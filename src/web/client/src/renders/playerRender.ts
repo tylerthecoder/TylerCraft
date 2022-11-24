@@ -1,4 +1,4 @@
-import { Player, Camera, Vector3D } from "@craft/engine";
+import { Player, Camera, Vector3D, IDim } from "@craft/engine";
 import { RenderData, Renderer } from "./renderer";
 import ShapeBuilder from "../services/shapeBuilder";
 import { canvas } from "../canvas";
@@ -15,7 +15,7 @@ export class PlayerRenderer extends Renderer {
 
   render(camera: Camera) {
     this.calculateBuffers();
-    this.renderObject(this.player.pos.data, camera);
+    this.renderObject(this.player.pos.data as IDim, camera);
   }
 
   static handSize = new Vector3D([.2, .2, .2]);
