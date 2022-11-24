@@ -14,6 +14,7 @@ import { GameStateDiff, GameDiffDto } from "./gameStateDiff.js";
 import { Vector2D } from "./utils/vector.js";
 import { GameController } from "./controllers/controller.js";
 import WorldModule from "./modules.js";
+import CubeHelpers, { Cube } from "./entities/cube.js";
 
 // TODO need to await this somehow
 WorldModule.load();
@@ -37,55 +38,28 @@ export interface IGameMetadata {
 export abstract class Game<Action = GameAction> {
   public gameId: string;
   public name: string;
-  public entities: EntityHolder;
-  public world: World;
   public multiPlayer: boolean;
   public stateDiff: GameStateDiff;
-  public controller: GameController<Action>;
+  public abstract controller: GameController<Action>;
 
   private gameActionHandler: GameActionHandler;
   private worldModel: WorldModel;
   private previousTime = Date.now();
 
-  abstract makeController(): GameController<Action>;
-
-  // TODO: create a load factory for the game.
-  // We have to wait for some chunks to load before we start performing logic on chunks
-  // Could also wait for wasm modules to load here
-  // Make each class handle its own loading of wasm
-  // static async createGame(): Promise<Game> {
-  //   const worldModel = new WorldModel();
-  //   const worldData = await worldModel.createWorld();
-  //   return new Game(worldModel, worldData);
-  // }
-
-
 
   constructor(
-    // controller: (game: G) => GameController,
+    public entities: EntityHolder,
+    public world: World,
     worldModel: WorldModel,
     worldData: IWorldData
   ) {
     Random.setSeed(worldData.config.seed);
 
     this.worldModel = worldModel;
-    this.controller = this.makeController();
     this.stateDiff = new GameStateDiff(this);
     this.gameActionHandler = new GameActionHandler(this);
 
     this.multiPlayer = Boolean(worldData.multiplayer);
-
-    this.world = worldData.data
-      ? WorldModule.createWorld(
-          this,
-          worldData.chunkReader,
-          worldData.data.world
-        )
-      : WorldModule.createWorld(this, worldData.chunkReader);
-
-    this.entities = worldData.data
-      ? new EntityHolder(this, worldData.data.entities)
-      : new EntityHolder(this);
 
     this.gameId = worldData.worldId;
     this.name = worldData.name;
@@ -102,9 +76,6 @@ export abstract class Game<Action = GameAction> {
 
   // abstract load(): Promise<void>;
   async baseLoad() {
-    await this.world.load();
-    console.log("World Loaded");
-
     // Setup timer
     this.previousTime = Date.now();
     this.baseUpdate();
@@ -172,7 +143,7 @@ export abstract class Game<Action = GameAction> {
       const adds = stateDiff.entities.add;
       for (const add of adds) {
         const ent = this.entities.createEntity(add);
-        this.entities.add(ent);
+        this.entities.add(this.stateDiff, ent);
       }
     }
 
@@ -191,8 +162,21 @@ export abstract class Game<Action = GameAction> {
     }
   }
 
+  placeBlock(cube: Cube) {
+    console.log("Adding block", cube);
+    // Check if an entity is in the way
+    for (const entity of this.entities.iterable()) {
+      if (CubeHelpers.isPointInsideOfCube(cube, entity.pos)) {
+        console.log("Not adding block, entity in the way");
+        return;
+      }
+    }
+
+    this.world.addBlock(this.stateDiff, cube);
+  }
+
   addPlayer(uid: string): Player {
-    return this.entities.createOrGetPlayer(uid);
+    return this.entities.createOrGetPlayer(this.stateDiff, uid);
   }
 
   save() {

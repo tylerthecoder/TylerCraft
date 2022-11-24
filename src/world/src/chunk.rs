@@ -138,6 +138,14 @@ impl Chunk {
             .filter(|(_i, &b)| b != BlockType::Void)
             .map(|(index, block_type)| {
                 let block = self.get_full_block_from_index(index);
+
+                let chunk_pos = World::world_pos_to_chunk_pos(&block.world_pos);
+
+                web_sys::console::log_1(&JsValue::from_str(&format!(
+                    "calc-vis-face chunk pos: {:?}",
+                    chunk_pos
+                )));
+
                 if block.block_type == BlockType::Void {
                     web_sys::console::log_1(&JsValue::from_str(&format!(
                         "Setting as void {:?}",

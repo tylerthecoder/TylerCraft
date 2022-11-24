@@ -1,5 +1,5 @@
 use crate::block::{BlockData, BlockType, WorldBlock};
-use crate::chunk::*;
+use crate::chunk::{self, *};
 use crate::direction::Direction;
 use crate::vec::{Vec2, Vec3};
 use serde_wasm_bindgen;
@@ -9,6 +9,7 @@ use std::error::Error;
 use wasm_bindgen::prelude::*;
 
 mod world_duct;
+mod world_unit_test;
 
 extern crate web_sys;
 
@@ -64,8 +65,18 @@ impl World {
     }
 
     pub fn world_pos_to_chunk_pos(world_pos: &WorldPos) -> ChunkPos {
-        let x = world_pos.x / CHUNK_WIDTH as i32;
-        let y = world_pos.z / CHUNK_WIDTH as i32;
+        let x = if world_pos.x < 0 {
+            ((world_pos.x + 1) / CHUNK_WIDTH as i32) - 1
+        } else {
+            world_pos.x / CHUNK_WIDTH as i32
+        };
+
+        let y = if world_pos.z < 0 {
+            ((world_pos.z + 1) / CHUNK_WIDTH as i32) - 1
+        } else {
+            world_pos.z / CHUNK_WIDTH as i32
+        };
+
         ChunkPos {
             x: x as i16,
             y: y as i16,
@@ -145,11 +156,6 @@ impl World {
         let chunk_pos = Self::world_pos_to_chunk_pos(block_world_pos);
         let chunk = self.get_chunk(&chunk_pos);
 
-        // web_sys::console::log_1(&JsValue::from_str(&format!(
-        //     "get_block: {:?}",
-        //     chunk.is_some()
-        // )));
-
         match chunk {
             Some(x) => {
                 let chunk_internal_pos = Self::world_pos_to_inner_chunk_pos(block_world_pos);
@@ -162,25 +168,5 @@ impl World {
                 world_pos: *block_world_pos,
             },
         }
-    }
-}
-
-mod tests {
-    use crate::{chunk::InnerChunkPos, world::ChunkPos};
-
-    use super::{World, WorldPos};
-
-    #[test]
-    fn world_pos_to_chunk_pos() {
-        let chunk_pos = World::world_pos_to_chunk_pos(&WorldPos { x: 1, y: 2, z: 3 });
-
-        assert_eq!(chunk_pos, ChunkPos { x: 0, y: 0 });
-    }
-
-    #[test]
-    fn world_pos_to_inner_chunk_pos() {
-        let chunk_pos = World::world_pos_to_inner_chunk_pos(&WorldPos { x: 1, y: 2, z: 3 });
-
-        assert_eq!(chunk_pos, InnerChunkPos { x: 1, y: 2, z: 3 });
     }
 }

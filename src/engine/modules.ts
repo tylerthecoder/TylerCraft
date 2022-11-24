@@ -10,7 +10,7 @@ export * as WorldModuleTypes from "@craft/rust-world";
 class WorldModuleClass {
   private _module: typeof WorldWasm | null = null;
 
-  private get module() {
+  public get module() {
     if (!this._module) {
       throw new Error("Module not loaded");
     }
@@ -29,15 +29,6 @@ class WorldModuleClass {
       this._module = await wasm;
       console.log("Modules Loaded node", this._module);
     }
-  }
-
-  public createWorld(
-    game: Game,
-    chunkReader: IChunkReader,
-    data?: ISerializedWorld
-  ) {
-    const wasmWorld = this.module.World.new_wasm();
-    return new World(wasmWorld, game, chunkReader, data);
   }
 
   public createChunk(chunkPos: Vector2D): Chunk {

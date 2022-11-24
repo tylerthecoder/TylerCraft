@@ -28,6 +28,18 @@ impl World {
 
     pub fn get_block_wasm(&self, val: JsValue) -> Result<JsValue, Error> {
         from_value(val).and_then(|pos: WorldPos| {
+            let chunk_pos = Self::world_pos_to_chunk_pos(&pos);
+            let chunk = self.get_chunk(&chunk_pos);
+
+            web_sys::console::log_1(&JsValue::from_str(&format!(
+                "get_block world pos: {:?} {:?} {:?} at chunk: {:?} {:?}. Chunk is loaded: {:?}",
+                pos.x,
+                pos.y,
+                pos.z,
+                chunk_pos.x,
+                chunk_pos.y,
+                chunk.is_some()
+            )));
             let block = self.get_block(&pos);
             to_value(&block)
         })
@@ -35,6 +47,17 @@ impl World {
 
     pub fn is_block_loaded_wasm(&self, val: JsValue) -> Result<JsValue, Error> {
         from_value(val).and_then(|pos| {
+            let chunk_pos = Self::world_pos_to_chunk_pos(&pos);
+            let chunk = self.get_chunk(&chunk_pos);
+            web_sys::console::log_1(&JsValue::from_str(&format!(
+                "is_block_loaded world pos: {:?} {:?} {:?} at chunk: {:?} {:?}. Chunk is loaded: {:?}",
+                pos.x,
+                pos.y,
+                pos.z,
+                chunk_pos.x,
+                chunk_pos.y,
+                chunk.is_some()
+            )));
             let is_loaded = self.is_block_loaded(&pos);
             to_value(&is_loaded)
         })

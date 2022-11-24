@@ -9,6 +9,7 @@ import { BLOCKS, ExtraBlockData } from "../blockdata.js";
 import { World } from "../world/world.js";
 import { ICameraData } from "../camera.js";
 import CubeHelpers from "./cube.js";
+import { Game } from "../game.js";
 
 
 export interface BeltDto {
@@ -242,8 +243,8 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
   }
 
   // TODO get camera data from the player's rot
-  useItem(world: World, cameraData: ICameraData) {
-    const lookingData = world.lookingAt(cameraData);
+  useItem(game: Game, cameraData: ICameraData) {
+    const lookingData = game.world.lookingAt(cameraData);
     if (!lookingData) return;
     const { cube } = lookingData;
     if (!cube) return;
@@ -267,7 +268,7 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
 
     console.log(newCube)
 
-    world.addBlock(newCube);
+    game.placeBlock(newCube);
   }
 
   fireball() {

@@ -1,4 +1,5 @@
 import { Game } from "../game.js";
+import { GameStateDiff } from "../gameStateDiff.js";
 import { World } from "../world/world.js";
 import { Entity, EntityDto } from "./entity.js";
 import { Player } from "./player.js";
@@ -39,7 +40,6 @@ export class EntityHolder {
   private players: Map<string, Player> = new Map();
 
   constructor(
-    private game: Game,
     data?: ISerializedEntities,
   ) {
     if (data) {
@@ -101,10 +101,10 @@ export class EntityHolder {
     entity.set(entityDto as any);
   }
 
-  setEntity(entityDto: EntityDto) {
+  setEntity(stateDiff: GameStateDiff, entityDto: EntityDto) {
     const entity = this.createEntity(entityDto);
     this.entities.set(entity.uid, entity);
-    this.game.stateDiff.updateEntity(entity.uid);
+    stateDiff.updateEntity(entity.uid);
   }
 
   serialize(): ISerializedEntities {
@@ -113,24 +113,24 @@ export class EntityHolder {
     }
   }
 
-  add(entity: Entity) {
+  add(stateDiff: GameStateDiff, entity: Entity) {
     if (!entity.uid) throw new Error("Must have uid");
     this.entities.set(entity.uid, entity);
-    this.game.stateDiff.addEntity(entity.uid);
+    stateDiff.addEntity(entity.uid);
   }
 
-  createOrGetPlayer(uid: string): Player {
+  createOrGetPlayer(stateDiff: GameStateDiff, uid: string): Player {
     // looking to see if we have already loaded this player, if so then return it
     const player = this.players.get(uid);
     if (player) {
       // send an event to the game
-      this.game.stateDiff.addEntity(player.uid);
+      stateDiff.addEntity(player.uid);
       return player;
     }
 
     const newPlayer = Player.create(uid);
     this.players.set(newPlayer.uid, newPlayer);
-    this.add(newPlayer);
+    this.add(stateDiff, newPlayer);
     return newPlayer;
   }
 
