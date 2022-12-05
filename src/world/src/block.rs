@@ -45,6 +45,16 @@ pub struct WorldBlock {
     pub world_pos: WorldPos,
 }
 
+impl WorldBlock {
+    pub fn empty(world_pos: WorldPos) -> WorldBlock {
+        WorldBlock {
+            block_type: BlockType::Void,
+            extra_data: BlockData::None,
+            world_pos,
+        }
+    }
+}
+
 // Stuck in limbo https://github.com/rustwasm/wasm-bindgen/issues/2407
 // #[wasm_bindgen]
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -74,11 +84,11 @@ pub enum BlockShape {
 
 #[derive(Clone, Copy)]
 pub struct BlockMetaData {
-    gravitable: bool,
-    shape: BlockShape,
-    transparent: bool,
-    intangible: bool,
-    fluid: bool,
+    pub gravitable: bool,
+    pub shape: BlockShape,
+    pub transparent: bool,
+    pub intangible: bool,
+    pub fluid: bool,
 }
 
 lazy_static! {

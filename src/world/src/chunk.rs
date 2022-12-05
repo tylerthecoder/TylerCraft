@@ -1,8 +1,6 @@
-use crate::block::{
-    cube_faces, get_visible_faces, BlockData, BlockMetaData, BlockType, WasmBlock, WasmImageData,
-    WorldBlock,
-};
-use crate::direction::{Direction, Directions};
+use crate::block::{get_visible_faces, BlockData, BlockType, WorldBlock};
+use crate::direction::Directions;
+use crate::utils::js_log;
 use crate::vec::Vec3;
 use crate::world::{ChunkPos, World, WorldPos};
 use serde::{Deserialize, Serialize};
@@ -10,23 +8,9 @@ use serde_big_array::BigArray;
 use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 
-#[wasm_bindgen]
-extern "C" {
-    // Use `js_namespace` here to bind `console.log(..)` instead of just
-    // `log(..)`
-    #[wasm_bindgen(js_namespace = console)]
-    fn log(s: &str);
-
-    // The `console.log` is quite polymorphic, so we can bind it with multiple
-    // signatures. Note that we need to use `js_name` to ensure we always call
-    // `log` in JS.
-    #[wasm_bindgen(js_namespace = console, js_name = log)]
-    fn log_u32(a: usize);
-
-    // Multiple arguments too!
-    #[wasm_bindgen(js_namespace = console, js_name = log)]
-    fn log_many(a: &str, b: &str);
-}
+mod chunk_duct;
+#[cfg(test)]
+mod chunk_unit_tests;
 
 pub const CHUNK_WIDTH: i16 = 16;
 pub const CHUNK_HEIGHT: i16 = 64;
@@ -43,56 +27,6 @@ pub struct BlockWithFaces {
 }
 
 pub type VisibleFaces = Vec<BlockWithFaces>;
-
-#[wasm_bindgen]
-impl Chunk {
-    pub fn get_block_wasm(&self, x: i8, y: i8, z: i8) -> JsValue {
-        let block = self.get_block(&InnerChunkPos { x, y, z });
-        JsValue::from_serde(&block).unwrap()
-    }
-
-    pub fn get_chunk_id(&self) -> String {
-        self.position.to_index()
-    }
-
-    pub fn get_visible_faces(&self) -> JsValue {
-        JsValue::from_serde(&self.visible_faces).unwrap()
-    }
-
-    pub fn add_block_wasm(&mut self, js_block: JsValue) -> () {
-        let world_block: WorldBlock = js_block.into_serde().unwrap();
-
-        let inner_pos = World::world_pos_to_inner_chunk_pos(&world_block.world_pos);
-
-        self.add_block(&inner_pos, world_block.block_type, world_block.extra_data);
-    }
-
-    pub fn deserialize(js_value: JsValue) -> Chunk {
-        js_value.into_serde().unwrap()
-    }
-
-    pub fn serialize(&self) -> Result<JsValue, JsValue> {
-        Ok(serde_wasm_bindgen::to_value(&self)?)
-    }
-
-    // Need to see if this will mess up the hash map that is pointing to this chunk.
-    pub fn set(&mut self, js_value: JsValue) -> () {
-        let chunk: Chunk = js_value.into_serde().unwrap();
-        *self = chunk;
-    }
-
-    pub fn make_wasm(x: i16, y: i16) -> Chunk {
-        Chunk::new(ChunkPos { x, y })
-    }
-
-    pub fn get_visible_faces_wasm(&self) -> JsValue {
-        JsValue::from_serde(&self.visible_faces).unwrap()
-    }
-
-    pub fn calculate_visible_faces_wasm(&mut self, world: &World) -> () {
-        self.calculate_visible_faces(world);
-    }
-}
 
 #[derive(Serialize, Deserialize)]
 #[wasm_bindgen]
@@ -131,7 +65,7 @@ impl Chunk {
     }
 
     pub fn calculate_visible_faces(&mut self, world: &World) -> () {
-        let data = self
+        let data: Vec<BlockWithFaces> = self
             .blocks
             .iter()
             .enumerate()
@@ -139,18 +73,24 @@ impl Chunk {
             .map(|(index, block_type)| {
                 let block = self.get_full_block_from_index(index);
 
-                let chunk_pos = World::world_pos_to_chunk_pos(&block.world_pos);
+                let block_from_world = world.get_block(&block.world_pos);
 
-                web_sys::console::log_1(&JsValue::from_str(&format!(
-                    "calc-vis-face chunk pos: {:?}",
-                    chunk_pos
-                )));
+                if block_from_world.block_type != block.block_type {
+                    js_log(&format!(
+                        "block_from_world.block_type != block.block_type: {:?} != {:?}",
+                        block_from_world.block_type, block.block_type
+                    ));
+                }
+
+                if block.world_pos != block_from_world.world_pos {
+                    js_log(&format!(
+                        "block.world_pos != block_from_world.world_pos: {:?} != {:?}",
+                        block.world_pos, block_from_world.world_pos
+                    ));
+                }
 
                 if block.block_type == BlockType::Void {
-                    web_sys::console::log_1(&JsValue::from_str(&format!(
-                        "Setting as void {:?}",
-                        block_type
-                    )));
+                    js_log(&format!("Setting as void {:?}", block_type));
                 }
                 BlockWithFaces {
                     faces: get_visible_faces(&block, world),
@@ -158,6 +98,8 @@ impl Chunk {
                 }
             })
             .collect();
+
+        js_log(&format!("Visible faces length: {:?}", data.len()));
 
         self.visible_faces = data;
     }
@@ -224,29 +166,5 @@ impl Chunk {
     pub fn remove_block(&mut self, pos: &InnerChunkPos) -> () {
         let index = Self::pos_to_index(pos);
         self.blocks[index] = BlockType::Void;
-    }
-}
-
-mod tests {
-    use crate::world::{World, WorldPos};
-
-    use super::{Chunk, ChunkPos, InnerChunkPos};
-
-    #[test]
-    fn index_conversion() {
-        let index = Chunk::pos_to_index(&InnerChunkPos::new(1, 2, 3));
-        assert_eq!(index, 1024 + 32 + 3);
-        let pos = Chunk::index_to_pos(index);
-        assert_eq!(pos, InnerChunkPos::new(1, 2, 3));
-    }
-
-    #[test]
-    fn conversion() {
-        let inner_chunk_pos = InnerChunkPos::new(1, 2, 3);
-        let chunk = Chunk::new(ChunkPos { x: 0, y: 0 });
-
-        let world_pos = chunk.chunk_pos_to_world_pos(&inner_chunk_pos);
-
-        assert_eq!(world_pos, WorldPos { x: 1, y: 2, z: 3 });
     }
 }

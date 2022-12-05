@@ -1,14 +1,13 @@
 use crate::block::{BlockData, BlockType, WorldBlock};
-use crate::chunk::{self, *};
-use crate::direction::Direction;
+use crate::chunk::*;
 use crate::vec::{Vec2, Vec3};
-use serde_wasm_bindgen;
-use std;
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::error::Error;
+use std::{self, fmt};
 use wasm_bindgen::prelude::*;
 
 mod world_duct;
+#[cfg(test)]
 mod world_unit_test;
 
 extern crate web_sys;
@@ -34,21 +33,33 @@ pub struct World {
     chunks: HashMap<i32, Chunk>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ChunkNotLoadedError;
+
+impl std::error::Error for ChunkNotLoadedError {}
+
+impl fmt::Display for ChunkNotLoadedError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Chunk not loaded")
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ChunkIndexOutOfBoundsError;
+
+impl std::error::Error for ChunkIndexOutOfBoundsError {}
+
+impl fmt::Display for ChunkIndexOutOfBoundsError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Chunk index out of bounds")
+    }
+}
+
 impl World {
     pub fn new() -> World {
         World {
             chunks: HashMap::new(),
         }
-    }
-
-    // TODO: see if we can map these to a int
-    // Use a u32 and have pos be u8s?
-    fn make_index(pos: &Vec3<i32>) -> String {
-        let x = pos.x as usize;
-        let y = pos.y as usize;
-        let z = pos.z as usize;
-        let index = format!("{}:{}:{}", x, y, z);
-        index
     }
 
     fn make_chunk_pos_index(chunk_pos: &ChunkPos) -> i32 {
@@ -83,32 +94,30 @@ impl World {
         }
     }
 
-    // fn parse_index(index: &str) -> Vec3<i32> {
-    // 	let mut split = index.split(":");
-    // 	let x = split.next().unwrap().parse::<usize>().unwrap();
-    // 	let y = split.next().unwrap().parse::<usize>().unwrap();
-    // 	let z = split.next().unwrap().parse::<usize>().unwrap();
-    // 	Vec3::new(x as i32, y as i32, z as i32)
-    // }
-
-    pub fn get_chunk(&self, chunk_pos: &ChunkPos) -> Option<&Chunk> {
+    pub fn get_chunk(&self, chunk_pos: &ChunkPos) -> Result<&Chunk, ChunkNotLoadedError> {
         let index = Self::make_chunk_pos_index(chunk_pos);
-        self.chunks.get(&index)
+        self.chunks.get(&index).ok_or(ChunkNotLoadedError)
     }
 
-    pub fn get_chunk_from_world_pos(&self, world_pos: &WorldPos) -> Option<&Chunk> {
+    pub fn get_chunk_from_world_pos(
+        &self,
+        world_pos: &WorldPos,
+    ) -> Result<&Chunk, ChunkNotLoadedError> {
         let chunk_pos = Self::world_pos_to_chunk_pos(world_pos);
         self.get_chunk(&chunk_pos)
     }
 
-    pub fn insert_chunk(&mut self, chunk: Chunk) {
+    pub fn insert_chunk(&mut self, chunk: Chunk) -> () {
         let index = Self::make_chunk_pos_index(&chunk.position);
         self.chunks.insert(index, chunk);
     }
 
-    pub fn get_mut_chunk(&mut self, chunk_pos: &ChunkPos) -> Option<&mut Chunk> {
+    pub fn get_mut_chunk(
+        &mut self,
+        chunk_pos: &ChunkPos,
+    ) -> Result<&mut Chunk, ChunkNotLoadedError> {
         let index = Self::make_chunk_pos_index(chunk_pos);
-        self.chunks.get_mut(&index)
+        self.chunks.get_mut(&index).ok_or(ChunkNotLoadedError)
     }
 
     pub fn load_chunk(&mut self, chunk_pos: &ChunkPos) -> &mut Chunk {
@@ -118,11 +127,12 @@ impl World {
         self.chunks.get_mut(&index.to_owned()).unwrap()
     }
 
-    pub fn remove_block(&mut self, world_pos: &WorldPos) {
+    pub fn remove_block(&mut self, world_pos: &WorldPos) -> Result<(), ChunkNotLoadedError> {
         let chunk_pos = Self::world_pos_to_chunk_pos(world_pos);
-        let chunk = self.get_mut_chunk(&chunk_pos).unwrap();
+        let chunk = self.get_mut_chunk(&chunk_pos)?;
         let block_chunk_pos = Self::world_pos_to_inner_chunk_pos(&world_pos);
         chunk.remove_block(&block_chunk_pos);
+        Ok(())
     }
 
     pub fn add_block(
@@ -130,17 +140,12 @@ impl World {
         block_world_pos: &WorldPos,
         block: BlockType,
         block_data: BlockData,
-    ) {
+    ) -> Result<(), ChunkNotLoadedError> {
         let block_chunk_pos = Self::world_pos_to_chunk_pos(block_world_pos);
-        let chunk = self.get_mut_chunk(&block_chunk_pos);
-
-        match chunk {
-            Some(x) => {
-                let chunk_internal_pos = Self::world_pos_to_inner_chunk_pos(block_world_pos);
-                x.add_block(&chunk_internal_pos, block, block_data);
-            }
-            None => (),
-        }
+        let chunk = self.get_mut_chunk(&block_chunk_pos)?;
+        let chunk_internal_pos = Self::world_pos_to_inner_chunk_pos(block_world_pos);
+        chunk.add_block(&chunk_internal_pos, block, block_data);
+        Ok(())
     }
 
     /** A block is loaded if the chunk it is in has been generated.
@@ -148,25 +153,18 @@ impl World {
      */
     pub fn is_block_loaded(&self, block_world_pos: &WorldPos) -> bool {
         let chunk = self.get_chunk_from_world_pos(&block_world_pos);
-        chunk.is_some()
+        chunk.is_ok()
     }
 
     /** Returns void block when the chunk isn't loaded */
+    /** ERROR, this isn't consistent */
     pub fn get_block(&self, block_world_pos: &WorldPos) -> WorldBlock {
         let chunk_pos = Self::world_pos_to_chunk_pos(block_world_pos);
         let chunk = self.get_chunk(&chunk_pos);
 
-        match chunk {
-            Some(x) => {
-                let chunk_internal_pos = Self::world_pos_to_inner_chunk_pos(block_world_pos);
-                let block = x.get_full_block(&chunk_internal_pos);
-                block
-            }
-            None => WorldBlock {
-                block_type: BlockType::Void,
-                extra_data: BlockData::None,
-                world_pos: *block_world_pos,
-            },
-        }
+        chunk.map_or(WorldBlock::empty(*block_world_pos), |chunk| {
+            let chunk_internal_pos = Self::world_pos_to_inner_chunk_pos(block_world_pos);
+            chunk.get_full_block(&chunk_internal_pos)
+        })
     }
 }

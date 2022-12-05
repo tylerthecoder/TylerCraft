@@ -5,7 +5,6 @@ use std::{
     fmt::Display,
     ops::{Add, AddAssign, Mul, SubAssign},
 };
-use wasm_bindgen::prelude::wasm_bindgen;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct Vec2<T> {
