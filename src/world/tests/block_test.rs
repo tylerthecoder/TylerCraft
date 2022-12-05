@@ -16,8 +16,12 @@ fn gets_visible_faces() {
 
     world.insert_chunk(chunk);
 
-    world.add_block(&world_pos, BlockType::Cloud, BlockData::None);
-    world.add_block(&other_world_pos, BlockType::Cloud, BlockData::None);
+    world
+        .add_block(&world_pos, BlockType::Cloud, BlockData::None)
+        .unwrap();
+    world
+        .add_block(&other_world_pos, BlockType::Cloud, BlockData::None)
+        .unwrap();
 
     let block = world.get_block(&world_pos);
 

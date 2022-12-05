@@ -186,9 +186,6 @@ export class World {
   }
 
   getBlockFromWorldPoint(pos: Vector3D): Cube | null {
-
-    console.log(pos)
-
     // I think the error comes from calculating visible faces
     // For some reason the block that we get back is not from thee correct chunk
 
@@ -206,19 +203,11 @@ export class World {
       // extraData: wasmBlock.extra_data === "None" ? ,
     }
 
-    // TODO
-
-
     if (block === null) {
       return null;
     }
 
     return block;
-    // const chunk = this.getChunkFromWorldPoint(pos);
-    // if (!chunk) return null;
-    // const cube = chunk.blocks.get(pos.floor());
-    // if (cube) return cube;
-    // return null;
   }
 
   update(entities: Entity[]) {
