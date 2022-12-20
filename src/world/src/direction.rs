@@ -12,9 +12,25 @@ pub enum Direction {
     Down = 5,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[wasm_bindgen]
+pub enum FlatDirection {
+    North = 0,
+    South = 1,
+    East = 2,
+    West = 3,
+}
+
 pub type Directions = [bool; 6];
 
 pub const ALL_DIRECTIONS: Directions = [true; 6];
+
+pub const EVERY_FLAT_DIRECTION: [FlatDirection; 4] = [
+    FlatDirection::North,
+    FlatDirection::South,
+    FlatDirection::East,
+    FlatDirection::West,
+];
 
 pub fn create_directions(direction: Direction) -> Directions {
     let mut directions = [false; 6];
@@ -35,6 +51,10 @@ impl Direction {
         }
     }
 
+    pub fn iter() -> impl Iterator<Item = Direction> {
+        (0..6).map(|i| Direction::from_index(i))
+    }
+
     pub fn to_index(&self) -> usize {
         match self {
             Direction::North => 0,
@@ -46,7 +66,22 @@ impl Direction {
         }
     }
 
+    pub fn empty() -> Directions {
+        [false; 6]
+    }
+
     pub fn to_directions(&self) -> Directions {
         create_directions(*self)
+    }
+
+    pub fn flatten(&self) -> FlatDirection {
+        match self {
+            Direction::North => FlatDirection::North,
+            Direction::South => FlatDirection::South,
+            Direction::East => FlatDirection::East,
+            Direction::West => FlatDirection::West,
+            Direction::Up => FlatDirection::North,
+            Direction::Down => FlatDirection::South,
+        }
     }
 }

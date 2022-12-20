@@ -1,4 +1,4 @@
-use crate::direction::Direction;
+use crate::direction::{Direction, FlatDirection, EVERY_FLAT_DIRECTION};
 use num::One;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -44,6 +44,18 @@ impl<T> Vec2<T> {
         }
     }
 
+    pub fn get_adjacent_vecs(&self) -> Vec<Vec2<T>>
+    where
+        T: Copy + Add<T, Output = T> + AddAssign<T> + One + SubAssign,
+    {
+        let mut adj_vecs: Vec<Vec2<T>> = Vec::new();
+        for direction in EVERY_FLAT_DIRECTION {
+            let adj_vec = self.move_in_flat_direction(&direction);
+            adj_vecs.push(adj_vec);
+        }
+        adj_vecs
+    }
+
     // disclaimer, this is weird.
     pub fn move_to_3d(&self, y_val: T) -> Vec3<T>
     where
@@ -54,6 +66,21 @@ impl<T> Vec2<T> {
             y: y_val,
             z: self.y,
         }
+    }
+
+    pub fn move_in_flat_direction(&self, direction: &FlatDirection) -> Vec2<T>
+    where
+        T: Copy + Add<T, Output = T> + AddAssign<T> + One + SubAssign,
+    {
+        let mut new_vec = *self;
+        match direction {
+            FlatDirection::North => new_vec.y += T::one(),
+            FlatDirection::South => new_vec.y -= T::one(),
+            FlatDirection::East => new_vec.x += T::one(),
+            FlatDirection::West => new_vec.x -= T::one(),
+            _ => (),
+        }
+        new_vec
     }
 }
 
@@ -138,5 +165,16 @@ impl<T> Vec3<T> {
             y: f(self.y),
             z: f(self.z),
         }
+    }
+
+    pub fn get_adjacent_vecs(&self) -> Vec<Vec3<T>>
+    where
+        T: Copy + Add<T, Output = T> + AddAssign<T> + One + SubAssign,
+    {
+        let mut vecs = Vec::new();
+        for direction in Direction::iter() {
+            vecs.push(self.move_direction(&direction));
+        }
+        vecs
     }
 }

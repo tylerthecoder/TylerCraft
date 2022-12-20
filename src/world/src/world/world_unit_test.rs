@@ -82,7 +82,7 @@ fn adds_chunks() {
 
     let same_chunk = world.get_chunk(&chunk_pos).unwrap();
 
-    let same_block = same_chunk.get_block(&inner_chunk_pos);
+    let same_block = same_chunk.get_block_type(&inner_chunk_pos);
 
     assert_eq!(same_block, BlockType::Cloud);
 }
