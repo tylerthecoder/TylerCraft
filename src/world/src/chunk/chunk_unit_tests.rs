@@ -50,6 +50,48 @@ fn chunk_pos_to_world_pos() {
 }
 
 #[test]
+fn gets_all_blocks() {
+    // Make a world
+    let mut world = World::new();
+
+    // Make a chunk
+    let mut chunk = Chunk::new(ChunkPos { x: -2, y: -3 });
+
+    chunk.add_block(
+        &InnerChunkPos::new(0, 0, 0),
+        BlockType::Cloud,
+        BlockData::None,
+    );
+
+    chunk.add_block(
+        &InnerChunkPos::new(1, 2, 3),
+        BlockType::Stone,
+        BlockData::None,
+    );
+
+    chunk.add_block(
+        &InnerChunkPos::new(15, 0, 15),
+        BlockType::Stone,
+        BlockData::None,
+    );
+
+    world.insert_chunk(chunk);
+
+    let chunk = world.get_chunk(&ChunkPos { x: -2, y: -3 }).unwrap();
+
+    let blocks = chunk.get_all_blocks();
+
+    assert_eq!(blocks.len(), 3);
+
+    // loop over all the blocks and see if they watch the block gotten from the world
+    for world_block in blocks.iter() {
+        let true_world_block = world.get_block(&world_block.world_pos);
+        assert_eq!(true_world_block.block_type, world_block.block_type);
+        assert_eq!(world_block, &true_world_block);
+    }
+}
+
+#[test]
 fn calculate_visible_faces() {
     // Make a world
     let mut world = World::new();
@@ -63,11 +105,11 @@ fn calculate_visible_faces() {
         BlockData::None,
     );
 
-    chunk.calculate_visible_faces(&world);
-
     world.insert_chunk(chunk);
 
-    let chunk = world.get_chunk(&ChunkPos { x: 0, y: 0 }).unwrap();
+    let chunk = world.get_mut_chunk(&ChunkPos { x: 0, y: 0 }).unwrap();
+
+    chunk.calculate_visible_faces(&world);
 
     assert_eq!(chunk.visible_faces.len(), 1);
 
@@ -89,7 +131,7 @@ fn stores_block() {
 
     chunk.add_block(&inner_chunk_pos, BlockType::Cloud, BlockData::None);
 
-    let block = chunk.get_block(&inner_chunk_pos);
+    let block = chunk.get_block_type(&inner_chunk_pos);
 
     assert_eq!(block, BlockType::Cloud);
 }
@@ -101,7 +143,7 @@ fn defaults_to_void() {
 
     let inner_chunk_pos = InnerChunkPos::new(0, 1, 1);
 
-    let block = chunk.get_block(&inner_chunk_pos);
+    let block = chunk.get_block_type(&inner_chunk_pos);
 
     assert_eq!(block, BlockType::Void);
 }
@@ -115,7 +157,7 @@ fn stores_first_block() {
 
     chunk.add_block(&inner_chunk_pos, BlockType::Cloud, BlockData::None);
 
-    let block = chunk.get_block(&inner_chunk_pos);
+    let block = chunk.get_block_type(&inner_chunk_pos);
 
     assert_eq!(block, BlockType::Cloud);
 }
@@ -129,7 +171,7 @@ fn stores_last_block() {
 
     chunk.add_block(&inner_chunk_pos, BlockType::Cloud, BlockData::None);
 
-    let block = chunk.get_block(&inner_chunk_pos);
+    let block = chunk.get_block_type(&inner_chunk_pos);
 
     assert_eq!(block, BlockType::Cloud);
 }
@@ -145,7 +187,7 @@ fn deletes_blocks() {
 
     chunk.remove_block(&inner_chunk_pos);
 
-    let block = chunk.get_block(&inner_chunk_pos);
+    let block = chunk.get_block_type(&inner_chunk_pos);
 
     assert_eq!(block, BlockType::Void)
 }

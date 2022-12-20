@@ -66,16 +66,6 @@ impl World {
         self.chunks.contains_key(&index)
     }
 
-    pub fn get_chunk_visible_faces(&self, x: i16, y: i16) -> Result<JsValue, Error> {
-        let chunk_pos = ChunkPos { x, y };
-
-        let chunk = self
-            .get_chunk(&chunk_pos)
-            .map_err(|err| Error::new(err.to_string()))?;
-
-        to_value(&chunk.visible_faces)
-    }
-
     pub fn set_chunk_at_pos(&mut self, chunk: &JsValue) -> Result<(), JsValue> {
         let chunk: Chunk = serde_wasm_bindgen::from_value(chunk.clone())?;
         let index = Self::make_chunk_pos_index(&chunk.position);

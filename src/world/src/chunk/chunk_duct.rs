@@ -10,7 +10,7 @@ use wasm_bindgen::prelude::*;
 impl Chunk {
     pub fn get_block_wasm(&self, val: JsValue) -> Result<JsValue, Error> {
         from_value(val).and_then(|pos: InnerChunkPos| {
-            let block = self.get_block(&pos);
+            let block = self.get_block_type(&pos);
             to_value(&block)
         })
     }
@@ -19,14 +19,10 @@ impl Chunk {
         self.position.to_index()
     }
 
-    pub fn get_visible_faces_wasm(&self) -> Result<JsValue, Error> {
-        to_value(&self.visible_faces)
-    }
-
     pub fn add_block_wasm(&mut self, js_block: JsValue) -> Result<(), Error> {
         from_value(js_block).and_then(|block: WorldBlock| {
             let inner_pos = World::world_pos_to_inner_chunk_pos(&block.world_pos);
-            self.add_block(&inner_pos, block.block_type, block.extra_data);
+            self.add_block(&inner_pos, block.block_type, block.extra_data, self);
             Ok(())
         })
     }
@@ -49,9 +45,5 @@ impl Chunk {
 
     pub fn make_wasm(x: i16, y: i16) -> Chunk {
         Chunk::new(ChunkPos { x, y })
-    }
-
-    pub fn calculate_visible_faces_wasm(&mut self, world: &World) -> () {
-        self.calculate_visible_faces(world);
     }
 }

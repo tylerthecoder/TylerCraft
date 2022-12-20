@@ -1,5 +1,6 @@
+use crate::block_getter::BlockGetter;
 use crate::direction::{create_directions, Direction, Directions, ALL_DIRECTIONS};
-use crate::world::{World, WorldPos};
+use crate::world::WorldPos;
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
@@ -38,7 +39,7 @@ pub struct WasmImageData {
     pub dir: Direction,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq)]
 pub struct WorldBlock {
     pub block_type: BlockType,
     pub extra_data: BlockData,
@@ -209,7 +210,7 @@ pub fn get_block_data(block_type: BlockType) -> &'static BlockMetaData {
     })
 }
 
-pub fn get_visible_faces(block: &WorldBlock, world: &World) -> Directions {
+pub fn get_visible_faces(block: &WorldBlock, block_getter: &dyn BlockGetter) -> Directions {
     let mut faces = cube_faces(block);
     for i in 0..5 {
         let current = faces[i];
@@ -217,7 +218,7 @@ pub fn get_visible_faces(block: &WorldBlock, world: &World) -> Directions {
             continue;
         }
         let direction = Direction::from_index(i);
-        let is_face_shown = is_block_face_visible(block, world, direction);
+        let is_face_shown = is_block_face_visible(block, block_getter, direction);
 
         if !is_face_shown {
             faces[i] = false;
@@ -242,11 +243,11 @@ pub fn cube_faces(world_block: &WorldBlock) -> Directions {
 
 pub fn is_block_face_visible(
     world_block: &WorldBlock,
-    world: &World,
+    block_getter: &dyn BlockGetter,
     direction: Direction,
 ) -> bool {
     let new_block_pos = world_block.world_pos.move_direction(&direction);
-    let new_block = world.get_block(&new_block_pos);
+    let new_block = block_getter.get_block(&new_block_pos);
 
     // We now assume there is always a block
     // There isn't a block, so we should show the face

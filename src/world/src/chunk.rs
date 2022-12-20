@@ -1,6 +1,5 @@
-use crate::block::{get_visible_faces, BlockData, BlockType, WorldBlock};
-use crate::direction::Directions;
-use crate::utils::js_log;
+use crate::block::{BlockData, BlockType, WorldBlock};
+use crate::block_getter::BlockGetter;
 use crate::vec::Vec3;
 use crate::world::{ChunkPos, World, WorldPos};
 use serde::{Deserialize, Serialize};
@@ -9,6 +8,7 @@ use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 
 mod chunk_duct;
+pub mod chunk_mesh;
 #[cfg(test)]
 mod chunk_unit_tests;
 
@@ -19,14 +19,36 @@ const CHUNK_MEM_SIZE: usize = (CHUNK_HEIGHT * CHUNK_WIDTH * CHUNK_WIDTH) as usiz
 
 pub type InnerChunkPos = Vec3<i8>;
 
-#[derive(Serialize, Deserialize)]
-pub struct BlockWithFaces {
-    pub world_pos: WorldPos,
-    // true is the face is visible
-    pub faces: Directions,
+impl InnerChunkPos {
+    fn to_chunk_index(&self) -> usize {
+        let x_part = (self.x as usize) << (4 + 6);
+        let y_part = (self.y as usize) << 4;
+        let z_part = self.z as usize;
+        x_part + y_part + z_part
+    }
+
+    fn make_from_chunk_index(index: usize) -> InnerChunkPos {
+        let x_part = (index >> (4 + 6)) as i8;
+        let y_part = ((index & 01111110000) >> 4) as i8;
+        let z_part = (index & 0b1111) as i8;
+        InnerChunkPos::new(x_part, y_part, z_part)
+    }
+
+    fn to_world_pos(&self, chunk_pos: ChunkPos) -> WorldPos {
+        chunk_pos
+            .scalar_mul(CHUNK_WIDTH)
+            .move_to_3d(0)
+            .map(|x| x as i8)
+            .add_vec(*self)
+            .map(|x| x as i32)
+    }
 }
 
-pub type VisibleFaces = Vec<BlockWithFaces>;
+pub struct ChunkBlock {
+    pub block_type: BlockType,
+    pub extra_data: BlockData,
+    pub pos: InnerChunkPos,
+}
 
 #[derive(Serialize, Deserialize)]
 #[wasm_bindgen]
@@ -35,83 +57,46 @@ pub struct Chunk {
     blocks: [BlockType; CHUNK_MEM_SIZE],
     block_data: HashMap<usize, BlockData>,
     #[wasm_bindgen(skip)]
-    pub visible_faces: VisibleFaces,
-    #[wasm_bindgen(skip)]
     pub position: ChunkPos,
 }
 
 impl Chunk {
-    fn pos_to_index(pos: &InnerChunkPos) -> usize {
-        let x_part = (pos.x as usize) << (4 + 6);
-        let y_part = (pos.y as usize) << 4;
-        let z_part = pos.z as usize;
-        x_part + y_part + z_part
-    }
-
-    fn index_to_pos(index: usize) -> InnerChunkPos {
-        let x_part = (index >> (4 + 6)) as i8;
-        let y_part = ((index & 01111110000) >> 4) as i8;
-        let z_part = (index & 0b1111) as i8;
-        InnerChunkPos::new(x_part, y_part, z_part)
-    }
-
     pub fn new(position: ChunkPos) -> Chunk {
         Chunk {
             blocks: [BlockType::Void; CHUNK_MEM_SIZE],
             block_data: HashMap::new(),
-            visible_faces: Vec::new(),
             position,
         }
     }
 
-    pub fn calculate_visible_faces(&mut self, world: &World) -> () {
-        let data: Vec<BlockWithFaces> = self
-            .blocks
+    fn get_all_non_void_chunk_pos(&self) -> Vec<InnerChunkPos> {
+        self.blocks
             .iter()
             .enumerate()
             .filter(|(_i, &b)| b != BlockType::Void)
-            .map(|(index, block_type)| {
-                let block = self.get_full_block_from_index(index);
+            .map(|(index, _block_type)| InnerChunkPos::make_from_chunk_index(index))
+            .collect()
+    }
 
-                let block_from_world = world.get_block(&block.world_pos);
-
-                if block_from_world.block_type != block.block_type {
-                    js_log(&format!(
-                        "block_from_world.block_type != block.block_type: {:?} != {:?}",
-                        block_from_world.block_type, block.block_type
-                    ));
-                }
-
-                if block.world_pos != block_from_world.world_pos {
-                    js_log(&format!(
-                        "block.world_pos != block_from_world.world_pos: {:?} != {:?}",
-                        block.world_pos, block_from_world.world_pos
-                    ));
-                }
-
-                if block.block_type == BlockType::Void {
-                    js_log(&format!("Setting as void {:?}", block_type));
-                }
-                BlockWithFaces {
-                    faces: get_visible_faces(&block, world),
-                    world_pos: block.world_pos,
-                }
+    pub fn get_all_blocks(&self) -> Vec<ChunkBlock> {
+        self.blocks
+            .iter()
+            .enumerate()
+            .filter(|(_i, &b)| b != BlockType::Void)
+            .map(|(index, _block_type)| {
+                self.get_block(&InnerChunkPos::make_from_chunk_index(index))
             })
-            .collect();
-
-        js_log(&format!("Visible faces length: {:?}", data.len()));
-
-        self.visible_faces = data;
+            .collect()
     }
 
     pub fn get_uuid(&self) -> String {
         self.position.to_index()
     }
 
-    pub fn add_block(&mut self, pos: &InnerChunkPos, block: BlockType, block_data: BlockData) {
-        let index = Self::pos_to_index(pos);
-        self.block_data.insert(index, block_data);
-        self.blocks[index] = block
+    pub fn add_block(&mut self, block: ChunkBlock, block_getter: &dyn BlockGetter) {
+        let index = block.pos.to_chunk_index();
+        self.block_data.insert(index, block.extra_data);
+        self.blocks[index] = block.block_type;
     }
 
     fn chunk_pos_to_world_pos(&self, chunk_pos: &InnerChunkPos) -> WorldPos {
@@ -134,10 +119,10 @@ impl Chunk {
         self.block_data.get(index).unwrap_or(&BlockData::None)
     }
 
-    fn get_full_block_from_index(&self, index: usize) -> WorldBlock {
+    fn get_world_block_from_index(&self, index: usize) -> WorldBlock {
         let block_type = self.get_block_type_at_index(index);
         let block_data = self.get_block_data_from_index(&index);
-        let inner_chunk_pos = Self::index_to_pos(index);
+        let inner_chunk_pos = InnerChunkPos::make_from_chunk_index(index);
 
         let world_pos = self.chunk_pos_to_world_pos(&inner_chunk_pos);
 
@@ -148,23 +133,41 @@ impl Chunk {
         }
     }
 
-    pub fn get_block(&self, pos: &InnerChunkPos) -> BlockType {
-        let index = Self::pos_to_index(pos);
-        self.get_block_type_at_index(index)
+    fn get_block_type(&self, pos: &InnerChunkPos) -> BlockType {
+        self.get_block_type_at_index(pos.to_chunk_index())
     }
 
-    pub fn get_full_block(&self, pos: &InnerChunkPos) -> WorldBlock {
-        let index = Self::pos_to_index(pos);
-        self.get_full_block_from_index(index)
+    fn get_block_data(&self, pos: &InnerChunkPos) -> &BlockData {
+        self.get_block_data_from_index(&pos.to_chunk_index())
     }
 
-    pub fn get_block_data(&self, pos: &InnerChunkPos) -> &BlockData {
-        let index = Self::pos_to_index(pos);
-        self.get_block_data_from_index(&index)
+    pub fn get_world_block(&self, pos: &InnerChunkPos) -> WorldBlock {
+        self.get_world_block_from_index(pos.to_chunk_index())
     }
 
-    pub fn remove_block(&mut self, pos: &InnerChunkPos) -> () {
-        let index = Self::pos_to_index(pos);
+    pub fn get_block(&self, pos: &InnerChunkPos) -> ChunkBlock {
+        let index = pos.to_chunk_index();
+        let block_type = self.get_block_type_at_index(index);
+        let block_data = self.get_block_data_from_index(&index);
+        let inner_chunk_pos = InnerChunkPos::make_from_chunk_index(index);
+
+        ChunkBlock {
+            block_type,
+            extra_data: *block_data,
+            pos: inner_chunk_pos,
+        }
+    }
+
+    pub fn remove_block(&mut self, block_getter: &dyn BlockGetter, pos: &InnerChunkPos) -> () {
+        let index = pos.to_chunk_index();
         self.blocks[index] = BlockType::Void;
+        let world_block = self.get_world_block_from_index(index);
+    }
+}
+
+impl BlockGetter for Chunk {
+    fn get_block(&self, pos: &WorldPos) -> WorldBlock {
+        let chunk_pos = World::world_pos_to_inner_chunk_pos(pos);
+        self.get_world_block(&chunk_pos)
     }
 }

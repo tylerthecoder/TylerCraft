@@ -1,9 +1,10 @@
-mod utils;
-pub mod world;
-pub mod vec;
-pub mod chunk;
 pub mod block;
+pub mod block_getter;
+pub mod chunk;
 pub mod direction;
+mod utils;
+pub mod vec;
+pub mod world;
 
 use wasm_bindgen::prelude::*;
 
@@ -12,7 +13,6 @@ use wasm_bindgen::prelude::*;
 #[cfg(feature = "wee_alloc")]
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
-
 
 #[wasm_bindgen]
 extern "C" {
@@ -31,5 +31,3 @@ extern "C" {
     #[wasm_bindgen(js_namespace = console, js_name = log)]
     fn log_many(a: &str, b: &str);
 }
-
-
