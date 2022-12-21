@@ -1,10 +1,13 @@
 use crate::{
     block::WorldBlock,
     chunk::{Chunk, InnerChunkPos},
-    world::{ChunkPos, World},
+    world::ChunkPos,
 };
 use serde_wasm_bindgen::{from_value, to_value, Error};
 use wasm_bindgen::prelude::*;
+
+// ==========================
+// Might not need this at all.
 
 #[wasm_bindgen]
 impl Chunk {
@@ -21,8 +24,7 @@ impl Chunk {
 
     pub fn add_block_wasm(&mut self, js_block: JsValue) -> Result<(), Error> {
         from_value(js_block).and_then(|block: WorldBlock| {
-            let inner_pos = World::world_pos_to_inner_chunk_pos(&block.world_pos);
-            self.add_block(&inner_pos, block.block_type, block.extra_data, self);
+            self.add_block(block.to_chunk_block());
             Ok(())
         })
     }

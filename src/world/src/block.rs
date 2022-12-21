@@ -63,6 +63,66 @@ impl WorldBlock {
             extra_data: self.extra_data,
         }
     }
+
+    /**
+     * Returns true if the current world block would be seen through the adjacent block
+     */
+    fn is_block_face_visible(&self, adjacent_block: WorldBlock) -> bool {
+        // We now assume there is always a block
+        // There isn't a block, so we should show the face
+        // if new_block.is_none() {
+        // 	return true;
+        // }
+
+        // let new_block = new_block.unwrap();
+
+        if adjacent_block.block_type == BlockType::Void {
+            return true;
+        }
+
+        let block_data = get_block_data(self.block_type);
+        let new_block_data = get_block_data(adjacent_block.block_type);
+
+        if block_data.fluid && new_block_data.fluid {
+            println!("They were both fluids");
+            return true;
+        }
+
+        // Don't think this is needed because the cube faces
+        // Return false for every face except the one the image is on
+        // if let BlockData::Image(image_direction) = new_block.extra_data {
+        // 	if image_direction != direction {
+        // 		return false;
+        // 	}
+        // }
+
+        println!("Don't show");
+
+        return false;
+    }
+
+    pub fn get_visible_faces(&self, adjacent_blocks: HashMap<Direction, WorldBlock>) -> Directions {
+        let mut faces = cube_faces(self);
+        for i in 0..5 {
+            let current = faces[i];
+            if !current {
+                continue;
+            }
+            let direction = Direction::from_index(i);
+
+            // Show the face if the block doesn't exist
+            let is_face_shown = match adjacent_blocks.get(&direction) {
+                Some(adjacent_block) => self.is_block_face_visible(*adjacent_block),
+                None => true,
+            };
+
+            if !is_face_shown {
+                faces[i] = false;
+            }
+        }
+
+        faces
+    }
 }
 
 // Stuck in limbo https://github.com/rustwasm/wasm-bindgen/issues/2407
@@ -219,24 +279,6 @@ pub fn get_block_data(block_type: BlockType) -> &'static BlockMetaData {
     })
 }
 
-pub fn get_visible_faces(block: &WorldBlock, block_getter: &dyn BlockGetter) -> Directions {
-    let mut faces = cube_faces(block);
-    for i in 0..5 {
-        let current = faces[i];
-        if !current {
-            continue;
-        }
-        let direction = Direction::from_index(i);
-        let is_face_shown = is_block_face_visible(block, block_getter, direction);
-
-        if !is_face_shown {
-            faces[i] = false;
-        }
-    }
-
-    faces
-}
-
 pub fn cube_faces(world_block: &WorldBlock) -> Directions {
     let block_data = get_block_data(world_block.block_type);
 
@@ -248,45 +290,4 @@ pub fn cube_faces(world_block: &WorldBlock) -> Directions {
             _ => ALL_DIRECTIONS,
         },
     }
-}
-
-pub fn is_block_face_visible(
-    world_block: &WorldBlock,
-    block_getter: &dyn BlockGetter,
-    direction: Direction,
-) -> bool {
-    let new_block_pos = world_block.world_pos.move_direction(&direction);
-    let new_block = block_getter.get_block(&new_block_pos);
-
-    // We now assume there is always a block
-    // There isn't a block, so we should show the face
-    // if new_block.is_none() {
-    // 	return true;
-    // }
-
-    // let new_block = new_block.unwrap();
-
-    if new_block.block_type == BlockType::Void {
-        return true;
-    }
-
-    let block_data = get_block_data(world_block.block_type);
-    let new_block_data = get_block_data(new_block.block_type);
-
-    if block_data.fluid && new_block_data.fluid {
-        println!("They were both fluids");
-        return true;
-    }
-
-    // Don't think this is needed because the cube faces
-    // Return false for every face except the one the image is on
-    // if let BlockData::Image(image_direction) = new_block.extra_data {
-    // 	if image_direction != direction {
-    // 		return false;
-    // 	}
-    // }
-
-    println!("Don't show");
-
-    return false;
 }

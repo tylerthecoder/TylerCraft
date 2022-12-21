@@ -1,7 +1,7 @@
-use crate::block::{get_visible_faces, BlockData, BlockType, WorldBlock};
+use crate::block::WorldBlock;
 use crate::chunk::chunk_mesh::ChunkMesh;
 use crate::chunk::{Chunk, InnerChunkPos, CHUNK_WIDTH};
-use crate::direction::Directions;
+use crate::direction::Direction;
 use crate::vec::{Vec2, Vec3};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -143,30 +143,51 @@ impl World {
      */
     pub fn add_block(&mut self, world_block: &WorldBlock) -> Result<(), ChunkNotLoadedError> {
         let chunk = self.get_mut_chunk(&world_block.world_pos.to_chunk_pos())?;
-
         let chunk_block = world_block.to_chunk_block();
+        chunk.add_block(chunk_block);
 
         self.update_chunks_around_block(&world_block.world_pos);
-
-        chunk.add_block(chunk_block);
 
         Ok(())
     }
 
+    /** Returns void block when the chunk isn't loaded */
+    /** ERROR, this isn't consistent. Idk if this is still relevant */
+    pub fn get_block(&self, world_pos: &WorldPos) -> WorldBlock {
+        let chunk = self.get_chunk(&world_pos.to_chunk_pos());
+
+        chunk.map_or(WorldBlock::empty(*world_pos), |chunk| {
+            chunk.get_world_block(&world_pos.to_inner_chunk_pos())
+        })
+    }
+
+    /** Always return all directions.
+     * The directions that point to no block will just default to void */
+    fn get_adjacent_blocks(&self, world_pos: &WorldPos) -> HashMap<Direction, WorldBlock> {
+        let mut adjacent_blocks = HashMap::new();
+        for direction in Direction::iter() {
+            let adjacent_pos = world_pos.move_direction(&direction);
+            let block = self.get_block(&adjacent_pos);
+            adjacent_blocks.insert(direction, block);
+        }
+        adjacent_blocks
+    }
+
     pub fn remove_block(&mut self, world_pos: &WorldPos) -> Result<(), ChunkNotLoadedError> {
         let chunk = self.get_mut_chunk(&world_pos.to_chunk_pos())?;
+        chunk.remove_block(&world_pos.to_inner_chunk_pos());
         self.update_chunks_around_block(world_pos);
-        chunk.remove_block(self, &world_pos.to_inner_chunk_pos());
         Ok(())
     }
 
     /* Mesh Logic */
 
-    fn update_mesh_at_pos(&self, world_pos: WorldPos) -> Result<(), ChunkNotLoadedError> {
-        let chunk_mesh = self.get_chunk_mesh(&world_pos.to_chunk_pos())?;
+    fn update_mesh_at_pos(&mut self, world_pos: WorldPos) -> Result<(), ChunkNotLoadedError> {
         let world_block = self.get_block(&world_pos);
 
-        let faces = get_visible_faces(&world_block, self);
+        let faces = world_block.get_visible_faces(self.get_adjacent_blocks(&world_pos));
+
+        let chunk_mesh = self.get_chunk_mesh(&world_pos.to_chunk_pos())?;
 
         chunk_mesh
             .face_map
@@ -175,9 +196,12 @@ impl World {
         Ok(())
     }
 
-    fn get_chunk_mesh(&self, chunk_pos: &ChunkPos) -> Result<&ChunkMesh, ChunkNotLoadedError> {
+    fn get_chunk_mesh(
+        &mut self,
+        chunk_pos: &ChunkPos,
+    ) -> Result<&mut ChunkMesh, ChunkNotLoadedError> {
         self.chunk_meshes
-            .get(&chunk_pos.to_world_index())
+            .get_mut(&chunk_pos.to_world_index())
             .ok_or(ChunkNotLoadedError)
     }
 
@@ -198,7 +222,7 @@ impl World {
     fn update_chunks_around_block(&mut self, world_pos: &WorldPos) -> () {
         // Check to see if any of the adjacent blocks are in different chunks.
         // Don't need to filter out duplicates since they aren't possible
-        let chunks_to_update = world_pos
+        world_pos
             .get_adjacent_vecs()
             .iter()
             // Map to chunk id
@@ -220,15 +244,5 @@ impl World {
     pub fn is_block_loaded(&self, block_world_pos: &WorldPos) -> bool {
         let chunk = self.get_chunk_from_world_pos(&block_world_pos);
         chunk.is_ok()
-    }
-
-    /** Returns void block when the chunk isn't loaded */
-    /** ERROR, this isn't consistent */
-    pub fn get_block(&self, world_pos: &WorldPos) -> WorldBlock {
-        let chunk = self.get_chunk(&world_pos.to_chunk_pos());
-
-        chunk.map_or(WorldBlock::empty(*world_pos), |chunk| {
-            chunk.get_world_block(&world_pos.to_inner_chunk_pos())
-        })
     }
 }

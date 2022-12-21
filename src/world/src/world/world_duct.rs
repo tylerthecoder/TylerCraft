@@ -5,7 +5,6 @@ use crate::{
     world::{ChunkPos, WorldPos},
 };
 use serde_wasm_bindgen::{from_value, to_value, Error};
-use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -18,16 +17,12 @@ impl World {
     }
 
     pub fn new_wasm() -> World {
-        World {
-            chunks: HashMap::new(),
-        }
+        World::default()
     }
 
     pub fn add_block_wasm(&mut self, val: JsValue) -> Result<(), Error> {
-        from_value(val).and_then(|block: WorldBlock| {
-            self.add_block(&block.world_pos, block.block_type, block.extra_data)
-                .map_err(Self::convert_error)
-        })
+        from_value(val)
+            .and_then(|block: WorldBlock| self.add_block(&block).map_err(Self::convert_error))
     }
 
     pub fn get_block_wasm(&self, val: JsValue) -> Result<JsValue, Error> {
@@ -62,14 +57,12 @@ impl World {
 
     pub fn has_chunk(&self, x: i16, y: i16) -> bool {
         let chunk_pos = ChunkPos { x, y };
-        let index = Self::make_chunk_pos_index(&chunk_pos);
-        self.chunks.contains_key(&index)
+        self.chunks.contains_key(&chunk_pos.to_world_index())
     }
 
     pub fn set_chunk_at_pos(&mut self, chunk: &JsValue) -> Result<(), JsValue> {
         let chunk: Chunk = serde_wasm_bindgen::from_value(chunk.clone())?;
-        let index = Self::make_chunk_pos_index(&chunk.position);
-        self.chunks.insert(index, chunk);
+        self.chunks.insert(chunk.position.to_world_index(), chunk);
         Ok(())
     }
 }
