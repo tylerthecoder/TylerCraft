@@ -158,16 +158,15 @@ impl Chunk {
         }
     }
 
-    pub fn remove_block(&mut self, block_getter: &dyn BlockGetter, pos: &InnerChunkPos) -> () {
+    pub fn remove_block(&mut self, pos: &InnerChunkPos) -> () {
         let index = pos.to_chunk_index();
         self.blocks[index] = BlockType::Void;
         let world_block = self.get_world_block_from_index(index);
     }
 }
 
-impl BlockGetter for Chunk {
-    fn get_block(&self, pos: &WorldPos) -> WorldBlock {
-        let chunk_pos = World::world_pos_to_inner_chunk_pos(pos);
-        self.get_world_block(&chunk_pos)
-    }
-}
+// impl BlockGetter for Chunk {
+//     fn get_block(&self, pos: &WorldPos) -> WorldBlock {
+//         self.get_world_block(&chunk_pos)
+//     }
+// }

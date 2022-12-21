@@ -39,6 +39,10 @@ Chunk Mesh
 
 World
 
-- Calculates the meshs and assigns them.
+- Calculates the meshes and assigns them.
 
 The world handles keeping mapping world values
+
+What if the world block computed is visible faces and was passed an adjacent faces struct? I think I'm going to do that
+
+Got a lot of cleaning work done, all of the logic makes sense now and I think it is a good way to handle storing the chunks and meshes. Going to have to write a bit more logic for the world side so the client can use it. But I might try to make it such that the world is the only interface and there is no js logic for chunks. It only creates chunks and passes them to the world. World will probably need to do some camera operations soon. I like the cleanup that was possible with the position structs. I think i'm really starting to get the mentality of struct. They don't have to be long lived, you can just throw data together and then define functions about how that data relates. Pretty fun. Next going to try to finish rust logic and write a bunch of tests for it.
