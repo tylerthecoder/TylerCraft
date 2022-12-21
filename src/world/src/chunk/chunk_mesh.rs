@@ -9,21 +9,20 @@ use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct ChunkMesh {
-    face_map: HashMap<usize, Directions>,
+    pub face_map: HashMap<usize, Directions>,
 }
 
 impl ChunkMesh {
-    pub fn calculate_for_block(
-        &mut self,
-        inner_chunk_pos: &InnerChunkPos,
-        h
-        block: &WorldBlock,
-        block_getter: &dyn BlockGetter,
-    ) {
-        let faces = get_visible_faces(&block, block_getter);
-        self.face_map
-            .insert(inner_chunk_pos.to_chunk_index(), faces);
+    update_block() {
+
     }
+
+
+    // pub fn calculate_for_block(&mut self, block: &WorldBlock, block_getter: &dyn BlockGetter) {
+    //     let faces = get_visible_faces(&block, block_getter);
+    //     self.face_map
+    //         .insert(block.world_pos.to_inner_chunk_pos().to_chunk_index(), faces);
+    // }
 
     /**
      * Calculates the visible faces for all blocks.
@@ -39,8 +38,8 @@ impl ChunkMesh {
     //         });
     // }
 
-    pub fn get_visible_faces_for_block(&self, pos: &InnerChunkPos) -> Directions {
-        let index = pos.to_chunk_index();
-        self.face_map.get(&index).copied().unwrap_or(ALL_DIRECTIONS)
-    }
+    // pub fn get_visible_faces_for_block(&self, pos: &InnerChunkPos) -> Directions {
+    //     let index = pos.to_chunk_index();
+    //     self.face_map.get(&index).copied().unwrap_or(ALL_DIRECTIONS)
+    // }
 }

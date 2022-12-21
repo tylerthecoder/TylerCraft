@@ -20,21 +20,21 @@ const CHUNK_MEM_SIZE: usize = (CHUNK_HEIGHT * CHUNK_WIDTH * CHUNK_WIDTH) as usiz
 pub type InnerChunkPos = Vec3<i8>;
 
 impl InnerChunkPos {
-    fn to_chunk_index(&self) -> usize {
+    pub fn to_chunk_index(&self) -> usize {
         let x_part = (self.x as usize) << (4 + 6);
         let y_part = (self.y as usize) << 4;
         let z_part = self.z as usize;
         x_part + y_part + z_part
     }
 
-    fn make_from_chunk_index(index: usize) -> InnerChunkPos {
+    pub fn make_from_chunk_index(index: usize) -> InnerChunkPos {
         let x_part = (index >> (4 + 6)) as i8;
         let y_part = ((index & 01111110000) >> 4) as i8;
         let z_part = (index & 0b1111) as i8;
         InnerChunkPos::new(x_part, y_part, z_part)
     }
 
-    fn to_world_pos(&self, chunk_pos: ChunkPos) -> WorldPos {
+    pub fn to_world_pos(&self, chunk_pos: &ChunkPos) -> WorldPos {
         chunk_pos
             .scalar_mul(CHUNK_WIDTH)
             .move_to_3d(0)
@@ -93,7 +93,7 @@ impl Chunk {
         self.position.to_index()
     }
 
-    pub fn add_block(&mut self, block: ChunkBlock, block_getter: &dyn BlockGetter) {
+    pub fn add_block(&mut self, block: ChunkBlock) {
         let index = block.pos.to_chunk_index();
         self.block_data.insert(index, block.extra_data);
         self.blocks[index] = block.block_type;

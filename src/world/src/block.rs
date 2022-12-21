@@ -1,4 +1,5 @@
 use crate::block_getter::BlockGetter;
+use crate::chunk::ChunkBlock;
 use crate::direction::{create_directions, Direction, Directions, ALL_DIRECTIONS};
 use crate::world::WorldPos;
 use lazy_static::lazy_static;
@@ -52,6 +53,14 @@ impl WorldBlock {
             block_type: BlockType::Void,
             extra_data: BlockData::None,
             world_pos,
+        }
+    }
+
+    pub fn to_chunk_block(&self) -> ChunkBlock {
+        ChunkBlock {
+            pos: self.world_pos.to_inner_chunk_pos(),
+            block_type: self.block_type,
+            extra_data: self.extra_data,
         }
     }
 }
