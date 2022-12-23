@@ -1,7 +1,7 @@
 use crate::{
     block::WorldBlock,
     chunk::{Chunk, InnerChunkPos},
-    world::ChunkPos,
+    positions::ChunkPos,
 };
 use serde_wasm_bindgen::{from_value, to_value, Error};
 use wasm_bindgen::prelude::*;

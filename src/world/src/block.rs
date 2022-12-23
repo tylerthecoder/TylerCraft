@@ -1,12 +1,15 @@
-use crate::block_getter::BlockGetter;
-use crate::chunk::ChunkBlock;
-use crate::direction::{create_directions, Direction, Directions, ALL_DIRECTIONS};
-use crate::world::WorldPos;
+use crate::{
+    direction::{Direction, Directions},
+    positions::{ChunkPos, InnerChunkPos, WorldPos},
+};
 use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
+
+#[cfg(test)]
+mod unit_tests;
 
 trait BlockTrait {
     fn get_visible_faces() -> Directions;
@@ -67,7 +70,7 @@ impl WorldBlock {
     /**
      * Returns true if the current world block would be seen through the adjacent block
      */
-    fn is_block_face_visible(&self, adjacent_block: WorldBlock) -> bool {
+    fn is_block_face_visible(&self, adjacent_block: &WorldBlock) -> bool {
         // We now assume there is always a block
         // There isn't a block, so we should show the face
         // if new_block.is_none() {
@@ -80,8 +83,8 @@ impl WorldBlock {
             return true;
         }
 
-        let block_data = get_block_data(self.block_type);
-        let new_block_data = get_block_data(adjacent_block.block_type);
+        let block_data = self.get_metadata();
+        let new_block_data = adjacent_block.get_metadata();
 
         if block_data.fluid && new_block_data.fluid {
             println!("They were both fluids");
@@ -102,26 +105,49 @@ impl WorldBlock {
     }
 
     pub fn get_visible_faces(&self, adjacent_blocks: HashMap<Direction, WorldBlock>) -> Directions {
-        let mut faces = cube_faces(self);
-        for i in 0..5 {
-            let current = faces[i];
-            if !current {
-                continue;
-            }
-            let direction = Direction::from_index(i);
+        self.get_faces()
+            .into_iter()
+            .filter(|direction| {
+                let is_face_shown = match adjacent_blocks.get(direction) {
+                    Some(adjacent_block) => self.is_block_face_visible(adjacent_block),
+                    None => true,
+                };
 
-            // Show the face if the block doesn't exist
-            let is_face_shown = match adjacent_blocks.get(&direction) {
-                Some(adjacent_block) => self.is_block_face_visible(*adjacent_block),
-                None => true,
-            };
+                is_face_shown
+            })
+            .collect::<Directions>()
+    }
 
-            if !is_face_shown {
-                faces[i] = false;
-            }
+    pub fn get_faces(&self) -> Directions {
+        match self.get_metadata().shape {
+            BlockShape::Cube => Directions::all(),
+            BlockShape::X => Directions::all(),
+            BlockShape::Flat => match self.extra_data {
+                BlockData::Image(direction) => Directions::create_for_direction(direction),
+                _ => Directions::all(),
+            },
         }
+    }
 
-        faces
+    pub fn get_metadata(&self) -> &BlockMetaData {
+        BlockMetaData::get_for_type(self.block_type)
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub struct ChunkBlock {
+    pub block_type: BlockType,
+    pub extra_data: BlockData,
+    pub pos: InnerChunkPos,
+}
+
+impl ChunkBlock {
+    pub fn to_world_block(&self, chunk_pos: &ChunkPos) -> WorldBlock {
+        WorldBlock {
+            block_type: self.block_type,
+            extra_data: self.extra_data,
+            world_pos: self.pos.to_world_pos(chunk_pos),
+        }
     }
 }
 
@@ -159,6 +185,18 @@ pub struct BlockMetaData {
     pub transparent: bool,
     pub intangible: bool,
     pub fluid: bool,
+}
+
+impl BlockMetaData {
+    pub fn get_for_type(block_type: BlockType) -> &'static BlockMetaData {
+        BLOCK_DATA.get(&block_type).unwrap_or(&BlockMetaData {
+            gravitable: false,
+            intangible: false,
+            fluid: false,
+            shape: BlockShape::Cube,
+            transparent: false,
+        })
+    }
 }
 
 lazy_static! {
@@ -267,27 +305,4 @@ lazy_static! {
 
         map
     };
-}
-
-pub fn get_block_data(block_type: BlockType) -> &'static BlockMetaData {
-    BLOCK_DATA.get(&block_type).unwrap_or(&BlockMetaData {
-        gravitable: false,
-        intangible: false,
-        fluid: false,
-        shape: BlockShape::Cube,
-        transparent: false,
-    })
-}
-
-pub fn cube_faces(world_block: &WorldBlock) -> Directions {
-    let block_data = get_block_data(world_block.block_type);
-
-    match block_data.shape {
-        BlockShape::Cube => ALL_DIRECTIONS,
-        BlockShape::X => ALL_DIRECTIONS,
-        BlockShape::Flat => match world_block.extra_data {
-            BlockData::Image(direction) => create_directions(direction),
-            _ => ALL_DIRECTIONS,
-        },
-    }
 }

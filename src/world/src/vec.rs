@@ -1,4 +1,4 @@
-use crate::direction::{Direction, FlatDirection, EVERY_FLAT_DIRECTION};
+use crate::direction::{Direction, Directions, FlatDirection, EVERY_FLAT_DIRECTION};
 use num::One;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -78,7 +78,6 @@ impl<T> Vec2<T> {
             FlatDirection::South => new_vec.y -= T::one(),
             FlatDirection::East => new_vec.x += T::one(),
             FlatDirection::West => new_vec.x -= T::one(),
-            _ => (),
         }
         new_vec
     }
@@ -172,7 +171,7 @@ impl<T> Vec3<T> {
         T: Copy + Add<T, Output = T> + AddAssign<T> + One + SubAssign,
     {
         let mut vecs = Vec::new();
-        for direction in Direction::iter() {
+        for direction in Directions::all() {
             vecs.push(self.move_direction(&direction));
         }
         vecs

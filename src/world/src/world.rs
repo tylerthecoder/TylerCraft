@@ -1,8 +1,8 @@
 use crate::block::WorldBlock;
 use crate::chunk::chunk_mesh::ChunkMesh;
-use crate::chunk::{Chunk, InnerChunkPos, CHUNK_WIDTH};
-use crate::direction::Direction;
-use crate::vec::{Vec2, Vec3};
+use crate::chunk::Chunk;
+use crate::direction::{Direction, Directions};
+use crate::positions::{ChunkPos, WorldPos};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::{self, fmt};
@@ -13,45 +13,6 @@ mod world_duct;
 mod world_unit_test;
 
 extern crate web_sys;
-
-pub type WorldPos = Vec3<i32>;
-pub type ChunkPos = Vec2<i16>;
-
-impl WorldPos {
-    pub fn to_inner_chunk_pos(&self) -> InnerChunkPos {
-        let x = ((self.x as i8 % 16) + 16) % 16;
-        let y = self.y as i8;
-        let z = ((self.z as i8 % 16) + 16) % 16;
-        InnerChunkPos::new(x, y, z)
-    }
-
-    pub fn to_chunk_pos(&self) -> ChunkPos {
-        let x = if self.x < 0 {
-            ((self.x + 1) / CHUNK_WIDTH as i32) - 1
-        } else {
-            self.x / CHUNK_WIDTH as i32
-        };
-
-        let y = if self.z < 0 {
-            ((self.z + 1) / CHUNK_WIDTH as i32) - 1
-        } else {
-            self.z / CHUNK_WIDTH as i32
-        };
-
-        ChunkPos {
-            x: x as i16,
-            y: y as i16,
-        }
-    }
-}
-
-impl ChunkPos {
-    pub fn to_world_index(&self) -> i32 {
-        let x = self.x as i32;
-        let y = self.y as i32;
-        x + (y << 16)
-    }
-}
 
 #[wasm_bindgen]
 pub struct WorldPosWasm {
@@ -120,12 +81,17 @@ impl World {
     }
 
     pub fn insert_chunk(&mut self, chunk: Chunk) -> () {
-        self.chunks.insert(chunk.position.to_world_index(), chunk);
-        // Update the chunks
+        // Update adjacent chunk meshes
+        chunk
+            .position
+            .get_adjacent_vecs()
+            .iter()
+            .for_each(|chunk_pos| {
+                // Doesn't matter if this throws a ChunkNotLoadedError
+                self.update_chunk_mesh(chunk_pos).ok();
+            });
 
-        chunk.position.get_adjacent_vecs().iter().map(|pos| {
-            let chunk = self.get_mut_chunk(&pos);
-        });
+        self.chunks.insert(chunk.position.to_world_index(), chunk);
     }
 
     pub fn load_chunk(&mut self, chunk_pos: &ChunkPos) -> &mut Chunk {
@@ -161,16 +127,27 @@ impl World {
         })
     }
 
-    /** Always return all directions.
-     * The directions that point to no block will just default to void */
+    /**
+     * Always return all directions.
+     * The directions that point to no block will just default to void
+     * */
     fn get_adjacent_blocks(&self, world_pos: &WorldPos) -> HashMap<Direction, WorldBlock> {
         let mut adjacent_blocks = HashMap::new();
-        for direction in Direction::iter() {
+        for direction in Directions::all() {
             let adjacent_pos = world_pos.move_direction(&direction);
             let block = self.get_block(&adjacent_pos);
             adjacent_blocks.insert(direction, block);
         }
         adjacent_blocks
+    }
+
+    /**
+     * A block is loaded if the chunk it is in has been generated.
+     * Does not necessarily mean the block is visible.
+     */
+    pub fn is_block_loaded(&self, block_world_pos: &WorldPos) -> bool {
+        let chunk = self.get_chunk_from_world_pos(&block_world_pos);
+        chunk.is_ok()
     }
 
     pub fn remove_block(&mut self, world_pos: &WorldPos) -> Result<(), ChunkNotLoadedError> {
@@ -181,7 +158,6 @@ impl World {
     }
 
     /* Mesh Logic */
-
     fn update_mesh_at_pos(&mut self, world_pos: WorldPos) -> Result<(), ChunkNotLoadedError> {
         let world_block = self.get_block(&world_pos);
 
@@ -206,12 +182,10 @@ impl World {
     }
 
     fn update_chunk_mesh(&mut self, chunk_pos: &ChunkPos) -> Result<(), ChunkNotLoadedError> {
-        let chunk_mesh = self.get_chunk_mesh(chunk_pos)?;
         let chunk = self.get_chunk(chunk_pos)?;
         for block in chunk.get_all_blocks() {
             self.update_mesh_at_pos(block.pos.to_world_pos(chunk_pos));
         }
-
         Ok(())
     }
 
@@ -232,17 +206,9 @@ impl World {
             // Map to chunk
             .for_each(|chunk_pos: ChunkPos| {
                 // Forget about the result, if the chunk isn't loaded, it doesn't matter
-                self.update_chunk_mesh(&chunk_pos);
+                self.update_chunk_mesh(&chunk_pos).ok();
             });
 
         ()
-    }
-
-    /** A block is loaded if the chunk it is in has been generated.
-     * Does not necessarily mean the block is visible.
-     */
-    pub fn is_block_loaded(&self, block_world_pos: &WorldPos) -> bool {
-        let chunk = self.get_chunk_from_world_pos(&block_world_pos);
-        chunk.is_ok()
     }
 }

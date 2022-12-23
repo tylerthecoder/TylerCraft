@@ -1,7 +1,7 @@
 pub mod block;
-pub mod block_getter;
 pub mod chunk;
 pub mod direction;
+pub mod positions;
 mod utils;
 pub mod vec;
 pub mod world;
