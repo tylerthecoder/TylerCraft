@@ -1,125 +1,50 @@
 use super::{Chunk, ChunkPos, InnerChunkPos};
 use crate::{
     block::{BlockData, BlockType},
-    world::{World, WorldPos},
+    chunk::ChunkBlock,
+    world::World,
 };
-
-#[test]
-fn index_conversion() {
-    let index = Chunk::pos_to_index(&InnerChunkPos::new(1, 2, 3));
-    assert_eq!(index, 1024 + 32 + 3);
-    let pos = Chunk::index_to_pos(index);
-    assert_eq!(pos, InnerChunkPos::new(1, 2, 3));
-
-    let index = Chunk::pos_to_index(&InnerChunkPos::new(0, 0, 0));
-    let pos = Chunk::index_to_pos(index);
-    assert_eq!(pos, InnerChunkPos::new(0, 0, 0));
-}
-
-#[test]
-fn conversion() {
-    let inner_chunk_pos = InnerChunkPos::new(1, 2, 3);
-    let chunk = Chunk::new(ChunkPos { x: 0, y: 0 });
-
-    let world_pos = chunk.chunk_pos_to_world_pos(&inner_chunk_pos);
-
-    assert_eq!(world_pos, WorldPos { x: 1, y: 2, z: 3 });
-}
-
-#[test]
-fn chunk_pos_to_world_pos() {
-    let chunk_pos = ChunkPos { x: 1, y: 1 };
-    let chunk = Chunk::new(chunk_pos);
-    let inner_chunk_pos = InnerChunkPos::new(1, 2, 3);
-    let world_pos = chunk.chunk_pos_to_world_pos(&inner_chunk_pos);
-
-    assert_eq!(world_pos, WorldPos { x: 17, y: 2, z: 19 });
-
-    let chunk_pos = ChunkPos { x: -1, y: -1 };
-    let chunk = Chunk::new(chunk_pos);
-    let inner_chunk_pos = InnerChunkPos::new(1, 2, 3);
-    let world_pos = chunk.chunk_pos_to_world_pos(&inner_chunk_pos);
-    assert_eq!(
-        world_pos,
-        WorldPos {
-            x: -15,
-            y: 2,
-            z: -13
-        }
-    );
-}
 
 #[test]
 fn gets_all_blocks() {
     // Make a world
-    let mut world = World::new();
+    let mut world = World::default();
 
     // Make a chunk
-    let mut chunk = Chunk::new(ChunkPos { x: -2, y: -3 });
+    let chunk_pos = ChunkPos { x: -2, y: -3 };
+    let mut chunk = Chunk::new(chunk_pos);
 
-    chunk.add_block(
-        &InnerChunkPos::new(0, 0, 0),
-        BlockType::Cloud,
-        BlockData::None,
-    );
+    chunk.add_block(ChunkBlock {
+        pos: InnerChunkPos::new(0, 0, 0),
+        block_type: BlockType::Cloud,
+        extra_data: BlockData::None,
+    });
 
-    chunk.add_block(
-        &InnerChunkPos::new(1, 2, 3),
-        BlockType::Stone,
-        BlockData::None,
-    );
+    chunk.add_block(ChunkBlock {
+        pos: InnerChunkPos::new(1, 2, 3),
+        block_type: BlockType::Stone,
+        extra_data: BlockData::None,
+    });
 
-    chunk.add_block(
-        &InnerChunkPos::new(15, 0, 15),
-        BlockType::Stone,
-        BlockData::None,
-    );
+    chunk.add_block(ChunkBlock {
+        pos: InnerChunkPos::new(15, 0, 15),
+        block_type: BlockType::Stone,
+        extra_data: BlockData::None,
+    });
 
     world.insert_chunk(chunk);
 
-    let chunk = world.get_chunk(&ChunkPos { x: -2, y: -3 }).unwrap();
+    let chunk = world.get_chunk(&chunk_pos).unwrap();
 
-    let blocks = chunk.get_all_blocks();
-
-    assert_eq!(blocks.len(), 3);
-
-    // loop over all the blocks and see if they watch the block gotten from the world
-    for world_block in blocks.iter() {
-        let true_world_block = world.get_block(&world_block.world_pos);
-        assert_eq!(true_world_block.block_type, world_block.block_type);
-        assert_eq!(world_block, &true_world_block);
-    }
-}
-
-#[test]
-fn calculate_visible_faces() {
-    // Make a world
-    let mut world = World::new();
-
-    // Make a chunk
-    let mut chunk = Chunk::new(ChunkPos { x: 0, y: 0 });
-
-    chunk.add_block(
-        &InnerChunkPos::new(0, 0, 0),
-        BlockType::Cloud,
-        BlockData::None,
-    );
-
-    world.insert_chunk(chunk);
-
-    let chunk = world.get_mut_chunk(&ChunkPos { x: 0, y: 0 }).unwrap();
-
-    chunk.calculate_visible_faces(&world);
-
-    assert_eq!(chunk.visible_faces.len(), 1);
-
-    let block_with_faces = chunk.visible_faces.get(0).unwrap();
-
-    assert_eq!(block_with_faces.faces.len(), 6);
-
-    let block = world.get_block(&block_with_faces.world_pos);
-
-    assert_eq!(block.block_type, BlockType::Cloud);
+    chunk
+        .get_all_blocks()
+        .iter()
+        .map(|block| block.to_world_block(&chunk_pos.to_owned()))
+        .for_each(|world_block| {
+            let true_world_block = world.get_block(&world_block.world_pos);
+            assert_eq!(true_world_block.block_type, world_block.block_type);
+            assert_eq!(world_block, true_world_block);
+        });
 }
 
 #[test]
@@ -129,11 +54,17 @@ fn stores_block() {
 
     let inner_chunk_pos = InnerChunkPos::new(1, 0, 1);
 
-    chunk.add_block(&inner_chunk_pos, BlockType::Cloud, BlockData::None);
+    let block = ChunkBlock {
+        pos: inner_chunk_pos,
+        block_type: BlockType::Cloud,
+        extra_data: BlockData::None,
+    };
 
-    let block = chunk.get_block_type(&inner_chunk_pos);
+    chunk.add_block(block);
 
-    assert_eq!(block, BlockType::Cloud);
+    let got_block = chunk.get_block(&inner_chunk_pos);
+
+    assert_eq!(block, got_block);
 }
 
 #[test]
@@ -155,7 +86,11 @@ fn stores_first_block() {
 
     let inner_chunk_pos = InnerChunkPos::new(0, 0, 0);
 
-    chunk.add_block(&inner_chunk_pos, BlockType::Cloud, BlockData::None);
+    chunk.add_block(ChunkBlock {
+        pos: inner_chunk_pos,
+        block_type: BlockType::Cloud,
+        extra_data: BlockData::None,
+    });
 
     let block = chunk.get_block_type(&inner_chunk_pos);
 
@@ -169,7 +104,11 @@ fn stores_last_block() {
 
     let inner_chunk_pos = InnerChunkPos::new(15, 63, 15);
 
-    chunk.add_block(&inner_chunk_pos, BlockType::Cloud, BlockData::None);
+    chunk.add_block(ChunkBlock {
+        pos: inner_chunk_pos,
+        block_type: BlockType::Cloud,
+        extra_data: BlockData::None,
+    });
 
     let block = chunk.get_block_type(&inner_chunk_pos);
 
@@ -183,7 +122,11 @@ fn deletes_blocks() {
 
     let inner_chunk_pos = InnerChunkPos::new(15, 63, 15);
 
-    chunk.add_block(&inner_chunk_pos, BlockType::Cloud, BlockData::None);
+    chunk.add_block(ChunkBlock {
+        pos: inner_chunk_pos,
+        block_type: BlockType::Cloud,
+        extra_data: BlockData::None,
+    });
 
     chunk.remove_block(&inner_chunk_pos);
 

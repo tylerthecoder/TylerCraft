@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use std::iter::{FromIterator, IntoIterator};
 use wasm_bindgen::prelude::wasm_bindgen;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -21,9 +22,59 @@ pub enum FlatDirection {
     West = 3,
 }
 
-pub type Directions = [bool; 6];
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Directions {
+    data: [bool; 6],
+}
 
-pub const ALL_DIRECTIONS: Directions = [true; 6];
+impl Directions {
+    pub fn all() -> Directions {
+        Directions { data: [true; 6] }
+    }
+
+    pub fn empty() -> Directions {
+        Directions { data: [false; 6] }
+    }
+
+    // pub fn iter(&self) -> Vec<Direction> {
+    //     (0..6)
+    //         .filter_map(|i| if self.data[i] { Some(i) } else { None })
+    //         .map(move |i| Direction::from_index(i))
+    //         .collect()
+    // }
+
+    pub fn create_for_direction(direction: Direction) -> Directions {
+        let mut data = [false; 6];
+        data[direction as usize] = true;
+        Directions { data }
+    }
+
+    pub fn has_direction(&self, direction: Direction) -> bool {
+        self.data[direction as usize]
+    }
+}
+
+impl FromIterator<Direction> for Directions {
+    fn from_iter<I: IntoIterator<Item = Direction>>(iter: I) -> Self {
+        let mut data = [false; 6];
+        for direction in iter {
+            data[direction as usize] = true;
+        }
+        Directions { data }
+    }
+}
+
+impl IntoIterator for Directions {
+    type Item = Direction;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+    fn into_iter(self) -> Self::IntoIter {
+        (0..6)
+            .filter_map(|i| if self.data[i] { Some(i) } else { None })
+            .map(move |i| Direction::from_index(i))
+            .collect::<Vec<Direction>>()
+            .into_iter()
+    }
+}
 
 pub const EVERY_FLAT_DIRECTION: [FlatDirection; 4] = [
     FlatDirection::North,
@@ -31,12 +82,6 @@ pub const EVERY_FLAT_DIRECTION: [FlatDirection; 4] = [
     FlatDirection::East,
     FlatDirection::West,
 ];
-
-pub fn create_directions(direction: Direction) -> Directions {
-    let mut directions = [false; 6];
-    directions[direction as usize] = true;
-    directions
-}
 
 impl Direction {
     pub fn from_index(index: usize) -> Direction {
@@ -51,10 +96,6 @@ impl Direction {
         }
     }
 
-    pub fn iter() -> impl Iterator<Item = Direction> {
-        (0..6).map(|i| Direction::from_index(i))
-    }
-
     pub fn to_index(&self) -> usize {
         match self {
             Direction::North => 0,
@@ -66,12 +107,8 @@ impl Direction {
         }
     }
 
-    pub fn empty() -> Directions {
-        [false; 6]
-    }
-
     pub fn to_directions(&self) -> Directions {
-        create_directions(*self)
+        Directions::create_for_direction(*self)
     }
 
     pub fn flatten(&self) -> FlatDirection {
