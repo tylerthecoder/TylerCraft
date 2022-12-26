@@ -74,33 +74,3 @@ fn adds_blocks() {
     assert_eq!(block.block_type, BlockType::Gold);
     assert_eq!(block.extra_data, BlockData::None);
 }
-
-#[test]
-fn mesh_updates_when_block_placed() {
-    let mut world = World::default();
-
-    let block_pos = WorldPos::new(0, 0, 0);
-
-    let chunk_pos = ChunkPos { x: 0, y: 0 };
-
-    let chunk = Chunk::new(chunk_pos);
-
-    world.insert_chunk(chunk);
-
-    let world_block = WorldBlock {
-        block_type: BlockType::Cloud,
-        extra_data: BlockData::None,
-        world_pos: block_pos,
-    };
-
-    world.add_block(&world_block).unwrap();
-
-    let faces = world
-        .get_chunk_mesh(&chunk_pos)
-        .unwrap()
-        .face_map
-        .get(&block_pos.to_inner_chunk_pos().to_chunk_index())
-        .unwrap();
-
-    assert_eq!(faces.into_iter().len(), 6);
-}

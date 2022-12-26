@@ -99,7 +99,7 @@ impl WorldBlock {
         // 	}
         // }
 
-        println!("Don't show");
+        println!("Can't see");
 
         return false;
     }
@@ -107,13 +107,9 @@ impl WorldBlock {
     pub fn get_visible_faces(&self, adjacent_blocks: HashMap<Direction, WorldBlock>) -> Directions {
         self.get_faces()
             .into_iter()
-            .filter(|direction| {
-                let is_face_shown = match adjacent_blocks.get(direction) {
-                    Some(adjacent_block) => self.is_block_face_visible(adjacent_block),
-                    None => true,
-                };
-
-                is_face_shown
+            .filter(|direction| match adjacent_blocks.get(direction) {
+                Some(adjacent_block) => self.is_block_face_visible(adjacent_block),
+                None => true,
             })
             .collect::<Directions>()
     }
