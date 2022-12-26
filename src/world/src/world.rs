@@ -184,7 +184,8 @@ impl World {
     fn update_chunk_mesh(&mut self, chunk_pos: &ChunkPos) -> Result<(), ChunkNotLoadedError> {
         let chunk = self.get_chunk(chunk_pos)?;
         for block in chunk.get_all_blocks() {
-            self.update_mesh_at_pos(block.pos.to_world_pos(chunk_pos));
+            self.update_mesh_at_pos(block.pos.to_world_pos(chunk_pos))
+                .ok();
         }
         Ok(())
     }
