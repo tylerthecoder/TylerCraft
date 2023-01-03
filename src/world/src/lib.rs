@@ -1,6 +1,8 @@
 pub mod block;
+pub mod camera;
 pub mod chunk;
 pub mod direction;
+pub mod plane;
 pub mod positions;
 mod utils;
 pub mod vec;
