@@ -22,6 +22,9 @@ export default class WorldRenderer {
   }
 
   blockUpdate(chunkId: string) {
+    // TODO:
+    // instead of getting a chunk renderer, make a new one with the mesh
+    // from the world.
     const chunkToUpdate = this.chunkRenderers.get(chunkId);
     if (chunkToUpdate) chunkToUpdate.getBufferData();
   }
@@ -63,6 +66,7 @@ export default class WorldRenderer {
       // console.log("Chunk not found, loading");
       return;
     }
+
 
     let chunkRenderer = this.chunkRenderers.get(chunkPos.toIndex());
 

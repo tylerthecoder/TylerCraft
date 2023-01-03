@@ -56,3 +56,25 @@ Starting to write tests for the world. Need to test things that will be used by 
 # 12/ 22 / 23
 
 Moving a lot of things over to structs. Trying to be more rust wherever I can. Turned `Directions` into a struct that can be iterated over.
+
+# 12 / 26 / 22
+
+Got all the tests to pass on the rust part. Need to add a couple more functions so I can get the visible faces to the chunk renderers.
+Also need to return a `GameUpdateDiff` every time a block is added or removed.
+
+# 1 / 2 / 23
+
+So next thing I am going to do is code the following logic, some of it is already here but I need to make sur eit is all wired together.
+When world is modified (block added or removed etc) return a `GameUpdateDiff`, need to fetch all the visible faces for all the modified chunks.
+
+Need to move all visible faces to world renderer instead of chunk renderer, or at least create a chunk renderer on the fly.
+
+Okay so now everything returns the game state diff. Where does this get processed. I guess in the world class.
+
+# 1 / 3 / 23
+
+Now I am going to remove all operations with visible faces from the chunk.
+Going to move the looking at function over to rust because it will be fun.
+The old way I did it was checking every single visible face in the chunk to see if the camera was looking at it. This time I am going to just step across the vector to see which blocks it could be touching, and check if they have a visible face that would intersect the line.
+
+Built a lot of logic for determining collisions. I think the logic for looking at is going to be a lot cleaner. I had to build a lot of things for it that I think will be useful later.

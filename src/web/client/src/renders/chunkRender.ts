@@ -5,6 +5,10 @@ import { ImageRenderer } from "./imageRender";
 import ShapeBuilder from "../services/shapeBuilder";
 import { canvas } from "../canvas";
 
+
+// TODO:
+// instead of passing a chunk, pass a way to get the visible faces
+
 export class ChunkRenderer extends Renderer {
   private otherRenders: Renderer[] = [];
 

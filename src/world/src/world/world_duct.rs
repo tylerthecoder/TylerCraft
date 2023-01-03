@@ -1,4 +1,4 @@
-use super::World;
+use super::{World, WorldStateDiff};
 use crate::{
     block::WorldBlock,
     chunk::Chunk,
@@ -20,9 +20,12 @@ impl World {
         World::default()
     }
 
-    pub fn add_block_wasm(&mut self, val: JsValue) -> Result<(), Error> {
-        from_value(val)
-            .and_then(|block: WorldBlock| self.add_block(&block).map_err(Self::convert_error))
+    pub fn add_block_wasm(&mut self, val: JsValue) -> Result<JsValue, Error> {
+        from_value(val).and_then(|block: WorldBlock| {
+            self.add_block(&block)
+                .map_err(Self::convert_error)
+                .and_then(|diff| to_value(&diff))
+        })
     }
 
     pub fn get_block_wasm(&self, val: JsValue) -> Result<JsValue, Error> {
@@ -39,9 +42,10 @@ impl World {
         })
     }
 
-    pub fn remove_block_wasm(&mut self, x: i32, y: i32, z: i32) -> Result<(), Error> {
+    pub fn remove_block_wasm(&mut self, x: i32, y: i32, z: i32) -> Result<JsValue, Error> {
         self.remove_block(&WorldPos { x, y, z })
             .map_err(Self::convert_error)
+            .and_then(|diff| to_value(&diff))
     }
 
     pub fn load_chunk_wasm(&mut self, x: i16, y: i16) -> () {

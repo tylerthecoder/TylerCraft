@@ -12,6 +12,14 @@ pub struct Vec2<T> {
     pub y: T,
 }
 
+pub struct Cartesian3DRotation {
+    /** The flat angle. [0, 2PI] */
+    pub theta: f32,
+
+    /** The up/down angle. [-PI/2, PI/2] */
+    pub phi: f32,
+}
+
 impl<T> Vec2<T> {
     pub fn new(x: T, y: T) -> Vec2<T> {
         Vec2 { x, y }
@@ -44,6 +52,9 @@ impl<T> Vec2<T> {
         }
     }
 
+    /** Returns a list of adjacent vectors that lie in a flat plane
+     * I.e no vectors that have a different y direction.
+     */
     pub fn get_adjacent_vecs(&self) -> Vec<Vec2<T>>
     where
         T: Copy + Add<T, Output = T> + AddAssign<T> + One + SubAssign,
@@ -93,6 +104,28 @@ pub struct Vec3<T> {
 impl<T> Vec3<T> {
     pub fn new(x: T, y: T, z: T) -> Vec3<T> {
         Vec3 { x, y, z }
+    }
+
+    pub fn get_component_from_direction(&self, direction: Direction) -> T {
+        match direction {
+            Direction::North => self.z,
+            Direction::South => self.z,
+            Direction::East => self.x,
+            Direction::West => self.x,
+            Direction::Up => self.y,
+            Direction::Down => self.y,
+        }
+    }
+
+    pub fn get_opposite_components_from_direction(&self, direction: Direction) -> (T, T) {
+        match direction {
+            Direction::North => (self.x, self.y),
+            Direction::South => (self.x, self.y),
+            Direction::East => (self.y, self.z),
+            Direction::West => (self.y, self.z),
+            Direction::Up => (self.x, self.z),
+            Direction::Down => (self.x, self.z),
+        }
     }
 
     pub fn to_index(&self) -> String
@@ -175,5 +208,15 @@ impl<T> Vec3<T> {
             vecs.push(self.move_direction(&direction));
         }
         vecs
+    }
+}
+
+impl Cartesian3DRotation {
+    pub fn to_unit_vector(self) -> Vec3<f32> {
+        Vec3 {
+            x: self.phi.sin() * self.theta.cos(),
+            y: self.phi.sin() * self.theta.sin(),
+            z: self.theta.cos(),
+        }
     }
 }

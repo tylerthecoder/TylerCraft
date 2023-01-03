@@ -8,6 +8,7 @@ import WorldModule, { WorldModuleTypes } from "../modules.js";
 import { BLOCK_DATA } from "../blockdata.js";
 import { ICameraData } from "../camera.js";
 import { GameStateDiff } from "../gameStateDiff.js";
+import { ChunkMesh } from "./chunkMesh.js";
 
 
 export interface ISerializedWorld {
@@ -22,19 +23,17 @@ export class ChunkHolder {
     public wasmWorld: WorldModuleTypes.World,
   ) {}
 
-  setAll(chunks: Chunk[], world: World): void {
+  setAll(chunks: Chunk[]): void {
     this.chunks = new Map(chunks.map(c => [c.pos.toIndex(), c]));
     console.log("Setting all");
     chunks.forEach(c => this.wasmWorld.set_chunk_at_pos(c.serialize()));
-    chunks.forEach(c => c.calculateVisibleFaces(world));
   }
 
-  addOrUpdate(chunk: Chunk, world: World): void {
+  addOrUpdate(chunk: Chunk): void {
     console.log("Setting chunk at", chunk);
     this.chunks.set(chunk.pos.toIndex(), chunk);
     const serialized = chunk.serialize();
     this.wasmWorld.set_chunk_at_pos(serialized);
-    chunk.calculateVisibleFaces(world);
   }
 
   has(pos: Vector2D): boolean {
@@ -112,6 +111,10 @@ export class World {
     ]);
   }
 
+  // ===================
+  //    Getters
+  // ===================
+
   // TODO make this a lookup instead of an array search
   getChunkById(chunkId: string) {
     for (const chunk of this.getChunks()) {
@@ -127,19 +130,53 @@ export class World {
     return chunk;
   }
 
+  getChunks(): Chunk[] {
+    return this.chunks.getAll();
+  }
+
+  getChunkMesh(chunkPos: Vector2D): ChunkMesh {
+    // TODO:
+    // ask wasm for the chunk mesh.
+  }
+
+  getChunkFromWorldPoint(pos: Vector3D) {
+    const chunkPos = World.worldPosToChunkPos(pos);
+    return this.getChunkFromPos(chunkPos);
+  }
+
+  getBlockFromWorldPoint(pos: Vector3D): Cube | null {
+    // I think the error comes from calculating visible faces
+    // For some reason the block that we get back is not from thee correct chunk
+
+    if (!this.wasmWorld.is_block_loaded_wasm(pos.toCartIntObj())) {
+      throw new Error("Getting block that hasn't been loaded")
+    }
+
+    const wasmBlock: ISerializedCube = this.wasmWorld.get_block_wasm(pos.toCartIntObj());
+
+
+    const block: Cube = {
+      pos: new Vector3D([wasmBlock.world_pos.x, wasmBlock.world_pos.y, wasmBlock.world_pos.z]),
+      type: wasmBlock.block_type,
+      // We aren't passing on extra block data just quite yet
+      // extraData: wasmBlock.extra_data === "None" ? ,
+    }
+
+    if (block === null) {
+      return null;
+    }
+
+    return block;
+  }
+
   updateChunk(chunkPos: Vector2D, chunkData: ISerializedChunk) {
     const chunk = this.getChunkFromPos(chunkPos);
     if (!chunk) return;
     chunk.set(chunkData);
-    chunk.calculateVisibleFaces(this);
   }
 
   addOrUpdateChunk(chunk: Chunk) {
-    this.chunks.addOrUpdate(chunk, this);
-  }
-
-  getChunks(): Chunk[] {
-    return this.chunks.getAll();
+    this.chunks.addOrUpdate(chunk);
   }
 
   hasChunk(chunkPos: Vector2D): boolean {
@@ -180,35 +217,6 @@ export class World {
     });
   }
 
-  getChunkFromWorldPoint(pos: Vector3D) {
-    const chunkPos = World.worldPosToChunkPos(pos);
-    return this.getChunkFromPos(chunkPos);
-  }
-
-  getBlockFromWorldPoint(pos: Vector3D): Cube | null {
-    // I think the error comes from calculating visible faces
-    // For some reason the block that we get back is not from thee correct chunk
-
-    if (!this.wasmWorld.is_block_loaded_wasm(pos.toCartIntObj())) {
-      throw new Error("Getting block that hasn't been loaded")
-    }
-
-    const wasmBlock: ISerializedCube = this.wasmWorld.get_block_wasm(pos.toCartIntObj());
-
-
-    const block: Cube = {
-      pos: new Vector3D([wasmBlock.world_pos.x, wasmBlock.world_pos.y, wasmBlock.world_pos.z]),
-      type: wasmBlock.block_type,
-      // We aren't passing on extra block data just quite yet
-      // extraData: wasmBlock.extra_data === "None" ? ,
-    }
-
-    if (block === null) {
-      return null;
-    }
-
-    return block;
-  }
 
   update(entities: Entity[]) {
     for (const entity of entities) {
@@ -292,25 +300,12 @@ export class World {
     // }
   }
 
-  private checkSurroundingChunkForUpdate(stateDiff: GameStateDiff, chunk: Chunk, pos: Vector3D) {
-    Vector3D.edgeVectorsStripY.forEach((indexVec) => {
-      const checkCubePos = pos.add(indexVec);
-      const otherChunk = this.getChunkFromWorldPoint(checkCubePos);
-
-      // if this is a different chunk
-      if (otherChunk && chunk !== otherChunk) {
-        stateDiff.updateChunk(chunk.uid);
-        // TODO recalculate faces
-      }
-    });
-  }
-
   addBlock(stateDiff: GameStateDiff, cube: Cube) {
     const chunk = this.getChunkFromWorldPoint(cube.pos);
     if (!chunk) {
       throw new Error("Trying to place block in unloaded chunk");
     }
-    this.wasmWorld.add_block_wasm({
+    const diff: {chunk_ids: string[]} = this.wasmWorld.add_block_wasm({
       block_type: cube.type,
       extra_data: cube.extraData,
       world_pos: {
@@ -320,27 +315,22 @@ export class World {
       },
     });
 
-    // chunk.blocks.add(cube);
-    // chunk.calculateVisibleFaces(this);
-    stateDiff.updateChunk(chunk.uid);
-    this.checkSurroundingChunkForUpdate(stateDiff, chunk, cube.pos);
+    diff.chunk_ids.forEach(id => stateDiff.updateChunk(id));
   }
 
   removeBlock(stateDiff: GameStateDiff, cubePos: Vector3D) {
     console.log("Removing block", cubePos);
     const chunk = this.getChunkFromWorldPoint(cubePos);
     if (!chunk) return;
-    this.wasmWorld.remove_block_wasm(
+    const diff: {chunk_ids: string[]} =this.wasmWorld.remove_block_wasm(
       cubePos.get(0),
       cubePos.get(1),
       cubePos.get(2)
     );
-    // chunk.blocks.remove(cubePos)
-    chunk.calculateVisibleFaces(this);
-    this.checkSurroundingChunkForUpdate(stateDiff, chunk, cubePos);
-    stateDiff.updateChunk(chunk.uid);
+    diff.chunk_ids.forEach(id => stateDiff.updateChunk(id));
   }
 
+  // TODO: move to wasm.
   lookingAt(camera: ICameraData): ILookingAtData | null {
     let closestDist = Infinity;
     let closestCube: ILookingAtData | null = null;

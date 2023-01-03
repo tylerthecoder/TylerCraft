@@ -7,6 +7,9 @@ use crate::{
 mod unit_tests;
 
 pub type InnerChunkPos = Vec3<i8>;
+pub type WorldPos = Vec3<i32>;
+pub type ChunkPos = Vec2<i16>;
+pub type FineWorldPos = Vec3<f32>;
 
 impl InnerChunkPos {
     pub fn to_chunk_index(&self) -> usize {
@@ -32,9 +35,6 @@ impl InnerChunkPos {
             .map(|x| x as i32)
     }
 }
-
-pub type WorldPos = Vec3<i32>;
-pub type ChunkPos = Vec2<i16>;
 
 impl WorldPos {
     pub fn to_inner_chunk_pos(&self) -> InnerChunkPos {
@@ -69,5 +69,15 @@ impl ChunkPos {
         let x = self.x as i32;
         let y = self.y as i32;
         x + (y << 16)
+    }
+}
+
+impl FineWorldPos {
+    pub fn to_world_pos(&self) -> WorldPos {
+        WorldPos {
+            x: self.x as i32,
+            y: self.y as i32,
+            z: self.z as i32,
+        }
     }
 }

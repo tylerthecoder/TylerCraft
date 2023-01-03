@@ -43,10 +43,10 @@ export type ISerializedVisibleFaces = Array<{
 }>;
 
 export class Chunk {
-  visibleCubesFaces: Array<{
-    cube: Cube;
-    faceVectors: Vector3D[];
-  }>;
+  // visibleCubesFaces: Array<{
+  //   cube: Cube;
+  //   faceVectors: Vector3D[];
+  // }>;
 
   uid: string;
 
@@ -60,8 +60,6 @@ export class Chunk {
     if (data) {
       this.set(data);
     }
-
-    this.visibleCubesFaces = [];
   }
 
   serialize(): ISerializedChunk {
@@ -89,9 +87,7 @@ export class Chunk {
 
   getBlockData(pos: Vector3D) {
     const block = this.wasmChunk.get_block_wasm(
-      pos.get(0),
-      pos.get(1),
-      pos.get(2)
+      pos.toCartIntObj()
     ) as Cube;
     return block.extraData;
   }
@@ -176,40 +172,7 @@ export class Chunk {
     return scaledPos[0] === this.pos.get(0) && scaledPos[2] === this.pos.get(1);
   }
 
-  calculateVisibleFaces(world: World) {
-    this.wasmChunk.calculate_visible_faces_wasm(world.wasmWorld);
-
-    const faces = this.wasmChunk.get_visible_faces_wasm() as ISerializedVisibleFaces | null;
-
-    if (!faces) {
-      throw new Error("No faces found");
-    }
-
-    // convert to real faces
-    this.visibleCubesFaces = faces.map((face) => {
-      const block = world.getBlockFromWorldPoint(
-        new Vector3D([face.world_pos.x, face.world_pos.y, face.world_pos.z])
-      );
-
-
-      if (!block) {
-        throw new Error("No block returned");
-      }
-
-      if (block.type === BLOCKS.void) {
-        // I think this error is happening because the chunk isn't loaded that the block is in,
-        // thus it is returning a void block
-        throw new Error("visible face should not be void")
-      }
-
-      return  {
-        cube: block,
-      faceVectors: ALL_DIRECTIONS
-        .filter((_dir, index) => face.faces[index])
-        .map(Vector3D.fromDirection),
-    } });
-  }
-
+  // TODO: move to world
   lookingAt(camera: ICameraData): ILookingAtData | false {
     let firstIntersection: IDim;
 
