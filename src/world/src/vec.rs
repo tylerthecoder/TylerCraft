@@ -3,21 +3,13 @@ use num::One;
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::Display,
-    ops::{Add, AddAssign, Mul, SubAssign},
+    ops::{Add, AddAssign, Mul, Sub, SubAssign},
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct Vec2<T> {
     pub x: T,
     pub y: T,
-}
-
-pub struct Cartesian3DRotation {
-    /** The flat angle. [0, 2PI] */
-    pub theta: f32,
-
-    /** The up/down angle. [-PI/2, PI/2] */
-    pub phi: f32,
 }
 
 impl<T> Vec2<T> {
@@ -101,7 +93,37 @@ pub struct Vec3<T> {
     pub z: T,
 }
 
-impl<T> Vec3<T> {
+impl<T, U> Sub<Vec3<U>> for Vec3<T>
+where
+    T: Sub<U, Output = T> + Copy,
+{
+    type Output = Vec3<T>;
+
+    fn sub(self, rhs: Vec3<U>) -> Self::Output {
+        Vec3 {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+            z: self.z - rhs.z,
+        }
+    }
+}
+
+impl<T, U> Mul<Vec3<U>> for Vec3<T>
+where
+    T: Mul<U, Output = T> + Copy,
+{
+    type Output = Vec3<T>;
+
+    fn mul(self, rhs: Vec3<U>) -> Self::Output {
+        Vec3 {
+            x: self.x * rhs.x,
+            y: self.y * rhs.y,
+            z: self.z * rhs.z,
+        }
+    }
+}
+
+impl<T: Add<Output = T> + Sub<Output = T> + Mul<T, Output = T> + Copy> Vec3<T> {
     pub fn new(x: T, y: T, z: T) -> Vec3<T> {
         Vec3 { x, y, z }
     }
@@ -164,10 +186,11 @@ impl<T> Vec3<T> {
         new_vec
     }
 
-    pub fn scalar_mult(&self, val: T) -> Vec3<T>
-    where
-        T: Mul<T, Output = T> + Copy,
-    {
+    pub fn sum(&self) -> T {
+        self.x + self.y + self.z
+    }
+
+    pub fn scalar_mult(&self, val: T) -> Vec3<T> {
         Vec3 {
             x: self.x * val,
             y: self.y * val,
@@ -185,6 +208,17 @@ impl<T> Vec3<T> {
             y: self.y + vec.y,
             z: self.z + vec.z,
         }
+    }
+
+    pub fn distance_to<U>(&self, vec: Vec3<U>) -> f32
+    where
+        U: Sub<U, Output = T> + Copy + Mul<T, Output = T> + Add<T, Output = T> + Into<f32>,
+        T: Sub<U, Output = T> + Copy + Mul<T, Output = T> + Add<T, Output = T> + Into<f32>,
+    {
+        let diff = *self - vec;
+        let diff_squared = diff * diff;
+        let sum = diff_squared.sum();
+        sum.into().sqrt()
     }
 
     pub fn map<B, F>(&self, f: F) -> Vec3<B>
@@ -211,12 +245,5 @@ impl<T> Vec3<T> {
     }
 }
 
-impl Cartesian3DRotation {
-    pub fn to_unit_vector(self) -> Vec3<f32> {
-        Vec3 {
-            x: self.phi.sin() * self.theta.cos(),
-            y: self.phi.sin() * self.theta.sin(),
-            z: self.theta.cos(),
-        }
-    }
-}
+#[cfg(test)]
+pub mod tests {}

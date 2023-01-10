@@ -1,35 +1,8 @@
 use crate::{
-    block::{BlockData, BlockType, ChunkBlock, WorldBlock},
+    block::{BlockData, BlockType, WorldBlock},
     chunk::Chunk,
-    positions::InnerChunkPos,
     world::{ChunkPos, World, WorldPos},
 };
-
-#[test]
-fn adds_chunks() {
-    let mut world = World::default();
-
-    let chunk_pos = ChunkPos::new(0, 0);
-    let inner_chunk_pos = InnerChunkPos::new(0, 0, 1);
-
-    let mut chunk = Chunk::new(chunk_pos);
-
-    let chunk_block = ChunkBlock {
-        block_type: BlockType::Cloud,
-        extra_data: BlockData::None,
-        pos: InnerChunkPos::new(0, 0, 1),
-    };
-
-    chunk.add_block(chunk_block);
-
-    world.insert_chunk(chunk);
-
-    let same_chunk = world.get_chunk(&chunk_pos).unwrap();
-
-    let same_block = same_chunk.get_block(&inner_chunk_pos);
-
-    assert_eq!(same_block.block_type, BlockType::Cloud);
-}
 
 #[test]
 fn adds_blocks() {

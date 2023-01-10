@@ -1,7 +1,7 @@
 pub mod block;
-pub mod camera;
 pub mod chunk;
 pub mod direction;
+pub mod geometry;
 pub mod plane;
 pub mod positions;
 mod utils;
