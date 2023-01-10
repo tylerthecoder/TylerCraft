@@ -1,5 +1,4 @@
 use crate::block::WorldBlock;
-use crate::camera::{self, Camera};
 use crate::chunk::chunk_mesh::ChunkMesh;
 use crate::chunk::Chunk;
 use crate::direction::{Direction, Directions};
@@ -9,6 +8,7 @@ use std::collections::HashMap;
 use std::{self, fmt};
 use wasm_bindgen::prelude::*;
 
+mod world_chunk;
 mod world_duct;
 mod world_intersection;
 #[cfg(test)]
@@ -65,58 +65,6 @@ pub struct World {
 }
 
 impl World {
-    /* Chunk Logic */
-    pub fn get_chunk(&self, chunk_pos: &ChunkPos) -> Result<&Chunk, ChunkNotLoadedError> {
-        self.chunks
-            .get(&chunk_pos.to_world_index())
-            .ok_or(ChunkNotLoadedError)
-    }
-
-    pub fn get_chunk_from_world_pos(
-        &self,
-        world_pos: &WorldPos,
-    ) -> Result<&Chunk, ChunkNotLoadedError> {
-        self.get_chunk(&world_pos.to_chunk_pos())
-    }
-
-    pub fn get_mut_chunk(
-        &mut self,
-        chunk_pos: &ChunkPos,
-    ) -> Result<&mut Chunk, ChunkNotLoadedError> {
-        self.chunks
-            .get_mut(&chunk_pos.to_world_index())
-            .ok_or(ChunkNotLoadedError)
-    }
-
-    pub fn insert_chunk(&mut self, chunk: Chunk) -> WorldStateDiff {
-        // Update adjacent chunk meshes
-        let updated_chunk_ids: Vec<String> = chunk
-            .position
-            .get_adjacent_vecs()
-            .iter()
-            .filter_map(|chunk_pos| {
-                if self.update_chunk_mesh(chunk_pos).is_ok() {
-                    Some(chunk_pos.to_index())
-                } else {
-                    None
-                }
-            })
-            .collect();
-
-        self.chunks.insert(chunk.position.to_world_index(), chunk);
-
-        WorldStateDiff {
-            chunk_ids: updated_chunk_ids,
-        }
-    }
-
-    pub fn load_chunk(&mut self, chunk_pos: &ChunkPos) -> &mut Chunk {
-        let chunk = Chunk::new(*chunk_pos);
-        let index = chunk_pos.to_world_index();
-        self.chunks.insert(index.to_owned(), chunk);
-        self.chunks.get_mut(&index.to_owned()).unwrap()
-    }
-
     /** Block Logic */
 
     /** Add a block to the world at a certain position and with certain data.
@@ -182,7 +130,7 @@ impl World {
 
         let faces = world_block.get_visible_faces(self.get_adjacent_blocks(&world_pos));
 
-        let chunk_mesh = self.get_chunk_mesh(&world_pos.to_chunk_pos())?;
+        let chunk_mesh = self.get_chunk_mesh_mut(&world_pos.to_chunk_pos())?;
 
         chunk_mesh
             .face_map
@@ -203,7 +151,13 @@ impl World {
             })
     }
 
-    fn get_chunk_mesh(
+    fn get_chunk_mesh(&self, chunk_pos: &ChunkPos) -> Result<&ChunkMesh, ChunkNotLoadedError> {
+        self.chunk_meshes
+            .get(&chunk_pos.to_world_index())
+            .ok_or(ChunkNotLoadedError)
+    }
+
+    fn get_chunk_mesh_mut(
         &mut self,
         chunk_pos: &ChunkPos,
     ) -> Result<&mut ChunkMesh, ChunkNotLoadedError> {

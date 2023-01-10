@@ -1,4 +1,4 @@
-use super::{World, WorldStateDiff};
+use super::World;
 use crate::{
     block::WorldBlock,
     chunk::Chunk,
@@ -59,9 +59,10 @@ impl World {
         })
     }
 
-    pub fn has_chunk(&self, x: i16, y: i16) -> bool {
-        let chunk_pos = ChunkPos { x, y };
-        self.chunks.contains_key(&chunk_pos.to_world_index())
+    pub fn has_chunk_wasm(&self, value: JsValue) -> bool {
+        from_value(value)
+            .map(|pos: ChunkPos| self.has_chunk(&pos))
+            .unwrap_or(false)
     }
 
     pub fn set_chunk_at_pos(&mut self, chunk: &JsValue) -> Result<(), JsValue> {
