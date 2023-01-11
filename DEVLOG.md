@@ -78,3 +78,9 @@ Going to move the looking at function over to rust because it will be fun.
 The old way I did it was checking every single visible face in the chunk to see if the camera was looking at it. This time I am going to just step across the vector to see which blocks it could be touching, and check if they have a visible face that would intersect the line.
 
 Built a lot of logic for determining collisions. I think the logic for looking at is going to be a lot cleaner. I had to build a lot of things for it that I think will be useful later.
+
+# 1 / 10 / 23
+
+Been slowly creating more geometry code.
+
+Want to investigate any better build systems to get the multiple modules building in the right direction.

@@ -2,6 +2,7 @@ use super::World;
 use crate::{
     block::WorldBlock,
     chunk::Chunk,
+    geometry::ray::Ray,
     world::{ChunkPos, WorldPos},
 };
 use serde_wasm_bindgen::{from_value, to_value, Error};
@@ -25,6 +26,13 @@ impl World {
             self.add_block(&block)
                 .map_err(Self::convert_error)
                 .and_then(|diff| to_value(&diff))
+        })
+    }
+
+    pub fn get_pointed_at_block_wasm(&self, val: JsValue) -> Result<JsValue, Error> {
+        from_value(val).and_then(|ray: Ray| {
+            let block = self.get_pointed_at_block(ray);
+            to_value(&block)
         })
     }
 

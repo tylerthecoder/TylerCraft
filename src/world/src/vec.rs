@@ -212,13 +212,16 @@ impl<T: Add<Output = T> + Sub<Output = T> + Mul<T, Output = T> + Copy> Vec3<T> {
 
     pub fn distance_to<U>(&self, vec: Vec3<U>) -> f32
     where
-        U: Sub<U, Output = T> + Copy + Mul<T, Output = T> + Add<T, Output = T> + Into<f32>,
-        T: Sub<U, Output = T> + Copy + Mul<T, Output = T> + Add<T, Output = T> + Into<f32>,
+        U: Sub<U, Output = T> + Copy + Mul<T, Output = T> + Add<T, Output = T>,
+        T: Sub<U, Output = T> + Copy + Mul<T, Output = T> + Add<T, Output = T>,
+        f32: From<T>,
     {
         let diff = *self - vec;
         let diff_squared = diff * diff;
         let sum = diff_squared.sum();
-        sum.into().sqrt()
+        // take the sqrt of sum
+        let sum_f32: f32 = sum.into();
+        sum_f32.sqrt()
     }
 
     pub fn map<B, F>(&self, f: F) -> Vec3<B>
@@ -246,4 +249,17 @@ impl<T: Add<Output = T> + Sub<Output = T> + Mul<T, Output = T> + Copy> Vec3<T> {
 }
 
 #[cfg(test)]
-pub mod tests {}
+pub mod tests {
+    use crate::vec::Vec3;
+
+    #[test]
+    fn test_distance_to() {
+        let vec1 = Vec3::new(0 as i16, 0 as i16, 0 as i16);
+        let vec2 = Vec3::new(1, 1, 1);
+        assert_eq!(vec1.distance_to(vec2), 1.7320508);
+
+        let vec1 = Vec3::new(0 as i16, 0 as i16, 0 as i16);
+        let vec2 = Vec3::new(1, 0, 0);
+        assert_eq!(vec1.distance_to(vec2), 1.0);
+    }
+}
