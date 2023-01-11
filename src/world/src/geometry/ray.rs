@@ -1,11 +1,14 @@
-use crate::{geometry::rotation::SphericalRotation, plane::WorldPlane, positions::FineWorldPos};
+use super::rotation::SphericalRotation;
+use crate::{plane::WorldPlane, positions::FineWorldPos};
+use serde::{Deserialize, Serialize};
 use std::borrow::BorrowMut;
 
+#[derive(Serialize, Deserialize)]
 pub struct Ray {
     pub pos: FineWorldPos,
     /**
      * The direction the camera is rotated.
-     * i.e. which way it is pointing.
+     * i.e. which way it is t.
      */
     pub rot: SphericalRotation,
 }
@@ -30,7 +33,9 @@ impl Ray {
         // PlanePos[dim] = CameraPos[dim] + t * CameraRotation
         // t = (PlanePos[dim] - CameraPos[dim]) / CameraRotation
 
-        let t = (self.pos.get_component_from_direction(plane.direction) as f32
+        let t = (plane
+            .world_pos
+            .get_component_from_direction(plane.direction) as f32
             - self.pos.get_component_from_direction(plane.direction))
             / self
                 .rot
@@ -67,5 +72,13 @@ mod tests {
         let world_plane = WorldPlane::new(WorldPos::new(3, 0, 0), Direction::West);
 
         assert_eq!(ray.distance_from_plane(&world_plane), Some(3.0));
+
+        let ray = Ray {
+            pos: FineWorldPos::new(0.0, 0.0, 0.0),
+            rot: SphericalRotation::new(0.0, 0.0),
+        };
+        let world_plane = WorldPlane::new(WorldPos::new(3, 0, 0), Direction::North);
+
+        assert_eq!(ray.distance_from_plane(&world_plane), None);
     }
 }

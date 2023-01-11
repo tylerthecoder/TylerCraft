@@ -1,7 +1,9 @@
-use crate::{block::WorldBlock, direction::Direction, geometry::ray::Ray, plane::WorldPlane};
+use serde::{Deserialize, Serialize};
 
 use super::World;
+use crate::{block::WorldBlock, direction::Direction, geometry::ray::Ray, plane::WorldPlane};
 
+#[derive(Serialize, Deserialize)]
 pub struct LookingAt {
     /**
      * The block a camera is pointing at
@@ -18,7 +20,7 @@ pub struct LookingAt {
 }
 
 impl World {
-    fn get_pointed_at_block(&self, ray: Ray) -> Option<LookingAt> {
+    pub fn get_pointed_at_block(&self, ray: Ray) -> Option<LookingAt> {
         // n is how much the ray will march forward
         for n in 0..10 {
             let pointed_at = ray
