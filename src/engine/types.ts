@@ -79,7 +79,7 @@ export abstract class WorldModel {
   abstract deleteWorld(worldId: string): Promise<void>;
 }
 
-export const enum ISocketMessageType {
+export enum ISocketMessageType {
   // from client
   getChunk, // server sends setChunk
   newWorld, // server sends welcome

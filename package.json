@@ -5,6 +5,7 @@
     "src/engine",
     "src/server",
     "src/web/client",
+    "src/web/client-vite",
     "src/web/workers/terrain-generation",
     "src/world"
   ],
@@ -20,6 +21,7 @@
     "dist/**/*"
   ],
   "scripts": {
+    "ts:dev": "tsc -b -w",
     "dev": "concurrently -n web,server,world \"yarn web dev\" \"yarn server dev\" \"yarn world dev\"",
     "engine": "yarn workspace @craft/engine",
     "web": "yarn workspace @craft/web-client",

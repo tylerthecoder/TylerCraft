@@ -84,3 +84,27 @@ Built a lot of logic for determining collisions. I think the logic for looking a
 Been slowly creating more geometry code.
 
 Want to investigate any better build systems to get the multiple modules building in the right direction.
+
+## Things wanted in a build system
+
+- Build each module in a dependent way.
+- Have multiple apps share a single build command.
+
+rust world -> tsc builds each module -> webpack rebuilds
+
+- 1 command running to build all typescript in build mode
+  - Do this even to web processes like `client/web`. Webpack should not be running typescript, only tsc should be doing that.
+- 1 command for listen to changes in `client/web` that restarts the webpack server when code changes.
+  - webpack needs to process the javascript
+  - Use fork-ts-checker-webpack-plugin to check typescript errors? Or just have webpack only watch the ts generated js.
+- 1 command for listening to changes in `server` that restarts the server when code changes.
+- 1 command for building rust code, when rust code changes, engine should rebuild, which should rebuild everything.
+
+## 1 / 11 / 23
+
+Using vite for building the web client
+Seems to work almost perfectly out of the box. Had to change some imports around
+
+Esmodulified a lot of the code. Vite works like a charm, I think it is auto reloading when things change but seems slight infrequent.
+Need to work on a single typescript process that is running and build all the code / checking types.
+Vite is fucking fast though.

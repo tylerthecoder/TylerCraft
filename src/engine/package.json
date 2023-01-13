@@ -1,5 +1,6 @@
 {
 	"name": "@craft/engine",
+	"type": "module",
 	"version": "1.0.0",
 	"main": "./dist/index.js",
 	"module": "./dist/index.js",
@@ -11,12 +12,11 @@
 	},
 	"dependencies": {
 		"@craft/rust-world": "1.0.0",
-		"random": "^2.2.0",
+		"random": "^4.1.0",
 		"seedrandom": "^3.0.5",
 		"simplex-noise": "^2.4.0"
 	},
 	"devDependencies": {
-		"@types/mongodb": "^4.0.7",
 		"@types/random": "^2.1.1",
 		"@types/seedrandom": "^2.4.28"
 	}

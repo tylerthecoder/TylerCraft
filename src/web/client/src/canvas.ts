@@ -1,10 +1,10 @@
 import { CONFIG, Vector3D } from "@craft/engine";
 import type { Navigator, XRSession, XRFrame, XRWebGLLayer, XRReferenceSpace } from 'webxr';
 import { mat4 } from "gl-matrix";
-import VertexShader from "../shaders/vertex.glsl";
-import FragmentShader from "../shaders/fragment.glsl";
+import VertexShader from "../shaders/vertex.glsl?raw";
+import FragmentShader from "../shaders/fragment.glsl?raw";
 
-console.log(VertexShader);
+console.log("Vertex shader", VertexShader);
 
 const WebGlLayer = (window as any).XRWebGLLayer as typeof XRWebGLLayer;
 

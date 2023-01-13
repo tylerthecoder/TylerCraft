@@ -5,8 +5,6 @@ package:
 clean:
 	rm -rf node_modules dist
 
-
-
 deploy-pi:
 # Move to root directory
 	cd "$(dirname "$0")"

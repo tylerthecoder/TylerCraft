@@ -1,12 +1,3 @@
-
-// namespace BlockData {
-
-
-
-
-// }
-
-
 export enum BLOCKS {
   void = 0,
   stone = 1,

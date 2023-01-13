@@ -1,6 +1,7 @@
 const CopyPlugin = require("copy-webpack-plugin");
 const WebpackBuildNotifierPlugin = require('webpack-build-notifier');
 const path = require("path");
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 module.exports = {
   entry: {
@@ -25,7 +26,8 @@ module.exports = {
     ]),
     new WebpackBuildNotifierPlugin({
       title: "Tylercraft",
-    })
+    }),
+    new ForkTsCheckerWebpackPlugin()
   ],
   output: {
     path: path.resolve(__dirname, './dist'),
@@ -43,6 +45,7 @@ module.exports = {
         test: /\.tsx?$/,
         loader: "ts-loader",
         options: {
+          transpileOnly: true,
           configFile: 'tsconfig.json',
           projectReferences: true,
         }

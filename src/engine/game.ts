@@ -13,11 +13,7 @@ import {
 import { GameStateDiff, GameDiffDto } from "./gameStateDiff.js";
 import { Vector2D } from "./utils/vector.js";
 import { GameController } from "./controllers/controller.js";
-import WorldModule from "./modules.js";
 import CubeHelpers, { Cube } from "./entities/cube.js";
-
-// TODO need to await this somehow
-WorldModule.load();
 
 export interface ISerializedGame {
   config: IConfig;
