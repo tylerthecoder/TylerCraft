@@ -8,7 +8,6 @@ import WorldModule, { WorldModuleTypes } from "../modules.js";
 import { BLOCK_DATA } from "../blockdata.js";
 import { ICameraData } from "../camera.js";
 import { GameStateDiff } from "../gameStateDiff.js";
-import { ChunkMesh } from "./chunkMesh.js";
 
 
 export interface ISerializedWorld {
@@ -37,7 +36,7 @@ export class ChunkHolder {
   }
 
   has(pos: Vector2D): boolean {
-    return this.wasmWorld.has_chunk(pos.get(0), pos.get(1))
+    return this.wasmWorld.has_chunk_wasm(pos.toCartIntObj())
   }
 
   get(pos: Vector2D): Chunk | null {
@@ -59,6 +58,7 @@ export class World {
     data?: ISerializedWorld
   ): Promise<World> {
     console.log("Loading world")
+    await WorldModule.load();
     const wasmWorld = WorldModule.module.World.new_wasm();
     const world = new World(wasmWorld, chunkReader, data);
     await world.load();
@@ -71,11 +71,15 @@ export class World {
     private chunkReader: IChunkReader,
     data?: ISerializedWorld
   ) {
-    console.log("WASM world", this.wasmWorld);
+    console.log("wasm world", this.wasmWorld);
 
     if (data) {
       // this.terrainGenerator = new TerrainGenerator(this.hasChunk.bind(this), this.getChunkFromPos.bind(this), data.tg);
-      this.chunks.setAll(data.chunks.map(WorldModule.createChunkFromSerialized), this);
+      this.chunks.setAll(data.chunks.map(ser => {
+        const chunkPos = new Vector2D([ser.position.x, ser.position.y]);
+        const wasmChunk = WorldModule.module.Chunk.deserialize(ser);
+        return new Chunk(wasmChunk, chunkPos);
+      }));
     } else {
       // this.terrainGenerator = new TerrainGenerator(this.hasChunk.bind(this), this.getChunkFromPos.bind(this));
     }
@@ -134,10 +138,10 @@ export class World {
     return this.chunks.getAll();
   }
 
-  getChunkMesh(chunkPos: Vector2D): ChunkMesh {
+  // getChunkMesh(chunkPos: Vector2D): ChunkMesh {
     // TODO:
     // ask wasm for the chunk mesh.
-  }
+  // }
 
   getChunkFromWorldPoint(pos: Vector3D) {
     const chunkPos = World.worldPosToChunkPos(pos);
@@ -330,30 +334,7 @@ export class World {
     diff.chunk_ids.forEach(id => stateDiff.updateChunk(id));
   }
 
-  // TODO: move to wasm.
   lookingAt(camera: ICameraData): ILookingAtData | null {
-    let closestDist = Infinity;
-    let closestCube: ILookingAtData | null = null;
-
-    // loop over all chunks and then check if they are reachable
-    for (const chunk of this.chunks.getAll()) {
-      const isReachable = chunk.circleIntersect(
-        new Vector3D(camera.pos),
-        CONFIG.player.reach
-      );
-      if (!isReachable) continue;
-
-      const cubeData = chunk.lookingAt(camera);
-      if (
-        cubeData &&
-        closestDist > cubeData.dist &&
-        cubeData.dist < CONFIG.player.reach
-      ) {
-        closestDist = cubeData.dist;
-        closestCube = cubeData;
-      }
-    }
-
-    return closestCube;
+    return null;
   }
 }

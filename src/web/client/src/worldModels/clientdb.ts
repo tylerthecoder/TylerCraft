@@ -12,10 +12,10 @@ import {
   Vector2D,
   WorldModule,
 } from "@craft/engine";
-import TerrainWorker from "worker-loader!@craft/terrain-gen-worker/terrain.worker";
+import TerrainWorker from "../workers/terrain.worker?worker";
 
 export class ClientDb extends WorldModel {
-  private terrainWorker: TerrainWorker;
+  private terrainWorker: Worker;
 
   private static WORLDS_OBS = "worlds";
 

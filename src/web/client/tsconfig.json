@@ -3,15 +3,14 @@
   "compilerOptions": {
     "outDir": "./build",
     "lib": ["es2019", "dom", "WebWorker"],
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "types": ["vite/client"]
   },
   "include": ["./src/**/*"],
   "references": [
     {
       "path": "../../engine"
-    },
-    {
-      "path": "../workers/terrain-generation"
     }
   ]
 }

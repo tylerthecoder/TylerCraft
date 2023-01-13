@@ -9,6 +9,6 @@
 		"dev": "cargo watch -i pkg -i pkg-nodejs -s 'yarn build && yarn build:node'"
 	},
 	"module": "./pkg/world.js",
-	"main": "./pkg-nodejs/world.js",
-	"types": "pkg-nodejs/world.d.ts"
+	"main": "./pkg/world.js",
+	"types": "./pkg/world.d.ts"
 }

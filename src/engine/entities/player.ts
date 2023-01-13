@@ -6,11 +6,9 @@ import { CONFIG } from "../config.js";
 import { Direction, Vector3D } from "../utils/vector.js";
 import { IEntityType } from "./entityHolder.js";
 import { BLOCKS, ExtraBlockData } from "../blockdata.js";
-import { World } from "../world/world.js";
 import { ICameraData } from "../camera.js";
 import CubeHelpers from "./cube.js";
 import { Game } from "../game.js";
-
 
 export interface BeltDto {
   selectedBlock: BLOCKS

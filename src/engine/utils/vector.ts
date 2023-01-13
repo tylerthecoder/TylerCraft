@@ -258,6 +258,14 @@ export class Vector2D extends Vector<[number, number]> {
     return this.data.join(",");
   }
 
+  toCartIntObj(): {x: number, y: number} {
+    // convert numbers to ints
+    return {
+      x: Math.round(this.data[0]),
+      y: Math.round(this.data[1]),
+    }
+  }
+
   toCartesianCoords(): Vector2D {
     const r = this.data[0];
     const t = this.data[1];
