@@ -52,6 +52,7 @@ pub struct WorldBlock {
 
 impl WorldBlock {
     pub fn empty(world_pos: WorldPos) -> WorldBlock {
+        js_sys::Array::new();
         WorldBlock {
             block_type: BlockType::Void,
             extra_data: BlockData::None,

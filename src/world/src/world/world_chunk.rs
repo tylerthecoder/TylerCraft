@@ -1,5 +1,5 @@
 use crate::{
-    chunk::Chunk,
+    chunk::{chunk_mesh::ChunkMesh, Chunk},
     positions::{ChunkPos, WorldPos},
 };
 
@@ -47,7 +47,14 @@ impl World {
             })
             .collect();
 
-        self.chunks.insert(chunk.position.to_world_index(), chunk);
+        let chunk_index = chunk.position.to_world_index();
+        let chunk_pos = chunk.position.to_owned();
+
+        self.chunks.insert(chunk_index, chunk);
+        self.chunk_meshes.insert(chunk_index, ChunkMesh::default());
+
+        // TODO don't unwrap this error
+        self.update_chunk_mesh(&chunk_pos).unwrap();
 
         WorldStateDiff {
             chunk_ids: updated_chunk_ids,

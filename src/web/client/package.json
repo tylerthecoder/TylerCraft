@@ -3,11 +3,8 @@
 	"version": "1.0.0",
 	"type": "module",
 	"scripts": {
-		"build": "webpack",
-		"dev": "webpack --watch",
-		"dev:vite": "vite",
-		"build:vite": "vite build",
-		"build2": "node build.js",
+		"dev": "vite",
+		"build": "vite build",
 		"clean": "rm -rf dist build"
 	},
 	"dependencies": {

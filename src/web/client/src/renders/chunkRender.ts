@@ -1,5 +1,5 @@
 import { Renderer, RenderData } from "./renderer";
-import { Camera, Chunk, arraySub, BlockType, getBlockData, faceVectorToFaceNumber, IDim } from "@craft/engine";
+import { Camera, arraySub, BlockType, getBlockData, faceVectorToFaceNumber, IDim, ChunkMesh, Vector3D, Vector2D, BLOCKS } from "@craft/engine";
 import TextureMapper from "../textureMapper";
 import { ImageRenderer } from "./imageRender";
 import ShapeBuilder from "../services/shapeBuilder";
@@ -12,47 +12,21 @@ import { canvas } from "../canvas";
 export class ChunkRenderer extends Renderer {
   private otherRenders: Renderer[] = [];
 
-  constructor(public chunk: Chunk) {
+  constructor(public chunkMesh: ChunkMesh, public position: Vector2D) {
     super();
     this.setActiveTexture(canvas.textureAtlas);
     this.getBufferData();
+  }
 
-    // this.otherRenders.push(
-    //   new ImageRenderer(
-    //     chunk.pos.add(new Vector3D([2, 2, 2])),
-    //     0
-    //   )
-    // );
-
-    // const chunkRendererWorker = new ChunkRendererWorker();
-
-    // // get the surrounding chunks
-    // const surroundingChunks = Vector2D.edgeVectors
-    //   .map((dir) => world.getChunkFromPos(chunk.chunkPos.add(dir)))
-    //   .filter(chunk => Boolean(chunk))
-    //   .map(chunk => chunk?.serialize()) as ISerializedChunk[];
-
-    // chunkRendererWorker.postMessage({
-    //   chunk: chunk.serialize(),
-    //   surroundingChunks,
-    // });
-
-    // chunkRendererWorker.onmessage = (message: MessageEvent<IWorkerResponse>) => {
-    //   console.log(message);
-    //   const { positions, indices, textureCords, transIndices, transPositions, transTextureCords } = message.data;
-    //   this.isLoaded = true;
-    //   this.setBuffersData(positions, indices, textureCords, transPositions, transIndices, transTextureCords)
-    // }
-
-    // this.getBufferData(world);
-
+  get worldPos(): Vector3D {
+    return this.position.insert(0, 1);
   }
 
   render(camera: Camera, trans?: boolean): void {
     // if (!this.isLoaded) return;
     this.setActiveTexture(canvas.textureAtlas);
 
-    this.renderObject(this.chunk.pos.insert(0, 1).data as IDim, camera, trans);
+    this.renderObject(this.worldPos.data as IDim, camera, trans);
 
     this.otherRenders.forEach(r => {
       r.render(camera)
@@ -71,10 +45,12 @@ export class ChunkRenderer extends Renderer {
     const renData = new RenderData();
     const transRenData = new RenderData(true);
 
-    this.chunk.visibleCubesFaces.forEach((visibleFace) => {
-      const { cube, faceVectors } = visibleFace;
+    this.chunkMesh.mesh.forEach(face => {
+      const { block: cube, faces } = face;
 
-      const relativePos = arraySub(cube.pos.data, this.chunk.pos.insert(0, 1).data);
+      if (cube.type === BLOCKS.void) return;
+
+      const relativePos = arraySub(cube.pos.data, this.worldPos.data);
       const blockData = getBlockData(cube.type);
       const blockRenData = blockData.transparent ? transRenData : renData;
 
@@ -83,12 +59,10 @@ export class ChunkRenderer extends Renderer {
         case BlockType.fluid: {
           const texturePos = TextureMapper.getTextureCords(cube.type);
           // loop through all the faces to get their cords
-          for (const directionVector of faceVectors) {
-            const faceIndex = faceVectorToFaceNumber(directionVector);
+          for (const direction of faces) {
+            ShapeBuilder.buildFace(direction, blockRenData, relativePos, 1);
 
-            ShapeBuilder.buildFace(faceIndex, blockRenData, relativePos, 1);
-
-            const textureCords = texturePos[faceIndex];
+            const textureCords = texturePos[direction];
 
             blockRenData.pushData({ textureCords, });
           }
@@ -96,15 +70,16 @@ export class ChunkRenderer extends Renderer {
           break;
         }
         case BlockType.flat: {
-          const extraBlockData = this.chunk.getBlockData(cube.pos);
-          if (!extraBlockData) return;
-          console.log(extraBlockData, cube.pos);
-          const imageRender = new ImageRenderer(
-            cube.pos,
-            extraBlockData.face,
-          );
+          // TODO get extra data rendering working
+          // const extraBlockData = this.chunkMesh.getBlockData(cube.pos);
+          // if (!extraBlockData) return;
+          // console.log(extraBlockData, cube.pos);
+          // const imageRender = new ImageRenderer(
+          //   cube.pos,
+          //   extraBlockData.face,
+          // );
 
-          this.otherRenders.push(imageRender);
+          // this.otherRenders.push(imageRender);
           break;
         }
         case BlockType.x: {
@@ -121,7 +96,9 @@ export class ChunkRenderer extends Renderer {
           throw new Error("Block type not renderable")
         }
       }
-    });
+    })
+
+
     this.setBuffers(renData, transRenData);
   }
 }

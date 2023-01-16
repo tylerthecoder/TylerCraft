@@ -24,8 +24,8 @@ export type ISerializedCube = {
 }
 
 export type WasmCube = {
-  type: BLOCKS;
-  pos: { x: number, y: number, z: number };
+  block_type: BLOCKS;
+  world_pos: { x: number, y: number, z: number };
   extraData?: { Image: Direction } | "None";
 }
 
@@ -45,13 +45,19 @@ export const CUBE_DIM: IDim = [1, 1, 1];
 class CubeHelpersClass {
 
   fromWasmCube(cube: WasmCube): Cube {
-    return {
-      pos: new Vector3D([cube.pos.x, cube.pos.y, cube.pos.z]),
-      type: cube.type,
-      extraData: !cube.extraData || cube.extraData === "None" ? undefined : {
-        face: cube.extraData.Image,
-        galleryIndex: 0,
+    try {
+      return {
+        pos: new Vector3D([cube.world_pos.x, cube.world_pos.y, cube.world_pos.z]),
+        type: cube.block_type,
+        extraData: !cube.extraData || cube.extraData === "None" ? undefined : {
+          face: cube.extraData.Image,
+          galleryIndex: 0,
+        }
       }
+    } catch(err) {
+      console.log("Could not create cube from wasm cube", cube)
+      console.log(err);
+      throw err;
     }
   }
 

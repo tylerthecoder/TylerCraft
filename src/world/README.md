@@ -1,2 +1,2 @@
-Run unit tests with `cargo test`
+Run unit tests with `yarn test`
 Run

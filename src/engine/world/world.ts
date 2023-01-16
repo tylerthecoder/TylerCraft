@@ -1,13 +1,14 @@
-import CubeHelpers, { Cube, CUBE_DIM, ISerializedCube } from "../entities/cube.js";
+import CubeHelpers, { Cube, CUBE_DIM, ISerializedCube, WasmCube } from "../entities/cube.js";
 import { Chunk, ILookingAtData, ISerializedChunk } from "./chunk.js";
 import { Entity } from "../entities/entity.js";
 import { IChunkReader } from "../types.js";
 import { CONFIG } from "../config.js";
-import { Vector3D, Vector2D } from "../utils/vector.js";
+import { Vector3D, Vector2D, Direction } from "../utils/vector.js";
 import WorldModule, { WorldModuleTypes } from "../modules.js";
 import { BLOCK_DATA } from "../blockdata.js";
 import { ICameraData } from "../camera.js";
 import { GameStateDiff } from "../gameStateDiff.js";
+import { ChunkMesh } from "./chunkMesh.js";
 
 
 export interface ISerializedWorld {
@@ -25,14 +26,14 @@ export class ChunkHolder {
   setAll(chunks: Chunk[]): void {
     this.chunks = new Map(chunks.map(c => [c.pos.toIndex(), c]));
     console.log("Setting all");
-    chunks.forEach(c => this.wasmWorld.set_chunk_at_pos(c.serialize()));
+    chunks.forEach(c => this.wasmWorld.insert_chunk_wasm(c.serialize()));
   }
 
   addOrUpdate(chunk: Chunk): void {
-    console.log("Setting chunk at", chunk);
+    console.log("Setting chunk", chunk);
     this.chunks.set(chunk.pos.toIndex(), chunk);
     const serialized = chunk.serialize();
-    this.wasmWorld.set_chunk_at_pos(serialized);
+    this.wasmWorld.insert_chunk_wasm(serialized);
   }
 
   has(pos: Vector2D): boolean {
@@ -47,7 +48,6 @@ export class ChunkHolder {
     return Array.from(this.chunks.values());
   }
 }
-
 export class World {
   // public terrainGenerator: TerrainGenerator;
   private chunks = new ChunkHolder(this.wasmWorld);
@@ -115,6 +115,11 @@ export class World {
     ]);
   }
 
+  static chunkIdToChunkPos(chunkId: string): Vector2D {
+    const [x, y] = chunkId.split(",").map((s) => parseInt(s));
+    return new Vector2D([x, y]);
+  }
+
   // ===================
   //    Getters
   // ===================
@@ -138,36 +143,35 @@ export class World {
     return this.chunks.getAll();
   }
 
-  // getChunkMesh(chunkPos: Vector2D): ChunkMesh {
-    // TODO:
-    // ask wasm for the chunk mesh.
-  // }
-
   getChunkFromWorldPoint(pos: Vector3D) {
     const chunkPos = World.worldPosToChunkPos(pos);
     return this.getChunkFromPos(chunkPos);
   }
 
+  getChunkMesh(chunkPos: Vector2D): ChunkMesh {
+    console.log("Getting chunk mesh for ", chunkPos);
+    const wasmMesh: Array<[WasmCube, {data: Array<boolean>}]> = this.wasmWorld.get_chunk_mesh_wasm(chunkPos.toCartIntObj());
+
+    const betterMesh = wasmMesh.map(([cube, {data}]) => {
+      const block = CubeHelpers.fromWasmCube(cube);
+      const faces = data.map((b, i) => b ? i : -1).filter(i => i !== -1) as Direction[];
+      return {
+        block,
+        faces,
+      }
+    });
+
+    return new ChunkMesh(betterMesh, chunkPos.toCartIntObj());
+  }
+
   getBlockFromWorldPoint(pos: Vector3D): Cube | null {
-    // I think the error comes from calculating visible faces
-    // For some reason the block that we get back is not from thee correct chunk
-
-    if (!this.wasmWorld.is_block_loaded_wasm(pos.toCartIntObj())) {
-      throw new Error("Getting block that hasn't been loaded")
-    }
-
     const wasmBlock: ISerializedCube = this.wasmWorld.get_block_wasm(pos.toCartIntObj());
-
 
     const block: Cube = {
       pos: new Vector3D([wasmBlock.world_pos.x, wasmBlock.world_pos.y, wasmBlock.world_pos.z]),
       type: wasmBlock.block_type,
       // We aren't passing on extra block data just quite yet
       // extraData: wasmBlock.extra_data === "None" ? ,
-    }
-
-    if (block === null) {
-      return null;
     }
 
     return block;
@@ -180,6 +184,7 @@ export class World {
   }
 
   addOrUpdateChunk(chunk: Chunk) {
+
     this.chunks.addOrUpdate(chunk);
   }
 

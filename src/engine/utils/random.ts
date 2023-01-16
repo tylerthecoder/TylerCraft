@@ -7,8 +7,6 @@ class RandomClass {
   private _rndNoise: simplexNoise = new simplexNoise();
   private jagFactor = CONFIG.terrain.jagFactor;
 
-
-
   setSeed(seed: string) {
     console.log("Setting random seed", seed);
     random.use(seedrandom(seed));

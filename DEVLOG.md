@@ -108,3 +108,14 @@ Seems to work almost perfectly out of the box. Had to change some imports around
 Esmodulified a lot of the code. Vite works like a charm, I think it is auto reloading when things change but seems slight infrequent.
 Need to work on a single typescript process that is running and build all the code / checking types.
 Vite is fucking fast though.
+
+## 1 / 16 / 23
+
+I've been gotten the build working much quicker. The page still reloads twice when rust code changes.
+Seems like it is once when the `.rs` file changes and once when the `.js` file changes. Trying to find out how to disable that.
+
+Real issue seems to be that wasm_pack writes twice.
+
+## 1 / 17 / 23
+
+It now renders the chunks made in rust to the screen using the chunk mesh. Looks like it is including a couple extra faces that aren't needed but that can be fixed with time.

@@ -4,8 +4,6 @@ import { mat4 } from "gl-matrix";
 import VertexShader from "../shaders/vertex.glsl?raw";
 import FragmentShader from "../shaders/fragment.glsl?raw";
 
-console.log("Vertex shader", VertexShader);
-
 const WebGlLayer = (window as any).XRWebGLLayer as typeof XRWebGLLayer;
 
 export class CanvasProgram {

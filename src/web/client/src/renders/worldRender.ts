@@ -1,4 +1,4 @@
-import { World, Entity, CONFIG, Camera, Player, Projectile, BLOCKS, Vector2D, Vector3D } from "@craft/engine";
+import { World, Entity, CONFIG, Camera, Player, Projectile, BLOCKS, Vector2D, Vector3D, Chunk } from "@craft/engine";
 import { Renderer } from "./renderer";
 import { canvas } from "../canvas";
 import { ChunkRenderer } from "./chunkRender";
@@ -22,11 +22,11 @@ export default class WorldRenderer {
   }
 
   blockUpdate(chunkId: string) {
-    // TODO:
-    // instead of getting a chunk renderer, make a new one with the mesh
-    // from the world.
-    const chunkToUpdate = this.chunkRenderers.get(chunkId);
-    if (chunkToUpdate) chunkToUpdate.getBufferData();
+    const chunkPos = World.chunkIdToChunkPos(chunkId);
+    const chunkMesh = this.world.getChunkMesh(chunkPos);
+    const chunkRenderer = new ChunkRenderer(chunkMesh, chunkPos);
+    chunkRenderer.getBufferData();
+    this.chunkRenderers.set(chunkId, chunkRenderer);
   }
 
   getFilter(camera: Camera): Vector3D | null {
@@ -55,6 +55,10 @@ export default class WorldRenderer {
     }
   }
 
+  addChunk(chunk: Chunk) {
+    this.blockUpdate(chunk.pos.toIndex());
+  }
+
   removeEntity(uid: string) {
     this.entityRenderers.delete(uid);
   }
@@ -63,26 +67,13 @@ export default class WorldRenderer {
     const chunk = this.world.getChunkFromPos(chunkPos, { loadIfNotFound: true });
 
     if (!chunk) {
-      // console.log("Chunk not found, loading");
       return;
     }
 
+    const chunkRenderer = this.chunkRenderers.get(chunkPos.toIndex());
 
-    let chunkRenderer = this.chunkRenderers.get(chunkPos.toIndex());
-
-    // this is a new chunk we haven't seen yet
     if (!chunkRenderer) {
-
-      // Go through and render the touching chunks
-      // not ideal but it is what needs to be done to make sure that the visible faces are rendered correctly
-      // maybe put on another thread later.
-      this.blockUpdate(chunkPos.add(new Vector2D([0, 1])).toIndex());
-      this.blockUpdate(chunkPos.add(new Vector2D([1, 0])).toIndex());
-      this.blockUpdate(chunkPos.add(new Vector2D([0, -1])).toIndex());
-      this.blockUpdate(chunkPos.add(new Vector2D([-1, 0])).toIndex());
-
-      chunkRenderer = new ChunkRenderer(chunk);
-      this.chunkRenderers.set(chunkPos.toIndex(), chunkRenderer);
+      return;
     }
 
     renderedSet.add(chunkRenderer);

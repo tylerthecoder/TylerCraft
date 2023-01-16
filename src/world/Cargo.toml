@@ -3,6 +3,9 @@ name = "world"
 version = "0.1.0"
 authors = ["Tyler Tracy <tylertracy1999@gmail.com>"]
 edition = "2018"
+description = "Logic for a world"
+repository = "https://www.github.com"
+license = "GPL2"
 
 [lib]
 crate-type = ["cdylib", "rlib"]

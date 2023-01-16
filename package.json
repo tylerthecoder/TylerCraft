@@ -21,7 +21,7 @@
     "dist/**/*"
   ],
   "scripts": {
-    "ts:dev": "tsc -b -w",
+    "ts:dev": "tsc -b -w src",
     "dev": "concurrently -n web,server,world \"yarn web dev\" \"yarn server dev\" \"yarn world dev\"",
     "engine": "yarn workspace @craft/engine",
     "web": "yarn workspace @craft/web-client",

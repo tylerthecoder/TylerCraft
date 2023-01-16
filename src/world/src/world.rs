@@ -3,6 +3,7 @@ use crate::chunk::chunk_mesh::ChunkMesh;
 use crate::chunk::Chunk;
 use crate::direction::{Direction, Directions};
 use crate::positions::{ChunkPos, WorldPos};
+use crate::utils::js_log;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::{self, fmt};
@@ -75,6 +76,7 @@ impl World {
         &mut self,
         world_block: &WorldBlock,
     ) -> Result<WorldStateDiff, ChunkNotLoadedError> {
+        js_log(&format!("Adding block at {:?}", world_block.world_pos));
         let chunk = self.get_mut_chunk(&world_block.world_pos.to_chunk_pos())?;
         let chunk_block = world_block.to_chunk_block();
         chunk.add_block(chunk_block);
@@ -168,6 +170,7 @@ impl World {
 
     fn update_chunk_mesh(&mut self, chunk_pos: &ChunkPos) -> Result<(), ChunkNotLoadedError> {
         let chunk = self.get_chunk(chunk_pos)?;
+        js_log(&format!("Recalculating chunk mesh for {:?}", chunk_pos));
         for block in chunk.get_all_blocks() {
             self.update_mesh_at_pos(block.pos.to_world_pos(chunk_pos))
                 .ok();

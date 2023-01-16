@@ -19,7 +19,6 @@ class Belt {
   public items: [BLOCKS, number][] = [];
 
   constructor() {
-    console.log("Constructing", this.selectedIndex);
     this.items = [
       [BLOCKS.cloud, 1],
       [BLOCKS.gold, 1],
