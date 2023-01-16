@@ -1,13 +1,11 @@
 import { Cube } from "../entities/cube.js";
 import { CONFIG } from "../config.js";
-import { Vector3D, Vector2D } from "../utils/vector.js";
+import { Vector3D, Vector2D, Direction } from "../utils/vector.js";
 import { BlockType } from "../blockdata.js";
 import { WorldModuleTypes } from "../modules.js";
 export interface ILookingAtData {
-  newCubePos: Vector3D;
-  cube?: Cube;
-  // The face number (0 - 5) that is being looked at
-  face: number;
+  cube: Cube;
+  face: Direction;
   dist: number;
 }
 

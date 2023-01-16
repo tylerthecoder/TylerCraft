@@ -7,10 +7,7 @@ use crate::{
 
 #[test]
 fn gets_all_blocks() {
-    // Make a world
     let mut world = World::default();
-
-    // Make a chunk
     let chunk_pos = ChunkPos { x: -2, y: -3 };
     let mut chunk = Chunk::new(chunk_pos);
 
@@ -42,7 +39,6 @@ fn gets_all_blocks() {
         .map(|block| block.to_world_block(&chunk_pos.to_owned()))
         .for_each(|world_block| {
             let true_world_block = world.get_block(&world_block.world_pos);
-            assert_eq!(true_world_block.block_type, world_block.block_type);
             assert_eq!(world_block, true_world_block);
         });
 }

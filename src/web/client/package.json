@@ -9,22 +9,14 @@
 	},
 	"dependencies": {
 		"@craft/engine": "1.0.0",
-		"@craft/terrain-gen-worker": "1.0.0",
 		"gl-matrix": "2.4.0"
 	},
 	"devDependencies": {
 		"@types/gl-matrix": "^2.4.5",
 		"@types/webxr": "^0.2.3",
-		"copy-webpack-plugin": "^5.0.3",
-		"fork-ts-checker-webpack-plugin": "^7.3.0",
-		"ts-loader": "^9.3.1",
 		"typescript": "^4.7.4",
 		"vite": "^4.0.4",
 		"vite-plugin-top-level-await": "^1.2.2",
-		"vite-plugin-wasm": "^3.1.1",
-		"webpack": "^5.73.0",
-		"webpack-build-notifier": "^2.1.1",
-		"webpack-cli": "^4.10.0",
-		"worker-loader": "^3.0.8"
+		"vite-plugin-wasm": "^3.1.1"
 	}
 }

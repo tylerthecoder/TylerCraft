@@ -1,7 +1,6 @@
+use super::{world_block::WorldBlock, World};
+use crate::{direction::Direction, geometry::ray::Ray, plane::WorldPlane};
 use serde::{Deserialize, Serialize};
-
-use super::World;
-use crate::{block::WorldBlock, direction::Direction, geometry::ray::Ray, plane::WorldPlane};
 
 #[derive(Serialize, Deserialize)]
 pub struct LookingAt {
@@ -64,23 +63,5 @@ impl World {
             }
         }
         None
-    }
-}
-
-// Tests
-
-#[cfg(test)]
-mod test {
-    use crate::{
-        positions::{ChunkPos, InnerChunkPos},
-        world::World,
-    };
-
-    #[test]
-    fn adds_chunks() {
-        let mut world = World::default();
-
-        let chunk_pos = ChunkPos::new(0, 0);
-        let inner_chunk_pos = InnerChunkPos::new(0, 0, 1);
     }
 }

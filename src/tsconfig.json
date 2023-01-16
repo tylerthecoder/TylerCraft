@@ -6,9 +6,6 @@
     },
     {
       "path": "./web/client"
-    },
-    {
-      "path": "./server"
     }
   ],
   "watchOptions": {

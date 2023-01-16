@@ -1,4 +1,4 @@
-import { ICameraData } from "./camera.js";
+import { CameraRay, ICameraData } from "./camera.js";
 import { Player } from "./entities/player.js";
 import { Game } from "./game.js";
 import { IDim } from "./types.js";
@@ -51,11 +51,11 @@ export interface GameActionData extends Record<GameAction, unknown> {
 	},
 	[GameAction.PlaceBlock]: {
 		playerUid: string;
-		cameraData: ICameraData;
+		cameraData: CameraRay;
 	},
 	[GameAction.RemoveBlock]: {
 		playerUid: string;
-		cameraData: ICameraData;
+		cameraData: CameraRay;
 	}
 	[GameAction.ChangeName]: {
 		name: string;

@@ -9,6 +9,7 @@ import { BLOCK_DATA } from "../blockdata.js";
 import { ICameraData } from "../camera.js";
 import { GameStateDiff } from "../gameStateDiff.js";
 import { ChunkMesh } from "./chunkMesh.js";
+import { Camera, CameraRay } from "../index.js";
 
 
 export interface ISerializedWorld {
@@ -149,7 +150,6 @@ export class World {
   }
 
   getChunkMesh(chunkPos: Vector2D): ChunkMesh {
-    console.log("Getting chunk mesh for ", chunkPos);
     const wasmMesh: Array<[WasmCube, {data: Array<boolean>}]> = this.wasmWorld.get_chunk_mesh_wasm(chunkPos.toCartIntObj());
 
     const betterMesh = wasmMesh.map(([cube, {data}]) => {
@@ -161,20 +161,14 @@ export class World {
       }
     });
 
+    console.log("Got chunk mesh for ", chunkPos, betterMesh);
+
     return new ChunkMesh(betterMesh, chunkPos.toCartIntObj());
   }
 
   getBlockFromWorldPoint(pos: Vector3D): Cube | null {
     const wasmBlock: ISerializedCube = this.wasmWorld.get_block_wasm(pos.toCartIntObj());
-
-    const block: Cube = {
-      pos: new Vector3D([wasmBlock.world_pos.x, wasmBlock.world_pos.y, wasmBlock.world_pos.z]),
-      type: wasmBlock.block_type,
-      // We aren't passing on extra block data just quite yet
-      // extraData: wasmBlock.extra_data === "None" ? ,
-    }
-
-    return block;
+    return CubeHelpers.fromWasmCube(wasmBlock);
   }
 
   updateChunk(chunkPos: Vector2D, chunkData: ISerializedChunk) {
@@ -184,7 +178,6 @@ export class World {
   }
 
   addOrUpdateChunk(chunk: Chunk) {
-
     this.chunks.addOrUpdate(chunk);
   }
 
@@ -243,8 +236,6 @@ export class World {
     }
   }
 
-  // soon only check chunks the entity is in
-  // Only "loaded" chunks should be doing this
   pushOut(ent: Entity) {
     const entDim = ent instanceof Entity ? ent.dim : CUBE_DIM;
 
@@ -273,40 +264,14 @@ export class World {
         for (let z = 0; z < entDim[2]; z++) {
           const centerZ = z + 0.5;
           const center = ent.pos.add(new Vector3D([centerX, centerY, centerZ]));
-
           // check the unit vectors first
-          for (const vec of Vector3D.unitVectors) {
-            const checkingPos = center.add(vec);
-            ifCubeExistThenPushOut(checkingPos);
-          }
-
-          for (const vec of Vector3D.edgeVectors) {
-            const checkingPos = center.add(vec);
-            ifCubeExistThenPushOut(checkingPos);
-          }
-
-          for (const vec of Vector3D.cornerVectors) {
+          for (const vec of [...Vector3D.unitVectors, ...Vector3D.edgeVectors, ...Vector3D.cornerVectors]) {
             const checkingPos = center.add(vec);
             ifCubeExistThenPushOut(checkingPos);
           }
         }
       }
     }
-
-    // const inChunk = this.getChunkFromWorldPoint(ent.pos);
-    // if (!inChunk) return;
-
-    // const chunksToCheck: Chunk[] = [inChunk];
-
-    // Vector2D.unitVectors.forEach(unitDir => {
-    //   const otherChunkPos = inChunk.chunkPos.add(unitDir);
-    //   const otherChunk = this.getChunkFromPos(otherChunkPos);
-    //   if (otherChunk) chunksToCheck.push(otherChunk);
-    // });
-
-    // for (const chunk of chunksToCheck) {
-    //   chunk.pushOut(ent);
-    // }
   }
 
   addBlock(stateDiff: GameStateDiff, cube: Cube) {
@@ -339,7 +304,22 @@ export class World {
     diff.chunk_ids.forEach(id => stateDiff.updateChunk(id));
   }
 
-  lookingAt(camera: ICameraData): ILookingAtData | null {
-    return null;
+  lookingAt(camera: CameraRay): ILookingAtData | null {
+    const lookingData: {
+      block: ISerializedCube,
+      face: Direction,
+      distance: number,
+    } | null = this.wasmWorld.get_pointed_at_block_wasm(camera);
+
+    console.log("Cam looking at ", lookingData, camera)
+
+
+    if (!lookingData) return null;
+
+    return {
+      cube: CubeHelpers.fromWasmCube(lookingData.block),
+      face: lookingData.face,
+      dist: lookingData.distance,
+    }
   }
 }

@@ -6,7 +6,7 @@ use crate::{
 #[cfg(test)]
 mod unit_tests;
 
-pub type InnerChunkPos = Vec3<i8>;
+pub type InnerChunkPos = Vec3<u8>;
 pub type WorldPos = Vec3<i32>;
 pub type ChunkPos = Vec2<i16>;
 pub type FineWorldPos = Vec3<f32>;
@@ -20,9 +20,9 @@ impl InnerChunkPos {
     }
 
     pub fn make_from_chunk_index(index: usize) -> InnerChunkPos {
-        let x_part = (index >> (4 + 6)) as i8;
-        let y_part = ((index & 01111110000) >> 4) as i8;
-        let z_part = (index & 0b1111) as i8;
+        let x_part = (index >> (4 + 6)) as u8;
+        let y_part = ((index & 0b1111110000) >> 4) as u8;
+        let z_part = (index & 0b1111) as u8;
         InnerChunkPos::new(x_part, y_part, z_part)
     }
 
@@ -30,17 +30,20 @@ impl InnerChunkPos {
         chunk_pos
             .scalar_mul(CHUNK_WIDTH)
             .move_to_3d(0)
-            .map(|x| x as i8)
-            .add_vec(*self)
+            .add_vec(self.map(|x| x as i16))
             .map(|x| x as i32)
     }
 }
 
 impl WorldPos {
+    pub fn is_valid(&self) -> bool {
+        self.y >= 0 && self.y < 256
+    }
+
     pub fn to_inner_chunk_pos(&self) -> InnerChunkPos {
-        let x = ((self.x as i8 % 16) + 16) % 16;
-        let y = self.y as i8;
-        let z = ((self.z as i8 % 16) + 16) % 16;
+        let x = (((self.x as i8 % 16) + 16) % 16) as u8;
+        let y = self.y as u8;
+        let z = (((self.z as i8 % 16) + 16) % 16) as u8;
         InnerChunkPos::new(x, y, z)
     }
 

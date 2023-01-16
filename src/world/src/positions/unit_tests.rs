@@ -12,6 +12,18 @@ fn index_conversion() {
 }
 
 #[test]
+fn inner_chunk_pos_to_chunk_index() {
+    fn do_test(inner_chunk_pos: InnerChunkPos) {
+        let index = inner_chunk_pos.to_chunk_index();
+        let inner_chunk_pos2 = InnerChunkPos::make_from_chunk_index(index);
+        assert_eq!(inner_chunk_pos, inner_chunk_pos2);
+    }
+
+    do_test(InnerChunkPos::new(0, 0, 0));
+    do_test(InnerChunkPos::new(15, 15, 15));
+}
+
+#[test]
 fn inner_chunk_pos_to_world_pos() {
     fn do_test(inner_chunk_pos: InnerChunkPos, chunk_pos: ChunkPos, world_pos: WorldPos) {
         assert_eq!(inner_chunk_pos.to_world_pos(&chunk_pos), world_pos);
@@ -37,7 +49,17 @@ fn inner_chunk_pos_to_world_pos() {
             y: 2,
             z: -13,
         },
-    )
+    );
+
+    do_test(
+        InnerChunkPos::new(15, 0, 15),
+        ChunkPos { x: -2, y: -3 },
+        WorldPos {
+            x: -17,
+            y: 0,
+            z: -33,
+        },
+    );
 }
 
 #[test]
