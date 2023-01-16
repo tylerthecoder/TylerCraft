@@ -1,19 +1,18 @@
-use crate::block::WorldBlock;
+use self::world_block::WorldBlock;
 use crate::chunk::chunk_mesh::ChunkMesh;
 use crate::chunk::Chunk;
 use crate::direction::{Direction, Directions};
 use crate::positions::{ChunkPos, WorldPos};
-use crate::utils::js_log;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::{self, fmt};
 use wasm_bindgen::prelude::*;
 
+pub mod world_block;
 mod world_chunk;
 mod world_duct;
 mod world_intersection;
-#[cfg(test)]
-mod world_unit_test;
+mod world_mesh;
 
 extern crate web_sys;
 
@@ -76,7 +75,6 @@ impl World {
         &mut self,
         world_block: &WorldBlock,
     ) -> Result<WorldStateDiff, ChunkNotLoadedError> {
-        js_log(&format!("Adding block at {:?}", world_block.world_pos));
         let chunk = self.get_mut_chunk(&world_block.world_pos.to_chunk_pos())?;
         let chunk_block = world_block.to_chunk_block();
         chunk.add_block(chunk_block);
@@ -102,6 +100,9 @@ impl World {
         let mut adjacent_blocks = HashMap::new();
         for direction in Directions::all() {
             let adjacent_pos = world_pos.move_direction(&direction);
+            if !adjacent_pos.is_valid() {
+                continue;
+            }
             let block = self.get_block(&adjacent_pos);
             adjacent_blocks.insert(direction, block);
         }
@@ -125,86 +126,30 @@ impl World {
         chunk.remove_block(&world_pos.to_inner_chunk_pos());
         Ok(self.update_chunks_around_block(world_pos))
     }
+}
 
-    /* Mesh Logic */
-    fn update_mesh_at_pos(&mut self, world_pos: WorldPos) -> Result<(), ChunkNotLoadedError> {
-        let world_block = self.get_block(&world_pos);
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::block::{BlockData, BlockType};
+    use crate::positions::WorldPos;
 
-        let faces = world_block.get_visible_faces(self.get_adjacent_blocks(&world_pos));
+    #[test]
+    fn get_adjacent_blocks() {
+        let mut world = World::default();
+        let chunk = Chunk::new(ChunkPos { x: 0, y: 0 });
+        world.insert_chunk(chunk);
+        let world_pos = WorldPos::new(0, 0, 0);
+        let block = WorldBlock {
+            block_type: BlockType::Cloud,
+            extra_data: BlockData::None,
+            world_pos,
+        };
+        world.add_block(&block).unwrap();
 
-        let chunk_mesh = self.get_chunk_mesh_mut(&world_pos.to_chunk_pos())?;
+        let adjacent_blocks = world.get_adjacent_blocks(&world_pos);
 
-        chunk_mesh
-            .face_map
-            .insert(world_pos.to_inner_chunk_pos().to_chunk_index(), faces);
-
-        Ok(())
-    }
-
-    fn get_mesh_at_pos(&self, world_pos: WorldPos) -> Result<Directions, ChunkNotLoadedError> {
-        self.get_chunk_mesh(&world_pos.to_chunk_pos())
-            .and_then(|mesh| {
-                let dirs = mesh
-                    .face_map
-                    .get(&world_pos.to_inner_chunk_pos().to_chunk_index())
-                    .unwrap_or(&Directions::empty())
-                    .to_owned();
-                Ok(dirs)
-            })
-    }
-
-    fn get_chunk_mesh(&self, chunk_pos: &ChunkPos) -> Result<&ChunkMesh, ChunkNotLoadedError> {
-        self.chunk_meshes
-            .get(&chunk_pos.to_world_index())
-            .ok_or(ChunkNotLoadedError)
-    }
-
-    fn get_chunk_mesh_mut(
-        &mut self,
-        chunk_pos: &ChunkPos,
-    ) -> Result<&mut ChunkMesh, ChunkNotLoadedError> {
-        self.chunk_meshes
-            .get_mut(&chunk_pos.to_world_index())
-            .ok_or(ChunkNotLoadedError)
-    }
-
-    fn update_chunk_mesh(&mut self, chunk_pos: &ChunkPos) -> Result<(), ChunkNotLoadedError> {
-        let chunk = self.get_chunk(chunk_pos)?;
-        js_log(&format!("Recalculating chunk mesh for {:?}", chunk_pos));
-        for block in chunk.get_all_blocks() {
-            self.update_mesh_at_pos(block.pos.to_world_pos(chunk_pos))
-                .ok();
-        }
-        Ok(())
-    }
-
-    /**
-     * Updates all chunks surrounding a block.
-     * Does not update the chunk the block is in.
-     */
-    fn update_chunks_around_block(&mut self, world_pos: &WorldPos) -> WorldStateDiff {
-        // Check to see if any of the adjacent blocks are in different chunks.
-        // Don't need to filter out duplicates since they aren't possible
-        let updated_ids: Vec<String> = world_pos
-            .get_adjacent_vecs()
-            .iter()
-            // Map to chunk id
-            .map(|world_pos: &WorldPos| world_pos.to_chunk_pos())
-            // Don't include the current chunk
-            .filter(|chunk_pos: &ChunkPos| chunk_pos != &world_pos.to_chunk_pos())
-            // Map to chunk
-            .filter_map(|chunk_pos: ChunkPos| {
-                // Forget about the result, if the chunk isn't loaded, it doesn't matter
-                if self.update_chunk_mesh(&chunk_pos).is_ok() {
-                    Some(chunk_pos.to_index())
-                } else {
-                    None
-                }
-            })
-            .collect();
-
-        WorldStateDiff {
-            chunk_ids: updated_ids,
-        }
+        // Five because there is no block below me
+        assert_eq!(adjacent_blocks.len(), 5);
     }
 }

@@ -161,7 +161,7 @@ export class MobileController extends GameController {
       e.preventDefault();
       e.stopPropagation();
       this.game.handleAction(GameAction.PlaceBlock, {
-        cameraData: this.clientGame.camera.getCameraData(),
+        cameraData: this.clientGame.camera.getRay(),
         playerUid: this.clientGame.mainPlayer.uid,
       });
     });
@@ -181,7 +181,7 @@ export class MobileController extends GameController {
       e.stopPropagation();
       console.log("Removing")
       this.game.handleAction(GameAction.RemoveBlock, {
-        cameraData: this.clientGame.camera.getCameraData(),
+        cameraData: this.clientGame.camera.getRay(),
         playerUid: this.clientGame.mainPlayer.uid,
       });
     });

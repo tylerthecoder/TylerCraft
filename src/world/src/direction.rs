@@ -36,12 +36,9 @@ impl Directions {
         Directions { data: [false; 6] }
     }
 
-    // pub fn iter(&self) -> Vec<Direction> {
-    //     (0..6)
-    //         .filter_map(|i| if self.data[i] { Some(i) } else { None })
-    //         .map(move |i| Direction::from_index(i))
-    //         .collect()
-    // }
+    pub fn remove_direction(&mut self, direction: Direction) {
+        self.data[direction as usize] = false;
+    }
 
     pub fn create_for_direction(direction: Direction) -> Directions {
         let mut data = [false; 6];

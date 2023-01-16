@@ -1,9 +1,8 @@
+use super::{ChunkNotLoadedError, World, WorldStateDiff};
 use crate::{
     chunk::{chunk_mesh::ChunkMesh, Chunk},
     positions::{ChunkPos, WorldPos},
 };
-
-use super::{ChunkNotLoadedError, World, WorldStateDiff};
 
 impl World {
     pub fn get_chunk(&self, chunk_pos: &ChunkPos) -> Result<&Chunk, ChunkNotLoadedError> {
@@ -50,8 +49,10 @@ impl World {
         let chunk_index = chunk.position.to_world_index();
         let chunk_pos = chunk.position.to_owned();
 
+        let chunk_mesh = ChunkMesh::new(chunk_pos);
+
         self.chunks.insert(chunk_index, chunk);
-        self.chunk_meshes.insert(chunk_index, ChunkMesh::default());
+        self.chunk_meshes.insert(chunk_index, chunk_mesh);
 
         // TODO don't unwrap this error
         self.update_chunk_mesh(&chunk_pos).unwrap();
@@ -74,8 +75,8 @@ mod tests {
     use crate::{
         block::{BlockData, BlockType, ChunkBlock},
         chunk::Chunk,
-        positions::{ChunkPos, InnerChunkPos},
-        world::World,
+        positions::{ChunkPos, InnerChunkPos, WorldPos},
+        world::{world_block::WorldBlock, World},
     };
 
     #[test]
@@ -102,5 +103,49 @@ mod tests {
         let same_block = same_chunk.get_block(&inner_chunk_pos);
 
         assert_eq!(same_block.block_type, BlockType::Cloud);
+    }
+
+    #[test]
+    fn adds_blocks() {
+        let mut world = World::default();
+
+        let block_pos = WorldPos::new(0, 0, 0);
+
+        let chunk = Chunk::new(ChunkPos { x: 0, y: 0 });
+
+        // In the first chunk
+        world.insert_chunk(chunk);
+
+        let world_block = WorldBlock {
+            block_type: BlockType::Cloud,
+            extra_data: BlockData::None,
+            world_pos: block_pos,
+        };
+
+        world.add_block(&world_block).unwrap();
+
+        let block = world.get_block(&block_pos);
+
+        assert_eq!(block.block_type, BlockType::Cloud);
+        assert_eq!(block.extra_data, BlockData::None);
+
+        // In a different chunk
+        let chunk2 = Chunk::new(ChunkPos { x: 1, y: 0 });
+        let block_pos = WorldPos::new(16, 0, 0);
+
+        let world_block = WorldBlock {
+            block_type: BlockType::Gold,
+            extra_data: BlockData::None,
+            world_pos: block_pos,
+        };
+
+        world.insert_chunk(chunk2);
+
+        world.add_block(&world_block).unwrap();
+
+        let block = world.get_block(&block_pos);
+
+        assert_eq!(block.block_type, BlockType::Gold);
+        assert_eq!(block.extra_data, BlockData::None);
     }
 }

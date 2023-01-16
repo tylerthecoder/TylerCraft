@@ -43,6 +43,7 @@ export function getBlockData(block: BLOCKS) {
 BLOCK_DATA.set(BLOCKS.void, {
   gravitable: false,
   blockType: BlockType.cube,
+  intangible: true,
 });
 BLOCK_DATA.set(BLOCKS.grass, {
   gravitable: false,

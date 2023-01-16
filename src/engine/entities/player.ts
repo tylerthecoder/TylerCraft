@@ -6,7 +6,7 @@ import { CONFIG } from "../config.js";
 import { Direction, Vector3D } from "../utils/vector.js";
 import { IEntityType } from "./entityHolder.js";
 import { BLOCKS, ExtraBlockData } from "../blockdata.js";
-import { ICameraData } from "../camera.js";
+import { Camera, CameraRay, ICameraData } from "../camera.js";
 import CubeHelpers from "./cube.js";
 import { Game } from "../game.js";
 
@@ -240,8 +240,8 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
   }
 
   // TODO get camera data from the player's rot
-  useItem(game: Game, cameraData: ICameraData) {
-    const lookingData = game.world.lookingAt(cameraData);
+  useItem(game: Game, camera: CameraRay) {
+    const lookingData = game.world.lookingAt(camera);
     if (!lookingData) return;
     const { cube } = lookingData;
     if (!cube) return;
@@ -257,9 +257,13 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
       }
     }
 
+    const newCubePos = lookingData.cube.pos.add(
+      Vector3D.fromDirection(lookingData.face)
+    );
+
     const newCube = CubeHelpers.createCube(
       blockType,
-      lookingData.newCubePos as Vector3D,
+      newCubePos,
       extraBlockData,
     );
 

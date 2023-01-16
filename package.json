@@ -6,7 +6,6 @@
     "src/server",
     "src/web/client",
     "src/web/client-vite",
-    "src/web/workers/terrain-generation",
     "src/world"
   ],
   "license": "MIT",
@@ -26,7 +25,6 @@
     "engine": "yarn workspace @craft/engine",
     "web": "yarn workspace @craft/web-client",
     "server": "yarn workspace @craft/server",
-    "terrain-worker": "yarn workspace @craft/terrain-gen-worker",
     "world": "yarn workspace @craft/rust-world"
   },
   "dependencies": {

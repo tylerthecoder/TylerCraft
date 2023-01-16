@@ -152,14 +152,14 @@ export class MouseAndKeyController extends GameController<GameAction[]> {
 
   placeBlock() {
     this.game.handleAction(GameAction.PlaceBlock, {
-      cameraData: this.clientGame.camera.getCameraData(),
+      cameraData: this.clientGame.camera.getRay(),
       playerUid: this.clientGame.mainPlayer.uid,
     });
   }
 
   removeBlock() {
     this.game.handleAction(GameAction.RemoveBlock, {
-      cameraData: this.clientGame.camera.getCameraData(),
+      cameraData: this.clientGame.camera.getRay(),
       playerUid: this.clientGame.mainPlayer.uid,
     })
   }
