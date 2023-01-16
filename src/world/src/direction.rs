@@ -7,10 +7,10 @@ use wasm_bindgen::prelude::wasm_bindgen;
 pub enum Direction {
     North = 0,
     South = 1,
-    East = 2,
-    West = 3,
-    Up = 4,
-    Down = 5,
+    Up = 2,
+    Down = 3,
+    East = 4,
+    West = 5,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]

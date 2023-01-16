@@ -5,6 +5,8 @@
     "lib": ["es2019", "dom", "WebWorker"],
     "skipLibCheck": true,
     "isolatedModules": true,
+    "module": "ESNext",
+    "moduleResolution": "node",
     "types": ["vite/client"]
   },
   "include": ["./src/**/*"],

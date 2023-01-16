@@ -21,7 +21,7 @@ impl<T> Vec2<T> {
     where
         T: Display,
     {
-        format!("{} {}", self.x, self.y).as_str().to_owned()
+        format!("{},{}", self.x, self.y).as_str().to_owned()
     }
 
     pub fn scalar_mul(&self, val: T) -> Vec2<T>
@@ -154,7 +154,7 @@ impl<T: Add<Output = T> + Sub<Output = T> + Mul<T, Output = T> + Copy> Vec3<T> {
     where
         T: Display,
     {
-        format!("{} {} {}", self.x, self.y, self.z)
+        format!("{},{},{}", self.x, self.y, self.z)
             .as_str()
             .to_owned()
     }

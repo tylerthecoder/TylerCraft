@@ -92,8 +92,8 @@ export class TerrainGenerator {
     return BLOCKS.grass;
   }
 
-  async generateChunk(chunkPos: Vector2D): Promise<Chunk> {
-    const chunk = await WorldModule.createChunk(chunkPos);
+  generateChunk(chunkPos: Vector2D): Chunk {
+    const chunk = WorldModule.createChunk(chunkPos);
 
     const worldPos = World.chunkPosToWorldPos(chunkPos).data;
 

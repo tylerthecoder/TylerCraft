@@ -25,7 +25,7 @@ export interface IImageBlockData {
 
 export type ExtraBlockData = IImageBlockData | undefined;
 
-interface BlockMetaData {
+export interface BlockMetaData {
   gravitable: boolean;
   blockType: BlockType;
   transparent?: boolean;
@@ -36,10 +36,14 @@ export const BLOCK_DATA: Map<BLOCKS, BlockMetaData> = new Map()
 
 export function getBlockData(block: BLOCKS) {
   const data = BLOCK_DATA.get(block);
-  if (!data) throw new Error("Block data not found");
+  if (!data) throw new Error("Block data not found for " + block);
   return data;
 }
 
+BLOCK_DATA.set(BLOCKS.void, {
+  gravitable: false,
+  blockType: BlockType.cube,
+});
 BLOCK_DATA.set(BLOCKS.grass, {
   gravitable: false,
   blockType: BlockType.cube,

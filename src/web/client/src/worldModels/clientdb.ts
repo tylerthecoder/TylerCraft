@@ -88,8 +88,6 @@ export class ClientDb extends WorldModel {
           const onTerrainMessage = (data: { data: ISerializedChunk }) => {
             if (data.data.chunkId !== chunkPos) return;
 
-            console.log("Chunk data from worker", data);
-
             const chunk = WorldModule.createChunkFromSerialized(data.data);
 
             resolve(chunk);

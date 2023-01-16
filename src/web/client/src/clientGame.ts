@@ -65,6 +65,11 @@ export class ClientGame extends Game {
       this.worldRenderer.addEntity(entity);
     }
 
+    // Create renderers for initial chunks
+    for (const chunk of this.world.getChunks()) {
+      this.worldRenderer.addChunk(chunk);
+    }
+
     if (this.multiPlayer) {
       SocketInterface.addListener(this.onSocketMessage.bind(this));
     }

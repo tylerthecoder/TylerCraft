@@ -929,8 +929,7 @@ __metadata:
   resolution: "@craft/engine@workspace:src/engine"
   dependencies:
     "@craft/rust-world": 1.0.0
-    "@types/random": ^2.1.1
-    "@types/seedrandom": ^2.4.28
+    "@types/seedrandom": ^3.0.4
     random: ^4.1.0
     seedrandom: ^3.0.5
     simplex-noise: ^2.4.0
@@ -1572,13 +1571,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/random@npm:^2.1.1":
-  version: 2.1.1
-  resolution: "@types/random@npm:2.1.1"
-  checksum: 42aa37ef0bb06eee046cd7f6774031f1436d06e5fafc2cb8d4848c6d4833c8aac4248d8037aebb8ce96ffd38de2e38084ef341b03d9804cca53c48c0b55c4ba1
-  languageName: node
-  linkType: hard
-
 "@types/range-parser@npm:*":
   version: 1.2.3
   resolution: "@types/range-parser@npm:1.2.3"
@@ -1595,10 +1587,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/seedrandom@npm:^2.4.28":
-  version: 2.4.28
-  resolution: "@types/seedrandom@npm:2.4.28"
-  checksum: c18a6514d6cda182484e2c100800223b2735b068556e96ebadaf3ec9227ba271211ed6bce29e0c421a79bd7b4b6e7980132283f9896444e92a8b957965c950bd
+"@types/seedrandom@npm:^3.0.4":
+  version: 3.0.4
+  resolution: "@types/seedrandom@npm:3.0.4"
+  checksum: 994f444f2c4ea2c7d8ca3358fc16f4a912c71b2d015647597ec28c8e6ba403101e8075bde382977189b065fcbb64d6af09a9e55d5db444e2b95f7643efb2f8c3
   languageName: node
   linkType: hard
 

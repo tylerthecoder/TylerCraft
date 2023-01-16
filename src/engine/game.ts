@@ -15,6 +15,8 @@ import { Vector2D } from "./utils/vector.js";
 import { GameController } from "./controllers/controller.js";
 import CubeHelpers, { Cube } from "./entities/cube.js";
 
+console.log("Tylercraft Engine");
+
 export interface ISerializedGame {
   config: IConfig;
   entities: ISerializedEntities;

@@ -17,7 +17,6 @@
 		"simplex-noise": "^2.4.0"
 	},
 	"devDependencies": {
-		"@types/random": "^2.1.1",
-		"@types/seedrandom": "^2.4.28"
+		"@types/seedrandom": "^3.0.4"
 	}
 }

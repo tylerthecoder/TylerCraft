@@ -1,6 +1,7 @@
 {
 	"name": "@craft/server",
 	"version": "1.0.0",
+	"type": "module",
 	"scripts": {
 		"start": "node -r dotenv/config ./dist/server.js",
 		"build": "tsc -b",

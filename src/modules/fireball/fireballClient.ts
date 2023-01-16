@@ -5,7 +5,6 @@
 // When it hits ash, the ash disappears
 // When it hits a player, the player is knocked back
 import { GameAction } from "@craft/engine/gameActions";
-import { MouseAndKeyController } from "../../web/client/controllers/gameKeyboardController";
 
 export enum FireBallActions {
 	ShootFireball = "shootFireball",

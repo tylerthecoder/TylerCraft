@@ -2,7 +2,10 @@ use super::World;
 use crate::{
     block::WorldBlock,
     chunk::Chunk,
+    direction::Directions,
     geometry::ray::Ray,
+    positions::InnerChunkPos,
+    utils::js_log,
     world::{ChunkPos, WorldPos},
 };
 use serde_wasm_bindgen::{from_value, to_value, Error};
@@ -43,6 +46,28 @@ impl World {
         })
     }
 
+    pub fn get_chunk_mesh_wasm(&self, val: JsValue) -> Result<JsValue, Error> {
+        from_value(val).and_then(|pos: ChunkPos| {
+            js_log(&format!("Getting chunk mesh for {:?}", pos));
+            let mesh = self.get_chunk_mesh(&pos).map_err(Self::convert_error)?;
+
+            // Convert the mesh to a value the js will like more.
+
+            let wasm_chunk_mesh = mesh
+                .face_map
+                .iter()
+                .map(|(index, directions)| {
+                    let block_world_pos =
+                        InnerChunkPos::make_from_chunk_index(*index).to_world_pos(&pos);
+                    let block = self.get_block(&block_world_pos);
+                    (block, directions.to_owned())
+                })
+                .collect::<Vec<(WorldBlock, Directions)>>();
+
+            to_value(&wasm_chunk_mesh)
+        })
+    }
+
     pub fn is_block_loaded_wasm(&self, val: JsValue) -> Result<JsValue, Error> {
         from_value(val).and_then(|pos| {
             let is_loaded = self.is_block_loaded(&pos);
@@ -73,9 +98,10 @@ impl World {
             .unwrap_or(false)
     }
 
-    pub fn set_chunk_at_pos(&mut self, chunk: &JsValue) -> Result<(), JsValue> {
-        let chunk: Chunk = serde_wasm_bindgen::from_value(chunk.clone())?;
-        self.chunks.insert(chunk.position.to_world_index(), chunk);
+    pub fn insert_chunk_wasm(&mut self, chunk: &JsValue) -> Result<(), JsValue> {
+        let chunk: Chunk = from_value(chunk.clone())?;
+        js_log(&format!("Setting chunk at {:?}", chunk.position));
+        self.insert_chunk(chunk);
         Ok(())
     }
 }
