@@ -4,7 +4,7 @@ use crate::chunk::Chunk;
 use crate::direction::{Direction, Directions};
 use crate::positions::{ChunkPos, WorldPos};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::{self, fmt};
 use wasm_bindgen::prelude::*;
 
@@ -54,7 +54,7 @@ impl fmt::Display for ChunkIndexOutOfBoundsError {
 #[derive(Serialize, Deserialize)]
 pub struct WorldStateDiff {
     /** A list of chunk ids that were changed */
-    pub chunk_ids: Vec<String>,
+    pub chunk_ids: HashSet<String>,
 }
 
 #[wasm_bindgen]

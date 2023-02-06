@@ -22,6 +22,7 @@ export default class WorldRenderer {
   }
 
   blockUpdate(chunkId: string) {
+    console.log("Rerendering chunk", chunkId);
     const chunkPos = World.chunkIdToChunkPos(chunkId);
     const chunkMesh = this.world.getChunkMesh(chunkPos);
     const chunkRenderer = new ChunkRenderer(chunkMesh, chunkPos);

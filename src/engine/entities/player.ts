@@ -243,6 +243,7 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
   useItem(game: Game, camera: CameraRay) {
     const lookingData = game.world.lookingAt(camera);
     if (!lookingData) return;
+    console.log("Looking at data", lookingData)
     const { cube } = lookingData;
     if (!cube) return;
 

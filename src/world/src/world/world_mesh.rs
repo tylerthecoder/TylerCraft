@@ -1,7 +1,8 @@
+use std::collections::{HashMap, HashSet};
+
 use super::{ChunkNotLoadedError, World, WorldStateDiff};
 use crate::{
-    chunk::chunk_mesh::ChunkMesh,
-    direction::Directions,
+    chunk::chunk_mesh::{BlockMesh, ChunkMesh},
     positions::{ChunkPos, WorldPos},
 };
 
@@ -20,12 +21,9 @@ impl World {
         Ok(())
     }
 
-    pub fn get_mesh_at_pos(&self, world_pos: WorldPos) -> Result<Directions, ChunkNotLoadedError> {
+    pub fn get_mesh_at_pos(&self, world_pos: WorldPos) -> Result<BlockMesh, ChunkNotLoadedError> {
         let mesh = self.get_chunk_mesh(&world_pos.to_chunk_pos())?;
-        let dirs = mesh.get(world_pos);
-
-        let dirs = dirs.unwrap_or(&Directions::empty()).to_owned();
-        Ok(dirs)
+        Ok(mesh.get(world_pos))
     }
 
     pub fn get_chunk_mesh(&self, chunk_pos: &ChunkPos) -> Result<&ChunkMesh, ChunkNotLoadedError> {
@@ -59,13 +57,11 @@ impl World {
     pub fn update_chunks_around_block(&mut self, world_pos: &WorldPos) -> WorldStateDiff {
         // Check to see if any of the adjacent blocks are in different chunks.
         // Don't need to filter out duplicates since they aren't possible
-        let updated_ids: Vec<String> = world_pos
-            .get_adjacent_vecs()
+        let updated_ids: HashSet<String> = world_pos
+            .get_cross_vecs()
             .iter()
             // Map to chunk id
             .map(|world_pos: &WorldPos| world_pos.to_chunk_pos())
-            // Don't include the current chunk
-            .filter(|chunk_pos: &ChunkPos| chunk_pos != &world_pos.to_chunk_pos())
             // Map to chunk
             .filter_map(|chunk_pos: ChunkPos| {
                 // Forget about the result, if the chunk isn't loaded, it doesn't matter
@@ -87,12 +83,13 @@ impl World {
 mod tests {
     use crate::{
         block::{BlockData, BlockType, ChunkBlock},
-        chunk::Chunk,
+        chunk::{chunk_mesh::BlockMesh, Chunk},
         direction::Directions,
         positions::{ChunkPos, InnerChunkPos, WorldPos},
         world::{world_block::WorldBlock, World},
     };
 
+    // TODO find out why this doesn't work when I add the block AFTER I add the chunk
     #[test]
     fn calculate_chunk_mesh() {
         let mut world = World::default();
@@ -100,23 +97,25 @@ mod tests {
 
         let world_pos = WorldPos::new(0, 0, 0);
 
-        let world_block = WorldBlock {
-            block_type: BlockType::Cloud,
-            extra_data: BlockData::None,
-            world_pos,
-        };
-
-        chunk.add_block(ChunkBlock {
-            block_type: BlockType::Cloud,
-            extra_data: BlockData::None,
-            pos: InnerChunkPos::new(0, 0, 0),
-        });
-
         world.insert_chunk(chunk);
+
+        world
+            .add_block(&WorldBlock {
+                block_type: BlockType::Cloud,
+                extra_data: BlockData::None,
+                world_pos,
+            })
+            .unwrap();
 
         let chunk_mesh = world.get_mesh_at_pos(world_pos).unwrap();
 
         let directions = Directions::all();
-        assert_eq!(chunk_mesh, directions);
+        assert_eq!(
+            chunk_mesh,
+            BlockMesh {
+                directions,
+                world_pos
+            }
+        );
     }
 }

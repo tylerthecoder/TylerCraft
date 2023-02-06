@@ -3,6 +3,7 @@ use crate::{
     positions::{FineWorldPos, WorldPos},
 };
 
+#[derive(Debug, PartialEq)]
 pub struct WorldPlane {
     pub world_pos: WorldPos,
     pub direction: Direction,
