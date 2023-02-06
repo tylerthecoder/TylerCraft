@@ -246,6 +246,21 @@ impl<T: Add<Output = T> + Sub<Output = T> + Mul<T, Output = T> + Copy> Vec3<T> {
         }
         vecs
     }
+
+    /**
+     * Like get_adjacent_vecs, but also returns the original vector
+     */
+    pub fn get_cross_vecs(&self) -> Vec<Vec3<T>>
+    where
+        T: Copy + Add<T, Output = T> + AddAssign<T> + One + SubAssign,
+    {
+        let mut vecs = Vec::new();
+        vecs.push(self.clone());
+        for direction in Directions::all() {
+            vecs.push(self.move_direction(&direction));
+        }
+        vecs
+    }
 }
 
 #[cfg(test)]

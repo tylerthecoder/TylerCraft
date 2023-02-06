@@ -1,5 +1,6 @@
 use crate::{
     direction::Directions,
+    plane::WorldPlane,
     positions::{ChunkPos, InnerChunkPos, WorldPos},
 };
 use serde::{Deserialize, Serialize};
@@ -9,6 +10,24 @@ use std::collections::HashMap;
 pub struct ChunkMesh {
     face_map: HashMap<usize, Directions>,
     chunk_pos: ChunkPos,
+}
+
+#[derive(PartialEq, Debug)]
+pub struct BlockMesh {
+    pub world_pos: WorldPos,
+    pub directions: Directions,
+}
+
+impl IntoIterator for &BlockMesh {
+    type Item = WorldPlane;
+    type IntoIter = std::vec::IntoIter<WorldPlane>;
+    fn into_iter(self) -> Self::IntoIter {
+        self.directions
+            .into_iter()
+            .map(|direction| WorldPlane::new(self.world_pos, direction))
+            .collect::<Vec<WorldPlane>>()
+            .into_iter()
+    }
 }
 
 impl ChunkMesh {
@@ -24,9 +43,17 @@ impl ChunkMesh {
             .insert(world_pos.to_inner_chunk_pos().to_chunk_index(), directions);
     }
 
-    pub fn get(&self, world_pos: WorldPos) -> Option<&Directions> {
-        self.face_map
+    pub fn get(&self, world_pos: WorldPos) -> BlockMesh {
+        let empty = Directions::empty();
+        let mesh = self
+            .face_map
             .get(&world_pos.to_inner_chunk_pos().to_chunk_index())
+            .unwrap_or(&empty);
+
+        BlockMesh {
+            world_pos,
+            directions: mesh.to_owned(),
+        }
     }
 }
 
@@ -52,7 +79,7 @@ impl IntoIterator for &ChunkMesh {
 #[cfg(test)]
 mod tests {
     use crate::{
-        chunk::chunk_mesh::ChunkMesh,
+        chunk::chunk_mesh::{BlockMesh, ChunkMesh},
         direction::Directions,
         positions::{ChunkPos, WorldPos},
     };
@@ -64,7 +91,13 @@ mod tests {
         let world_pos = WorldPos::new(0, 0, 0);
         let directions = Directions::all();
         chunk_mesh.insert(world_pos, directions);
-        assert_eq!(chunk_mesh.get(world_pos), Some(&directions));
+        assert_eq!(
+            chunk_mesh.get(world_pos),
+            BlockMesh {
+                world_pos,
+                directions
+            }
+        );
     }
 
     #[test]
@@ -72,6 +105,12 @@ mod tests {
         let chunk_pos = ChunkPos::new(0, 0);
         let chunk_mesh = ChunkMesh::new(chunk_pos);
         let world_pos = WorldPos::new(0, 0, 0);
-        assert_eq!(chunk_mesh.get(world_pos), None);
+        assert_eq!(
+            chunk_mesh.get(world_pos),
+            BlockMesh {
+                world_pos,
+                directions: Directions::empty()
+            }
+        );
     }
 }

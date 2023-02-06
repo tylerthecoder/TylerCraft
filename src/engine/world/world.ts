@@ -3,13 +3,12 @@ import { Chunk, ILookingAtData, ISerializedChunk } from "./chunk.js";
 import { Entity } from "../entities/entity.js";
 import { IChunkReader } from "../types.js";
 import { CONFIG } from "../config.js";
-import { Vector3D, Vector2D, Direction } from "../utils/vector.js";
+import { Vector3D, Vector2D, Direction, getDirectionFromString } from "../utils/vector.js";
 import WorldModule, { WorldModuleTypes } from "../modules.js";
 import { BLOCK_DATA } from "../blockdata.js";
-import { ICameraData } from "../camera.js";
 import { GameStateDiff } from "../gameStateDiff.js";
 import { ChunkMesh } from "./chunkMesh.js";
-import { Camera, CameraRay } from "../index.js";
+import { CameraRay } from "../index.js";
 
 
 export interface ISerializedWorld {
@@ -189,6 +188,7 @@ export class World {
   // called before the world is passed on to the game
   private async load() {
     const loadPromises: Promise<void>[] = [];
+    console.log("Loading")
     for (let i = -CONFIG.loadDistance; i < CONFIG.loadDistance; i++) {
       for (let j = -CONFIG.loadDistance; j < CONFIG.loadDistance; j++) {
         const chunkPos = new Vector2D([i, j]);
@@ -208,17 +208,18 @@ export class World {
     }
 
     this.loadingChunks.add(chunkPos.toIndex());
+    console.log("Calling load chunk")
     return new Promise((resolve) => {
       this.chunkReader.getChunk(chunkPos.toIndex()).then((chunk) => {
         // this should only happen on the client side when single player
         // and on the server side when multiplayer
         // if (!chunk) chunk = this.terrainGenerator.generateChunk(chunkPos);
+        console.log("Got chunk", chunk)
         this.addOrUpdateChunk(chunk);
         resolve();
       });
     });
   }
-
 
   update(entities: Entity[]) {
     for (const entity of entities) {
@@ -281,7 +282,7 @@ export class World {
     }
     const diff: {chunk_ids: string[]} = this.wasmWorld.add_block_wasm({
       block_type: cube.type,
-      extra_data: cube.extraData,
+      extra_data: "None",
       world_pos: {
         x: cube.pos.get(0),
         y: cube.pos.get(1),
@@ -307,9 +308,10 @@ export class World {
   lookingAt(camera: CameraRay): ILookingAtData | null {
     const lookingData: {
       block: ISerializedCube,
-      face: Direction,
+      face: string,
       distance: number,
     } | null = this.wasmWorld.get_pointed_at_block_wasm(camera);
+
 
     console.log("Cam looking at ", lookingData, camera)
 
@@ -318,7 +320,7 @@ export class World {
 
     return {
       cube: CubeHelpers.fromWasmCube(lookingData.block),
-      face: lookingData.face,
+      face: getDirectionFromString(lookingData.face),
       dist: lookingData.distance,
     }
   }

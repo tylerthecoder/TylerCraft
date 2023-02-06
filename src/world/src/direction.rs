@@ -1,6 +1,9 @@
 use serde::{Deserialize, Serialize};
+use std::f32::consts::PI;
 use std::iter::{FromIterator, IntoIterator};
 use wasm_bindgen::prelude::wasm_bindgen;
+
+use crate::geometry::rotation::SphericalRotation;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[wasm_bindgen]
@@ -11,6 +14,19 @@ pub enum Direction {
     Down = 3,
     East = 4,
     West = 5,
+}
+
+impl Direction {
+    pub fn to_rotation(&self) -> SphericalRotation {
+        match self {
+            Direction::North => SphericalRotation::new(0.0, 0.0),
+            Direction::South => SphericalRotation::new(PI, 0.0),
+            Direction::East => SphericalRotation::new(PI / 2.0, 0.0),
+            Direction::West => SphericalRotation::new(3.0 * PI / 2.0, 0.0),
+            Direction::Up => SphericalRotation::new(0.0, -PI / 2.0),
+            Direction::Down => SphericalRotation::new(0.0, PI / 2.0),
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -85,10 +101,10 @@ impl Direction {
         match index {
             0 => Direction::North,
             1 => Direction::South,
-            2 => Direction::East,
-            3 => Direction::West,
-            4 => Direction::Up,
-            5 => Direction::Down,
+            2 => Direction::Up,
+            3 => Direction::Down,
+            4 => Direction::East,
+            5 => Direction::West,
             _ => panic!("Invalid direction index: {}", index),
         }
     }
@@ -97,10 +113,10 @@ impl Direction {
         match self {
             Direction::North => 0,
             Direction::South => 1,
-            Direction::East => 2,
-            Direction::West => 3,
-            Direction::Up => 4,
-            Direction::Down => 5,
+            Direction::Up => 2,
+            Direction::Down => 3,
+            Direction::East => 4,
+            Direction::West => 5,
         }
     }
 

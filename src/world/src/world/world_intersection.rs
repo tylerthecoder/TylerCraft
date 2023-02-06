@@ -2,7 +2,7 @@ use super::{world_block::WorldBlock, World};
 use crate::{direction::Direction, geometry::ray::Ray, plane::WorldPlane};
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(PartialEq, Debug, Serialize, Deserialize)]
 pub struct LookingAt {
     /**
      * The block a camera is pointing at
@@ -26,22 +26,19 @@ impl World {
                 .move_forward(n as f32)
                 .pos
                 .to_world_pos()
-                .get_adjacent_vecs()
+                .get_cross_vecs()
                 .iter()
                 .filter_map(|pos| self.get_mesh_at_pos(pos.to_owned()).ok())
-                .flat_map(|directions| {
-                    directions.into_iter().filter_map(|direction| {
-                        let plane = WorldPlane::new(ray.pos.to_world_pos(), direction);
-
-                        match ray.distance_from_plane(&plane) {
-                            Some(distance) => Some(LookingAt {
-                                block: self.get_block(&plane.world_pos),
-                                face: plane.direction,
-                                distance,
-                            }),
-                            None => None,
-                        }
-                    })
+                .flat_map(|block_mesh| {
+                    println!("directions: {:?}", block_mesh);
+                    match ray.distance_from_block_mesh(&block_mesh) {
+                        Some((plane, distance)) => Some(LookingAt {
+                            block: self.get_block(&block_mesh.world_pos),
+                            face: plane.direction,
+                            distance,
+                        }),
+                        None => None,
+                    }
                 })
                 .min_by(
                     |LookingAt {
@@ -63,5 +60,51 @@ impl World {
             }
         }
         None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        block::{BlockData, BlockType},
+        chunk::Chunk,
+        direction::Direction,
+        geometry::ray::Ray,
+        positions::{FineWorldPos, WorldPos},
+        world::{world_block::WorldBlock, World},
+    };
+
+    use super::LookingAt;
+
+    fn finds_block_being_pointed_at(block: &WorldBlock, ray: Ray, expected: LookingAt) -> () {
+        let mut world = World::default();
+        let chunk = Chunk::new(block.world_pos.to_chunk_pos());
+        world.insert_chunk(chunk);
+        world.add_block(&block).unwrap();
+        let actual = world.get_pointed_at_block(ray);
+
+        assert_eq!(actual, Some(expected));
+    }
+
+    #[test]
+    fn test_pointing_at() {
+        let block = WorldBlock {
+            world_pos: WorldPos::new(0, 0, 0),
+            block_type: BlockType::Stone,
+            extra_data: BlockData::None,
+        };
+
+        self::finds_block_being_pointed_at(
+            &block,
+            Ray {
+                pos: FineWorldPos::new(0.5, 0.5, 0.5),
+                rot: Direction::Down.to_rotation(),
+            },
+            LookingAt {
+                block: block,
+                face: Direction::Up,
+                distance: 0.5,
+            },
+        );
     }
 }

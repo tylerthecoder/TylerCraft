@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use super::{ChunkNotLoadedError, World, WorldStateDiff};
 use crate::{
     chunk::{chunk_mesh::ChunkMesh, Chunk},
@@ -33,7 +35,7 @@ impl World {
 
     pub fn insert_chunk(&mut self, chunk: Chunk) -> WorldStateDiff {
         // Update adjacent chunk meshes
-        let updated_chunk_ids: Vec<String> = chunk
+        let updated_chunk_ids: HashSet<String> = chunk
             .position
             .get_adjacent_vecs()
             .iter()

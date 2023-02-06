@@ -1,7 +1,7 @@
 use super::rotation::SphericalRotation;
-use crate::{plane::WorldPlane, positions::FineWorldPos};
+use crate::{chunk::chunk_mesh::BlockMesh, plane::WorldPlane, positions::FineWorldPos};
 use serde::{Deserialize, Serialize};
-use std::borrow::BorrowMut;
+use std::{borrow::BorrowMut, cmp::Ordering};
 
 #[derive(Serialize, Deserialize)]
 pub struct Ray {
@@ -25,6 +25,19 @@ impl Ray {
                 .add_vec(self.rot.to_unit_vector().scalar_mult(amount)),
             rot: self.rot,
         }
+    }
+
+    pub fn distance_from_block_mesh(&self, block_mesh: &BlockMesh) -> Option<(WorldPlane, f32)> {
+        block_mesh
+            .into_iter()
+            .filter_map(|plane| {
+                println!("plane: {:?}", plane);
+                self.distance_from_plane(&plane)
+                    .map(|distance| (plane, distance))
+            })
+            .min_by(|(planeA, distA), (planeB, distB)| {
+                distA.partial_cmp(distB).unwrap_or(Ordering::Equal)
+            })
     }
 
     pub fn distance_from_plane(&self, plane: &WorldPlane) -> Option<f32> {
@@ -57,7 +70,8 @@ impl Ray {
 mod tests {
     use super::Ray;
     use crate::{
-        direction::Direction,
+        chunk::chunk_mesh::BlockMesh,
+        direction::{Direction, Directions},
         geometry::rotation::SphericalRotation,
         plane::WorldPlane,
         positions::{FineWorldPos, WorldPos},
@@ -80,5 +94,28 @@ mod tests {
         let world_plane = WorldPlane::new(WorldPos::new(3, 0, 0), Direction::North);
 
         assert_eq!(ray.distance_from_plane(&world_plane), None);
+    }
+
+    #[test]
+    fn distance_from_block_mesh() {
+        let ray = Ray {
+            pos: FineWorldPos::new(0.5, 3.0, 0.5),
+            rot: Direction::Down.to_rotation(),
+        };
+
+        let block_mesh = BlockMesh {
+            directions: Directions::create_for_direction(Direction::Up),
+            world_pos: WorldPos::new(0, 0, 0),
+        };
+
+        println!("block_mesh: {:?}", block_mesh);
+
+        let (plane, distance) = ray.distance_from_block_mesh(&block_mesh).unwrap();
+
+        assert_eq!(
+            plane,
+            WorldPlane::new(WorldPos::new(0, 0, 0), Direction::Up)
+        );
+        assert_eq!(distance, 3.0);
     }
 }

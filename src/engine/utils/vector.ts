@@ -1,7 +1,9 @@
+
 type IDim = [number, number, number];
 
 // type VectorIndex = bigint;
 export type VectorIndex = string;
+
 
 export enum Direction {
   Forwards = 0,
@@ -10,6 +12,18 @@ export enum Direction {
   Right = 3,
   Up = 4,
   Down = 5,
+}
+
+export const getDirectionFromString = (dir: string): Direction => {
+  switch (dir) {
+    case "Up": return Direction.Up;
+    case "Down": return Direction.Down;
+    case "West": return Direction.Left;
+    case "East": return Direction.Right;
+    case "North": return Direction.Forwards;
+    case "South": return Direction.Backwards;
+    default: throw new Error(`Invalid direction: ${dir}`);
+  }
 }
 
 export const ALL_DIRECTIONS = [
@@ -346,6 +360,7 @@ export class Vector3D extends Vector<[number, number, number]> {
   }
 
   static fromDirection(direction: Direction): Vector3D {
+    console.log("From direction", direction)
     switch (direction) {
       case Direction.Forwards: return new Vector3D([0, 0, 1]);
       case Direction.Backwards: return new Vector3D([0, 0, -1]);
