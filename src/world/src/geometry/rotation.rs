@@ -15,14 +15,20 @@ impl SphericalRotation {
     pub fn new(theta: f32, phi: f32) -> SphericalRotation {
         SphericalRotation { theta, phi }
     }
+}
 
-    pub fn to_unit_vector(&self) -> Vec3<f32> {
+impl Into<Vec3<f32>> for SphericalRotation {
+    /**
+     * Converts a spherical rotation into a unit vector.
+     */
+    fn into(self) -> Vec3<f32> {
         let phi_offset = (PI / 2.0) - self.phi;
+        let theta_offset = self.theta + (PI / 2.0);
 
         Vec3 {
-            x: (self.theta.cos() * phi_offset.sin()),
-            y: phi_offset.cos(),
-            z: self.theta.sin() * phi_offset.sin(),
+            x: -(theta_offset.cos() * phi_offset.sin()),
+            y: -phi_offset.cos(),
+            z: theta_offset.sin() * phi_offset.sin(),
         }
     }
 }
@@ -30,7 +36,7 @@ impl SphericalRotation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::f32::consts::PI;
+    use crate::direction::Direction;
 
     impl Vec3<f32> {
         fn assert_eq(&self, other: Vec3<f32>) {
@@ -40,46 +46,19 @@ mod tests {
         }
     }
 
+    fn run_direction_test(direction: Direction, expected: Vec3<f32>) {
+        let rot: SphericalRotation = direction.into();
+        let unit_vector: Vec3<f32> = rot.into();
+        unit_vector.assert_eq(expected);
+    }
+
     #[test]
-    fn test_spherical_rotation_to_unit_vector() {
-        let rotation = SphericalRotation {
-            theta: 0.0,
-            phi: 0.0,
-        };
-        rotation
-            .to_unit_vector()
-            .assert_eq(Vec3::new(1.0, 0.0, 0.0));
-
-        let rotation = SphericalRotation {
-            theta: 0.0,
-            phi: PI / 2.0,
-        };
-        rotation
-            .to_unit_vector()
-            .assert_eq(Vec3::new(0.0, 1.0, 0.0));
-
-        let rotation = SphericalRotation {
-            theta: 0.0,
-            phi: -PI / 2.0,
-        };
-        rotation
-            .to_unit_vector()
-            .assert_eq(Vec3::new(0.0, -1.0, 0.0));
-
-        let rotation = SphericalRotation {
-            theta: PI / 2.0,
-            phi: 0.0,
-        };
-        rotation
-            .to_unit_vector()
-            .assert_eq(Vec3::new(0.0, 0.0, 1.0));
-
-        let rotation = SphericalRotation {
-            theta: -PI / 2.0,
-            phi: 0.0,
-        };
-        rotation
-            .to_unit_vector()
-            .assert_eq(Vec3::new(0.0, 0.0, -1.0));
+    fn tests_directions() {
+        run_direction_test(Direction::North, Vec3::new(0.0, 0.0, 1.0));
+        run_direction_test(Direction::South, Vec3::new(0.0, 0.0, -1.0));
+        run_direction_test(Direction::East, Vec3::new(1.0, 0.0, 0.0));
+        run_direction_test(Direction::West, Vec3::new(-1.0, 0.0, 0.0));
+        run_direction_test(Direction::Up, Vec3::new(0.0, 1.0, 0.0));
+        run_direction_test(Direction::Down, Vec3::new(0.0, -1.0, 0.0));
     }
 }
