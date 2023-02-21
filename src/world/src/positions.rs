@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{
     chunk::CHUNK_WIDTH,
     vec::{Vec2, Vec3},

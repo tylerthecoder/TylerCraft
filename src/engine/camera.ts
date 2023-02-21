@@ -33,9 +33,9 @@ export abstract class Camera {
         z: this.pos.get(2),
       },
       rot: {
-        theta: this.rot.get(1),
+        theta: -this.rot.get(1) + Math.PI * 3/2,
         // Convert to [-pi/2, pi/2]
-        phi: (Math.PI / 2) - this.rot.get(2),
+        phi: -((Math.PI / 2) - this.rot.get(2)),
       }
     };
   }

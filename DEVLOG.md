@@ -119,3 +119,13 @@ Real issue seems to be that wasm_pack writes twice.
 ## 1 / 17 / 23
 
 It now renders the chunks made in rust to the screen using the chunk mesh. Looks like it is including a couple extra faces that aren't needed but that can be fixed with time.
+
+
+
+# 2 / 15 / 23
+
+I've still been working here and there. Found a bug in the ray detection on the plane level. Test should be failing need to figure out why.
+
+# 2 / 21 / 23
+
+Finally got the ray intersection working. Wasn't considering the outward facing planes correctly. Only thing left is to fix the mesh rendering. It is off when you place new blocks.

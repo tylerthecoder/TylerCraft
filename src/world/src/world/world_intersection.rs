@@ -98,13 +98,32 @@ mod tests {
             &block,
             Ray {
                 pos: FineWorldPos::new(0.5, 0.5, 0.5),
-                rot: Direction::Down.to_rotation(),
+                rot: Direction::Down.into(),
             },
             LookingAt {
-                block: block,
+                block,
                 face: Direction::Up,
                 distance: 0.5,
             },
         );
+
+        let block = WorldBlock {
+            world_pos: WorldPos::new(2, 0, 0),
+            block_type: BlockType::Stone,
+            extra_data: BlockData::None,
+        };
+
+        self::finds_block_being_pointed_at(
+            &block,
+            Ray {
+                pos: FineWorldPos::new(0.5, 0.5, 0.5),
+                rot: Direction::East.into(),
+            },
+            LookingAt {
+                block,
+                face: Direction::West,
+                distance: 1.5,
+            },
+        )
     }
 }
