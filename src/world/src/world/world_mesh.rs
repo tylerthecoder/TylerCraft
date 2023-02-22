@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 use super::{ChunkNotLoadedError, World, WorldStateDiff};
 use crate::{
@@ -82,14 +82,13 @@ impl World {
 #[cfg(test)]
 mod tests {
     use crate::{
-        block::{BlockData, BlockType, ChunkBlock},
+        block::{BlockData, BlockType},
         chunk::{chunk_mesh::BlockMesh, Chunk},
-        direction::Directions,
-        positions::{ChunkPos, InnerChunkPos, WorldPos},
+        direction::{Direction, Directions},
+        positions::{ChunkPos, WorldPos},
         world::{world_block::WorldBlock, World},
     };
 
-    // TODO find out why this doesn't work when I add the block AFTER I add the chunk
     #[test]
     fn calculate_chunk_mesh() {
         let mut world = World::default();
@@ -110,6 +109,84 @@ mod tests {
         let chunk_mesh = world.get_mesh_at_pos(world_pos).unwrap();
 
         let directions = Directions::all();
+        assert_eq!(
+            chunk_mesh,
+            BlockMesh {
+                directions,
+                world_pos
+            }
+        );
+    }
+
+    #[test]
+    fn calculate_chunk_mesh_with_adjacent_block() {
+        let mut world = World::default();
+        let mut chunk = Chunk::new(ChunkPos { x: 0, y: 0 });
+
+        let world_pos = WorldPos::new(0, 0, 0);
+        let adjacent_world_pos = WorldPos::new(0, 0, 1);
+
+        world.insert_chunk(chunk);
+
+        world
+            .add_block(&WorldBlock {
+                block_type: BlockType::Cloud,
+                extra_data: BlockData::None,
+                world_pos,
+            })
+            .unwrap();
+
+        world
+            .add_block(&WorldBlock {
+                block_type: BlockType::Cloud,
+                extra_data: BlockData::None,
+                world_pos: adjacent_world_pos,
+            })
+            .unwrap();
+
+        let chunk_mesh = world.get_mesh_at_pos(world_pos).unwrap();
+
+        let mut directions = Directions::all();
+        directions.remove_direction(Direction::North);
+        assert_eq!(
+            chunk_mesh,
+            BlockMesh {
+                directions,
+                world_pos
+            }
+        );
+    }
+
+    #[test]
+    fn calculate_chunk_mesh_with_adjacent_block_south() {
+        let mut world = World::default();
+        let mut chunk = Chunk::new(ChunkPos { x: 0, y: 0 });
+
+        let world_pos = WorldPos::new(0, 0, 1);
+        let adjacent_world_pos = WorldPos::new(0, 0, 0);
+
+        world.insert_chunk(chunk);
+
+        world
+            .add_block(&WorldBlock {
+                block_type: BlockType::Cloud,
+                extra_data: BlockData::None,
+                world_pos,
+            })
+            .unwrap();
+
+        world
+            .add_block(&WorldBlock {
+                block_type: BlockType::Cloud,
+                extra_data: BlockData::None,
+                world_pos: adjacent_world_pos,
+            })
+            .unwrap();
+
+        let chunk_mesh = world.get_mesh_at_pos(world_pos).unwrap();
+
+        let mut directions = Directions::all();
+        directions.remove_direction(Direction::South);
         assert_eq!(
             chunk_mesh,
             BlockMesh {

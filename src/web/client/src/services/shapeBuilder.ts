@@ -15,7 +15,14 @@ export class ShapeBuilderClass {
     edgeTransform?: (edge: Vector3D) => Vector3D,
   ) {
     // get the dimension of the face i.e. x, y, z
-    const dimensionIndex = faceIndex >> 1;
+    let dimensionIndex = faceIndex >> 1;
+
+    // Swap the x and z dimensions
+    if (dimensionIndex === 2) {
+      dimensionIndex = 0;
+    } else if (dimensionIndex === 0) {
+      dimensionIndex = 2;
+    }
 
     // get the direction of the face. In or out
     const dir = faceIndex % 2 === 0 ? 1 : 0;
