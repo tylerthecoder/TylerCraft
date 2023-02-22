@@ -11,6 +11,7 @@ export const BASE_CONFIG = {
   glFov: (45 * Math.PI) / 180,
 
   terrain: {
+    generateChunks: true,
     jagFactor: 32,
     maxHeight: 12,
     cloudLevel: 30,

@@ -164,6 +164,15 @@ export class MouseAndKeyController extends GameController<GameAction[]> {
     })
   }
 
+  // Basically a debug function
+  placeBlockUnderPlayer() {
+    console.log("Placing block under player");
+
+    this.game.handleAction(GameAction.PlaceDebugBlock, {
+      playerUid: this.clientGame.mainPlayer.uid,
+    });
+  }
+
 
   openMenu() {
     this.gameMenu.style.display = "block";
@@ -287,6 +296,10 @@ export class MouseAndKeyController extends GameController<GameAction[]> {
 
     this.ifHasKeyThen("m", () => {
       this.openMenu();
+    })
+
+    this.ifHasKeyThen("j", () => {
+      this.placeBlockUnderPlayer();
     })
 
     const selectBelt = (pos: number) => {

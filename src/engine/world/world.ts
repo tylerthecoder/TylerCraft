@@ -189,6 +189,11 @@ export class World {
   private async load() {
     const loadPromises: Promise<void>[] = [];
     console.log("Loading")
+
+    if (!CONFIG.terrain.generateChunks) {
+      return;
+    }
+
     for (let i = -CONFIG.loadDistance; i < CONFIG.loadDistance; i++) {
       for (let j = -CONFIG.loadDistance; j < CONFIG.loadDistance; j++) {
         const chunkPos = new Vector2D([i, j]);

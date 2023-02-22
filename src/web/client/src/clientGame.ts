@@ -161,6 +161,7 @@ export class ClientGame extends Game {
   }
 
   toggleCreative() {
+    console.log("Toggle Creative");
     if (this.mainPlayer.creative) {
       this.mainPlayer.setCreative(false);
     } else {

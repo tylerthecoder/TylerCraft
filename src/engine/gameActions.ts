@@ -1,4 +1,6 @@
+import { BLOCKS } from "./blockdata.js";
 import { CameraRay, ICameraData } from "./camera.js";
+import CubeHelpers from "./entities/cube.js";
 import { Player } from "./entities/player.js";
 import { Game } from "./game.js";
 import { IDim } from "./types.js";
@@ -14,6 +16,8 @@ export enum GameAction {
 	PlayerBeltLeft = "playerBeltLeft",
 	PlayerBeltRight = "playerBeltRight",
 	PlayerSetBeltIndex = "playerSetBeltIndex",
+	// Places a single block under the player
+	PlaceDebugBlock = "placeDebugBlock",
 	Save = "save",
 	ChangeName = "changeName",
 }
@@ -61,7 +65,9 @@ export interface GameActionData extends Record<GameAction, unknown> {
 		name: string;
 	}
 	[GameAction.Save]: undefined,
-
+	[GameAction.PlaceDebugBlock]: {
+		playerUid: string;
+	}
 }
 
 export class GameActionDto<T extends GameAction = GameAction> {
@@ -175,6 +181,15 @@ export class GameActionHandler {
 			const player = this.getPlayer(playerUid);
 			player.belt.setIndex(index);
 			this.game.stateDiff.updateEntity(player.uid);
+		}
+
+		if (action.isType(GameAction.PlaceDebugBlock)) {
+			console.log("Placing debug block")
+			const { playerUid } = action.data;
+			const player = this.getPlayer(playerUid);
+			const pos = player.pos.floor();
+			const cube = CubeHelpers.createCube(BLOCKS.gold, pos);
+			this.game.world.addBlock(this.game.stateDiff, cube);
 		}
 
 	}

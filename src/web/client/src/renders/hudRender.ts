@@ -80,10 +80,13 @@ export class HudRenderer extends Renderer {
   drawStats(camera: Camera) {
     const cameraPos = camera.pos.data.map(Math.floor).join(",")
 
+    const numChunks = this.game.world.getChunks().length;
+
     const statsElement = document.getElementById("stats")!;
     const statsString = `
-      ${cameraPos}
-      Fps: ${this.game.frameRate.toFixed(0)}
+      playerPos: ${cameraPos} <br />
+      fps: ${this.game.frameRate.toFixed(0)} <br />
+      numChunks: ${numChunks}
     `;
     if (this.lastStats !== statsString) {
       statsElement.innerHTML = statsString;

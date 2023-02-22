@@ -138,3 +138,16 @@ Maybe it would be a good idea to look into hot module reloading so I can reload 
 Deleting blocks doesn't work either
 
 I think a better debug mode to aim to make is a way to have no chunks loaded, but I can fly around in a void and type a command to place a block anywhere.
+Maybe also make it where the block face that is being looked at is highlighted
+
+I guess to hot reload I could have something that looks like this
+```
+if (hot) {
+  const state = game.save()
+  reloadGameLogic()
+  game.load(state)
+}
+```
+
+Got the placing of a debug block working, just have to figure out how to place the block when there are no chunks. Do I want to check on the client if the chunk exists before inserting or add an option to automatically create the chunk if one doesn't exist.
+
