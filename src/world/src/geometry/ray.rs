@@ -114,6 +114,14 @@ mod tests {
         let world_plane = WorldPlane::new(WorldPos::new(1, 0, 1), Direction::Up);
 
         assert_eq!(ray.distance_from_plane(&world_plane), None);
+
+        let ray = Ray {
+            pos: FineWorldPos::new(0.5, 0.5, 0.5),
+            rot: Direction::Down.into(),
+        };
+        let world_plane = WorldPlane::new(WorldPos::new(1, 0, 1), Direction::Up);
+
+        assert_eq!(ray.distance_from_plane(&world_plane), None);
     }
 
     #[test]

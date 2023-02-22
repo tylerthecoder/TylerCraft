@@ -126,6 +126,15 @@ It now renders the chunks made in rust to the screen using the chunk mesh. Looks
 
 I've still been working here and there. Found a bug in the ray detection on the plane level. Test should be failing need to figure out why.
 
-# 2 / 21 / 23
+# 2 / 20 / 23
 
 Finally got the ray intersection working. Wasn't considering the outward facing planes correctly. Only thing left is to fix the mesh rendering. It is off when you place new blocks.
+
+# 2 / 21 / 23
+
+Fixed the mesh rendering. Now seems like sometimes the block placement is wrong when you are rotated, might need to add some test cases for rotation.
+Maybe it would be a good idea to look into hot module reloading so I can reload the world logic. Only hard part about that is the code stores the data about which block is in each chunk.
+
+Deleting blocks doesn't work either
+
+I think a better debug mode to aim to make is a way to have no chunks loaded, but I can fly around in a void and type a command to place a block anywhere.
