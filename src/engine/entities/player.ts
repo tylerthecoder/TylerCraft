@@ -201,6 +201,7 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
   }
 
   setCreative(val: boolean) {
+    console.log("Setting creative to", val)
     this.creative = val;
     this.gravitable = !val;
   }

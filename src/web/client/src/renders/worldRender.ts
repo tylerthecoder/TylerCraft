@@ -65,7 +65,7 @@ export default class WorldRenderer {
   }
 
   renderChunk(chunkPos: Vector2D, camera: Camera, renderedSet: Set<ChunkRenderer>) {
-    const chunk = this.world.getChunkFromPos(chunkPos, { loadIfNotFound: true });
+    const chunk = this.world.getChunkFromPos(chunkPos);
 
     if (!chunk) {
       return;
