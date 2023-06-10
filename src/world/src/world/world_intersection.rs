@@ -1,6 +1,7 @@
 use super::{world_block::WorldBlock, World};
 use crate::{direction::Direction, geometry::ray::Ray, plane::WorldPlane};
 use serde::{Deserialize, Serialize};
+use wasm_bindgen::JsValue;
 
 #[derive(PartialEq, Debug, Serialize, Deserialize)]
 pub struct LookingAt {
@@ -19,14 +20,16 @@ pub struct LookingAt {
 }
 
 impl World {
+
+
+    // TODO: memoize the blocks returned from the `get_cube_vecs`, we are probably checking the same blocks a lot
     pub fn get_pointed_at_block(&self, ray: Ray) -> Option<LookingAt> {
         // n is how much the ray will march forward
-        for n in 0..10 {
-            let pointed_at = ray
-                .move_forward(n as f32)
-                .pos
-                .to_world_pos()
-                .get_cross_vecs()
+        for n in 0..13 {
+            let marched_pos = ray.move_forward(n as f32).pos.to_world_pos();
+
+            let pointed_at = marched_pos
+                .get_cube_vecs()
                 .iter()
                 .filter_map(|pos| self.get_mesh_at_pos(pos.to_owned()).ok())
                 .flat_map(|block_mesh| {

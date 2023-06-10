@@ -1,9 +1,9 @@
 use crate::direction::{Direction, Directions, FlatDirection, EVERY_FLAT_DIRECTION};
-use num::One;
+use num::{One, Zero};
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::Display,
-    ops::{Add, AddAssign, Mul, Sub, SubAssign},
+    ops::{Add, AddAssign, Mul, Sub, SubAssign, Neg}
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -247,6 +247,33 @@ impl<
         }
         vecs
     }
+
+    /**
+     * Returns all blocks in a cube around the vector
+     * I am not proud of this
+     */
+    pub fn get_cube_vecs(&self) -> Vec<Vec3<T>>
+    where
+        T: Add<Output = T> + Sub<Output = T> + Copy + One + Neg< Output = T> + Zero,
+    {
+        let mut vecs = Vec::new();
+
+        vecs.push(self.clone());
+
+        for x in [-T::one(), T::one(), T::zero()].iter().cloned() {
+            for y in [-T::one(), T::one(), T::zero()].iter().cloned() {
+                for z in [-T::one(), T::one(), T::zero()].iter().cloned() {
+                    vecs.push(Vec3::new(self.x + x, self.y + y, self.z + z));
+                }
+            }
+        }
+
+        vecs
+    }
+
+
+
+
 }
 
 #[cfg(test)]

@@ -161,3 +161,16 @@ I think it is because we get all blocks that aren't void in the chunk, then we u
 My idea to fix this is to add a dirty array to the chunk that is updated when a block is added or removed. Then when we update the mesh, we can check if the block is in the dirty array
 
 That fixed it but it does not delete the dirty blocks in a chunk ever.
+
+
+Seems to still be an issue with placing blocks. Sometimes a a block seems to be not found and the ray goes through it. Only seems to happen when x or y cord is negative.
+
+Also might need to have a script that adds `type: module` to the package json in the wasm folder. That is preventing nodejs from loading the wasm module.
+
+
+Think I want to work on high lighting the block that is being looked at for debug purposes. It will help with this stuff a lot.
+
+Looks like the blocks that aren't being found are because the ray isn't even checking that block sometimes.
+
+Found the issue. I made the ray check many more blocks while marching and it finds the correct one now.
+
