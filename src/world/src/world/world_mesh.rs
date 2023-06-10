@@ -43,7 +43,7 @@ impl World {
 
     pub fn update_chunk_mesh(&mut self, chunk_pos: &ChunkPos) -> Result<(), ChunkNotLoadedError> {
         let chunk = self.get_chunk(chunk_pos)?;
-        for block in chunk.get_all_blocks() {
+        for block in chunk.get_all_blocks_and_dirty() {
             self.update_mesh_at_pos(block.pos.to_world_pos(chunk_pos))
                 .ok();
         }
@@ -52,7 +52,7 @@ impl World {
 
     /**
      * Updates all chunks surrounding a block.
-     * Does not update the chunk the block is in.
+     * Does not update the chunk the block is in. ( I think this is false now? )
      */
     pub fn update_chunks_around_block(&mut self, world_pos: &WorldPos) -> WorldStateDiff {
         // Check to see if any of the adjacent blocks are in different chunks.

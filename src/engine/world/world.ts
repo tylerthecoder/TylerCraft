@@ -214,16 +214,12 @@ export class World {
 
     this.loadingChunks.add(chunkPos.toIndex());
     console.log("Calling load chunk")
-    return new Promise((resolve) => {
-      this.chunkReader.getChunk(chunkPos.toIndex()).then((chunk) => {
-        // this should only happen on the client side when single player
-        // and on the server side when multiplayer
-        // if (!chunk) chunk = this.terrainGenerator.generateChunk(chunkPos);
-        console.log("Got chunk", chunk)
-        this.addOrUpdateChunk(chunk);
-        resolve();
-      });
-    });
+    const chunk = await this.chunkReader.getChunk(chunkPos.toIndex());
+    // this should only happen on the client side when single player
+    // and on the server side when multiplayer
+    // if (!chunk) chunk = this.terrainGenerator.generateChunk(chunkPos);
+    console.log("Got chunk", chunk)
+    this.addOrUpdateChunk(chunk);
   }
 
   update(entities: Entity[]) {
@@ -280,10 +276,14 @@ export class World {
     }
   }
 
-  addBlock(stateDiff: GameStateDiff, cube: Cube) {
+  async addBlock(stateDiff: GameStateDiff, cube: Cube, options?: {loadChunkIfNotLoaded: boolean}) {
     const chunk = this.getChunkFromWorldPoint(cube.pos);
     if (!chunk) {
-      throw new Error("Trying to place block in unloaded chunk");
+      if (options?.loadChunkIfNotLoaded) {
+        await this.loadChunk(World.worldPosToChunkPos(cube.pos));
+      } else {
+        throw new Error("Trying to place block in unloaded chunk");
+      }
     }
     const diff: {chunk_ids: string[]} = this.wasmWorld.add_block_wasm({
       block_type: cube.type,
@@ -307,6 +307,7 @@ export class World {
       cubePos.get(1),
       cubePos.get(2)
     );
+    console.log("Diff from removing block", diff);
     diff.chunk_ids.forEach(id => stateDiff.updateChunk(id));
   }
 

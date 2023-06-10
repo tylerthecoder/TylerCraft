@@ -189,7 +189,7 @@ export class GameActionHandler {
 			const player = this.getPlayer(playerUid);
 			const pos = player.pos.floor();
 			const cube = CubeHelpers.createCube(BLOCKS.gold, pos);
-			this.game.world.addBlock(this.game.stateDiff, cube);
+			this.game.world.addBlock(this.game.stateDiff, cube, {loadChunkIfNotLoaded: true});
 		}
 
 	}

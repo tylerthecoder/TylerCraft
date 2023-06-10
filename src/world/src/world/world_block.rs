@@ -49,6 +49,10 @@ impl WorldBlock {
     }
 
     pub fn get_visible_faces(&self, adjacent_blocks: HashMap<Direction, WorldBlock>) -> Directions {
+        if self.block_type == BlockType::Void {
+            return Directions::empty()
+        }
+
         self.get_faces()
             .into_iter()
             .filter(|direction| match adjacent_blocks.get(direction) {
