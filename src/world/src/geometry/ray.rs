@@ -35,8 +35,8 @@ impl Ray {
                 self.distance_from_plane(&plane)
                     .map(|distance| (plane, distance))
             })
-            .min_by(|(planeA, distA), (planeB, distB)| {
-                distA.partial_cmp(distB).unwrap_or(Ordering::Equal)
+            .min_by(|(_plane_a, dist_a), (_plane_b, dist_b)| {
+                dist_a.partial_cmp(dist_b).unwrap_or(Ordering::Equal)
             })
     }
 
