@@ -24,6 +24,10 @@ pub struct Chunk {
     block_data: HashMap<usize, BlockData>,
     #[wasm_bindgen(skip)]
     pub position: ChunkPos,
+
+    /** TODO: I am never deleting dirty blocks, need to fix that */
+    #[wasm_bindgen(skip)]
+    pub dirty_blocks: Vec<InnerChunkPos>,
 }
 
 impl Chunk {
@@ -32,6 +36,7 @@ impl Chunk {
             blocks: [BlockType::Void; CHUNK_MEM_SIZE],
             block_data: HashMap::new(),
             position,
+            dirty_blocks: Vec::new(),
         }
     }
 
@@ -46,6 +51,17 @@ impl Chunk {
             .collect()
     }
 
+    /**
+     * Returns dirty blocks plus all the visible blocks
+     */
+    pub fn get_all_blocks_and_dirty(&self) -> Vec<ChunkBlock> {
+        self.dirty_blocks
+            .iter()
+            .map(|pos| self.get_block(pos))
+            .chain(self.get_all_blocks().into_iter())
+            .collect()
+    }
+
     pub fn get_uuid(&self) -> String {
         self.position.to_index()
     }
@@ -54,6 +70,7 @@ impl Chunk {
         let index = block.pos.to_chunk_index();
         self.block_data.insert(index, block.extra_data);
         self.blocks[index] = block.block_type;
+        self.dirty_blocks.push(block.pos.clone());
     }
 
     fn get_block_type_at_index(&self, index: usize) -> BlockType {
@@ -103,5 +120,11 @@ impl Chunk {
     pub fn remove_block(&mut self, pos: &InnerChunkPos) -> () {
         let index = pos.to_chunk_index();
         self.blocks[index] = BlockType::Void;
+        self.block_data.remove(&index);
+        self.dirty_blocks.push(pos.clone());
+    }
+
+    pub fn clean(&mut self) {
+        self.dirty_blocks.clear();
     }
 }

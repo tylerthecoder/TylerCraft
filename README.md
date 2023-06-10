@@ -49,3 +49,15 @@ WorldModels are pre game. They create the game by either asking the client stora
     - [moduleName] - More game logic - Deps: web/shared, game
       - web
       - logic
+
+
+
+
+## Debug
+
+Currently only works in chrome. Server doesn't work, have to run dev for web, engine, and world. I think it is because we get all blocks that aren't void in the chunk, then we update the mesh for them. Since we removed the block, it isn't returned in the array of all blocks, so we don't update at that location.
+
+My idea to fix this is to add a dirty array to the chunk that is updated when a block is added or removed. Then when we update the mesh, we can check if the block is in the dirty array
+
+
+

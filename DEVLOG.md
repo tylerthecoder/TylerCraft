@@ -151,3 +151,13 @@ if (hot) {
 
 Got the placing of a debug block working, just have to figure out how to place the block when there are no chunks. Do I want to check on the client if the chunk exists before inserting or add an option to automatically create the chunk if one doesn't exist.
 
+
+# 6 / 10 / 23
+
+Seems like deleting a block doesn't update the mesh.
+
+I think it is because we get all blocks that aren't void in the chunk, then we update the mesh for them. Since we removed the block, it isn't returned in the array of all blocks, so we don't update at that location.
+
+My idea to fix this is to add a dirty array to the chunk that is updated when a block is added or removed. Then when we update the mesh, we can check if the block is in the dirty array
+
+That fixed it but it does not delete the dirty blocks in a chunk ever.

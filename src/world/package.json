@@ -1,6 +1,7 @@
 {
 	"name": "@craft/rust-world",
 	"version": "1.0.0",
+	"type": "module",
 	"scripts": {
 		"build": "wasm-pack build",
 		"build:quick": "wasm-pack build --mode no-install",
