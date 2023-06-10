@@ -70,7 +70,7 @@ mod tests {
         chunk::chunk_mesh::BlockMesh,
         direction::{Direction, Directions},
         plane::WorldPlane,
-        positions::{FineWorldPos, WorldPos},
+        positions::{FineWorldPos, WorldPos}, geometry::rotation::SphericalRotation,
     };
 
     #[test]
@@ -122,6 +122,18 @@ mod tests {
         let world_plane = WorldPlane::new(WorldPos::new(1, 0, 1), Direction::Up);
 
         assert_eq!(ray.distance_from_plane(&world_plane), None);
+
+
+        let ray = Ray {
+            pos: FineWorldPos::new(-3.7103435802557425, 2.8, 11.354942113622975),
+            rot: SphericalRotation { theta: 0.03720367320505069, phi: 0.2720000000000098 }
+        };
+        let world_plane = WorldPlane::new(WorldPos::new(-4, 0, 17), Direction::Up);
+        let distance = ray.distance_from_plane(&world_plane);
+
+        println!("The Distance: {:?}", distance);
+
+
     }
 
     #[test]

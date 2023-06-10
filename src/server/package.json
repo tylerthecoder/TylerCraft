@@ -3,7 +3,7 @@
 	"version": "1.0.0",
 	"type": "module",
 	"scripts": {
-		"start": "node -r dotenv/config ./dist/server.js",
+		"start": "node --experimental-modules --experimental-wasm-modules -r dotenv/config ./dist/server.js",
 		"build": "tsc -b",
 		"dev:build": "tsc -b -w",
 		"nodemon": "nodemon",
