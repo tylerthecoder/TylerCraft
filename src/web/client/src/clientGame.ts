@@ -1,4 +1,4 @@
-import { Camera, Game, ISocketMessage, ISocketMessageType, IWorldData, WorldModel, Player, GameStateDiff, GameAction, GameActionHolder, GameController, World, EntityHolder } from "@craft/engine";
+import { Camera, Game, ISocketMessage, ISocketMessageType, IWorldData, WorldModel, Player, GameStateDiff, GameAction, GameActionHolder, GameController, World, EntityHolder, CONFIG } from "@craft/engine";
 import { EntityCamera } from "./cameras/entityCamera";
 import { canvas } from "./canvas";
 import WorldRenderer from "./renders/worldRender";
@@ -53,7 +53,6 @@ export class ClientGame extends Game {
 
     this.worldRenderer = new WorldRenderer(this.world, this);
 
-    // Temp
     this.worldRenderer.shouldRenderMainPlayer = false;
 
     this.mainPlayer = entities.createOrGetPlayer(this.stateDiff, getMyUid());
@@ -75,7 +74,6 @@ export class ClientGame extends Game {
     }
 
     this.setUpPlayer();
-    // this.setUpSpectator();
 
     if (canvas.isXr) {
       this.camera = new XrCamera(this.mainPlayer);
@@ -129,11 +127,21 @@ export class ClientGame extends Game {
     for (const entityId of stateDiff.getRemovedEntities()) {
       this.worldRenderer.removeEntity(entityId);
     }
+
+    // Load chunks around the player
+    if (CONFIG.terrain.infiniteGen) {
+      this.world.loadChunksAroundPoint(this.mainPlayer.pos)
+    }
+
+    const loadedChunk = this.world.chunks.getNewlyLoadedChunk();
+    if (loadedChunk) {
+      this.worldRenderer.addChunk(loadedChunk);
+    }
+
   }
 
   renderLoop(time: number) {
     const delta = time - this.totTime;
-    // Update the controllers so they can append game actions
     this.worldRenderer.render(this);
     this.pastDeltas.push(delta);
     this.totTime = time;

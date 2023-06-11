@@ -2,6 +2,11 @@ export const BASE_CONFIG = {
   seed: "bungi",
 
   renderDistance: 3,
+
+
+  /**
+   * How many chunks to load in each direction starting at the player
+   */
   loadDistance: 3,
 
   transparency: true,
@@ -24,7 +29,8 @@ export const BASE_CONFIG = {
     trees: false,
     // flowers: true,
     flowers: false,
-    /** Make the world load forever in all directions.
+    /**
+     * Make the world load forever in all directions.
      * If off the world loads to the size of Config.loadDistance
      */
     infiniteGen: true,
