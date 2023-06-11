@@ -1,5 +1,5 @@
 import { RenderData, Renderer } from "./renderer";
-import { Camera, Entity, IDim, } from "@craft/engine";
+import { Camera, Entity, IDim } from "@craft/engine";
 import TextureMapper from "../textureMapper";
 import ShapeBuilder from "../services/shapeBuilder";
 import { canvas } from "../canvas";
@@ -21,7 +21,7 @@ export class CubeRenderer extends Renderer {
     const renData = new RenderData();
     renData.pushData({ textureCords });
 
-    ShapeBuilder.buildBox(vec => vec, renData);
+    ShapeBuilder.buildBox((vec) => vec, renData);
 
     this.setBuffers(renData);
   }

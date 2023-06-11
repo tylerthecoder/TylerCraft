@@ -1,6 +1,14 @@
-import { BLOCKS, BlockType, ExtraBlockData, getBlockData } from "../blockdata.js";
+import {
+  BLOCKS,
+  BlockType,
+  ExtraBlockData,
+  getBlockData,
+} from "../blockdata.js";
 import { Direction, Vector3D } from "../utils/vector.js";
-import { faceNumberToFaceVector, faceVectorToFaceNumber } from "../utils/face.js";
+import {
+  faceNumberToFaceVector,
+  faceVectorToFaceNumber,
+} from "../utils/face.js";
 import { World } from "../world/world.js";
 import { IDim } from "../types.js";
 import { Entity, FaceLocater } from "./entity.js";
@@ -9,53 +17,58 @@ export type CubeDto = {
   type: BLOCKS;
   pos: IDim;
   extraData?: ExtraBlockData;
-}
+};
 
 export type Cube = {
   type: BLOCKS;
   pos: Vector3D;
   extraData?: ExtraBlockData;
-}
+};
 
 export type ISerializedCube = {
   block_type: BLOCKS;
   extra_data: "None";
   world_pos: { x: number; y: number; z: number };
-}
+};
 
 export type WasmCube = {
   block_type: BLOCKS;
-  world_pos: { x: number, y: number, z: number };
+  world_pos: { x: number; y: number; z: number };
   extraData?: { Image: Direction } | "None";
-}
+};
 
 export type Box = {
   pos: Vector3D;
   dim?: IDim;
-}
+};
 
 export type HitBox = Box & {
   dim: IDim;
   hit?: (entity: Entity, where: FaceLocater) => void;
-}
-
+};
 
 export const CUBE_DIM: IDim = [1, 1, 1];
 
 class CubeHelpersClass {
-
   fromWasmCube(cube: WasmCube): Cube {
     try {
       return {
-        pos: new Vector3D([cube.world_pos.x, cube.world_pos.y, cube.world_pos.z]),
+        pos: new Vector3D([
+          cube.world_pos.x,
+          cube.world_pos.y,
+          cube.world_pos.z,
+        ]),
         type: cube.block_type,
-        extraData: !cube.extraData || cube.extraData === "None" ? undefined : {
-          face: cube.extraData.Image,
-          galleryIndex: 0,
-        }
-      }
-    } catch(err) {
-      console.log("Could not create cube from wasm cube", cube)
+        extraData:
+          !cube.extraData || cube.extraData === "None"
+            ? undefined
+            : {
+                face: cube.extraData.Image,
+                galleryIndex: 0,
+              },
+      };
+    } catch (err) {
+      console.log("Could not create cube from wasm cube", cube);
       console.log(err);
       throw err;
     }
@@ -74,7 +87,7 @@ class CubeHelpersClass {
       type: cubeDto.type,
       pos: new Vector3D(cubeDto.pos),
       extraData: cubeDto.extraData,
-    }
+    };
   }
 
   serialize(cube: Cube): CubeDto {
@@ -82,12 +95,14 @@ class CubeHelpersClass {
       type: cube.type,
       pos: cube.pos.data as IDim,
       extraData: cube.extraData,
-    }
+    };
   }
 
   isPointInsideOfCube(cube: Cube, point: Vector3D) {
     return cube.pos.data.every((ord, index) => {
-      return point.data[index] >= ord && point.data[index] <= ord + CUBE_DIM[index]
+      return (
+        point.data[index] >= ord && point.data[index] <= ord + CUBE_DIM[index]
+      );
     });
   }
 
@@ -106,8 +121,9 @@ class CubeHelpersClass {
 
       case BlockType.flat: {
         console.log(cube);
-        if (!cube.extraData) throw new Error("cube1 block should have extra data");
-        const direction = faceNumberToFaceVector(cube.extraData.face)
+        if (!cube.extraData)
+          throw new Error("cube1 block should have extra data");
+        const direction = faceNumberToFaceVector(cube.extraData.face);
         return [direction];
       }
     }
@@ -126,7 +142,10 @@ class CubeHelpersClass {
     const blockData = getBlockData(checkingBlock.type);
     const currentBlockData = getBlockData(cube.type);
 
-    if (blockData.blockType === BlockType.fluid && currentBlockData.blockType === BlockType.fluid) {
+    if (
+      blockData.blockType === BlockType.fluid &&
+      currentBlockData.blockType === BlockType.fluid
+    ) {
       return true;
     }
 
@@ -153,7 +172,7 @@ class CubeHelpersClass {
         cube2.pos.get(i) >= cube1.pos.get(i) + (cube1.dim ?? CUBE_DIM)[i] // and cube2 is not contained in my (cube1) line segmcube2
       ) {
         // not possible for these to be intersecting since one dimension is too far away
-        return false
+        return false;
       }
 
       if (
@@ -161,12 +180,11 @@ class CubeHelpersClass {
         cube1.pos.get(i) >= cube2.pos.get(i) + (cube2.dim ?? CUBE_DIM)[i] // and cube2 is not contained in my (cube1) line segmcube2
       ) {
         // not possible for these to be intersecting since one dimension is too far away
-        return false
+        return false;
       }
     }
     return true;
   }
-
 }
 
 const CubeHelpers = new CubeHelpersClass();

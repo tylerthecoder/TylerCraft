@@ -44,7 +44,6 @@ export abstract class Game<Action = GameAction> {
   private worldModel: WorldModel;
   private previousTime = Date.now();
 
-
   constructor(
     public entities: EntityHolder,
     public world: World,

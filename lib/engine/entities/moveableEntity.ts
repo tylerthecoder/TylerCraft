@@ -8,7 +8,9 @@ export interface MovableEntityDto extends EntityDto {
   vel: IDim;
 }
 
-export abstract class MovableEntity<T extends MovableEntityDto = MovableEntityDto> extends Entity<T> {
+export abstract class MovableEntity<
+  T extends MovableEntityDto = MovableEntityDto
+> extends Entity<T> {
   vel = Vector3D.zero;
   /**
    * (radius (1), theta: [0, 2pi], phi: [0, pi])
@@ -25,8 +27,8 @@ export abstract class MovableEntity<T extends MovableEntityDto = MovableEntityDt
   protected baseDto(): MovableEntityDto {
     return {
       ...super.baseDto(),
-      vel: this.vel.data as IDim
-    }
+      vel: this.vel.data as IDim,
+    };
   }
 
   protected baseSet(data: Partial<MovableEntityDto>) {
@@ -54,7 +56,7 @@ export abstract class MovableEntity<T extends MovableEntityDto = MovableEntityDt
 
   private static gravityVector = new Vector3D([0, CONFIG.gravity, 0]);
   gravity() {
-    if (this.vel.magnitude() > .9) return; // set a terminal velocity
+    if (this.vel.magnitude() > 0.9) return; // set a terminal velocity
     this.vel = this.vel.add(MovableEntity.gravityVector);
   }
 
@@ -111,13 +113,8 @@ export abstract class MovableEntity<T extends MovableEntityDto = MovableEntityDt
 
   getJumpVel(): Vector3D {
     if (this.metaActions.has(MetaAction.jump)) {
-      return new Vector3D([
-        0,
-        CONFIG.player.jumpSpeed,
-        0
-      ]);
+      return new Vector3D([0, CONFIG.player.jumpSpeed, 0]);
     }
     return Vector3D.zero;
   }
-
 }

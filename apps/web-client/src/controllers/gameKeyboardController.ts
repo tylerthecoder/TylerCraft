@@ -1,4 +1,12 @@
-import { MetaAction, MovableEntity, CONFIG, GameAction, Direction, GameController, IDim } from "@craft/engine";
+import {
+  MetaAction,
+  MovableEntity,
+  CONFIG,
+  GameAction,
+  Direction,
+  GameController,
+  IDim,
+} from "@craft/engine";
 import { ClientGame } from "../clientGame";
 import { canvas } from "../canvas";
 
@@ -23,23 +31,21 @@ const makeWheelScroller = (game: ClientGame) => {
       totalWheelDelta += e.deltaY;
     }
 
-
     if (totalWheelDelta > 100) {
       totalWheelDelta = 0;
       game.handleAction(GameAction.PlayerBeltLeft, {
         playerUid: game.mainPlayer.uid,
-      })
+      });
     }
 
     if (totalWheelDelta < -100) {
       totalWheelDelta = 0;
       game.handleAction(GameAction.PlayerBeltRight, {
         playerUid: game.mainPlayer.uid,
-      })
+      });
     }
-  })
-}
-
+  });
+};
 
 export class MouseAndKeyController extends GameController<GameAction[]> {
   private keys = new Set();
@@ -53,8 +59,12 @@ export class MouseAndKeyController extends GameController<GameAction[]> {
   private exitMenuButton = document.getElementById("exitMenuButton")!;
   private menuButton = document.getElementById("menuIcon")!;
   private gameMenu = document.getElementById("gameMenu")!;
-  private eGameNameInput = document.getElementById("gameNameInput") as HTMLInputElement;
-  private eSaveButton = document.getElementById("saveButton") as HTMLButtonElement;
+  private eGameNameInput = document.getElementById(
+    "gameNameInput"
+  ) as HTMLInputElement;
+  private eSaveButton = document.getElementById(
+    "saveButton"
+  ) as HTMLButtonElement;
 
   private hasMouseMoved = false;
 
@@ -68,11 +78,11 @@ export class MouseAndKeyController extends GameController<GameAction[]> {
     makeWheelScroller(clientGame);
 
     window.addEventListener("keydown", ({ key }) => {
-      this.handleKeyDown(key)
+      this.handleKeyDown(key);
     });
 
     window.addEventListener("keyup", ({ key }) => {
-      this.handleKeyUp(key)
+      this.handleKeyUp(key);
     });
 
     window.addEventListener("mousedown", (e: MouseEvent) => {
@@ -89,9 +99,11 @@ export class MouseAndKeyController extends GameController<GameAction[]> {
         return;
       }
 
-      if (e.which === 3) { // right click
+      if (e.which === 3) {
+        // right click
         this.placeBlock();
-      } else if (e.which === 1) { // left click
+      } else if (e.which === 1) {
+        // left click
         this.removeBlock();
       }
       e.preventDefault();
@@ -130,13 +142,13 @@ export class MouseAndKeyController extends GameController<GameAction[]> {
       if (!e.target) return;
       // TODO debounce this
       this.game.handleAction(GameAction.ChangeName, {
-        name: (e.target as HTMLInputElement).value
+        name: (e.target as HTMLInputElement).value,
       });
     });
 
     this.eSaveButton.addEventListener("click", () => {
       this.save();
-    })
+    });
   }
 
   save() {
@@ -161,7 +173,7 @@ export class MouseAndKeyController extends GameController<GameAction[]> {
     this.game.handleAction(GameAction.RemoveBlock, {
       cameraData: this.clientGame.camera.getRay(),
       playerUid: this.clientGame.mainPlayer.uid,
-    })
+    });
   }
 
   // Basically a debug function
@@ -172,7 +184,6 @@ export class MouseAndKeyController extends GameController<GameAction[]> {
       playerUid: this.clientGame.mainPlayer.uid,
     });
   }
-
 
   openMenu() {
     this.gameMenu.style.display = "block";
@@ -189,11 +200,11 @@ export class MouseAndKeyController extends GameController<GameAction[]> {
     } else if (key === "d") {
       this.currentMoveDirections.add(Direction.Right);
     } else if (key === "p") {
-      this.game.handleAction(GameAction.Save, undefined)
+      this.game.handleAction(GameAction.Save, undefined);
     } else if (key === " ") {
       this.game.handleAction(GameAction.PlayerJump, {
         playerUid: this.player.uid,
-      })
+      });
     }
   }
 
@@ -212,7 +223,6 @@ export class MouseAndKeyController extends GameController<GameAction[]> {
   }
 
   update(_delta: number) {
-
     if (this.hasMouseMoved) {
       // Send this data to the server
       this.game.handleAction(GameAction.PlayerRotate, {
@@ -221,8 +231,6 @@ export class MouseAndKeyController extends GameController<GameAction[]> {
       });
       this.hasMouseMoved = false;
     }
-
-
 
     if (this.clientGame.isSpectating) {
       // const spectator = this.clientGame.spectator;
@@ -255,7 +263,7 @@ export class MouseAndKeyController extends GameController<GameAction[]> {
           directions: Array.from(this.currentMoveDirections.values()),
           playerUid: this.clientGame.mainPlayer.uid,
           playerRot: this.clientGame.mainPlayer.rot.data as IDim,
-        })
+        });
 
         // Copy prev to current
         this.prevMoveDirections = new Set(this.currentMoveDirections);
@@ -266,7 +274,6 @@ export class MouseAndKeyController extends GameController<GameAction[]> {
       if (this.keys.has("f")) {
         player.fireball();
       }
-
 
       if (player.creative) {
         this.ifHasKeyThenAddMeta(player, " ", MetaAction.up);
@@ -288,55 +295,54 @@ export class MouseAndKeyController extends GameController<GameAction[]> {
 
     this.ifHasKeyThen("v", () => {
       this.clientGame.toggleThirdPerson();
-    })
+    });
 
     this.ifHasKeyThen("c", () => {
       this.clientGame.toggleCreative();
-    })
+    });
 
     this.ifHasKeyThen("m", () => {
       this.openMenu();
-    })
+    });
 
     this.ifHasKeyThen("j", () => {
       this.placeBlockUnderPlayer();
-    })
+    });
 
     const selectBelt = (pos: number) => {
       this.game.handleAction(GameAction.PlayerSetBeltIndex, {
         playerUid: this.clientGame.mainPlayer.uid,
         index: pos,
       });
-
-    }
+    };
 
     this.ifHasKeyThen("1", () => {
       selectBelt(0);
-    })
+    });
 
     this.ifHasKeyThen("2", () => {
       selectBelt(1);
-    })
+    });
 
     this.ifHasKeyThen("3", () => {
       selectBelt(2);
-    })
+    });
 
     this.ifHasKeyThen("4", () => {
       selectBelt(3);
-    })
+    });
 
     this.ifHasKeyThen("5", () => {
       selectBelt(4);
-    })
+    });
 
     this.ifHasKeyThen("6", () => {
       selectBelt(5);
-    })
+    });
 
     this.ifHasKeyThen("7", () => {
       selectBelt(6);
-    })
+    });
 
     this.ifHasKeyThen("8", () => {
       selectBelt(7);
@@ -348,8 +354,7 @@ export class MouseAndKeyController extends GameController<GameAction[]> {
   }
 
   ifHasKeyThenAddMeta(ent: MovableEntity, key: string, metaAction: MetaAction) {
-    if (this.keys.has(key))
-      ent.metaActions.add(metaAction);
+    if (this.keys.has(key)) ent.metaActions.add(metaAction);
     else {
       ent.metaActions.delete(metaAction);
     }

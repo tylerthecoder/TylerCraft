@@ -35,7 +35,7 @@ export class SphereRenderer extends Renderer {
       for (let j = 0; j < layerAmount; j++) {
         const x = Math.cos(j * ((2 * Math.PI) / layerAmount)) * circleRadius;
         const z = Math.sin(j * ((2 * Math.PI) / layerAmount)) * circleRadius;
-        const pos = [x, y, z].map(o => (o * this.radius) / 2);
+        const pos = [x, y, z].map((o) => (o * this.radius) / 2);
         positions.push(pos);
       }
 
@@ -84,7 +84,7 @@ export class SphereRenderer extends Renderer {
           const p2 = (i + 1) % fromLength;
 
           const bet = between2(p1 / fromLength, p2 / fromLength, toLength).map(
-            x => x + toStart
+            (x) => x + toStart
           );
 
           const halfway = Math.floor(bet.length / 2);

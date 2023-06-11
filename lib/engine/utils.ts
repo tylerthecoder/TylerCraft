@@ -1,14 +1,18 @@
 import { IDim } from "./types.js";
 
-
 export function roundToNPlaces(num: number, n: number) {
   // // const t = Math.round(num * powerOfTen) / powerOfTen
   // // return t;
   // return parseFloat(num.toFixed(n));
-  return Math.round((num + Number.EPSILON) * 10 ** n) / 10 ** n
+  return Math.round((num + Number.EPSILON) * 10 ** n) / 10 ** n;
 }
 
-export function bindValue(number: number, min: number, max: number, wrap?: boolean) {
+export function bindValue(
+  number: number,
+  min: number,
+  max: number,
+  wrap?: boolean
+) {
   if (wrap) {
     if (number > max) return number - max;
     if (number < min) return number + max;
@@ -21,8 +25,8 @@ export function bindValue(number: number, min: number, max: number, wrap?: boole
 
 export function camelCaseToNormalCase(str: string) {
   return str
-    .replace(/([A-Z])/g, ' $1')
-    .replace(/^./, str => str.toUpperCase())
+    .replace(/([A-Z])/g, " $1")
+    .replace(/^./, (str) => str.toUpperCase());
 }
 
 export function arrayAdd<T extends number[]>(arr1: T, arr2: T): T {
@@ -42,9 +46,8 @@ export function arrayMul<T extends number[]>(arr1: T, arr2: T): T {
 }
 
 export function arrayScalarMul<T extends number[]>(arr1: T, num: number): T {
-  return arr1.map(val => val * num) as T;
+  return arr1.map((val) => val * num) as T;
 }
-
 
 export function arraySquare(arr: number[]) {
   return arrayMul(arr, arr);
@@ -97,7 +100,9 @@ export function arrayDist(arr1: number[], arr2: number[]) {
 }
 
 export function arrayDistSquared(arr1: number[], arr2: number[]) {
-  return arraySub(arr1, arr2).map(Math.abs).reduce((sum, current) => sum + current);
+  return arraySub(arr1, arr2)
+    .map(Math.abs)
+    .reduce((sum, current) => sum + current);
 }
 
 export function arrayDot<T extends number[]>(arr1: T, arr2: T): number {
@@ -116,21 +121,17 @@ export function arrayCross(arr1: IDim, arr2: IDim): IDim {
     arr1[1] * arr2[2] - arr1[2] * arr2[1],
     arr1[2] * arr2[0] - arr1[0] * arr2[2],
     arr1[0] * arr2[1] - arr1[1] * arr2[0],
-  ]
+  ];
 }
 
 export function getRandEle<T>(arr: Array<T>): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-
-
 export class MapArray<T, S> extends Map<T, S[]> {
-
   public append(key: T, value: S) {
     const currentValue = this.get(key) ?? [];
     const newValue = [...currentValue, value];
     this.set(key, newValue);
   }
-
 }

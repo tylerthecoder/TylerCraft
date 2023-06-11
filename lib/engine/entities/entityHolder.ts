@@ -7,51 +7,59 @@ import { Projectile } from "./projectile.js";
 
 export const enum IEntityType {
   Player = 0,
-  Projectile = 1
+  Projectile = 1,
 }
 
 // Types that need to be updated
 export const GameEntityClassMap = {
   [IEntityType.Player]: Player,
   [IEntityType.Projectile]: Projectile,
-}
+};
 
 // Helper Types
-type ValueOfClass<C extends GameEntityTypeOfClass> = C extends (new (...args: any[]) => infer T) ? T : never;
+type ValueOfClass<C extends GameEntityTypeOfClass> = C extends new (
+  ...args: any[]
+) => infer T
+  ? T
+  : never;
 type Distribute<U> = U extends GameEntityTypeOfClass ? ValueOfClass<U> : never;
 
 export type GameEntityDtoMap = {
-  [key in keyof typeof GameEntityClassMap]: ValueOfClass<typeof GameEntityClassMap[key]> extends Entity<infer DTO> ? DTO : never;
-}
+  [key in keyof typeof GameEntityClassMap]: ValueOfClass<
+    (typeof GameEntityClassMap)[key]
+  > extends Entity<infer DTO>
+    ? DTO
+    : never;
+};
 export type GameEntityDto = GameEntityDtoMap[keyof GameEntityDtoMap];
-export type GameEntityTypeOfClass = typeof GameEntityClassMap[keyof typeof GameEntityClassMap];
+export type GameEntityTypeOfClass =
+  (typeof GameEntityClassMap)[keyof typeof GameEntityClassMap];
 export type GameEntity = Distribute<GameEntityTypeOfClass>;
-type GameEntityClassTypeLookup<T extends IEntityType> = ValueOfClass<typeof GameEntityClassMap[T]>;
-
-
+type GameEntityClassTypeLookup<T extends IEntityType> = ValueOfClass<
+  (typeof GameEntityClassMap)[T]
+>;
 
 export interface ISerializedEntities {
-  entities: GameEntityDto[],
+  entities: GameEntityDto[];
 }
-
 
 export class EntityHolder {
   private entities: Map<string, Entity> = new Map(); // this includes players
   private players: Map<string, Player> = new Map();
 
-  constructor(
-    data?: ISerializedEntities,
-  ) {
+  constructor(data?: ISerializedEntities) {
     if (data) {
-      const entityMapData: [uid: string, entity: Entity][] = data.entities.
-        map(e => [e.uid, this.createEntity(e)]);
+      const entityMapData: [uid: string, entity: Entity][] = data.entities.map(
+        (e) => [e.uid, this.createEntity(e)]
+      );
       this.entities = new Map(entityMapData);
 
-      const playersMapData: [uid: string, player: Player][] = Array.from(this.entities.values()).
-        filter(ent => ent instanceof Player).
-        map(player => [player.uid, player as Player]);
+      const playersMapData: [uid: string, player: Player][] = Array.from(
+        this.entities.values()
+      )
+        .filter((ent) => ent instanceof Player)
+        .map((player) => [player.uid, player as Player]);
       this.players = new Map(playersMapData);
-
     }
   }
 
@@ -74,12 +82,14 @@ export class EntityHolder {
     return Array.from(this.players.values());
   }
 
-
   //=======================
   //    Create
   //=======================
 
-  createEntity<T extends EntityDto, S extends GameEntityClassTypeLookup<T['type']>>(entity: T): S {
+  createEntity<
+    T extends EntityDto,
+    S extends GameEntityClassTypeLookup<T["type"]>
+  >(entity: T): S {
     console.log("Creating entity of type: ", entity.type);
     const entClass = GameEntityClassMap[entity.type];
     return new entClass(entity) as S;
@@ -91,7 +101,7 @@ export class EntityHolder {
 
   update(world: World, delta: number) {
     const entityArray = Array.from(this.entities.values());
-    entityArray.forEach(entity => entity.update(delta));
+    entityArray.forEach((entity) => entity.update(delta));
     world.update(entityArray);
   }
 
@@ -110,7 +120,7 @@ export class EntityHolder {
   serialize(): ISerializedEntities {
     return {
       entities: Array.from(this.players.values()).map((p) => p.getDto()),
-    }
+    };
   }
 
   add(stateDiff: GameStateDiff, entity: Entity) {
@@ -153,5 +163,3 @@ export class EntityHolder {
     return this.entities.values();
   }
 }
-
-

@@ -1,9 +1,7 @@
-
 type IDim = [number, number, number];
 
 // type VectorIndex = bigint;
 export type VectorIndex = string;
-
 
 export enum Direction {
   Forwards = 0,
@@ -16,15 +14,22 @@ export enum Direction {
 
 export const getDirectionFromString = (dir: string): Direction => {
   switch (dir) {
-    case "Up": return Direction.Up;
-    case "Down": return Direction.Down;
-    case "West": return Direction.Left;
-    case "East": return Direction.Right;
-    case "North": return Direction.Forwards;
-    case "South": return Direction.Backwards;
-    default: throw new Error(`Invalid direction: ${dir}`);
+    case "Up":
+      return Direction.Up;
+    case "Down":
+      return Direction.Down;
+    case "West":
+      return Direction.Left;
+    case "East":
+      return Direction.Right;
+    case "North":
+      return Direction.Forwards;
+    case "South":
+      return Direction.Backwards;
+    default:
+      throw new Error(`Invalid direction: ${dir}`);
   }
-}
+};
 
 export const ALL_DIRECTIONS = [
   Direction.Forwards,
@@ -33,10 +38,9 @@ export const ALL_DIRECTIONS = [
   Direction.Right,
   Direction.Up,
   Direction.Down,
-]
+];
 
 export class Vector<T extends number[] = IDim> {
-
   static xVectors = [
     [1, 0, 1],
     [1, 1, 1],
@@ -48,9 +52,7 @@ export class Vector<T extends number[] = IDim> {
     [1, 0, 0],
   ];
 
-  constructor(
-    public data: number[]
-  ) { }
+  constructor(public data: number[]) {}
 
   equals(vec: Vector<T>): boolean {
     for (let i = 0; i < this.data.length; i++) {
@@ -89,7 +91,7 @@ export class Vector<T extends number[] = IDim> {
   }
 
   static _scalarMul<T extends number[]>(vec1: Vector<T>, num: number) {
-    return vec1.data.map(val => val * num) as T;
+    return vec1.data.map((val) => val * num) as T;
   }
 
   static _normalize<T extends number[]>(vec1: Vector<T>) {
@@ -100,7 +102,6 @@ export class Vector<T extends number[] = IDim> {
   static _floor<T extends number[]>(vec1: Vector<T>) {
     return vec1.data.map(Math.floor) as T;
   }
-
 
   private _sub(vec: Vector<T>): T {
     return this.data.map((num, index) => num - vec.get(index)) as T;
@@ -123,7 +124,7 @@ export class Vector<T extends number[] = IDim> {
   }
 
   private _scalarMultiply(number: number): T {
-    return this.data.map(val => val * number) as T;
+    return this.data.map((val) => val * number) as T;
   }
   scalarMultiplyTo(number: number) {
     this.data = this._scalarMultiply(number);
@@ -182,38 +183,32 @@ export class Vector<T extends number[] = IDim> {
     const x = this.data[0];
     const y = this.data[1];
     const z = this.data[2];
-    return new Vector3D(
-      [
-        x * Math.cos(angle) - z * Math.sin(angle),
-        y,
-        x * Math.sin(angle) + z * Math.cos(angle),
-      ]
-    )
+    return new Vector3D([
+      x * Math.cos(angle) - z * Math.sin(angle),
+      y,
+      x * Math.sin(angle) + z * Math.cos(angle),
+    ]);
   }
 
   rotateZ(angle: number) {
     const x = this.data[0];
     const y = this.data[1];
     const z = this.data[2];
-    return new Vector3D(
-      [
-        x * Math.cos(angle) - y * Math.sin(angle),
-        x * Math.sin(angle) + y * Math.cos(angle),
-        z
-      ]
-    )
+    return new Vector3D([
+      x * Math.cos(angle) - y * Math.sin(angle),
+      x * Math.sin(angle) + y * Math.cos(angle),
+      z,
+    ]);
   }
 }
 
-
 export class Vector2D extends Vector<[number, number]> {
-
   static unitVectors = [
     [1, 0],
     [-1, 0],
     [0, 1],
     [0, -1],
-  ].map(d => new Vector2D(d));
+  ].map((d) => new Vector2D(d));
 
   static edgeVectors = [
     [1, 1],
@@ -224,7 +219,7 @@ export class Vector2D extends Vector<[number, number]> {
     [-1, 1],
     [-1, 0],
     [-1, -1],
-  ].map(d => new Vector2D(d));
+  ].map((d) => new Vector2D(d));
 
   static squareVectors = Vector2D.edgeVectors.concat(new Vector2D([0, 0]));
 
@@ -241,7 +236,7 @@ export class Vector2D extends Vector<[number, number]> {
   }
 
   floor(): Vector2D {
-    return new Vector2D(Vector._floor(this))
+    return new Vector2D(Vector._floor(this));
   }
 
   copy(): Vector2D {
@@ -252,7 +247,7 @@ export class Vector2D extends Vector<[number, number]> {
     return new Vector3D([
       ...this.data.slice(0, index),
       num,
-      ...this.data.slice(index)
+      ...this.data.slice(index),
     ]);
   }
 
@@ -261,7 +256,7 @@ export class Vector2D extends Vector<[number, number]> {
     // const data1 = index >> 16;
     // const data2 = index - data1;
     // return new Vector2D([data1, data2]);
-    const ords = index.split(",").map(n => parseInt(n));
+    const ords = index.split(",").map((n) => parseInt(n));
     return new Vector2D(ords);
   }
 
@@ -272,12 +267,12 @@ export class Vector2D extends Vector<[number, number]> {
     return this.data.join(",");
   }
 
-  toCartIntObj(): {x: number, y: number} {
+  toCartIntObj(): { x: number; y: number } {
     // convert numbers to ints
     return {
       x: Math.round(this.data[0]),
       y: Math.round(this.data[1]),
-    }
+    };
   }
 
   toCartesianCoords(): Vector2D {
@@ -303,15 +298,15 @@ export class Vector3D extends Vector<[number, number, number]> {
     [0, 1, 0],
     [0, -1, 0],
     [0, 0, 1],
-    [0, 0, -1]
-  ].map(d => new Vector3D(d));
+    [0, 0, -1],
+  ].map((d) => new Vector3D(d));
 
   static unitVectorsStripY = [
     [1, 0, 0],
     [-1, 0, 0],
     [0, 0, 1],
     [0, 0, -1],
-  ].map(d => new Vector3D(d));
+  ].map((d) => new Vector3D(d));
 
   static edgeVectors = [
     [1, 1, 0],
@@ -326,7 +321,7 @@ export class Vector3D extends Vector<[number, number, number]> {
     [0, 1, -1],
     [0, -1, 1],
     [0, -1, -1],
-  ].map(d => new Vector3D(d));
+  ].map((d) => new Vector3D(d));
 
   static edgeVectorsStripY = [
     [1, 0, 1],
@@ -337,7 +332,7 @@ export class Vector3D extends Vector<[number, number, number]> {
     [-1, 0, 1],
     [-1, 0, 0],
     [-1, 0, -1],
-  ].map(d => new Vector3D(d));
+  ].map((d) => new Vector3D(d));
 
   static cornerVectors = [
     [1, 1, 1],
@@ -348,26 +343,32 @@ export class Vector3D extends Vector<[number, number, number]> {
     [-1, 1, -1],
     [-1, -1, 1],
     [-1, -1, -1],
-  ].map(d => new Vector3D(d));
+  ].map((d) => new Vector3D(d));
 
   static fromIndex(index: VectorIndex): Vector3D {
     // const data1 = index >> 16n;
     // const data2 = index - data1 << 16;
     // const data2 = index - data1;
     // return new Vector3D([data1, data2]);
-    const ords = index.split(",").map(n => parseInt(n));
+    const ords = index.split(",").map((n) => parseInt(n));
     return new Vector3D(ords);
   }
 
   static fromDirection(direction: Direction): Vector3D {
-    console.log("From direction", direction)
+    console.log("From direction", direction);
     switch (direction) {
-      case Direction.Forwards: return new Vector3D([0, 0, 1]);
-      case Direction.Backwards: return new Vector3D([0, 0, -1]);
-      case Direction.Right: return new Vector3D([1, 0, 0]);
-      case Direction.Left: return new Vector3D([-1, 0, 0]);
-      case Direction.Up: return new Vector3D([0, 1, 0]);
-      case Direction.Down: return new Vector3D([0, -1, 0]);
+      case Direction.Forwards:
+        return new Vector3D([0, 0, 1]);
+      case Direction.Backwards:
+        return new Vector3D([0, 0, -1]);
+      case Direction.Right:
+        return new Vector3D([1, 0, 0]);
+      case Direction.Left:
+        return new Vector3D([-1, 0, 0]);
+      case Direction.Up:
+        return new Vector3D([0, 1, 0]);
+      case Direction.Down:
+        return new Vector3D([0, -1, 0]);
     }
   }
 
@@ -380,13 +381,13 @@ export class Vector3D extends Vector<[number, number, number]> {
     return this.data.join(",");
   }
 
-  toCartIntObj(): {x: number, y: number, z: number} {
+  toCartIntObj(): { x: number; y: number; z: number } {
     // convert numbers to ints
     return {
       x: Math.round(this.data[0]),
       y: Math.round(this.data[1]),
       z: Math.round(this.data[2]),
-    }
+    };
   }
 
   add(vec: Vector3D): Vector3D {
@@ -414,14 +415,11 @@ export class Vector3D extends Vector<[number, number, number]> {
   }
 
   floor(): Vector3D {
-    return new Vector3D(Vector._floor(this))
+    return new Vector3D(Vector._floor(this));
   }
 
   stripY(): Vector2D {
-    return new Vector2D([
-      this.data[0],
-      this.data[2]
-    ]);
+    return new Vector2D([this.data[0], this.data[2]]);
   }
 
   toCartesianCoords(): Vector3D {
@@ -438,4 +436,3 @@ export class Vector3D extends Vector<[number, number, number]> {
     return new Vector3D(cords);
   }
 }
-

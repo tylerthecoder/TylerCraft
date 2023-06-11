@@ -1,10 +1,20 @@
 import { Renderer, RenderData } from "./renderer";
-import { Camera, arraySub, BlockType, getBlockData, faceVectorToFaceNumber, IDim, ChunkMesh, Vector3D, Vector2D, BLOCKS } from "@craft/engine";
+import {
+  Camera,
+  arraySub,
+  BlockType,
+  getBlockData,
+  faceVectorToFaceNumber,
+  IDim,
+  ChunkMesh,
+  Vector3D,
+  Vector2D,
+  BLOCKS,
+} from "@craft/engine";
 import TextureMapper from "../textureMapper";
 import { ImageRenderer } from "./imageRender";
 import ShapeBuilder from "../services/shapeBuilder";
 import { canvas } from "../canvas";
-
 
 // TODO:
 // instead of passing a chunk, pass a way to get the visible faces
@@ -28,8 +38,8 @@ export class ChunkRenderer extends Renderer {
 
     this.renderObject(this.worldPos.data as IDim, camera, trans);
 
-    this.otherRenders.forEach(r => {
-      r.render(camera)
+    this.otherRenders.forEach((r) => {
+      r.render(camera);
     });
   }
 
@@ -45,7 +55,7 @@ export class ChunkRenderer extends Renderer {
     const renData = new RenderData();
     const transRenData = new RenderData(true);
 
-    this.chunkMesh.mesh.forEach(face => {
+    this.chunkMesh.mesh.forEach((face) => {
       const { block: cube, faces } = face;
 
       if (cube.type === BLOCKS.void) return;
@@ -64,7 +74,7 @@ export class ChunkRenderer extends Renderer {
 
             const textureCords = texturePos[direction];
 
-            blockRenData.pushData({ textureCords, });
+            blockRenData.pushData({ textureCords });
           }
 
           break;
@@ -87,17 +97,16 @@ export class ChunkRenderer extends Renderer {
           ShapeBuilder.buildX(blockRenData, relativePos);
 
           blockRenData.pushData({
-            textureCords: [...texturePos[0], ...texturePos[1]]
+            textureCords: [...texturePos[0], ...texturePos[1]],
           });
           break;
         }
 
         default: {
-          throw new Error("Block type not renderable")
+          throw new Error("Block type not renderable");
         }
       }
-    })
-
+    });
 
     this.setBuffers(renData, transRenData);
   }

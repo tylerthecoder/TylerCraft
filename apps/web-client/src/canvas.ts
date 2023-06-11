@@ -1,5 +1,11 @@
 import { CONFIG, Vector3D } from "@craft/engine";
-import type { Navigator, XRSession, XRFrame, XRWebGLLayer, XRReferenceSpace } from 'webxr';
+import type {
+  Navigator,
+  XRSession,
+  XRFrame,
+  XRWebGLLayer,
+  XRReferenceSpace,
+} from "webxr";
 import { mat4 } from "gl-matrix";
 import VertexShader from "../shaders/vertex.glsl?raw";
 import FragmentShader from "../shaders/fragment.glsl?raw";
@@ -10,29 +16,28 @@ export class CanvasProgram {
   public eCanvas = document.getElementById("glCanvas") as HTMLCanvasElement;
   public eHudCanvas = document.getElementById("hudCanvas") as HTMLCanvasElement;
   public eHud = document.getElementById("hud") as HTMLCanvasElement;
-  public eWebxrButton = document.getElementById("webxrButton") as HTMLCanvasElement;
+  public eWebxrButton = document.getElementById(
+    "webxrButton"
+  ) as HTMLCanvasElement;
   public gl: WebGLRenderingContext;
   public hudCxt: CanvasRenderingContext2D;
   public program: {
-    program: WebGLProgram,
-    attribLocations: { [name: string]: number },
-    uniformLocations: { [name: string]: WebGLUniformLocation },
+    program: WebGLProgram;
+    attribLocations: { [name: string]: number };
+    uniformLocations: { [name: string]: WebGLUniformLocation };
   };
 
-  public navigator = (window.navigator as any as Navigator);
+  public navigator = window.navigator as any as Navigator;
   public webXrSession: XRSession | null = null;
   public xrRefSpace: XRReferenceSpace | null = null;
   public currentXRFrame: XRFrame | null = null;
   public textureAtlas: WebGLTexture;
 
   // all of these images will be immediately
-  private galleryImagesPaths: string[] = [
-    "./img/tree.jpg",
-  ];
-  private galleryImages: WebGLTexture[] = []
+  private galleryImagesPaths: string[] = ["./img/tree.jpg"];
+  private galleryImages: WebGLTexture[] = [];
 
   public static factory() {
-
     return new CanvasProgram();
   }
 
@@ -46,7 +51,7 @@ export class CanvasProgram {
 
     this.textureAtlas = this.loadTextureFromUrl("./img/texture_map.png", gl);
 
-    this.galleryImagesPaths.forEach(path => {
+    this.galleryImagesPaths.forEach((path) => {
       const img = new Image();
       img.src = path;
       const texture = this.loadTextureFromUrl(path, gl);
@@ -62,7 +67,7 @@ export class CanvasProgram {
       this.eCanvas.width = window.innerWidth;
       this.gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
       if (this.program) this.createProjectionMatrix();
-    }
+    };
 
     window.addEventListener("resize", getCanvasDimensions);
     getCanvasDimensions();
@@ -76,7 +81,12 @@ export class CanvasProgram {
     if (CONFIG.transparency) {
       // this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
       // gl.blendFunc(this.gl.ONE, this.gl.ONE_MINUS_SRC_ALPHA);
-      gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      gl.blendFuncSeparate(
+        gl.SRC_ALPHA,
+        gl.ONE_MINUS_SRC_ALPHA,
+        gl.ONE,
+        gl.ONE_MINUS_SRC_ALPHA
+      );
 
       this.gl.enable(this.gl.BLEND);
     }
@@ -84,12 +94,16 @@ export class CanvasProgram {
     this.clearCanvas();
 
     const vertexShader = this.loadShader(gl, gl.VERTEX_SHADER, VertexShader);
-    const fragmentShader = this.loadShader(gl, gl.FRAGMENT_SHADER, FragmentShader);
+    const fragmentShader = this.loadShader(
+      gl,
+      gl.FRAGMENT_SHADER,
+      FragmentShader
+    );
 
     const shaderProgram = gl.createProgram();
 
     if (!shaderProgram) {
-      throw new Error("Error loading shader program")
+      throw new Error("Error loading shader program");
     }
 
     gl.attachShader(shaderProgram, vertexShader);
@@ -99,9 +113,9 @@ export class CanvasProgram {
     if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
       console.log(
         "Unable to initialize the shader program: " +
-        gl.getProgramInfoLog(shaderProgram)
+          gl.getProgramInfoLog(shaderProgram)
       );
-      throw new Error("Unable to init shader program")
+      throw new Error("Unable to init shader program");
     }
 
     this.program = {
@@ -111,11 +125,17 @@ export class CanvasProgram {
         textureCord: gl.getAttribLocation(shaderProgram, "aTextureCord"),
       },
       uniformLocations: {
-        projectionMatrix: gl.getUniformLocation(shaderProgram, "uProjectionMatrix")!,
-        modelViewMatrix: gl.getUniformLocation(shaderProgram, "uModelViewMatrix")!,
+        projectionMatrix: gl.getUniformLocation(
+          shaderProgram,
+          "uProjectionMatrix"
+        )!,
+        modelViewMatrix: gl.getUniformLocation(
+          shaderProgram,
+          "uModelViewMatrix"
+        )!,
         uSampler: gl.getUniformLocation(shaderProgram, "uSampler")!,
         uFilter: gl.getUniformLocation(shaderProgram, "uFilter")!,
-      }
+      },
     };
 
     gl.useProgram(this.program.program);
@@ -140,7 +160,6 @@ export class CanvasProgram {
   }
 
   public loadTextureFromUrl(url: string, gl: WebGLRenderingContext) {
-
     const isPowerOf2 = (x: number) => (x & (x - 1)) === 0;
 
     const texture = gl.createTexture();
@@ -202,7 +221,7 @@ export class CanvasProgram {
     image.src = url;
 
     if (!texture) {
-      throw new Error("Error loading texture file")
+      throw new Error("Error loading texture file");
     }
 
     return texture;
@@ -211,7 +230,7 @@ export class CanvasProgram {
   // Returns one of the images that I have loaded locally on my
   getGalleryTexture(index: number): WebGLTexture {
     // Make sure we never get an image out of bounds
-    index = index % this.galleryImagesPaths.length
+    index = index % this.galleryImagesPaths.length;
 
     return this.galleryImages[index];
   }
@@ -248,7 +267,9 @@ export class CanvasProgram {
       return;
     }
 
-    const supported = await this.navigator.xr.isSessionSupported("immersive-vr");
+    const supported = await this.navigator.xr.isSessionSupported(
+      "immersive-vr"
+    );
     if (!supported) {
       console.log("Immersive VR not supported");
       return;
@@ -267,35 +288,38 @@ export class CanvasProgram {
       console.log("inputsourceschange");
     });
 
-    this.webXrSession.updateRenderState({ baseLayer: new WebGlLayer(this.webXrSession, this.gl), depthFar: 1000, depthNear: 0.1 });
-    this.xrRefSpace = await this.webXrSession.requestReferenceSpace("local-floor");
+    this.webXrSession.updateRenderState({
+      baseLayer: new WebGlLayer(this.webXrSession, this.gl),
+      depthFar: 1000,
+      depthNear: 0.1,
+    });
+    this.xrRefSpace = await this.webXrSession.requestReferenceSpace(
+      "local-floor"
+    );
     console.log("Ref space", this.xrRefSpace);
-
-
   }
 
   loop(loopFunc: (delta: number) => void) {
     const wrappedXRLoopFunc = (t: number, frame: XRFrame) => {
-      this.clearCanvas()
+      this.clearCanvas();
       this.currentXRFrame = frame;
       loopFunc(t);
       this.webXrSession?.requestAnimationFrame(wrappedXRLoopFunc);
-    }
+    };
     const wrappedLoopFunc = (t: number) => {
-      this.clearCanvas()
+      this.clearCanvas();
       loopFunc(t);
       window.requestAnimationFrame(wrappedLoopFunc);
-    }
+    };
 
     if (this.webXrSession) {
-      console.log("xr loop")
+      console.log("xr loop");
       this.webXrSession.requestAnimationFrame(wrappedXRLoopFunc);
     } else {
-      console.log("Normal loop")
+      console.log("Normal loop");
       window.requestAnimationFrame(wrappedLoopFunc);
     }
   }
-
 
   clearCanvas() {
     this.gl.clearColor(0.0, 0.8, 1.0, 1.0);
@@ -304,18 +328,28 @@ export class CanvasProgram {
   }
 
   setColorFilter(color: Vector3D) {
-    this.gl.uniform4f(this.program.uniformLocations.uFilter, color.get(0), color.get(1), color.get(2), 0);
+    this.gl.uniform4f(
+      this.program.uniformLocations.uFilter,
+      color.get(0),
+      color.get(1),
+      color.get(2),
+      0
+    );
   }
 
   //
   // creates a shader of the given type, uploads the source and
   // compiles it.
   //
-  loadShader(gl: WebGLRenderingContext, type: number, source: string): WebGLShader {
+  loadShader(
+    gl: WebGLRenderingContext,
+    type: number,
+    source: string
+  ): WebGLShader {
     const shader = gl.createShader(type);
 
     if (!shader) {
-      throw new Error("Error loading shader")
+      throw new Error("Error loading shader");
     }
 
     // Send the source to the shader object
@@ -328,7 +362,7 @@ export class CanvasProgram {
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
       console.log(gl.getShaderInfoLog(shader));
       gl.deleteShader(shader);
-      throw new Error("Error loading shader")
+      throw new Error("Error loading shader");
     }
 
     return shader;

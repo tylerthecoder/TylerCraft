@@ -1,18 +1,16 @@
 import { arrayAdd, arrayScalarMul, Vector, Vector3D } from "@craft/engine";
 import { RenderData } from "../renders/renderer";
 
-
 // This class is just for getting the webgl buffers (positions, indices) for simple shapes
 // will take in offsets and other constructs so other classes can use this to build bigger things
 // does not build textures, yet
 export class ShapeBuilderClass {
-
   buildFace(
     faceIndex: number, // Face index is a number 0 - 5 to represent
     renData: RenderData,
     relPos: number[],
     size: number,
-    edgeTransform?: (edge: Vector3D) => Vector3D,
+    edgeTransform?: (edge: Vector3D) => Vector3D
   ) {
     // get the dimension of the face i.e. x, y, z
     let dimensionIndex = faceIndex >> 1;
@@ -28,11 +26,16 @@ export class ShapeBuilderClass {
     const dir = faceIndex % 2 === 0 ? 1 : 0;
 
     // four corners of a square, centered at origin
-    const square = [[0, 0], [1, 0], [1, 1], [0, 1]];
+    const square = [
+      [0, 0],
+      [1, 0],
+      [1, 1],
+      [0, 1],
+    ];
 
     // get a flattened array of the positions
     const vertices = square
-      .map(edge => {
+      .map((edge) => {
         const cords = arrayScalarMul(edge, size);
 
         // add the 3 dimension to the square
@@ -50,7 +53,7 @@ export class ShapeBuilderClass {
       .flat();
 
     // get triangle indices
-    const triIndices = [0, 1, 2, 0, 2, 3].map(x => x + renData.indexOffset);
+    const triIndices = [0, 1, 2, 0, 2, 3].map((x) => x + renData.indexOffset);
 
     renData.indexOffset += 4;
 
@@ -60,16 +63,13 @@ export class ShapeBuilderClass {
     });
   }
 
-  buildX(
-    renData: RenderData,
-    relPos: number[],
-  ) {
-    const positions = Vector.xVectors.
-      map(v => arrayAdd(v, relPos)).
-      flat();
+  buildX(renData: RenderData, relPos: number[]) {
+    const positions = Vector.xVectors.map((v) => arrayAdd(v, relPos)).flat();
 
-    const triIndices = [0, 1, 2, 0, 2, 3].map(x => x + renData.indexOffset);
-    const secondTriIndices = [0, 1, 2, 0, 2, 3].map(x => x + renData.indexOffset + 4);
+    const triIndices = [0, 1, 2, 0, 2, 3].map((x) => x + renData.indexOffset);
+    const secondTriIndices = [0, 1, 2, 0, 2, 3].map(
+      (x) => x + renData.indexOffset + 4
+    );
     const indices = [...triIndices, ...secondTriIndices];
 
     renData.indexOffset += 8;
@@ -80,18 +80,13 @@ export class ShapeBuilderClass {
     });
   }
 
-  buildBox(
-    edgeFunction: (edge: Vector3D) => Vector3D,
-    renData: RenderData,
-  ) {
+  buildBox(edgeFunction: (edge: Vector3D) => Vector3D, renData: RenderData) {
     const facesToRender = [0, 1, 2, 3, 4, 5];
     for (const face of facesToRender) {
       this.buildFace(face, renData, Vector3D.zero.data, 1, edgeFunction);
     }
   }
-
 }
-
 
 const ShapeBuilder = new ShapeBuilderClass();
 export default ShapeBuilder;

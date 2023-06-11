@@ -1,4 +1,19 @@
-import { Camera, Game, ISocketMessage, ISocketMessageType, IWorldData, WorldModel, Player, GameStateDiff, GameAction, GameActionHolder, GameController, World, EntityHolder, CONFIG } from "@craft/engine";
+import {
+  Camera,
+  Game,
+  ISocketMessage,
+  ISocketMessageType,
+  IWorldData,
+  WorldModel,
+  Player,
+  GameStateDiff,
+  GameAction,
+  GameActionHolder,
+  GameController,
+  World,
+  EntityHolder,
+  CONFIG,
+} from "@craft/engine";
 import { EntityCamera } from "./cameras/entityCamera";
 import { canvas } from "./canvas";
 import WorldRenderer from "./renders/worldRender";
@@ -7,7 +22,6 @@ import { XrCamera } from "./cameras/xrCamera";
 import { MobileController } from "./controllers/mobileController";
 import { Quest2Controller } from "./controllers/quest2Controller";
 import { MouseAndKeyController } from "./controllers/gameKeyboardController";
-
 
 // This class should only read game and not write.
 // It uses game data to draw the game to the screen and handle user input
@@ -23,14 +37,13 @@ export class ClientGame extends Game {
 
   static async make(
     worldData: IWorldData,
-    worldModel: WorldModel,
+    worldModel: WorldModel
   ): Promise<ClientGame> {
-
     const entityHolder = new EntityHolder(worldData.data?.entities);
     const world = await World.make(
       worldData.chunkReader,
-      worldData.data?.world,
-    )
+      worldData.data?.world
+    );
 
     const game = new ClientGame(entityHolder, world, worldModel, worldData);
 
@@ -41,7 +54,7 @@ export class ClientGame extends Game {
     entities: EntityHolder,
     world: World,
     worldModel: WorldModel,
-    worldData: IWorldData,
+    worldData: IWorldData
   ) {
     super(entities, world, worldModel, worldData);
 
@@ -81,7 +94,7 @@ export class ClientGame extends Game {
       this.camera = new EntityCamera(this.mainPlayer);
     }
 
-    canvas.loop(this.renderLoop.bind(this))
+    canvas.loop(this.renderLoop.bind(this));
   }
 
   private makeController(): GameController<GameAction> {
@@ -93,7 +106,7 @@ export class ClientGame extends Game {
       } else {
         return MouseAndKeyController;
       }
-    }
+    };
     return new (getClass())(this);
   }
 
@@ -114,7 +127,6 @@ export class ClientGame extends Game {
 
   // Called by Game each tick,
   update(delta: number, stateDiff: GameStateDiff) {
-
     for (const dirtyChunkId of stateDiff.getDirtyChunks()) {
       this.worldRenderer.blockUpdate(dirtyChunkId);
     }
@@ -130,14 +142,13 @@ export class ClientGame extends Game {
 
     // Load chunks around the player
     if (CONFIG.terrain.infiniteGen) {
-      this.world.loadChunksAroundPoint(this.mainPlayer.pos)
+      this.world.loadChunksAroundPoint(this.mainPlayer.pos);
     }
 
     const loadedChunk = this.world.chunks.getNewlyLoadedChunk();
     if (loadedChunk) {
       this.worldRenderer.addChunk(loadedChunk);
     }
-
   }
 
   renderLoop(time: number) {
@@ -158,7 +169,8 @@ export class ClientGame extends Game {
 
   toggleThirdPerson() {
     if (this.camera instanceof EntityCamera) {
-      this.worldRenderer.shouldRenderMainPlayer = this.camera.togglePerspective();
+      this.worldRenderer.shouldRenderMainPlayer =
+        this.camera.togglePerspective();
     }
   }
 
@@ -177,4 +189,3 @@ export class ClientGame extends Game {
     }
   }
 }
-

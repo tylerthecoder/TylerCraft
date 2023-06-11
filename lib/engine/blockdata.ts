@@ -32,7 +32,7 @@ export interface BlockMetaData {
   intangible?: boolean;
 }
 
-export const BLOCK_DATA: Map<BLOCKS, BlockMetaData> = new Map()
+export const BLOCK_DATA: Map<BLOCKS, BlockMetaData> = new Map();
 
 export function getBlockData(block: BLOCKS) {
   const data = BLOCK_DATA.get(block);

@@ -39,5 +39,7 @@ export class Spectator {
     // this.baseUpdate(delta)
   }
 
-  hit(_entity: Entity, _where: FaceLocater) {/* NO-OP */ }
+  hit(_entity: Entity, _where: FaceLocater) {
+    /* NO-OP */
+  }
 }

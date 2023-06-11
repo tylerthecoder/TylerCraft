@@ -62,7 +62,6 @@ export class Chunk {
     this.wasmChunk.add_block_wasm(wasmBlock);
   }
 
-
   getBlockFromWorldPos(worldPos: Vector3D) {
     const scaledPos = worldPos.data.map((dim) =>
       Math.floor(dim / CONFIG.terrain.chunkSize)
@@ -79,9 +78,7 @@ export class Chunk {
    * @returns
    */
   getBlockData(pos: Vector3D) {
-    const block = this.wasmChunk.get_block_wasm(
-      pos.toCartIntObj()
-    ) as Cube;
+    const block = this.wasmChunk.get_block_wasm(pos.toCartIntObj()) as Cube;
     return block.extraData;
   }
 

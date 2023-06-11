@@ -1,13 +1,11 @@
-console.log("Bootstrapping")
+console.log("Bootstrapping");
 
-import * as Engine from "@craft/engine"
+import * as Engine from "@craft/engine";
 
 console.log("Boot Engine", Engine);
 
-import("@craft/engine").then(
-	eng => console.log("Engine Importer", eng)
-)
+import("@craft/engine").then((eng) => console.log("Engine Importer", eng));
 
 import("./app")
-	.then(app => console.log("App imported"))
-	.catch(e => console.error("Error importing app.ts", e))
+  .then((app) => console.log("App imported"))
+  .catch((e) => console.error("Error importing app.ts", e));

@@ -15,19 +15,17 @@ export class HudRenderer extends Renderer {
 
   private eToolbelt = document.getElementById("toolbelt") as HTMLDivElement;
   private eHealthBar = document.getElementById("healthBar") as HTMLDivElement;
-  private eToolbeltItems = Array.from(document.querySelectorAll(".toolbelt-item")) as HTMLElement[];
+  private eToolbeltItems = Array.from(
+    document.querySelectorAll(".toolbelt-item")
+  ) as HTMLElement[];
   private eStats = document.getElementById("eStats") as HTMLDivElement;
   private eUseItemButton = document.getElementById("useItemButton")!;
   private eUseItemButton2 = document.getElementById("useItemButton2")!;
   private eForwardButton = document.getElementById("forwardButton")!;
   private eJumpButton = document.getElementById("jumpButton")!;
 
-
-  constructor(
-    public canvas: CanvasProgram,
-    public game: ClientGame,
-  ) {
-    super()
+  constructor(public canvas: CanvasProgram, public game: ClientGame) {
+    super();
     this.textureImg = document.createElement("img");
     this.textureImg.src = "./img/texture_map.png";
 
@@ -37,7 +35,6 @@ export class HudRenderer extends Renderer {
     if (!IS_MOBILE) {
       this.hideControls();
     }
-
 
     this.drawBelt();
   }
@@ -52,17 +49,16 @@ export class HudRenderer extends Renderer {
   }
 
   drawRect(x: number, y: number, w: number, h: number) {
-    this.canvas.hudCxt.fillRect(x, y, w, h)
+    this.canvas.hudCxt.fillRect(x, y, w, h);
   }
 
   strokeRect(x: number, y: number, w: number, h: number) {
-    this.canvas.hudCxt.strokeRect(x, y, w, h)
+    this.canvas.hudCxt.strokeRect(x, y, w, h);
   }
 
   drawText(str: string, x: number, y: number) {
-    this.canvas.hudCxt.font = "40px sanserif"
+    this.canvas.hudCxt.font = "40px sanserif";
     this.canvas.hudCxt.fillText(str, x, y);
-
   }
 
   // drawImg(x: number, y: number, w: number, h: number, type: BLOCKS) {
@@ -78,7 +74,7 @@ export class HudRenderer extends Renderer {
 
   private lastStats = "";
   drawStats(camera: Camera) {
-    const cameraPos = camera.pos.data.map(Math.floor).join(",")
+    const cameraPos = camera.pos.data.map(Math.floor).join(",");
 
     const numChunks = this.game.world.getChunks().length;
 
@@ -95,20 +91,19 @@ export class HudRenderer extends Renderer {
 
     if (this.game.controller instanceof Quest2Controller) {
       const rotVec = new Vector2D([camera.rot.get(0), camera.rot.get(1)]);
-      rotVec.data = rotVec.data.map(n => Math.floor(n * 100) / 100);
+      rotVec.data = rotVec.data.map((n) => Math.floor(n * 100) / 100);
       this.drawText(rotVec.toIndex(), 0, 70);
     }
-
   }
 
   drawBelt() {
-    this.eToolbeltItems.forEach((item, index) => (
-      item.innerHTML = `<h2>${index}</h2>`
-    ));
+    this.eToolbeltItems.forEach(
+      (item, index) => (item.innerHTML = `<h2>${index}</h2>`)
+    );
 
     this.eToolbeltItems.forEach((item, index) => {
       if (index === this.game.mainPlayer?.belt.selectedIndex) {
-        item.classList.add("selected")
+        item.classList.add("selected");
       } else {
         item.classList.remove("selected");
       }
@@ -119,13 +114,15 @@ export class HudRenderer extends Renderer {
     // draw the icons
     for (let i = 0; i < 10; i++) {
       const { cords } = TextureMapper.getBlockPreviewCords(1, itemDim, itemDim);
-      this.eToolbeltItems[i].style.clipPath = `polygon(${cords.x1} ${cords.y1} ${cords.x2} ${cords.y2})`;
+      this.eToolbeltItems[
+        i
+      ].style.clipPath = `polygon(${cords.x1} ${cords.y1} ${cords.x2} ${cords.y2})`;
     }
-
   }
 
   drawHealthBar() {
-    const { current, max } = this.game.mainPlayer?.health;
+    if (!this.game.mainPlayer) return;
+    const { current, max } = this.game.mainPlayer.health;
     const healthPercent = current / max;
     this.eHealthBar.style.width = `${healthPercent * 100}%`;
   }
@@ -150,7 +147,6 @@ export class HudRenderer extends Renderer {
     }
 
     // draw selected items
-    this.drawHealthBar()
+    this.drawHealthBar();
   }
-
 }
