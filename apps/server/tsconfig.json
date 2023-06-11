@@ -8,5 +8,5 @@
   },
   "include": ["./**/*.ts"],
   "exclude": ["dist/**"],
-  "references": [{ "path": "../engine" }]
+  "references": [{ "path": "../../lib/engine" }]
 }

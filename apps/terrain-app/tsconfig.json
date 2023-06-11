@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "lib": ["es2019", "dom"]
+  },
+  "include": ["src/terrainApp.ts"],
+  "references": [{ "path": "../../lib/engine" }]
+}

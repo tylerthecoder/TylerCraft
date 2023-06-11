@@ -1,15 +1,8 @@
-import { BLOCKS } from "@craft/engine/blockdata";
-import { CONFIG } from "@craft/engine/config";
-import Random from "@craft/engine/utils/random";
-import { Vector2D, Vector3D } from "@craft/engine/utils/vector";
-import { BIOME_SIZE } from "@craft/engine/world/biome";
-import { Chunk } from "@craft/engine/world/chunk";
-import { TerrainGenerator } from "@craft/engine/world/terrainGenerator";
-import { World } from "@craft/engine/world/world";
 
 /*
   This file contains logic for the terrain viewer app
 **/
+import { BIOME_SIZE, BLOCKS, Chunk, CONFIG, Random, TerrainGenerator, Vector2D, Vector3D, World } from "@craft/engine";
 
 const LOAD_DIST = 6;
 const SCALE_FACTOR = 10;
@@ -97,7 +90,7 @@ export class TerrainApp {
   private draw() {
     for (const [, chunk] of this.chunks.entries()) {
       // draw the chunk
-      const worldPos = World.chunkPosToWorldPos(chunk.chunkPos);
+      const worldPos = World.chunkPosToWorldPos(chunk.pos);
 
       const xPos = (worldPos.data[0] + this.offsetX) * SCALE_FACTOR;
       const yPos = (worldPos.data[2] + this.offsetY) * SCALE_FACTOR;
@@ -111,13 +104,13 @@ export class TerrainApp {
           let blockPos = worldPos.add(new Vector3D([i, 0, j]));
 
           // Keep moving up until we find the top block
-          while (chunk.blocks.has(blockPos)) {
+          while (chunk.containsWorldPos(blockPos)) {
             blockPos = blockPos.add(new Vector3D([0, 1, 0]));
           }
           // go down one
           blockPos = blockPos.add(new Vector3D([0, -1, 0]));
 
-          const cube = chunk.blocks.get(blockPos);
+          const cube = chunk.getBlockFromWorldPos(blockPos);
           if (!cube) {
             return;
           }

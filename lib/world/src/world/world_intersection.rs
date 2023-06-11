@@ -1,7 +1,6 @@
 use super::{world_block::WorldBlock, World};
-use crate::{direction::Direction, geometry::ray::Ray, plane::WorldPlane};
+use crate::{direction::Direction, geometry::ray::Ray};
 use serde::{Deserialize, Serialize};
-use wasm_bindgen::JsValue;
 
 #[derive(PartialEq, Debug, Serialize, Deserialize)]
 pub struct LookingAt {
