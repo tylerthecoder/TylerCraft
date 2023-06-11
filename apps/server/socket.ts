@@ -9,9 +9,7 @@ type MessageListener = (message: ISocketMessage) => void;
 export default class SocketServer {
   connectionListeners: ConnectionListener[] = [];
 
-  constructor(
-    private server: WebSocket.WebSocketServer
-  ) {
+  constructor(private server: WebSocket.WebSocketServer) {
     this.server.on("connection", this.newConnection.bind(this));
   }
 
@@ -29,7 +27,7 @@ export default class SocketServer {
 
     console.log("Tylercraft socket connection");
 
-    this.connectionListeners.forEach(func => {
+    this.connectionListeners.forEach((func) => {
       func(ws);
     });
   }
@@ -47,7 +45,6 @@ export default class SocketServer {
       if (message) {
         func(message);
       }
-
     });
   }
 

@@ -1,7 +1,23 @@
 import Players from "./players.js";
 import WebSocket from "ws";
 import { SocketInterface } from "./app.js";
-import { EmptyController, Game, GameAction, GameActionDto, GameActionHolder, GameStateDiff, ISocketMessage, ISocketMessageType, IWorldData, MapArray, Vector2D, WorldModel, GameController, EntityHolder, World } from "@craft/engine";
+import {
+  EmptyController,
+  Game,
+  GameAction,
+  GameActionDto,
+  GameActionHolder,
+  GameStateDiff,
+  ISocketMessage,
+  ISocketMessageType,
+  IWorldData,
+  MapArray,
+  Vector2D,
+  WorldModel,
+  GameController,
+  EntityHolder,
+  World,
+} from "@craft/engine";
 
 export class ServerGame extends Game {
   public clients: Players;
@@ -11,26 +27,24 @@ export class ServerGame extends Game {
 
   static async make(
     worldData: IWorldData,
-    worldModel: WorldModel,
+    worldModel: WorldModel
   ): Promise<ServerGame> {
-
     const entityHolder = new EntityHolder(worldData.data?.entities);
     const world = await World.make(
       worldData.chunkReader,
-      worldData.data?.world,
-    )
+      worldData.data?.world
+    );
 
     const game = new ServerGame(entityHolder, world, worldModel, worldData);
 
     return game;
   }
 
-
   constructor(
     entities: EntityHolder,
     world: World,
     worldModel: WorldModel,
-    worldData: IWorldData,
+    worldData: IWorldData
   ) {
     super(entities, world, worldModel, worldData);
 
@@ -65,8 +79,8 @@ export class ServerGame extends Game {
     }
 
     if (this.actionMap.size > 0) {
-      for (const [ws, actions] of this.actionMap.entries()) {
-        console.log("Actions", actions)
+      for (const [_ws, actions] of this.actionMap.entries()) {
+        console.log("Actions", actions);
       }
     }
 
@@ -84,18 +98,17 @@ export class ServerGame extends Game {
       // Append the diff to all clients but the one that sent the actions
       this.clients
         .getSockets()
-        .filter(s => s !== ws)
-        .forEach(s => {
+        .filter((s) => s !== ws)
+        .forEach((s) => {
           clientDiffs.get(s)?.append(this.stateDiff);
         });
-
     }
 
     // Send the combined state diff to all clients
     for (const [ws, diff] of clientDiffs.entries()) {
       if (diff.hasData()) {
         const diffData = diff.get();
-        console.log("Sending diff", diffData)
+        console.log("Sending diff", diffData);
         SocketInterface.send(ws, {
           type: ISocketMessageType.gameDiff,
           gameDiffPayload: diffData,
@@ -120,7 +133,7 @@ export class ServerGame extends Game {
       setChunkPayload: {
         pos: chunkPosString,
         data: serializedData,
-      }
+      },
     });
   }
 

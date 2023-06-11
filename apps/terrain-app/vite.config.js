@@ -6,6 +6,10 @@ export default defineConfig({
 	optimizeDeps: {
 		exclude: ['@craft/engine'],
 	},
+	clearScreen: false,
+	server: {
+		port: 4000,
+	},
 	build: {
 		commonjsOptions: {
 			include: [/@craft\/engine/, /node_modules/],

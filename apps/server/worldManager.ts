@@ -1,5 +1,9 @@
 import { DbWorldModel } from "./dbWorldModel.js";
-import { ICreateWorldOptions, ISocketMessage, ISocketMessageType } from "@craft/engine";
+import {
+  ICreateWorldOptions,
+  ISocketMessage,
+  ISocketMessageType,
+} from "@craft/engine";
 import { ServerGame } from "./serverGame.js";
 import Websocket from "ws";
 import { SocketInterface } from "./app.js";
@@ -26,7 +30,7 @@ export class GameManager {
           console.log("Create Id: ", world.gameId);
           world.addSocket(payload.myUid, ws);
         } else if (message.type === ISocketMessageType.saveWorld) {
-          const payload = message.saveWorldPayload!
+          const payload = message.saveWorldPayload!;
           const world = this.games.get(payload.worldId);
           if (!world) {
             console.log("That world doesn't exist", payload);
@@ -34,7 +38,7 @@ export class GameManager {
           }
           world.save();
         }
-      })
+      });
     });
   }
 
@@ -50,15 +54,9 @@ export class GameManager {
     if (!loadedWorldData) return null;
 
     // add the world to our local list
-    const serverWorld = await ServerGame.make(
-      loadedWorldData,
-      this.worldModel,
-    );
+    const serverWorld = await ServerGame.make(loadedWorldData, this.worldModel);
 
-    this.games.set(
-      worldId,
-      serverWorld,
-    );
+    this.games.set(worldId, serverWorld);
     return serverWorld;
   }
 
@@ -66,19 +64,15 @@ export class GameManager {
     return this.worldModel.getAllWorlds();
   }
 
-  async createWorld(createWorldOptions: ICreateWorldOptions): Promise<ServerGame> {
+  async createWorld(
+    createWorldOptions: ICreateWorldOptions
+  ): Promise<ServerGame> {
     console.log(createWorldOptions);
     const worldData = await this.worldModel.createWorld(createWorldOptions);
 
-    const newWorld = await ServerGame.make(
-      worldData,
-      this.worldModel,
-    );
+    const newWorld = await ServerGame.make(worldData, this.worldModel);
 
-    this.games.set(
-      worldData.worldId,
-      newWorld,
-    );
+    this.games.set(worldData.worldId, newWorld);
 
     return newWorld;
   }

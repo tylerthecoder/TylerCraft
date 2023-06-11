@@ -1,17 +1,26 @@
-import { Chunk, Game, IChunkReader, ICreateWorldOptions, IGameMetadata, ISerializedChunk, ISerializedGame, IWorldData, TerrainGenerator, Vector2D, World, WorldModel, WorldModule} from "@craft/engine";
+import {
+  Chunk,
+  Game,
+  IChunkReader,
+  ICreateWorldOptions,
+  IGameMetadata,
+  ISerializedGame,
+  IWorldData,
+  TerrainGenerator,
+  Vector2D,
+  WorldModel,
+  WorldModule,
+} from "@craft/engine";
 import { db } from "./app.js";
-
 
 export class RamChunkReader implements IChunkReader {
   private chunkMap = new Map<string, Chunk>();
   private terrainGenerator: TerrainGenerator;
 
-  constructor(
-    serializedGame?: ISerializedGame,
-  ) {
+  constructor(serializedGame?: ISerializedGame) {
     this.terrainGenerator = new TerrainGenerator(
       (chunkPos) => this.chunkMap.has(chunkPos.toIndex()),
-      (chunkPos) => this.chunkMap.get(chunkPos.toIndex()),
+      (chunkPos) => this.chunkMap.get(chunkPos.toIndex())
     );
     if (!serializedGame) return;
     for (const chunkData of serializedGame.world.chunks) {
@@ -39,7 +48,7 @@ export class DbWorldModel extends WorldModel {
       config: worldOptions.config,
       name: worldOptions.gameName,
       multiplayer: true,
-    }
+    };
   }
 
   async getWorld(gameId: string): Promise<IWorldData | null> {
@@ -53,36 +62,41 @@ export class DbWorldModel extends WorldModel {
       worldId: gameId,
       activePlayers: [],
       config: game.config,
-      name: game.name
-    }
+      name: game.name,
+    };
   }
 
   async getAllWorlds() {
     // const games: IGameMetadata[] = [];
-    const games: IGameMetadata[] = await this.gameCollection.find<ISerializedGame>(
-      {},
-      {
-        projection: {
-          gameId: 1,
-          name: 1,
+    const games: IGameMetadata[] = await this.gameCollection
+      .find<ISerializedGame>(
+        {},
+        {
+          projection: {
+            gameId: 1,
+            name: 1,
+          },
         }
-      }
-    ).toArray();
+      )
+      .toArray();
     return games;
   }
 
   async saveWorld(game: Game) {
     console.log("Saving world");
     const serializedWorld = game.serialize();
-    await this.gameCollection.updateOne({
-      gameId: game.gameId,
-    }, { $set: serializedWorld }, {
-      upsert: true,
-    });
+    await this.gameCollection.updateOne(
+      {
+        gameId: game.gameId,
+      },
+      { $set: serializedWorld },
+      {
+        upsert: true,
+      }
+    );
   }
 
   async deleteWorld(worldId: string) {
     await this.gameCollection.deleteOne({ gameId: worldId });
   }
 }
-

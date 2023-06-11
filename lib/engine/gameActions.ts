@@ -1,5 +1,5 @@
 import { BLOCKS } from "./blockdata.js";
-import { CameraRay, ICameraData } from "./camera.js";
+import { CameraRay } from "./camera.js";
 import CubeHelpers from "./entities/cube.js";
 import { Player } from "./entities/player.js";
 import { Game } from "./game.js";
