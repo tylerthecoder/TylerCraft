@@ -1,13 +1,18 @@
-import { CONFIG, Game, GameStateDiff, ISocketMessage, ISocketMessageType, Player } from "@craft/engine";
+import {
+  CONFIG,
+  Game,
+  GameStateDiff,
+  ISocketMessage,
+  ISocketMessageType,
+  Player,
+} from "@craft/engine";
 import WebSocket from "ws";
 import { SocketInterface } from "./app.js";
 
 export default class Players {
   players: Map<WebSocket, Player> = new Map();
 
-  constructor(
-    public game: Game,
-  ) { }
+  constructor(public game: Game) {}
 
   getSockets(): WebSocket[] {
     return Array.from(this.players.keys());
@@ -33,10 +38,10 @@ export default class Players {
         uid,
         worldId: this.game.gameId,
         entities: this.game.entities.serialize(),
-        activePlayers: Array.from(this.players.values()).map(p => p.uid),
+        activePlayers: Array.from(this.players.values()).map((p) => p.uid),
         config: CONFIG,
         name: this.game.name,
-      }
+      },
     };
     SocketInterface.send(ws, welcomeMessage);
 
@@ -56,7 +61,11 @@ export default class Players {
     // If they leave, KILL THEM
     ws.on("close", this.removePlayer.bind(this, ws));
 
-    console.log(`New player! ${uid} ${this.game.entities.getActivePlayers().length} players`);
+    console.log(
+      `New player! ${uid} ${
+        this.game.entities.getActivePlayers().length
+      } players`
+    );
   }
 
   removePlayer(ws: WebSocket): void {
@@ -80,6 +89,8 @@ export default class Players {
     this.game.entities.remove(player.uid);
     this.players.delete(ws);
 
-    console.log(`Remove Player! ${this.game.entities.getActivePlayers().length} players`);
+    console.log(
+      `Remove Player! ${this.game.entities.getActivePlayers().length} players`
+    );
   }
 }

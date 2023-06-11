@@ -1,9 +1,6 @@
 import { IDim } from "./types.js";
 
 export function roundToNPlaces(num: number, n: number) {
-  // // const t = Math.round(num * powerOfTen) / powerOfTen
-  // // return t;
-  // return parseFloat(num.toFixed(n));
   return Math.round((num + Number.EPSILON) * 10 ** n) / 10 ** n;
 }
 
@@ -109,7 +106,6 @@ export function arrayDot<T extends number[]>(arr1: T, arr2: T): number {
   const mults = arrayMul(arr1, arr2);
 
   return sumOfArray(mults);
-  // return arr1.reduce((acc, cur, index) => acc + cur * arr2[index], 0);
 }
 
 export function sumOfArray(arr: number[]): number {

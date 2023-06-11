@@ -8,7 +8,7 @@
 		"build:node": "wasm-pack build --target nodejs --out-dir pkg-nodejs",
 		"test": "cargo test -- --nocapture",
 		"test:wasm": "wasm-pack test --firefox --headless",
-		"dev": "cargo watch -c -N -w src -s 'yarn build:quick'",
+		"dev": "cargo watch -N -w src -s 'yarn build:quick'",
 		"clean": "rm -rf pkg"
 	},
 	"module": "./pkg/world.js",

@@ -4,8 +4,5 @@ set -e
 set -x
 
 yarn
-yarn engine build
-yarn world build
-yarn server build
-yarn web build
+yarn build
 yarn server start

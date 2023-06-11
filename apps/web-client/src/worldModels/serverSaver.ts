@@ -21,8 +21,11 @@ export class NetworkWorldModel extends WorldModel {
     const welcomeMessage: ISocketWelcomePayload = await new Promise(
       (resolve) => {
         listener = (message: ISocketMessage) => {
-          if (message.type === ISocketMessageType.welcome) {
-            resolve(message.welcomePayload!);
+          if (
+            message.type === ISocketMessageType.welcome &&
+            message.welcomePayload
+          ) {
+            resolve(message.welcomePayload);
           }
         };
         SocketInterface.addListener(listener);

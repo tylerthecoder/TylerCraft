@@ -7,7 +7,7 @@
 	"types": "./dist/index.d.ts",
 	"scripts": {
 		"build": "tsc -b",
-		"dev": "tsc -b -w",
+		"dev": "tsc -b -w --preserveWatchOutput",
 		"lint": "eslint . --ext .ts",
 		"clean": "rm -rf dist"
 	},

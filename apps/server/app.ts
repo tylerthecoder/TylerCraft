@@ -12,7 +12,7 @@ const addRoutes = (app: Application) => {
     const worlds = await worldManager.getAllWorlds();
     res.send(worlds);
   });
-}
+};
 
 export let SocketInterface: SocketServer;
 
@@ -21,12 +21,11 @@ const main = async (client: MongoClient, wss: WebSocket.WebSocketServer) => {
   console.log("Database Connected");
   SocketInterface = new SocketServer(wss);
   worldManager = new GameManager();
-}
+};
 
 const TylerCraftApp = {
   main,
   addRoutes,
-}
+};
 
 export default TylerCraftApp;
-

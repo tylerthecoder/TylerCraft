@@ -5,11 +5,12 @@
 	"scripts": {
 		"start": "node --experimental-modules --experimental-wasm-modules -r dotenv/config ./dist/server.js",
 		"build": "tsc -b",
-		"dev:build": "tsc -b -w",
+		"dev:build": "tsc -b -w --preserveWatchOutput",
 		"nodemon": "nodemon",
 		"buildAndRun": "yarn build && yarn start",
 		"dev": "npm-run-all --parallel nodemon dev:build",
-		"clean": "rm -rf ./dist"
+		"clean": "rm -rf ./dist",
+		"lint": "eslint --ext .ts ."
 	},
 	"dependencies": {
 		"@craft/engine": "1.0.0",
@@ -24,6 +25,7 @@
 		"@types/express": "^4.17.7",
 		"@types/mongodb": "^4.0.7",
 		"@types/ws": "^8.5.3",
+		"dotenv": "^16.1.4",
 		"eslint": "^8.42.0",
 		"nodemon": "1.19.1",
 		"npm-run-all": "^4.1.5",

@@ -1,7 +1,3 @@
-
-/*
-  This file contains logic for the terrain viewer app
-**/
 import { BIOME_SIZE, BLOCKS, Chunk, CONFIG, Random, TerrainGenerator, Vector2D, Vector3D, World } from "@craft/engine";
 
 const LOAD_DIST = 6;
