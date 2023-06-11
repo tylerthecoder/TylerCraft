@@ -3,12 +3,13 @@
 	"version": "1.0.0",
 	"type": "module",
 	"scripts": {
-		"build": "wasm-pack build && node add-module-type.js",
+		"build": "wasm-pack build --mode no-install && node add-module-type.js",
 		"build:quick": "wasm-pack build --mode no-install && node add-module-type.js",
 		"build:node": "wasm-pack build --target nodejs --out-dir pkg-nodejs",
 		"test": "cargo test -- --nocapture",
 		"test:wasm": "wasm-pack test --firefox --headless",
-		"dev": "cargo watch -c -N -w src -s 'yarn build:quick'"
+		"dev": "cargo watch -c -N -w src -s 'yarn build:quick'",
+		"clean": "rm -rf pkg"
 	},
 	"module": "./pkg/world.js",
 	"main": "./pkg/world.js",

@@ -1,0 +1,19 @@
+{
+	"name": "@craft/terrain-app",
+	"version": "1.0.0",
+	"type": "module",
+	"scripts": {
+		"start": "node --experimental-modules --experimental-wasm-modules -r dotenv/config ./dist/server.js",
+		"build": "tsc -b",
+		"dev": "vite",
+		"buildAndRun": "yarn build && yarn start",
+		"clean": "rm -rf dist"
+	},
+	"dependencies": {
+		"@craft/engine": "1.0.0"
+	},
+	"devDependencies": {
+		"typescript": "^4.9.5",
+		"vite": "^4.3.9"
+	}
+}

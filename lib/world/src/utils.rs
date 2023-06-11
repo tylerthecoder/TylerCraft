@@ -1,4 +1,4 @@
-use wasm_bindgen::JsValue;
+// use wasm_bindgen::JsValue;
 
 // pub fn set_panic_hook() {
 //     // When the `console_error_panic_hook` feature is enabled, we can call the
@@ -11,6 +11,6 @@ use wasm_bindgen::JsValue;
 //     console_error_panic_hook::set_once();
 // }
 
-pub fn js_log(s: &str) {
+// pub fn js_log(s: &str) {
     // web_sys::console::log_1(&JsValue::from_str(s));
-}
+// }

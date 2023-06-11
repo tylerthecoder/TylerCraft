@@ -14,3 +14,5 @@ worlds
 !.yarn/sdks
 !.yarn/versions
 *.swp
+
+.turbo

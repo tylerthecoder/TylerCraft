@@ -8,7 +8,8 @@
 		"dev:build": "tsc -b -w",
 		"nodemon": "nodemon",
 		"buildAndRun": "yarn build && yarn start",
-		"dev": "npm-run-all --parallel nodemon dev:build"
+		"dev": "npm-run-all --parallel nodemon dev:build",
+		"clean": "rm -rf ./dist"
 	},
 	"dependencies": {
 		"@craft/engine": "1.0.0",

@@ -1,7 +1,6 @@
 use crate::{
     direction::Direction,
     positions::{FineWorldPos, WorldPos},
-    world::World,
 };
 
 #[derive(Debug, PartialEq)]
