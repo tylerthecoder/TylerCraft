@@ -11,22 +11,26 @@ import { ChunkMesh } from "./chunkMesh.js";
 import { CameraRay } from "../index.js";
 
 
-export interface ISerializedWorld {
-  chunks: ISerializedChunk[];
-  // tg: ISerializedTerrainGenerator;
-}
+type ISerializedChunkHolder = ISerializedChunk[];
 
 export class ChunkHolder {
   private chunks = new Map<string, Chunk>();
+  private loadingChunks = new Map<string, Promise<Chunk>>();
+  private chunksToSend: Chunk[] = [];
 
   constructor(
-    public wasmWorld: WorldModuleTypes.World,
-  ) {}
-
-  setAll(chunks: Chunk[]): void {
-    this.chunks = new Map(chunks.map(c => [c.pos.toIndex(), c]));
-    console.log("Setting all");
-    chunks.forEach(c => this.wasmWorld.insert_chunk_wasm(c.serialize()));
+    private wasmWorld: WorldModuleTypes.World,
+    private chunkReader: IChunkReader,
+    data?: ISerializedChunkHolder
+  ) {
+    if (data) {
+      data.forEach(ser => {
+        const chunkPos = new Vector2D([ser.position.x, ser.position.y]);
+        const wasmChunk = WorldModule.module.Chunk.deserialize(ser);
+        const chunk = new Chunk(wasmChunk, chunkPos);
+        this.addOrUpdate(chunk);
+      });
+    }
   }
 
   addOrUpdate(chunk: Chunk): void {
@@ -47,11 +51,57 @@ export class ChunkHolder {
   getAll(): Chunk[] {
     return Array.from(this.chunks.values());
   }
+
+  async loadAll(): Promise<Chunk[]> {
+    return Promise.all(this.loadingChunks.values());
+  }
+
+  startLoadingChunk(pos: Vector2D): void {
+    const chunkId = pos.toIndex();
+
+    if (this.chunks.has(chunkId)) {
+      return;
+    }
+
+    if (this.loadingChunks.has(chunkId)) {
+      return;
+    }
+
+    const chunkPromise = this.chunkReader.getChunk(chunkId);
+
+    const wrappedChunkPromise = chunkPromise
+      .then(chunk => {
+        this.chunksToSend.push(chunk);
+        this.addOrUpdate(chunk);
+        this.loadingChunks.delete(chunkId);
+        return chunk;
+      })
+
+    this.loadingChunks.set(chunkId, wrappedChunkPromise);
+  }
+
+  async immediateLoadChunk(pos: Vector2D): Promise<Chunk> {
+    const chunkId = pos.toIndex();
+    const chunk = await this.chunkReader.getChunk(chunkId);
+    this.chunksToSend.push(chunk);
+    this.addOrUpdate(chunk);
+    return chunk;
+  }
+
+  getNewlyLoadedChunk(): Chunk | null {
+    return this.chunksToSend.shift() ?? null;
+  }
+
 }
+
+
+export interface ISerializedWorld {
+  chunks: ISerializedChunkHolder
+}
+
 export class World {
   // public terrainGenerator: TerrainGenerator;
-  private chunks = new ChunkHolder(this.wasmWorld);
-  public loadingChunks = new Set<string>();
+  public chunks: ChunkHolder;
 
   static async make(
     chunkReader: IChunkReader,
@@ -73,16 +123,7 @@ export class World {
   ) {
     console.log("wasm world", this.wasmWorld);
 
-    if (data) {
-      // this.terrainGenerator = new TerrainGenerator(this.hasChunk.bind(this), this.getChunkFromPos.bind(this), data.tg);
-      this.chunks.setAll(data.chunks.map(ser => {
-        const chunkPos = new Vector2D([ser.position.x, ser.position.y]);
-        const wasmChunk = WorldModule.module.Chunk.deserialize(ser);
-        return new Chunk(wasmChunk, chunkPos);
-      }));
-    } else {
-      // this.terrainGenerator = new TerrainGenerator(this.hasChunk.bind(this), this.getChunkFromPos.bind(this));
-    }
+    this.chunks = new ChunkHolder(wasmWorld, chunkReader, data?.chunks);
   }
 
   // We just aren't going to serialize the terrain generator for now. Hopefully later we find a better way to do this
@@ -132,10 +173,8 @@ export class World {
     throw new Error("Chunk with id " + chunkId + " not found");
   }
 
-  getChunkFromPos(chunkPos: Vector2D, config?: { loadIfNotFound?: boolean }) {
+  getChunkFromPos(chunkPos: Vector2D) {
     const chunk = this.chunks.get(chunkPos);
-    if (!chunk && config?.loadIfNotFound) this.loadChunk(chunkPos);
-    // if (!chunk && config?.generateIfNotFound) return this.generateChunk(chunkPos);
     return chunk;
   }
 
@@ -159,8 +198,6 @@ export class World {
         faces,
       }
     });
-
-    console.log("Got chunk mesh for ", chunkPos, betterMesh);
 
     return new ChunkMesh(betterMesh, chunkPos.toCartIntObj());
   }
@@ -187,8 +224,12 @@ export class World {
   // load the starting chunks
   // called before the world is passed on to the game
   private async load() {
-    const loadPromises: Promise<void>[] = [];
-    console.log("Loading")
+    this.loadChunksAroundPoint(new Vector3D([0, 0, 0]));
+    await this.chunks.loadAll();
+  }
+
+  loadChunksAroundPoint(pos: Vector3D): void {
+    const centerChunkPos = World.worldPosToChunkPos(pos);
 
     if (!CONFIG.terrain.generateChunks) {
       return;
@@ -196,30 +237,13 @@ export class World {
 
     for (let i = -CONFIG.loadDistance; i < CONFIG.loadDistance; i++) {
       for (let j = -CONFIG.loadDistance; j < CONFIG.loadDistance; j++) {
-        const chunkPos = new Vector2D([i, j]);
-        if (!this.hasChunk(chunkPos)) {
-          const loadPromise = this.loadChunk(chunkPos);
-          loadPromises.push(loadPromise);
-        }
+        const chunkPos = new Vector2D([
+          centerChunkPos.get(0) + i,
+          centerChunkPos.get(1) + j,
+        ]);
+        this.chunks.startLoadingChunk(chunkPos);
       }
     }
-    await Promise.all(loadPromises);
-  }
-
-  async loadChunk(chunkPos: Vector2D): Promise<void> {
-    // no repeat loading
-    if (this.loadingChunks.has(chunkPos.toIndex())) {
-      return;
-    }
-
-    this.loadingChunks.add(chunkPos.toIndex());
-    console.log("Calling load chunk")
-    const chunk = await this.chunkReader.getChunk(chunkPos.toIndex());
-    // this should only happen on the client side when single player
-    // and on the server side when multiplayer
-    // if (!chunk) chunk = this.terrainGenerator.generateChunk(chunkPos);
-    console.log("Got chunk", chunk)
-    this.addOrUpdateChunk(chunk);
   }
 
   update(entities: Entity[]) {
@@ -280,7 +304,7 @@ export class World {
     const chunk = this.getChunkFromWorldPoint(cube.pos);
     if (!chunk) {
       if (options?.loadChunkIfNotLoaded) {
-        await this.loadChunk(World.worldPosToChunkPos(cube.pos));
+        await this.chunks.immediateLoadChunk(World.worldPosToChunkPos(cube.pos));
       } else {
         throw new Error("Trying to place block in unloaded chunk");
       }

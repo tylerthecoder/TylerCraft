@@ -110,7 +110,7 @@ export class ServerGame extends Game {
     const chunkPos = Vector2D.fromIndex(chunkPosString);
     let chunk = this.world.getChunkFromPos(chunkPos);
     if (!chunk) {
-      await this.world.loadChunk(chunkPos);
+      await this.world.chunks.immediateLoadChunk(chunkPos);
       chunk = this.world.getChunkFromPos(chunkPos);
     }
     if (!chunk) throw new Error("Chunk wasn't found");

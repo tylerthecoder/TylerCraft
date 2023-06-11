@@ -45,10 +45,7 @@ export class ClientDb extends WorldModel {
             keyPath: "gameId",
             autoIncrement: true,
           });
-
-          // objectStore.createIndex("name", "name", { unique: false });
         }
-        // add a "name" properties to worlds and make it searchable
       };
     });
 

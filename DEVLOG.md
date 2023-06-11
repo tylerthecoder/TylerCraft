@@ -174,3 +174,14 @@ Looks like the blocks that aren't being found are because the ray isn't even che
 
 Found the issue. I made the ray check many more blocks while marching and it finds the correct one now.
 
+
+It is now able to be built and deployed. But there seems still be be some minor issues
+- infinite terrain generation doesn't work
+- Transparent blocks have some issues
+- Textures are rotated incorrectly
+
+
+Working on infinite chunk generation. I want to make it so a single chunk is rendered a frame.
+
+I made it where it now only sends a single chunk at a time to be loaded.
+
