@@ -6,7 +6,8 @@
     "apps/terrain-app",
     "apps/web-client",
     "lib/engine",
-    "lib/world"
+    "lib/world",
+    "lib/eslint"
   ],
   "license": "MIT",
   "version": "1.0.7",
@@ -24,25 +25,15 @@
     "dev": "turbo dev",
     "build": "turbo build",
     "clean": "turbo clean",
+    "lint": "turbo lint",
     "engine": "yarn workspace @craft/engine",
     "web": "yarn workspace @craft/web-client",
     "server": "yarn workspace @craft/server",
     "world": "yarn workspace @craft/rust-world",
     "terrain-app": "yarn workspace @craft/terrain-app"
   },
-  "dependencies": {
-    "dotenv": "^8.2.0"
-  },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^4.2.0",
-    "@typescript-eslint/parser": "^4.2.0",
-    "concurrently": "^7.5.0",
-    "eslint": "^7.9.0",
-    "npm-run-all": "4.1.5",
-    "serve": "^11.3.2",
-    "source-map-loader": "^4.0.1",
-    "turbo": "^1.10.3",
-    "typescript": "^4.9.5"
+    "turbo": "^1.10.3"
   },
   "nodemonConfig": {
     "ignore": [

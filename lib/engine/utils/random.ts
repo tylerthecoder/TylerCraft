@@ -15,7 +15,7 @@ class RandomClass {
 
   // returns random number from [0,1]
   noise(x: number, y: number) {
-    return this.customNoise(x, y, this.jagFactor)
+    return this.customNoise(x, y, this.jagFactor);
   }
 
   customNoise(x: number, y: number, jagFactor: number) {
@@ -44,6 +44,5 @@ class RandomClass {
     return data[rndIndex];
   }
 }
-
 
 export const Random = new RandomClass();

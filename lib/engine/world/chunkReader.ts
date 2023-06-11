@@ -1,14 +1,9 @@
 import { INullableChunkReader } from "../types.js";
 import { Chunk } from "./chunk.js";
-import {World} from "./world.js";
-
+import { World } from "./world.js";
 
 export class ChunkReader {
-  constructor(
-    private chunkReader?: INullableChunkReader
-  ) {
-
-  }
+  constructor(private chunkReader?: INullableChunkReader) {}
 
   async getChunk(chunkPos: string) {
     let chunk: Chunk | null = null;
@@ -25,4 +20,3 @@ export class ChunkReader {
     // return this.terrainGenerator.generateChunk(chunkPosVec);
   }
 }
-

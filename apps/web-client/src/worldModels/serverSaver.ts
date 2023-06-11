@@ -1,18 +1,33 @@
-import { CONFIG, IGameMetadata, Game, Chunk, ICreateWorldOptions, ISocketMessage, ISocketMessageType, ISocketWelcomePayload, IWorldData, WorldModel, IChunkReader, WorldModule } from "@craft/engine";
+import {
+  CONFIG,
+  IGameMetadata,
+  Game,
+  Chunk,
+  ICreateWorldOptions,
+  ISocketMessage,
+  ISocketMessageType,
+  ISocketWelcomePayload,
+  IWorldData,
+  WorldModel,
+  IChunkReader,
+  WorldModule,
+} from "@craft/engine";
 import { getMyUid, SocketInterface } from "../app";
 import { SocketListener } from "../socket";
 
 export class NetworkWorldModel extends WorldModel {
   private async waitForWelcomeMessage() {
     let listener: SocketListener | null = null;
-    const welcomeMessage: ISocketWelcomePayload = await new Promise((resolve) => {
-      listener = (message: ISocketMessage) => {
-        if (message.type === ISocketMessageType.welcome) {
-          resolve(message.welcomePayload!);
-        }
+    const welcomeMessage: ISocketWelcomePayload = await new Promise(
+      (resolve) => {
+        listener = (message: ISocketMessage) => {
+          if (message.type === ISocketMessageType.welcome) {
+            resolve(message.welcomePayload!);
+          }
+        };
+        SocketInterface.addListener(listener);
       }
-      SocketInterface.addListener(listener)
-    });
+    );
     SocketInterface.removeListener(listener!);
     return welcomeMessage;
   }
@@ -31,7 +46,7 @@ export class NetworkWorldModel extends WorldModel {
           // tg: {
           //   blocksToRender: [],
           // }
-        }
+        },
       },
       chunkReader: new ServerGameReader(),
       activePlayers: welcomeMessage.activePlayers,
@@ -39,17 +54,18 @@ export class NetworkWorldModel extends WorldModel {
       config: welcomeMessage.config,
       name: welcomeMessage.name,
       multiplayer: true,
-    }
+    };
   }
 
-
-  public async createWorld(createWorldOptions: ICreateWorldOptions): Promise<IWorldData> {
+  public async createWorld(
+    createWorldOptions: ICreateWorldOptions
+  ): Promise<IWorldData> {
     SocketInterface.send({
       type: ISocketMessageType.newWorld,
       newWorldPayload: {
         myUid: getMyUid(),
         ...createWorldOptions,
-      }
+      },
     });
 
     console.log("Creating world");
@@ -64,7 +80,7 @@ export class NetworkWorldModel extends WorldModel {
       name: createWorldOptions.gameName,
       config: createWorldOptions.config,
       multiplayer: true,
-    }
+    };
   }
 
   public async getWorld(worldId: string): Promise<IWorldData | null> {
@@ -73,7 +89,7 @@ export class NetworkWorldModel extends WorldModel {
       joinWorldPayload: {
         worldId,
         myUid: getMyUid(),
-      }
+      },
     });
 
     const welcomeMessage = await this.waitForWelcomeMessage();
@@ -82,7 +98,7 @@ export class NetworkWorldModel extends WorldModel {
 
   public async getAllWorlds(): Promise<IGameMetadata[]> {
     const res = await fetch("/worlds");
-    const data = await res.json() as IGameMetadata[];
+    const data = (await res.json()) as IGameMetadata[];
     return data;
   }
 
@@ -93,7 +109,7 @@ export class NetworkWorldModel extends WorldModel {
       type: ISocketMessageType.saveWorld,
       saveWorldPayload: {
         worldId: gameData.gameId,
-      }
+      },
     });
   }
 
@@ -103,7 +119,6 @@ export class NetworkWorldModel extends WorldModel {
 }
 
 class ServerGameReader implements IChunkReader {
-
   // send a socket message asking for the chunk then wait for the reply
   // this could also be a rest endpoint but that isn't as fun :) Plus the socket already has some identity to it
   async getChunk(chunkPos: string) {
@@ -124,8 +139,8 @@ class ServerGameReader implements IChunkReader {
           const chunk = WorldModule.createChunkFromSerialized(payload.data);
           resolve(chunk);
         }
-      }
-      SocketInterface.addListener(listener)
+      };
+      SocketInterface.addListener(listener);
     });
     SocketInterface.removeListener(listener!);
 

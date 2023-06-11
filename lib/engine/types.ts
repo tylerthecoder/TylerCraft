@@ -8,18 +8,16 @@ import { Chunk, ISerializedChunk } from "./world/chunk.js";
 
 export type IDim = [number, number, number];
 
-
 // Defs
 // There are actions and state changes
 // Actions are sent to the server to be converted to state changes that are then sent to the clients
 // Servers can only just send state changes to the clients without any actions (An entity spawned, a timer went off)
 
-
 export enum StateUpdateType {
   AddEntity,
   UpdateEntity,
   RemoveEntity,
-  UpdateChunk
+  UpdateChunk,
 }
 
 export interface IAddEntityStateUpdate {
@@ -43,10 +41,10 @@ export interface IChunkUpdateStateUpdate {
 }
 
 export type StateUpdate =
-  IAddEntityStateUpdate |
-  IUpdateEntityStateUpdate |
-  IEntityRemoveStateUpdate |
-  IChunkUpdateStateUpdate;
+  | IAddEntityStateUpdate
+  | IUpdateEntityStateUpdate
+  | IEntityRemoveStateUpdate
+  | IChunkUpdateStateUpdate;
 
 export interface ICreateWorldOptions {
   gameName: string;
@@ -72,7 +70,9 @@ export interface IWorldData {
 }
 
 export abstract class WorldModel {
-  abstract createWorld(createWorldOptions: ICreateWorldOptions): Promise<IWorldData>;
+  abstract createWorld(
+    createWorldOptions: ICreateWorldOptions
+  ): Promise<IWorldData>;
   abstract getWorld(worldId: string): Promise<IWorldData | null>;
   abstract saveWorld(data: Game): Promise<void>;
   abstract getAllWorlds(): Promise<IGameMetadata[]>;
@@ -111,21 +111,21 @@ export interface ISocketMessage {
   joinWorldPayload?: {
     myUid: string;
     worldId: string;
-  },
+  };
   newWorldPayload?: {
     myUid: string;
     config: IConfig;
     gameName: string;
-  },
+  };
   saveWorldPayload?: {
     worldId: string;
-  },
+  };
   getChunkPayload?: {
-    pos: string,
-  }
+    pos: string;
+  };
 
   // from server
-  welcomePayload?: ISocketWelcomePayload,
+  welcomePayload?: ISocketWelcomePayload;
   // newPlayerPayload?: {
   //   uid: string,
   // },
@@ -133,9 +133,9 @@ export interface ISocketMessage {
   //   uid: string,
   // },
   setChunkPayload?: {
-    pos: string,
-    data: ISerializedChunk,
-  }
+    pos: string;
+    data: ISerializedChunk;
+  };
   gameDiffPayload?: GameDiffDto;
 
   // from either

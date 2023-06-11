@@ -3,13 +3,18 @@
  */
 import * as Engine from "@craft/engine";
 console.log("Engine", Engine, (Engine as any).default);
-import { camelCaseToNormalCase, CONFIG, Game, IGameMetadata, WorldModel } from "@craft/engine";
+import {
+  camelCaseToNormalCase,
+  CONFIG,
+  Game,
+  IGameMetadata,
+  WorldModel,
+} from "@craft/engine";
 import { ClientDb } from "./worldModels/clientdb";
 import { NetworkWorldModel } from "./worldModels/serverSaver";
 import { ClientGame } from "./clientGame";
 import { SocketHandler } from "./socket";
 import { GameStarter } from "./clientGameStarter";
-
 
 export interface IExtendedWindow extends Window {
   clientDb?: ClientDb;
@@ -21,7 +26,7 @@ export const IS_MOBILE = /Mobi/.test(window.navigator.userAgent);
 
 const gameStarter = new GameStarter();
 
-console.log("Is Mobile: ", IS_MOBILE)
+console.log("Is Mobile: ", IS_MOBILE);
 
 // helper functions
 function showElement(e: HTMLElement) {
@@ -33,7 +38,6 @@ function hideElement(e: HTMLElement) {
   e.classList.add("hidden");
   e.classList.remove("shown");
 }
-
 
 // generate your unique id
 // kind of bad to do this client side, but I can make it better later
@@ -58,7 +62,9 @@ const eBackButton = document.getElementById("backButton")!;
 const eWorldOptionsScreen = document.getElementById("worldOptionsScreen")!;
 const eConfigForm = document.getElementById("configForm") as HTMLFormElement;
 const eConfigFormExtra = document.getElementById("configFormExtra")!;
-const eConfigFormStartButton = document.getElementById("configFormStartButton") as HTMLButtonElement;
+const eConfigFormStartButton = document.getElementById(
+  "configFormStartButton"
+) as HTMLButtonElement;
 
 // Add listeners
 ePlayLocalButton.addEventListener("click", showLocalWorldPicker);
@@ -73,8 +79,6 @@ export const SocketInterface = new SocketHandler();
 // Create Local World (#local-new)
 // Choose Server World (#server)
 // Create Server World (#server-new)
-
-
 
 // select certain screen based on the location hash
 console.log("Location hash", location.hash);
@@ -100,9 +104,8 @@ async function getOnlineWorldModel() {
   return serverWorldModel;
 }
 
-
 // Auto load a world if a URL query is present
-const idQuery = new URL(location.href).searchParams.get("worldId")
+const idQuery = new URL(location.href).searchParams.get("worldId");
 
 if (idQuery) {
   loadWorldById(idQuery);
@@ -114,7 +117,7 @@ export async function loadWorldById(worldId: string) {
   console.log("Loading world", worldId);
 
   const clientWorlds = await clientWorldModel.getAllWorlds();
-  const clientHasWorld = clientWorlds.some(world => world.gameId === worldId);
+  const clientHasWorld = clientWorlds.some((world) => world.gameId === worldId);
   if (clientHasWorld) {
     console.log("Found Client World");
     const clientWorld = await clientWorldModel.getWorld(worldId);
@@ -124,7 +127,7 @@ export async function loadWorldById(worldId: string) {
 
   const serverWorldModel = await getOnlineWorldModel();
   const serverWorlds = await serverWorldModel.getAllWorlds();
-  const serverHasWorld = serverWorlds.some(world => world.gameId === worldId);
+  const serverHasWorld = serverWorlds.some((world) => world.gameId === worldId);
   if (serverHasWorld) {
     const serverWorld = await serverWorldModel.getWorld(worldId);
     if (serverWorld) {
@@ -134,15 +137,13 @@ export async function loadWorldById(worldId: string) {
     return;
   }
 
-  console.log("Id not found")
+  console.log("Id not found");
 
   // remove id from url
   const url = new URL(location.href);
   url.searchParams.delete("worldId");
   history.replaceState(null, "", url.href);
 }
-
-
 
 // Display Screen Functions
 async function showLocalWorldPicker() {
@@ -152,23 +153,29 @@ async function showLocalWorldPicker() {
 
 async function showOnlineWorldPicker() {
   const serverWorldModel = await getOnlineWorldModel();
-  showWorldPicker(serverWorldModel, "online", "online-new", () => showOnlineWorldPicker());
+  showWorldPicker(serverWorldModel, "online", "online-new", () =>
+    showOnlineWorldPicker()
+  );
 }
 
 async function showLocalNewWorldScreen() {
   hideElement(eGameTypeScreen);
   const clientDb = await getLocalWorldModel();
-  showWorldOptionsScreen(clientDb, () => showLocalWorldPicker())
+  showWorldOptionsScreen(clientDb, () => showLocalWorldPicker());
 }
 
 async function showOnlineNewWorldScreen() {
   hideElement(eGameTypeScreen);
   const clientDb = await getLocalWorldModel();
-  showWorldOptionsScreen(clientDb, () => showOnlineWorldPicker())
+  showWorldOptionsScreen(clientDb, () => showOnlineWorldPicker());
 }
 
-
-async function showWorldPicker(worldModel: WorldModel, currentHash: string, nextHash: string, onBack: () => void) {
+async function showWorldPicker(
+  worldModel: WorldModel,
+  currentHash: string,
+  nextHash: string,
+  onBack: () => void
+) {
   hideElement(eGameTypeScreen);
   hideElement(eWorldOptionsScreen);
 
@@ -180,14 +187,17 @@ async function showWorldPicker(worldModel: WorldModel, currentHash: string, next
 
   console.log(games, gamesMap);
 
-  games.forEach(game => gamesMap.set(game.gameId, game));
+  games.forEach((game) => gamesMap.set(game.gameId, game));
 
-  let gamesHtml = games.reduce((acc, game) => `
+  let gamesHtml = games.reduce(
+    (acc, game) => `
     ${acc}
     <button class="gameItem" id="game-${game.gameId}">
       ${game.name}
     </button>
-  `, "");
+  `,
+    ""
+  );
 
   gamesHtml += `
     <button class="gameItem" id="game-new">
@@ -206,11 +216,11 @@ async function showWorldPicker(worldModel: WorldModel, currentHash: string, next
     hideElement(ePickWorldScreen);
     hideElement(eBackButton);
     showElement(eGameTypeScreen);
-  }
+  };
 
   const eGameItems = document.getElementsByClassName("gameItem");
 
-  Array.from(eGameItems).forEach(ele => {
+  Array.from(eGameItems).forEach((ele) => {
     // you clicked a world
     ele.addEventListener("click", async () => {
       location.hash = nextHash;
@@ -223,7 +233,8 @@ async function showWorldPicker(worldModel: WorldModel, currentHash: string, next
 
       const worldId = ele.id.substr(5);
       const worldData = await worldModel.getWorld(worldId);
-      if (!worldData) throw new Error("World wasn't found. Db must be effed up");
+      if (!worldData)
+        throw new Error("World wasn't found. Db must be effed up");
 
       gameStarter.start(worldModel, worldData);
     });
@@ -242,19 +253,24 @@ function createConfigHtmlObject(
 
 function createConfigHtml(
   [configKey, configValue]: [string, unknown],
-  prefix: string,
+  prefix: string
 ): string {
   const label =
     camelCaseToNormalCase(prefix.replace(/,/g, " ")) +
     camelCaseToNormalCase(configKey);
   switch (typeof configValue) {
     case "object":
-      return createConfigHtmlObject(configValue as Record<string, unknown>, `${prefix + configKey + ","}`);
+      return createConfigHtmlObject(
+        configValue as Record<string, unknown>,
+        `${prefix + configKey + ","}`
+      );
     case "boolean":
       return `
       <div class="form-row">
         <label> ${label}: </label>
-        <input type="checkbox" ${configValue && "checked"} name="${prefix + configKey}" />
+        <input type="checkbox" ${configValue && "checked"} name="${
+        prefix + configKey
+      }" />
       </div>
     `;
     case "string":
@@ -268,7 +284,9 @@ function createConfigHtml(
       return `
       <div class="form-row">
         <label> ${label}: </label>
-        <input type="number" value=${configValue} name="${prefix + configKey}" />
+        <input type="number" value=${configValue} name="${
+        prefix + configKey
+      }" />
       </div>
     `;
   }
@@ -288,13 +306,16 @@ function showWorldOptionsScreen(worldModel: WorldModel, onBack: () => void) {
 
   eConfigFormExtra.innerHTML = createConfigHtmlObject(CONFIG, "");
 
-
   // When the game is started, update CONFIG with the the inputted values
   eConfigFormStartButton.addEventListener("click", async () => {
-
     const formData = new FormData(eConfigForm);
 
-    const assignValueToConfig = (prefix: string, obj: Record<string, unknown>, configKey: string, configValue: unknown) => {
+    const assignValueToConfig = (
+      prefix: string,
+      obj: Record<string, unknown>,
+      configKey: string,
+      configValue: unknown
+    ) => {
       const newValue = formData.get(prefix + configKey);
       switch (typeof configValue) {
         case "number":
@@ -314,15 +335,16 @@ function showWorldOptionsScreen(worldModel: WorldModel, onBack: () => void) {
           );
           break;
       }
-    }
+    };
 
-    const assignValuesToConfigObject = (prefix: string, obj: Record<string, unknown>) => {
-      Object.
-        entries(obj).
-        forEach(
-          ([configKey, configValue]) => assignValueToConfig(prefix, obj, configKey, configValue)
-        );
-    }
+    const assignValuesToConfigObject = (
+      prefix: string,
+      obj: Record<string, unknown>
+    ) => {
+      Object.entries(obj).forEach(([configKey, configValue]) =>
+        assignValueToConfig(prefix, obj, configKey, configValue)
+      );
+    };
 
     assignValuesToConfigObject("", CONFIG);
 
@@ -331,8 +353,8 @@ function showWorldOptionsScreen(worldModel: WorldModel, onBack: () => void) {
       gameName: formData.get("name") as string,
     });
 
-    gameStarter.start(worldModel, newWorldData).catch(err => {
-      console.log("Game Error")
+    gameStarter.start(worldModel, newWorldData).catch((err) => {
+      console.log("Game Error");
       console.error(err);
     });
   });

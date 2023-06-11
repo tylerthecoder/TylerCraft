@@ -18,7 +18,7 @@ class WorldModuleClass {
     if (this._module) {
       return;
     }
-    console.log("Loading WorldWasm engine", WorldWasm)
+    console.log("Loading WorldWasm engine", WorldWasm);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const wasm = WorldWasm as any;
     if (wasm.default?.then) {
@@ -32,7 +32,7 @@ class WorldModuleClass {
     }
   }
 
-  public createChunk(chunkPos: Vector2D):Chunk {
+  public createChunk(chunkPos: Vector2D): Chunk {
     const wasmChunk = this.module.Chunk.make_wasm(
       chunkPos.get(0),
       chunkPos.get(1)
@@ -40,7 +40,7 @@ class WorldModuleClass {
     return new Chunk(wasmChunk, chunkPos);
   }
 
-  public createChunkFromSerialized(data: ISerializedChunk):Chunk {
+  public createChunkFromSerialized(data: ISerializedChunk): Chunk {
     const wasmChunk = this.module.Chunk.deserialize(data);
     const chunkPos = new Vector2D([data.position.x, data.position.y]);
     return new Chunk(wasmChunk, chunkPos);

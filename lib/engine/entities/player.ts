@@ -11,7 +11,7 @@ import CubeHelpers from "./cube.js";
 import { Game } from "../game.js";
 
 export interface BeltDto {
-  selectedBlock: BLOCKS
+  selectedBlock: BLOCKS;
 }
 
 class Belt {
@@ -32,17 +32,18 @@ class Belt {
   }
 
   get selectedBlock() {
-    return this.items[this.selectedIndex][0]
+    return this.items[this.selectedIndex][0];
   }
 
   getDto(): BeltDto {
     return {
       selectedBlock: this.selectedBlock,
-    }
+    };
   }
 
   public moveLeft() {
-    this.selectedIndex = (this.selectedIndex - 1 + this.items.length) % this.items.length;
+    this.selectedIndex =
+      (this.selectedIndex - 1 + this.items.length) % this.items.length;
     console.log("Moved left", this.selectedIndex);
   }
 
@@ -57,8 +58,6 @@ class Belt {
   }
 }
 
-
-
 export interface PlayerDto extends MovableEntityDto {
   type: IEntityType.Player;
   moveDirections: Direction[];
@@ -67,19 +66,20 @@ export interface PlayerDto extends MovableEntityDto {
   health: {
     current: number;
     max: number;
-  }
+  };
 }
-
 
 // A controller / PlayerHandler will append actions to Player
 export class Player extends MovableEntity<PlayerDto> implements IEntity {
   // abstract values
   static readonly type = IEntityType.Player;
-  get type() { return Player.type; }
+  get type() {
+    return Player.type;
+  }
 
   // Entity overrides
   pos: Vector3D = new Vector3D([0, 50, 0]);
-  dim: IDim = [.8, 2, .8];
+  dim: IDim = [0.8, 2, 0.8];
   rot = new Vector3D([0, 0, Math.PI / 2]);
 
   // Player Member Variables
@@ -96,13 +96,13 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
   health = {
     current: 100,
     max: 100,
-  }
+  };
 
   fire = {
     count: 0,
     holding: false,
     coolDown: 10,
-  }
+  };
 
   creative = false;
 
@@ -124,7 +124,7 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
       rot: this.rot.data as IDim,
       moveDirections: this.moveDirections,
       belt: this.belt.getDto(),
-    }
+    };
   }
 
   set(player: Partial<PlayerDto>) {
@@ -146,24 +146,28 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     const moveDirection = (direction: Direction) => {
       switch (direction) {
         case Direction.Forwards:
-          return new Vector3D([
-            -baseSpeed, this.rot.get(1), Math.PI / 2,
-          ]).toCartesianCoords()
-            .set(1, 0)
+          return new Vector3D([-baseSpeed, this.rot.get(1), Math.PI / 2])
+            .toCartesianCoords()
+            .set(1, 0);
         case Direction.Backwards:
-          return new Vector3D([
-            baseSpeed, this.rot.get(1), Math.PI / 2,
-          ]).toCartesianCoords()
+          return new Vector3D([baseSpeed, this.rot.get(1), Math.PI / 2])
+            .toCartesianCoords()
             .set(1, 0);
         case Direction.Left:
           return new Vector3D([
-            baseSpeed, this.rot.get(1) + Math.PI / 2, Math.PI / 2
-          ]).toCartesianCoords()
+            baseSpeed,
+            this.rot.get(1) + Math.PI / 2,
+            Math.PI / 2,
+          ])
+            .toCartesianCoords()
             .set(1, 0);
         case Direction.Right:
           return new Vector3D([
-            baseSpeed, this.rot.get(1) - Math.PI / 2, Math.PI / 2
-          ]).toCartesianCoords()
+            baseSpeed,
+            this.rot.get(1) - Math.PI / 2,
+            Math.PI / 2,
+          ])
+            .toCartesianCoords()
             .set(1, 0);
         case Direction.Up:
           if (this.creative) {
@@ -178,7 +182,7 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
             return Vector3D.zero;
           }
       }
-    }
+    };
 
     let newVel = Vector3D.zero;
     for (const dir of this.moveDirections) {
@@ -201,7 +205,7 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
   }
 
   setCreative(val: boolean) {
-    console.log("Setting creative to", val)
+    console.log("Setting creative to", val);
     this.creative = val;
     this.gravitable = !val;
   }
@@ -228,7 +232,7 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
 
     if (this.pos.get(1) < -10) {
       this.pos.set(1, 2);
-      this.vel.set(1, -.1);
+      this.vel.set(1, -0.1);
     }
   }
 
@@ -244,7 +248,7 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
   useItem(game: Game, camera: CameraRay) {
     const lookingData = game.world.lookingAt(camera);
     if (!lookingData) return;
-    console.log("Looking at data", lookingData)
+    console.log("Looking at data", lookingData);
     const { cube } = lookingData;
     if (!cube) return;
 
@@ -256,7 +260,7 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
       extraBlockData = {
         galleryIndex: 0,
         face: lookingData.face,
-      }
+      };
     }
 
     const newCubePos = lookingData.cube.pos.add(
@@ -266,10 +270,10 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     const newCube = CubeHelpers.createCube(
       blockType,
       newCubePos,
-      extraBlockData,
+      extraBlockData
     );
 
-    console.log(newCube)
+    console.log(newCube);
 
     game.placeBlock(newCube);
   }
@@ -277,8 +281,11 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
   fireball() {
     if (this.fire.count > 0) return;
 
-    const vel = this.rotCart.scalarMultiply(-.4).data as IDim;
-    const pos = arrayAdd(arrayAdd(this.pos.data, arrayScalarMul(vel, 4)), [.5, 2, .5]) as IDim;
+    const vel = this.rotCart.scalarMultiply(-0.4).data as IDim;
+    const pos = arrayAdd(
+      arrayAdd(this.pos.data, arrayScalarMul(vel, 4)),
+      [0.5, 2, 0.5]
+    ) as IDim;
     // const ball = new Projectile(new Vector3D(pos), new Vector3D(vel));
 
     // this.actions.push({

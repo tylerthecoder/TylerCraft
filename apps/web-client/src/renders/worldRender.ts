@@ -1,4 +1,15 @@
-import { World, Entity, CONFIG, Camera, Player, Projectile, BLOCKS, Vector2D, Vector3D, Chunk } from "@craft/engine";
+import {
+  World,
+  Entity,
+  CONFIG,
+  Camera,
+  Player,
+  Projectile,
+  BLOCKS,
+  Vector2D,
+  Vector3D,
+  Chunk,
+} from "@craft/engine";
 import { Renderer } from "./renderer";
 import { canvas } from "../canvas";
 import { ChunkRenderer } from "./chunkRender";
@@ -13,10 +24,7 @@ export default class WorldRenderer {
   private chunkRenderers: Map<string, ChunkRenderer> = new Map();
   shouldRenderMainPlayer = true;
 
-  constructor(
-    private world: World,
-    game: ClientGame,
-  ) {
+  constructor(private world: World, game: ClientGame) {
     const hudCanvas = new HudRenderer(canvas, game);
     this.renderers.push(hudCanvas);
   }
@@ -34,7 +42,7 @@ export default class WorldRenderer {
     const block = this.world.getBlockFromWorldPoint(camera.pos);
 
     if (block?.type === BLOCKS.water) {
-      return new Vector3D([0, .3, 1]);
+      return new Vector3D([0, 0.3, 1]);
     } else {
       return Vector3D.zero;
     }
@@ -48,9 +56,7 @@ export default class WorldRenderer {
     if (entity instanceof Player) {
       const renderer = new PlayerRenderer(entity);
       this.entityRenderers.set(entity.uid, renderer);
-    } else if (
-      entity instanceof Projectile
-    ) {
+    } else if (entity instanceof Projectile) {
       const renderer = new SphereRenderer(entity);
       this.entityRenderers.set(entity.uid, renderer);
     }
@@ -64,7 +70,11 @@ export default class WorldRenderer {
     this.entityRenderers.delete(uid);
   }
 
-  renderChunk(chunkPos: Vector2D, camera: Camera, renderedSet: Set<ChunkRenderer>) {
+  renderChunk(
+    chunkPos: Vector2D,
+    camera: Camera,
+    renderedSet: Set<ChunkRenderer>
+  ) {
     const chunk = this.world.getChunkFromPos(chunkPos);
 
     if (!chunk) {
@@ -109,10 +119,7 @@ export default class WorldRenderer {
     }
 
     // loop through all of the chunks that I would be able to see.
-    const cameraXYPos = new Vector2D([
-      camera.pos.get(0),
-      camera.pos.get(2),
-    ]);
+    const cameraXYPos = new Vector2D([camera.pos.get(0), camera.pos.get(2)]);
 
     const realRenderDistance = CONFIG.terrain.chunkSize * CONFIG.renderDistance;
     const cameraChunkPos = World.worldPosToChunkPos(camera.pos);
@@ -124,12 +131,15 @@ export default class WorldRenderer {
 
     const skippedChunkPos = new Set<Vector2D>();
 
-    for (let i = - CONFIG.renderDistance; i <= CONFIG.renderDistance; i++) {
-      for (let j = - CONFIG.renderDistance; j <= CONFIG.renderDistance; j++) {
+    for (let i = -CONFIG.renderDistance; i <= CONFIG.renderDistance; i++) {
+      for (let j = -CONFIG.renderDistance; j <= CONFIG.renderDistance; j++) {
         const indexVec = new Vector2D([i, j]);
         const chunkPos = cameraChunkPos.add(indexVec);
         const chunkWorldPos = World.chunkPosToWorldPos(chunkPos, true);
-        const chunkXYPos = new Vector2D([chunkWorldPos.get(0), chunkWorldPos.get(2)]);
+        const chunkXYPos = new Vector2D([
+          chunkWorldPos.get(0),
+          chunkWorldPos.get(2),
+        ]);
         const distAway = cameraXYPos.distFrom(chunkXYPos);
 
         if (distAway > realRenderDistance) {
@@ -138,7 +148,7 @@ export default class WorldRenderer {
         }
 
         // check if you are facing that right way to see the chunk
-        const diffChunkCamera = camera.pos.sub(chunkWorldPos).normalize()
+        const diffChunkCamera = camera.pos.sub(chunkWorldPos).normalize();
         const dist = diffChunkCamera.distFrom(cameraRotNorm);
 
         if (dist > CONFIG.fovFactor) {
@@ -186,14 +196,10 @@ export default class WorldRenderer {
       }
     }
 
-
     // loop through all the chunk renders and only render the transparent things
     // This is last so that the transparent things are rendered on top of the solid things
     for (const chunkRenderer of renderedChunks.values()) {
       chunkRenderer.render(camera, true);
     }
-
   }
-
-
 }

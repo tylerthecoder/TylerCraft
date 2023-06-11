@@ -2,15 +2,19 @@ import { Entity, FaceLocater, IEntity } from "./entity.js";
 import { IEntityType } from "./entityHolder.js";
 import { MovableEntity, MovableEntityDto } from "./moveableEntity.js";
 
-
 export interface ProjectileDto extends MovableEntityDto {
   type: IEntityType.Projectile;
 }
 
-export class Projectile extends MovableEntity<ProjectileDto> implements IEntity {
+export class Projectile
+  extends MovableEntity<ProjectileDto>
+  implements IEntity
+{
   // abstract values
   static readonly type = IEntityType.Projectile;
-  get type() { return Projectile.type; }
+  get type() {
+    return Projectile.type;
+  }
 
   gravitable = false;
 
@@ -18,7 +22,7 @@ export class Projectile extends MovableEntity<ProjectileDto> implements IEntity 
     return {
       ...this.baseDto(),
       type: Projectile.type,
-    }
+    };
   }
 
   set(data: Partial<ProjectileDto>): void {

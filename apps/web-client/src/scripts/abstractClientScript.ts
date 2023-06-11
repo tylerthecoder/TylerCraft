@@ -1,3 +1,3 @@
 export abstract class AbstractClientScript {
-	abstract render(): void;
+  abstract render(): void;
 }

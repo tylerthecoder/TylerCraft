@@ -19,10 +19,11 @@ export class EntityCamera extends Camera {
   // cycles through player perspectives. Returns weather the player should be rendered or not
   public togglePerspective(): boolean {
     this.perspective =
-      this.perspective === PlayerPerspective.FirstPerson ?
-        PlayerPerspective.ThirdPersonBack :
-        this.perspective === PlayerPerspective.ThirdPersonBack ?
-          PlayerPerspective.ThirdPersonFront : PlayerPerspective.FirstPerson
+      this.perspective === PlayerPerspective.FirstPerson
+        ? PlayerPerspective.ThirdPersonBack
+        : this.perspective === PlayerPerspective.ThirdPersonBack
+        ? PlayerPerspective.ThirdPersonFront
+        : PlayerPerspective.FirstPerson;
 
     return this.perspective !== PlayerPerspective.FirstPerson;
   }
@@ -42,35 +43,31 @@ export class EntityCamera extends Camera {
 
     if (this.perspective === PlayerPerspective.ThirdPersonBack) {
       offset = this.entity.rot
-        .add(
-          new Vector3D([CONFIG.player.thirdPersonCamDist, 0, 0])
-        )
+        .add(new Vector3D([CONFIG.player.thirdPersonCamDist, 0, 0]))
         .toCartesianCoords()
-        .multiply(
-          new Vector3D([1, -1, 1])
-        )
+        .multiply(new Vector3D([1, -1, 1]));
     } else if (this.perspective === PlayerPerspective.ThirdPersonFront) {
       this.rot = this.entity.rot.add(new Vector3D([0, Math.PI, 0]));
       offset = this.entity.rot
-        .add(
-          new Vector3D([CONFIG.player.thirdPersonCamDist, Math.PI, 0])
-        )
+        .add(new Vector3D([CONFIG.player.thirdPersonCamDist, Math.PI, 0]))
         .toCartesianCoords()
-        .multiply(
-          new Vector3D([1, -1, 1])
-        )
+        .multiply(new Vector3D([1, -1, 1]));
     } else {
       offset = this.offset;
     }
 
-    offset = offset.add(new Vector3D([
-      this.entity.dim[0] / 2,
-      this.entity.dim[1] * (9 / 10),
-      this.entity.dim[2] / 2
-    ]));
+    offset = offset.add(
+      new Vector3D([
+        this.entity.dim[0] / 2,
+        this.entity.dim[1] * (9 / 10),
+        this.entity.dim[2] / 2,
+      ])
+    );
 
     return offset.add(this.entity.pos);
   }
 
-  set pos(_pos: Vector3D) {/* NO-OP */ }
+  set pos(_pos: Vector3D) {
+    /* NO-OP */
+  }
 }

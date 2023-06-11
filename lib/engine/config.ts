@@ -3,7 +3,6 @@ export const BASE_CONFIG = {
 
   renderDistance: 3,
 
-
   /**
    * How many chunks to load in each direction starting at the player
    */
@@ -11,7 +10,7 @@ export const BASE_CONFIG = {
 
   transparency: true,
 
-  fovFactor: .6,
+  fovFactor: 0.6,
 
   glFov: (45 * Math.PI) / 180,
 
@@ -39,13 +38,13 @@ export const BASE_CONFIG = {
   gravity: -0.013,
 
   player: {
-    speed: .2,
+    speed: 0.2,
     reach: 10,
     // jumpSpeed: 0.16,
     jumpSpeed: 0.25,
     mouseRotSpeed: 0.002,
     thirdPersonCamDist: 6,
-  }
+  },
 };
 
 export let CONFIG = BASE_CONFIG;

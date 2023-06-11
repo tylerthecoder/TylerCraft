@@ -8,8 +8,8 @@ export interface ICameraData {
 }
 
 export interface CameraRay {
-  pos: {x: number, y: number, z: number};
-  rot: {theta: number, phi: number};
+  pos: { x: number; y: number; z: number };
+  rot: { theta: number; phi: number };
 }
 
 export abstract class Camera {
@@ -33,17 +33,22 @@ export abstract class Camera {
         z: this.pos.get(2),
       },
       rot: {
-        theta: -this.rot.get(1) + Math.PI * 3/2,
+        theta: -this.rot.get(1) + (Math.PI * 3) / 2,
         // Convert to [-pi/2, pi/2]
-        phi: -((Math.PI / 2) - this.rot.get(2)),
-      }
+        phi: -(Math.PI / 2 - this.rot.get(2)),
+      },
     };
   }
 
-
-  update(_delta: number) {/* NO-OP */ }
-  render(_camera: Camera) {/* NO-OP */ }
-  hit(_ent: Entity, _where: FaceLocater) {/* NO-OP */ }
+  update(_delta: number) {
+    /* NO-OP */
+  }
+  render(_camera: Camera) {
+    /* NO-OP */
+  }
+  hit(_ent: Entity, _where: FaceLocater) {
+    /* NO-OP */
+  }
 
   abstract rotateBy(x: number, y: number): void;
 }

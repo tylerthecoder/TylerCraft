@@ -6,19 +6,17 @@ import CubeHelpers, { Cube } from "../entities/cube.js";
 import { World } from "./world.js";
 import { BiomeGenerator, Biome } from "./biome.js";
 import WorldModule from "../modules.js";
-import {Chunk} from "./index.js";
+import { Chunk } from "./index.js";
 
 export interface ISerializedTerrainGenerator {
   blocksToRender: Array<{
     chunkPos: string;
     cubes: Cube[];
-  }>
+  }>;
 }
 
-
-
 export class TerrainGenerator {
-  private blocksToRender: Map<string, Cube[]>
+  private blocksToRender: Map<string, Cube[]>;
   public biomeGenerator = new BiomeGenerator();
   preRenderedChunks: Set<string> = new Set();
 
@@ -26,29 +24,32 @@ export class TerrainGenerator {
     private worldHasChunk: (chunkPos: Vector2D) => boolean,
     private worldGetChunk: (chunkPos: Vector2D) => Chunk | undefined,
     // take a chunk pos string (1, 2) to a list of cubes that need to be added to it
-    serializedData?: ISerializedTerrainGenerator,
+    serializedData?: ISerializedTerrainGenerator
   ) {
     if (serializedData) {
-      const blocksToRender = serializedData.blocksToRender.map(({ chunkPos, cubes }) => {
-        return [chunkPos, cubes] as [string, Cube[]];
-      });
+      const blocksToRender = serializedData.blocksToRender.map(
+        ({ chunkPos, cubes }) => {
+          return [chunkPos, cubes] as [string, Cube[]];
+        }
+      );
 
       this.blocksToRender = new Map(blocksToRender);
     } else {
       this.blocksToRender = new Map();
     }
-
   }
 
   serialize(): ISerializedTerrainGenerator {
     return {
-      blocksToRender: Array.from(this.blocksToRender.entries()).map(([chunkPos, cubes]) => {
-        return {
-          chunkPos,
-          cubes,
+      blocksToRender: Array.from(this.blocksToRender.entries()).map(
+        ([chunkPos, cubes]) => {
+          return {
+            chunkPos,
+            cubes,
+          };
         }
-      }),
-    }
+      ),
+    };
   }
 
   private addExtraBlock(cube: Cube) {
@@ -60,7 +61,7 @@ export class TerrainGenerator {
       const chunk = this.worldGetChunk(chunkPos);
       if (!chunk) return;
       // we don't want this to be true
-      chunk.addBlock(cube)
+      chunk.addBlock(cube);
     }
 
     const currentBlocks = this.blocksToRender.get(chunkPos.toIndex()) || [];
@@ -70,7 +71,7 @@ export class TerrainGenerator {
   private getHeightFromPos(pos: Vector2D): number {
     const biomeHeight = this.biomeGenerator.getBiomeHeightForWorldPos(pos);
 
-    if (CONFIG.terrain.flatWorld) return 0
+    if (CONFIG.terrain.flatWorld) return 0;
 
     return Math.floor(Random.noise(pos.data[0], pos.data[1]) * biomeHeight);
   }
@@ -80,7 +81,7 @@ export class TerrainGenerator {
       return BLOCKS.grass;
     }
     if (biome === Biome.Mountain) {
-      if (Random.randomFloat(0, 1) > .5) {
+      if (Random.randomFloat(0, 1) > 0.5) {
         return BLOCKS.stone;
       } else {
         return BLOCKS.grass;
@@ -116,7 +117,10 @@ export class TerrainGenerator {
         if (y <= CONFIG.terrain.waterLever) {
           for (let k = y; k < 3; k++) {
             const cubePos = [x, k, z];
-            const cube = CubeHelpers.createCube(BLOCKS.water, new Vector3D(cubePos));
+            const cube = CubeHelpers.createCube(
+              BLOCKS.water,
+              new Vector3D(cubePos)
+            );
             chunk.addBlock(cube);
           }
         }
@@ -126,14 +130,26 @@ export class TerrainGenerator {
 
           const topBlock = this.getTopBlock(biome);
 
-          const blockType = k === y ? topBlock : Random.randomNum() > .9 ? BLOCKS.gold : BLOCKS.stone;
+          const blockType =
+            k === y
+              ? topBlock
+              : Random.randomNum() > 0.9
+              ? BLOCKS.gold
+              : BLOCKS.stone;
           const cube = CubeHelpers.createCube(blockType, new Vector3D(cubePos));
           chunk.addBlock(cube);
         }
 
         // add grass
-        if (y >= CONFIG.terrain.waterLever && Random.randomNum() > .99 && CONFIG.terrain.flowers) {
-          const cube = CubeHelpers.createCube(BLOCKS.redFlower, new Vector3D([x, y + 1, z]));
+        if (
+          y >= CONFIG.terrain.waterLever &&
+          Random.randomNum() > 0.99 &&
+          CONFIG.terrain.flowers
+        ) {
+          const cube = CubeHelpers.createCube(
+            BLOCKS.redFlower,
+            new Vector3D([x, y + 1, z])
+          );
           chunk.addBlock(cube);
         }
       }
@@ -141,16 +157,24 @@ export class TerrainGenerator {
 
     const chunkString = chunkPos.toIndex();
     if (this.blocksToRender.has(chunkString)) {
-      this.blocksToRender.get(chunkString)!.forEach(cube => {
+      this.blocksToRender.get(chunkString)!.forEach((cube) => {
         chunk.addBlock(cube);
       });
       this.blocksToRender.delete(chunkString);
     }
 
-    chunk.addBlock(CubeHelpers.createCube(BLOCKS.cloud, new Vector3D([0, 0, 0])));
-    chunk.addBlock(CubeHelpers.createCube(BLOCKS.cloud, new Vector3D([0, 0, 15])));
-    chunk.addBlock(CubeHelpers.createCube(BLOCKS.cloud, new Vector3D([15, 0, 15])));
-    chunk.addBlock(CubeHelpers.createCube(BLOCKS.cloud, new Vector3D([15, 0, 0])));
+    chunk.addBlock(
+      CubeHelpers.createCube(BLOCKS.cloud, new Vector3D([0, 0, 0]))
+    );
+    chunk.addBlock(
+      CubeHelpers.createCube(BLOCKS.cloud, new Vector3D([0, 0, 15]))
+    );
+    chunk.addBlock(
+      CubeHelpers.createCube(BLOCKS.cloud, new Vector3D([15, 0, 15]))
+    );
+    chunk.addBlock(
+      CubeHelpers.createCube(BLOCKS.cloud, new Vector3D([15, 0, 0]))
+    );
 
     return chunk;
   }
@@ -183,13 +207,15 @@ export class TerrainGenerator {
               worldPos.get(2) + l,
             ]);
 
-            const biome = this.biomeGenerator.getBiomeFromWorldPos(blockPos.stripY());
+            const biome = this.biomeGenerator.getBiomeFromWorldPos(
+              blockPos.stripY()
+            );
 
             // Tree logic
             switch (biome) {
               case Biome.Forest:
                 // Make tress very likely
-                if (Random.randomNum() > .95 && CONFIG.terrain.trees) {
+                if (Random.randomNum() > 0.95 && CONFIG.terrain.trees) {
                   const tree = this.generateTree(blockPos);
                   for (const cube of tree) {
                     this.addExtraBlock(cube);
@@ -197,11 +223,14 @@ export class TerrainGenerator {
                 }
                 break;
               case Biome.Mountain:
-
                 break;
 
               case Biome.Plains:
-                if (y > CONFIG.terrain.waterLever && Random.randomNum() > .999 && CONFIG.terrain.trees) {
+                if (
+                  y > CONFIG.terrain.waterLever &&
+                  Random.randomNum() > 0.999 &&
+                  CONFIG.terrain.trees
+                ) {
                   const tree = this.generateTree(blockPos);
                   for (const cube of tree) {
                     this.addExtraBlock(cube);
@@ -212,7 +241,7 @@ export class TerrainGenerator {
             }
 
             // Cloud Logic
-            if (Random.randomNum() > .999) {
+            if (Random.randomNum() > 0.999) {
               const cloud = this.generateCloud(blockPos);
               for (const cube of cloud) {
                 this.addExtraBlock(cube);
@@ -221,8 +250,7 @@ export class TerrainGenerator {
           }
         }
 
-        this.preRenderedChunks.add(checkingChunkPos.toIndex())
-
+        this.preRenderedChunks.add(checkingChunkPos.toIndex());
       }
     }
   }
@@ -245,8 +273,8 @@ export class TerrainGenerator {
           const indexVector = new Vector3D([i, j, k]);
           const newPos = top.add(indexVector);
           if (
-            i === 0 && j === 0 && k === 0 ||
-            i === 0 && j == -1 && k === 0
+            (i === 0 && j === 0 && k === 0) ||
+            (i === 0 && j == -1 && k === 0)
           ) {
             continue;
           }
@@ -255,7 +283,6 @@ export class TerrainGenerator {
         }
       }
     }
-
 
     return cubes;
   }
@@ -271,7 +298,9 @@ export class TerrainGenerator {
       for (let j = 0; j < length; j++) {
         const indexVec = new Vector3D([i, 0, j]);
         const cubePos = startingPos.add(indexVec);
-        const y = Math.floor(Random.customNoise(cubePos.get(0), cubePos.get(2), 4) * 4);
+        const y = Math.floor(
+          Random.customNoise(cubePos.get(0), cubePos.get(2), 4) * 4
+        );
         if (y < 1) {
           continue;
         }
@@ -281,13 +310,9 @@ export class TerrainGenerator {
           const cube = CubeHelpers.createCube(BLOCKS.cloud, newCubePos);
           cubes.push(cube);
         }
-
       }
     }
 
-
-
     return cubes;
   }
-
 }

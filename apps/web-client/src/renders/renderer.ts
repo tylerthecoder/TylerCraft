@@ -15,19 +15,16 @@ export class RenderData implements IRenderData {
 
   indexOffset = 0;
 
-  constructor(
-    private shouldLog = false,
-  ) { }
+  constructor(private shouldLog = false) {}
 
   public pushData(renData: Partial<RenderData>) {
     if (this.shouldLog) {
       // console.log(renData);
     }
-    this.indices.push(...renData.indices ?? []);
-    this.positions.push(...renData.positions ?? []);
-    this.textureCords.push(...renData.textureCords ?? []);
+    this.indices.push(...(renData.indices ?? []));
+    this.positions.push(...(renData.positions ?? []));
+    this.textureCords.push(...(renData.textureCords ?? []));
   }
-
 
   public get posOffset() {
     return this.positions.length;
@@ -39,12 +36,9 @@ export class RenderData implements IRenderData {
     this.textureCords = [];
     this.indexOffset = 0;
   }
-
-
 }
 
 export abstract class Renderer {
-
   posBuffer: WebGLBuffer | null = null;
   indexBuffer: WebGLBuffer | null = null;
   textureBuffer: WebGLBuffer | null = null;
@@ -54,47 +48,67 @@ export abstract class Renderer {
 
   texture: WebGLTexture | null = null;
   amount = 0;
-  transAmount = 0
+  transAmount = 0;
 
-  protected setBuffers(
-    renData: IRenderData,
-    transRenData?: IRenderData,
-  ) {
+  protected setBuffers(renData: IRenderData, transRenData?: IRenderData) {
     const gl = canvas.gl;
 
     this.amount = renData.indices.length;
 
     this.posBuffer = gl.createBuffer()!;
     gl.bindBuffer(gl.ARRAY_BUFFER, this.posBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(renData.positions), gl.STATIC_DRAW);
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array(renData.positions),
+      gl.STATIC_DRAW
+    );
 
     this.indexBuffer = gl.createBuffer()!;
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(renData.indices), gl.STATIC_DRAW);
+    gl.bufferData(
+      gl.ELEMENT_ARRAY_BUFFER,
+      new Uint16Array(renData.indices),
+      gl.STATIC_DRAW
+    );
 
     this.textureBuffer = gl.createBuffer()!;
     gl.bindBuffer(gl.ARRAY_BUFFER, this.textureBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(renData.textureCords), gl.STATIC_DRAW);
+    gl.bufferData(
+      gl.ARRAY_BUFFER,
+      new Float32Array(renData.textureCords),
+      gl.STATIC_DRAW
+    );
 
     if (transRenData?.positions) {
       this.transPosBuffer = gl.createBuffer()!;
       gl.bindBuffer(gl.ARRAY_BUFFER, this.transPosBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(transRenData.positions), gl.STATIC_DRAW);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array(transRenData.positions),
+        gl.STATIC_DRAW
+      );
     }
 
     if (transRenData?.indices) {
       this.transIndexBuffer = gl.createBuffer()!;
       this.transAmount = transRenData.indices.length;
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.transIndexBuffer);
-      gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(transRenData.indices), gl.STATIC_DRAW);
+      gl.bufferData(
+        gl.ELEMENT_ARRAY_BUFFER,
+        new Uint16Array(transRenData.indices),
+        gl.STATIC_DRAW
+      );
     }
 
     if (transRenData?.textureCords) {
       this.transTextureBuffer = gl.createBuffer()!;
       gl.bindBuffer(gl.ARRAY_BUFFER, this.transTextureBuffer);
-      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(transRenData.textureCords), gl.STATIC_DRAW);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array(transRenData.textureCords),
+        gl.STATIC_DRAW
+      );
     }
-
   }
 
   protected setActiveTexture(texture: WebGLTexture) {
@@ -153,7 +167,6 @@ export abstract class Renderer {
 
   abstract render(camera: Camera): void;
 
-
   renderXrObject(pos: number[], camera: Camera, trans?: boolean) {
     const { currentXRFrame, xrRefSpace, gl, program, webXrSession } = canvas;
     if (!currentXRFrame || !xrRefSpace || !webXrSession) {
@@ -184,7 +197,7 @@ export abstract class Renderer {
         modelViewMatrix,
         modelViewMatrix,
         view.transform.inverse.matrix as mat4
-      )
+      );
 
       // Now move the drawing position to where we want to start drawing the square.
       mat4.translate(
@@ -219,7 +232,6 @@ export abstract class Renderer {
     }
   }
 
-
   renderObject(pos: IDim, camera: Camera, trans?: boolean) {
     if (canvas.currentXRFrame) {
       return this.renderXrObject(pos, camera, trans);
@@ -230,8 +242,18 @@ export abstract class Renderer {
     // Set the drawing position to the "identity" point, which is
     // the center of the scene.
     const modelViewMatrix = mat4.create();
-    mat4.rotate(modelViewMatrix, modelViewMatrix, camera.rot.get(2) - Math.PI / 2, [1, 0, 0]);
-    mat4.rotate(modelViewMatrix, modelViewMatrix, camera.rot.get(1) - Math.PI / 2, [0, 1, 0]);
+    mat4.rotate(
+      modelViewMatrix,
+      modelViewMatrix,
+      camera.rot.get(2) - Math.PI / 2,
+      [1, 0, 0]
+    );
+    mat4.rotate(
+      modelViewMatrix,
+      modelViewMatrix,
+      camera.rot.get(1) - Math.PI / 2,
+      [0, 1, 0]
+    );
 
     // Now move the drawing position to where we want to start drawing the square.
     mat4.translate(

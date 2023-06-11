@@ -7,12 +7,15 @@
 		"build": "tsc -b",
 		"dev": "vite",
 		"buildAndRun": "yarn build && yarn start",
-		"clean": "rm -rf dist"
+		"clean": "rm -rf dist",
+		"lint": "eslint --ext .ts src"
 	},
 	"dependencies": {
 		"@craft/engine": "1.0.0"
 	},
 	"devDependencies": {
+		"@craft/eslint-config-tylercraft": "^1.0.0",
+		"eslint": "^8.42.0",
 		"typescript": "^4.9.5",
 		"vite": "^4.3.9"
 	}

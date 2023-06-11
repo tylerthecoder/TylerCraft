@@ -1,7 +1,6 @@
 import { Random } from "../utils/random.js";
 import { Vector2D, VectorIndex } from "../utils/vector.js";
 
-
 export enum Biome {
   Plains,
   Mountain,
@@ -17,17 +16,17 @@ const BiomeInfo = new Map<Biome, IBiomeInfo>();
 
 BiomeInfo.set(Biome.Plains, {
   maxHeight: 4,
-  sizeFactor: 2
+  sizeFactor: 2,
 });
 
 BiomeInfo.set(Biome.Mountain, {
   maxHeight: 20,
-  sizeFactor: .5
+  sizeFactor: 0.5,
 });
 
 BiomeInfo.set(Biome.Forest, {
   maxHeight: 10,
-  sizeFactor: 1
+  sizeFactor: 1,
 });
 
 export function GetBiomeInfo(biome: Biome): IBiomeInfo {
@@ -48,15 +47,14 @@ interface BiomeGridSectionWithoutBiome {
   sectionPos: Vector2D;
 }
 
-
-type BiomeGridSection = BiomeGridSectionWithBiome | BiomeGridSectionWithoutBiome;
-
+type BiomeGridSection =
+  | BiomeGridSectionWithBiome
+  | BiomeGridSectionWithoutBiome;
 
 export const BIOME_SIZE = 60;
 // This should be a function of the heights of the two biomes
 const BIOME_EASE_FACTOR = 10;
 const SAMPLE_AMOUNT = 3;
-
 
 export class BiomeGenerator {
   public biomeGrid: BiomeGridSection[] = [];
@@ -88,21 +86,23 @@ export class BiomeGenerator {
   }
 
   public getBiomeHeightForWorldPos(worldPos: Vector2D): number {
-    const inSection = this.getSectionFromSectionPos(BiomeGenerator.getSectionPosFromWorldPos(worldPos));
+    const inSection = this.getSectionFromSectionPos(
+      BiomeGenerator.getSectionPosFromWorldPos(worldPos)
+    );
     const mainSection = this.getClosestSectionWithBiomeForWorldPos(worldPos);
 
     // Default to plains
-    if (!mainSection) return this.getBiomeInfoForBiome(Biome.Plains).maxHeight
+    if (!mainSection) return this.getBiomeInfoForBiome(Biome.Plains).maxHeight;
 
     const mainBiomeInfo = this.getBiomeInfoForBiome(mainSection.biome);
-    const mainBiomeWorldDist = mainSection.biomeWorldPos.distFrom(worldPos) // * mainBiomeInfo.sizeFactor;
+    const mainBiomeWorldDist = mainSection.biomeWorldPos.distFrom(worldPos); // * mainBiomeInfo.sizeFactor;
 
     // Set the starting values
     let biomeHeightsSum = mainBiomeInfo.maxHeight;
     let allBiomeHeights = mainBiomeInfo.maxHeight;
 
     // Check all nearby biomes to see if we should "ease" this biomes height to fit in more
-    Vector2D.squareVectors.forEach(edge => {
+    Vector2D.squareVectors.forEach((edge) => {
       const checkingPos = inSection.sectionPos.add(edge);
       const checkingSection = this.getSectionFromSectionPos(checkingPos);
 
@@ -114,36 +114,54 @@ export class BiomeGenerator {
         return;
       }
 
-      const checkingBiomeInfo = this.getBiomeInfoForBiome(checkingSection.biome);
-      const checkingBiomeWorldDist = checkingSection.biomeWorldPos.distFrom(worldPos) //* checkingBiomeInfo.sizeFactor;
+      const checkingBiomeInfo = this.getBiomeInfoForBiome(
+        checkingSection.biome
+      );
+      const checkingBiomeWorldDist =
+        checkingSection.biomeWorldPos.distFrom(worldPos); //* checkingBiomeInfo.sizeFactor;
 
-      if (Math.abs(checkingBiomeWorldDist - mainBiomeWorldDist) > BIOME_EASE_FACTOR) return;
+      if (
+        Math.abs(checkingBiomeWorldDist - mainBiomeWorldDist) >
+        BIOME_EASE_FACTOR
+      )
+        return;
 
       this.fringeBlocks.add(worldPos.toIndex());
-      this.fringeNum.set(worldPos.toIndex(), (this.fringeNum.get(worldPos.toIndex()) ?? 1) + 1);
+      this.fringeNum.set(
+        worldPos.toIndex(),
+        (this.fringeNum.get(worldPos.toIndex()) ?? 1) + 1
+      );
 
       // We are on the border of two biomes. Lets do a weighted average of their heights
-      const normalizedDistFactor = mainBiomeWorldDist / (checkingBiomeWorldDist + mainBiomeWorldDist);
+      const normalizedDistFactor =
+        mainBiomeWorldDist / (checkingBiomeWorldDist + mainBiomeWorldDist);
 
       if (normalizedDistFactor === 0) return;
 
-      const minBiomeHeight = Math.min(checkingBiomeInfo.maxHeight, mainBiomeInfo.maxHeight);
-      const avgBiomeHeight = (normalizedDistFactor * Math.abs(checkingBiomeInfo.maxHeight - mainBiomeInfo.maxHeight)) + minBiomeHeight;
+      const minBiomeHeight = Math.min(
+        checkingBiomeInfo.maxHeight,
+        mainBiomeInfo.maxHeight
+      );
+      const avgBiomeHeight =
+        normalizedDistFactor *
+          Math.abs(checkingBiomeInfo.maxHeight - mainBiomeInfo.maxHeight) +
+        minBiomeHeight;
 
       biomeHeightsSum += avgBiomeHeight;
       allBiomeHeights += checkingBiomeInfo.maxHeight;
     });
 
-
     // This shouldn't be needed
     if (biomeHeightsSum === 0) {
-      this.fringeHeight.set(worldPos.toIndex(), Math.floor(mainBiomeInfo.maxHeight));
+      this.fringeHeight.set(
+        worldPos.toIndex(),
+        Math.floor(mainBiomeInfo.maxHeight)
+      );
       return mainBiomeInfo.maxHeight;
     }
 
-
-
-    const height = (allBiomeHeights / biomeHeightsSum) * mainBiomeInfo.maxHeight;
+    const height =
+      (allBiomeHeights / biomeHeightsSum) * mainBiomeInfo.maxHeight;
     this.fringeHeight.set(worldPos.toIndex(), Math.floor(height));
     return height;
   }
@@ -151,13 +169,7 @@ export class BiomeGenerator {
   // Static Helpers
 
   static getRandomBiome(): Biome {
-    return Random.randomElement(
-      [
-        Biome.Forest,
-        Biome.Mountain,
-        Biome.Plains
-      ]
-    )
+    return Random.randomElement([Biome.Forest, Biome.Mountain, Biome.Plains]);
   }
 
   static getSectionPosFromWorldPos(worldPos: Vector2D) {
@@ -168,14 +180,16 @@ export class BiomeGenerator {
   }
 
   // This returns the section with the biome closest to the world point
-  private getClosestSectionWithBiomeForWorldPos(worldPos: Vector2D): BiomeGridSectionWithBiome | undefined {
-    const sectionPos = BiomeGenerator.getSectionPosFromWorldPos(worldPos)
+  private getClosestSectionWithBiomeForWorldPos(
+    worldPos: Vector2D
+  ): BiomeGridSectionWithBiome | undefined {
+    const sectionPos = BiomeGenerator.getSectionPosFromWorldPos(worldPos);
 
     let minDist = Infinity;
     let closestGridSection: BiomeGridSectionWithBiome | undefined = undefined;
 
     // Check all surrounding biome plots to find which biome is closest to the point
-    Vector2D.squareVectors.forEach(edge => {
+    Vector2D.squareVectors.forEach((edge) => {
       const checkingPos = sectionPos.add(edge);
       const checkingSection = this.getSectionFromSectionPos(checkingPos);
 
@@ -213,7 +227,9 @@ export class BiomeGenerator {
     const loadedBiomeGridData = this.biomeMap.get(sectionPos.toIndex());
 
     if (!loadedBiomeGridData) {
-      console.log("Something went terribly wrong. Maybe it doesn't matter though");
+      console.log(
+        "Something went terribly wrong. Maybe it doesn't matter though"
+      );
       throw new Error("This is actually bad");
     }
 
@@ -227,24 +243,21 @@ export class BiomeGenerator {
     return biomeData;
   }
 
-
   private genBiomeForSection(sectionPos: Vector2D) {
     // Generate a random point in this square SAMPLE AMOUNT times to see if there is anywhere I can place it
     // if not then mark it inactive and move on
     for (let i = 0; i < SAMPLE_AMOUNT; i++) {
       const x = Random.randomInt(0, BIOME_SIZE);
       const z = Random.randomInt(0, BIOME_SIZE);
-      const newBiomeWorldPos = sectionPos.scalarMultiply(BIOME_SIZE).add(new Vector2D([x, z]));
+      const newBiomeWorldPos = sectionPos
+        .scalarMultiply(BIOME_SIZE)
+        .add(new Vector2D([x, z]));
 
-      const tooClose = Vector2D.squareVectors.some(edge => {
+      const tooClose = Vector2D.squareVectors.some((edge) => {
         const checkingPos = sectionPos.add(edge);
         const checkingBiomeData = this.biomeMap.get(checkingPos.toIndex());
 
-        if (
-          !checkingBiomeData ||
-          !checkingBiomeData.hasBiome
-        ) return false;
-
+        if (!checkingBiomeData || !checkingBiomeData.hasBiome) return false;
 
         const dist = newBiomeWorldPos.distFrom(checkingBiomeData.biomeWorldPos);
 
@@ -273,11 +286,9 @@ export class BiomeGenerator {
     const emptyBiomeGridData: BiomeGridSectionWithoutBiome = {
       sectionPos,
       hasBiome: false,
-    }
+    };
 
     this.biomeMap.set(sectionPos.toIndex(), emptyBiomeGridData);
     this.biomeGrid.push(emptyBiomeGridData);
   }
-
 }
-

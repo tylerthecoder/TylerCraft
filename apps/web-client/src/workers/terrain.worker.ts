@@ -9,11 +9,6 @@ import {
   WorldModule,
 } from "@craft/engine";
 
-export const t = () => {
-  console.log("t");
-}
-
-
 interface IGetChunkMessage {
   type: "getChunk";
   x: number;
@@ -33,7 +28,7 @@ interface IWorkerMessage {
 const ctx: Worker = self as any;
 
 ctx.onmessage = async function (e: IWorkerMessage) {
-  await WorldModule.load()
+  await WorldModule.load();
   if (e.data.type === "getChunk") {
     const chunk = getChunk2(e.data.x, e.data.y);
 
@@ -49,7 +44,6 @@ const terrainGenerator = new TerrainGenerator(
   (pos) => chunks.has(pos.toIndex()),
   (pos) => chunks.get(pos.toIndex())
 );
-
 
 Random.setSeed("bungus");
 
