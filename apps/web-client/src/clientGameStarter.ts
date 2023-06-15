@@ -41,4 +41,11 @@ export class GameStarter {
     ePickWorldScreen.classList.add("fade");
     eStartMenu.classList.add("fade");
   }
+
+  public async stop() {
+    if (this.game) {
+      this.game = null;
+      console.log("Game stopped");
+    }
+  }
 }

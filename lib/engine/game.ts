@@ -173,7 +173,7 @@ export abstract class Game<Action = GameAction> {
   }
 
   addPlayer(uid: string): Player {
-    return this.entities.createOrGetPlayer(this.stateDiff, uid);
+    return this.entities.createPlayer(this.stateDiff, uid);
   }
 
   async save() {

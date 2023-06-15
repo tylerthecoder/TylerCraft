@@ -12,7 +12,7 @@ export class SocketHandler {
     return `${protocol}//${url.host}?app=tylercraft`;
   }
 
-  connect() {
+  connect(onClose: () => void) {
     console.log("Connecting to socket", this.wssUrl);
     return new Promise<void>((resolve) => {
       this.socket = new WebSocket(this.wssUrl);
@@ -20,6 +20,11 @@ export class SocketHandler {
         console.log("Socket Connected");
         resolve();
         this.startListening();
+      };
+
+      this.socket.onclose = () => {
+        console.log("Socket Closed");
+        onClose();
       };
     });
   }

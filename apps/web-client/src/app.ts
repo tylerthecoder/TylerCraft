@@ -108,7 +108,7 @@ export async function getLocalWorldModel() {
 
 async function getOnlineWorldModel() {
   const serverWorldModel = new NetworkWorldModel();
-  await SocketInterface.connect();
+  await SocketInterface.connect(() => gameStarter.stop());
   return serverWorldModel;
 }
 

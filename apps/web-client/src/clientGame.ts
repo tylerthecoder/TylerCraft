@@ -120,8 +120,11 @@ export class ClientGame extends Game {
 
   onSocketMessage(message: ISocketMessage) {
     console.log("Socket Message", message);
-    if (message.type === ISocketMessageType.gameDiff) {
-      this.handleStateDiff(message.gameDiffPayload!);
+    if (
+      message.type === ISocketMessageType.gameDiff &&
+      message.gameDiffPayload
+    ) {
+      this.handleStateDiff(message.gameDiffPayload);
     }
   }
 

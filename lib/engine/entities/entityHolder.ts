@@ -128,6 +128,16 @@ export class EntityHolder {
     stateDiff.addEntity(entity.uid);
   }
 
+  createPlayer(stateDiff: GameStateDiff, uid: string) {
+    if (this.players.has(uid)) {
+      throw new Error("Player already exists");
+    }
+    const player = Player.create(uid);
+    this.players.set(player.uid, player);
+    this.add(stateDiff, player);
+    return player;
+  }
+
   createOrGetPlayer(stateDiff: GameStateDiff, uid: string): Player {
     // looking to see if we have already loaded this player, if so then return it
     const player = this.players.get(uid);
@@ -137,10 +147,7 @@ export class EntityHolder {
       return player;
     }
 
-    const newPlayer = Player.create(uid);
-    this.players.set(newPlayer.uid, newPlayer);
-    this.add(stateDiff, newPlayer);
-    return newPlayer;
+    return this.createPlayer(stateDiff, uid);
   }
 
   remove(uid: string) {
