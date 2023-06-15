@@ -185,3 +185,13 @@ Working on infinite chunk generation. I want to make it so a single chunk is ren
 
 I made it where it now only sends a single chunk at a time to be loaded.
 
+
+# 6 / 11 / 23
+
+Added turbo repo and linting to the project. Moved everything around to make more sense and I think it is a good structure.
+Want to work on fixing terrain gen next.
+
+
+# 6 / 15 / 23
+
+Multiplayer kind of works not but is not robust at all. And all the textures are rotated incorrectly.

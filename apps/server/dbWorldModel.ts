@@ -67,7 +67,6 @@ export class DbWorldModel extends WorldModel {
   }
 
   async getAllWorlds() {
-    // const games: IGameMetadata[] = [];
     const games: IGameMetadata[] = await this.gameCollection
       .find<ISerializedGame>(
         {},
@@ -85,6 +84,7 @@ export class DbWorldModel extends WorldModel {
   async saveWorld(game: Game) {
     console.log("Saving world");
     const serializedWorld = game.serialize();
+    console.log("Saving world", serializedWorld, game.gameId);
     await this.gameCollection.updateOne(
       {
         gameId: game.gameId,
@@ -94,6 +94,7 @@ export class DbWorldModel extends WorldModel {
         upsert: true,
       }
     );
+    console.log("SAved");
   }
 
   async deleteWorld(worldId: string) {

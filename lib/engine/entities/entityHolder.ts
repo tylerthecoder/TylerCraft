@@ -1,4 +1,3 @@
-import { Game } from "../game.js";
 import { GameStateDiff } from "../gameStateDiff.js";
 import { World } from "../world/world.js";
 import { Entity, EntityDto } from "./entity.js";

@@ -3,10 +3,9 @@
 	"version": "1.0.0",
 	"type": "module",
 	"scripts": {
-		"start": "node --experimental-modules --experimental-wasm-modules -r dotenv/config ./dist/server.js",
-		"build": "tsc -b",
+		"build": "vite build",
 		"dev": "PORT=4000 vite",
-		"buildAndRun": "yarn build && yarn start",
+		"typecheck": "tsc --noEmit",
 		"clean": "rm -rf dist",
 		"lint": "eslint --ext .ts src"
 	},

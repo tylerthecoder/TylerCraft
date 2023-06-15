@@ -3,13 +3,23 @@ use crate::positions::{ChunkPos, InnerChunkPos};
 use crate::world::world_block::WorldBlock;
 use serde::{Deserialize, Serialize};
 use serde_big_array::BigArray;
-use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 
 mod chunk_duct;
 pub mod chunk_mesh;
 #[cfg(test)]
 mod chunk_unit_tests;
+
+
+#[wasm_bindgen(typescript_custom_section)]
+const ITEXT_STYLE: &'static str = r#"
+interface ITextStyle {
+    bold: boolean;
+    italic: boolean;
+    size: number;
+}
+"#;
+
 
 pub const CHUNK_WIDTH: i16 = 16;
 pub const CHUNK_HEIGHT: i16 = 64;
@@ -21,12 +31,14 @@ const CHUNK_MEM_SIZE: usize = (CHUNK_HEIGHT * CHUNK_WIDTH * CHUNK_WIDTH) as usiz
 pub struct Chunk {
     #[serde(with = "BigArray")]
     blocks: [BlockType; CHUNK_MEM_SIZE],
-    block_data: HashMap<usize, BlockData>,
+    #[serde(with = "BigArray")]
+    block_data: [BlockData; CHUNK_MEM_SIZE],
     #[wasm_bindgen(skip)]
     pub position: ChunkPos,
 
     /** TODO: I am never deleting dirty blocks, need to fix that */
     #[wasm_bindgen(skip)]
+    #[serde(skip)]
     pub dirty_blocks: Vec<InnerChunkPos>,
 }
 
@@ -34,7 +46,7 @@ impl Chunk {
     pub fn new(position: ChunkPos) -> Chunk {
         Chunk {
             blocks: [BlockType::Void; CHUNK_MEM_SIZE],
-            block_data: HashMap::new(),
+            block_data: [BlockData::None; CHUNK_MEM_SIZE],
             position,
             dirty_blocks: Vec::new(),
         }
@@ -68,8 +80,8 @@ impl Chunk {
 
     pub fn add_block(&mut self, block: ChunkBlock) {
         let index = block.pos.to_chunk_index();
-        self.block_data.insert(index, block.extra_data);
         self.blocks[index] = block.block_type;
+        self.block_data[index] = block.extra_data;
         self.dirty_blocks.push(block.pos.clone());
     }
 
@@ -81,7 +93,10 @@ impl Chunk {
     }
 
     fn get_block_data_from_index(&self, index: &usize) -> &BlockData {
-        self.block_data.get(index).unwrap_or(&BlockData::None)
+        match self.block_data.get(*index) {
+            Some(block_data) => block_data,
+            None => &BlockData::None,
+        }
     }
 
     fn get_world_block_from_index(&self, index: usize) -> WorldBlock {
@@ -120,7 +135,7 @@ impl Chunk {
     pub fn remove_block(&mut self, pos: &InnerChunkPos) -> () {
         let index = pos.to_chunk_index();
         self.blocks[index] = BlockType::Void;
-        self.block_data.remove(&index);
+        self.block_data[index] = BlockData::None;
         self.dirty_blocks.push(pos.clone());
     }
 

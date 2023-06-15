@@ -80,7 +80,7 @@ export class ServerGame extends Game {
 
     if (this.actionMap.size > 0) {
       for (const [_ws, actions] of this.actionMap.entries()) {
-        console.log("Actions", actions);
+        console.log("Actions", actions, this.);
       }
     }
 
@@ -144,12 +144,14 @@ export class ServerGame extends Game {
       console.log("Got Message", message);
       switch (message.type) {
         case ISocketMessageType.actions: {
-          const payload = message.actionPayload!;
+          if (!message.actionPayload) throw new Error("No actions payload");
+          const payload = message.actionPayload;
           this.actionMap.append(ws, payload);
           break;
         }
         case ISocketMessageType.getChunk: {
-          const payload = message.getChunkPayload!;
+          if (!message.getChunkPayload) throw new Error("No get chunk payload");
+          const payload = message.getChunkPayload;
           this.sendChunkTo(payload.pos, ws);
           break;
         }

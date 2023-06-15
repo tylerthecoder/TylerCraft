@@ -136,8 +136,11 @@ class ServerGameReader implements IChunkReader {
     let listener: SocketListener | null = null;
     const chunk: Chunk = await new Promise((resolve) => {
       listener = (message: ISocketMessage) => {
-        if (message.type === ISocketMessageType.setChunk) {
-          const payload = message.setChunkPayload!;
+        if (
+          message.type === ISocketMessageType.setChunk &&
+          message.setChunkPayload
+        ) {
+          const payload = message.setChunkPayload;
           if (payload.pos !== chunkPos) return;
           const chunk = WorldModule.createChunkFromSerialized(payload.data);
           resolve(chunk);
@@ -145,9 +148,9 @@ class ServerGameReader implements IChunkReader {
       };
       SocketInterface.addListener(listener);
     });
-    SocketInterface.removeListener(listener!);
-
-    // console.log("Getting chunk", chunk);
+    if (listener) {
+      SocketInterface.removeListener(listener);
+    }
 
     return chunk;
   }

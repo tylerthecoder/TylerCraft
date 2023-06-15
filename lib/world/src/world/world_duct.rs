@@ -89,9 +89,10 @@ impl World {
             .unwrap_or(false)
     }
 
-    pub fn insert_chunk_wasm(&mut self, chunk: &JsValue) -> Result<(), JsValue> {
-        let chunk: Chunk = from_value(chunk.clone())?;
-        self.insert_chunk(chunk);
-        Ok(())
+    pub fn insert_chunk_wasm(&mut self, value: JsValue) -> Result<(), Error> {
+        from_value(value).and_then(|chunk: Chunk| {
+            self.insert_chunk(chunk);
+            Ok(())
+        })
     }
 }

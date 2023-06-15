@@ -176,7 +176,7 @@ export abstract class Game<Action = GameAction> {
     return this.entities.createOrGetPlayer(this.stateDiff, uid);
   }
 
-  save() {
-    this.worldModel.saveWorld(this);
+  async save() {
+    await this.worldModel.saveWorld(this);
   }
 }

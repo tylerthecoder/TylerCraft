@@ -24,7 +24,6 @@ serde-big-array = "0.4.1"
 serde-wasm-bindgen = "0.4"
 float-cmp = "0.9.0"
 phf = { version = "0.11", default-features = false, features = ["macros"] }
-
 web-sys = { version = "0.3.60", features = ["console"] }
 
 # The `console_error_panic_hook` crate provides better debugging of panics by

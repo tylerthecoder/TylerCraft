@@ -6,9 +6,6 @@ use crate::{
 use serde_wasm_bindgen::{from_value, to_value, Error};
 use wasm_bindgen::prelude::*;
 
-// ==========================
-// Might not need this at all.
-
 #[wasm_bindgen]
 impl Chunk {
     pub fn get_block_wasm(&self, val: JsValue) -> Result<JsValue, Error> {

@@ -43,7 +43,6 @@ export class ChunkHolder {
   }
 
   addOrUpdate(chunk: Chunk): void {
-    console.log("Setting chunk", chunk);
     this.chunks.set(chunk.pos.toIndex(), chunk);
     const serialized = chunk.serialize();
     this.wasmWorld.insert_chunk_wasm(serialized);
@@ -78,12 +77,17 @@ export class ChunkHolder {
 
     const chunkPromise = this.chunkReader.getChunk(chunkId);
 
-    const wrappedChunkPromise = chunkPromise.then((chunk) => {
-      this.chunksToSend.push(chunk);
-      this.addOrUpdate(chunk);
-      this.loadingChunks.delete(chunkId);
-      return chunk;
-    });
+    const wrappedChunkPromise = chunkPromise
+      .then((chunk) => {
+        this.chunksToSend.push(chunk);
+        this.addOrUpdate(chunk);
+        this.loadingChunks.delete(chunkId);
+        return chunk;
+      })
+      .catch((err) => {
+        this.loadingChunks.delete(chunkId);
+        throw err;
+      });
 
     this.loadingChunks.set(chunkId, wrappedChunkPromise);
   }
@@ -115,8 +119,12 @@ export class World {
   ): Promise<World> {
     console.log("Loading world");
     await WorldModule.load();
+
+    console.log("Loaded module");
     const wasmWorld = WorldModule.module.World.new_wasm();
+    console.log("Created wasm world");
     const world = new World(wasmWorld, chunkReader, data);
+    console.log("Created world");
     await world.load();
     console.log("World loaded");
     return world;
@@ -132,15 +140,12 @@ export class World {
     this.chunks = new ChunkHolder(wasmWorld, chunkReader, data?.chunks);
   }
 
-  // We just aren't going to serialize the terrain generator for now. Hopefully later we find a better way to do this
   serialize(): ISerializedWorld {
-    // const serializedTG = this.terrainGenerator.serialize();
     const serializedChunks = this.chunks
       .getAll()
       .map((chunk) => chunk.serialize());
     return {
       chunks: serializedChunks,
-      // tg: serializedTG,
     };
   }
 

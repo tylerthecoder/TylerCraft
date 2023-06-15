@@ -13,6 +13,7 @@ export class SocketHandler {
   }
 
   connect() {
+    console.log("Connecting to socket", this.wssUrl);
     return new Promise<void>((resolve) => {
       this.socket = new WebSocket(this.wssUrl);
       this.socket.onopen = () => {
@@ -44,7 +45,7 @@ export class SocketHandler {
     }
     this.socket.onmessage = (e) => {
       const message = JSON.parse(e.data) as ISocketMessage;
-      // console.log("Message from server", message);
+      console.log("Message from server", message);
       this.listeners.forEach((l) => l(message));
     };
   }

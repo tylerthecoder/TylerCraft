@@ -39,6 +39,14 @@ function hideElement(e: HTMLElement) {
   e.classList.remove("shown");
 }
 
+function getElementByIdOrThrow(id: string): HTMLElement {
+  const e = document.getElementById(id);
+  if (!e) {
+    throw new Error(`Element with id ${id} not found`);
+  }
+  return e;
+}
+
 // generate your unique id
 // kind of bad to do this client side, but I can make it better later
 const UID_KEY = "tylercraft-uid";
@@ -53,16 +61,16 @@ export function getMyUid() {
 }
 
 // Get all of the elements
-const ePlayLocalButton = document.getElementById("playLocalButton")!;
-const ePlayOnlineButton = document.getElementById("playOnlineButton")!;
-export const eStartMenu = document.getElementById("startMenu")!;
-const eGameTypeScreen = document.getElementById("pickGameTypeScreen")!;
-export const ePickWorldScreen = document.getElementById("pickWorldScreen")!;
-const eBackButton = document.getElementById("backButton")!;
-const eWorldOptionsScreen = document.getElementById("worldOptionsScreen")!;
-const eConfigForm = document.getElementById("configForm") as HTMLFormElement;
-const eConfigFormExtra = document.getElementById("configFormExtra")!;
-const eConfigFormStartButton = document.getElementById(
+const ePlayLocalButton = getElementByIdOrThrow("playLocalButton");
+const ePlayOnlineButton = getElementByIdOrThrow("playOnlineButton");
+export const eStartMenu = getElementByIdOrThrow("startMenu");
+const eGameTypeScreen = getElementByIdOrThrow("pickGameTypeScreen");
+export const ePickWorldScreen = getElementByIdOrThrow("pickWorldScreen");
+const eBackButton = getElementByIdOrThrow("backButton");
+const eWorldOptionsScreen = getElementByIdOrThrow("worldOptionsScreen");
+const eConfigForm = getElementByIdOrThrow("configForm") as HTMLFormElement;
+const eConfigFormExtra = getElementByIdOrThrow("configFormExtra");
+const eConfigFormStartButton = getElementByIdOrThrow(
   "configFormStartButton"
 ) as HTMLButtonElement;
 

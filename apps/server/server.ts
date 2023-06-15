@@ -3,6 +3,7 @@ import TylerCraftApp from "./app.js";
 import { WebSocketServer } from "ws";
 import { MongoClient } from "mongodb";
 import cors from "cors";
+import { WorldModule } from "@craft/engine";
 
 export const PORT = process.env.PORT ?? 3000;
 export const DB_URL = process.env.DB_URL;
@@ -44,7 +45,13 @@ const start = async () => {
     // useFindAndModify: true,
   });
 
+  console.log("Loading world module");
+  await WorldModule.load();
+  console.log("World module loaded");
+
   await TylerCraftApp.main(client, wss);
 };
 
-start();
+start()
+  .then(() => console.log("Server started"))
+  .catch((err) => console.error(err));

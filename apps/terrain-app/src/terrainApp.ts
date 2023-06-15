@@ -1,4 +1,17 @@
-import { BIOME_SIZE, BLOCKS, Chunk, CONFIG, Random, TerrainGenerator, Vector2D, Vector3D, World } from "@craft/engine";
+import {
+  BIOME_SIZE,
+  BLOCKS,
+  Chunk,
+  CONFIG,
+  Random,
+  TerrainGenerator,
+  Vector2D,
+  Vector3D,
+  World,
+  WorldModule,
+} from "@craft/engine";
+
+console.log("Hello World");
 
 const LOAD_DIST = 6;
 const SCALE_FACTOR = 10;
@@ -8,7 +21,9 @@ export class TerrainApp {
     this.hasChunk.bind(this),
     this.getChunk.bind(this)
   );
-  private eCanvas = document.getElementById("terrainCanvas") as HTMLCanvasElement;
+  private eCanvas = document.getElementById(
+    "terrainCanvas"
+  ) as HTMLCanvasElement;
   private ctx = this.eCanvas.getContext("2d")!;
   private chunks: Map<string, Chunk> = new Map();
 
@@ -21,7 +36,7 @@ export class TerrainApp {
       this.eCanvas.height = window.innerHeight;
       this.eCanvas.width = window.innerWidth;
       this.draw();
-    }
+    };
     window.addEventListener("resize", getCanvasDimensions.bind(this));
 
     console.log(this.chunks);
@@ -57,7 +72,13 @@ export class TerrainApp {
     this.ctx.fillRect(x, y, w, h);
   }
 
-  private drawRectOutline(x: number, y: number, w: number, h: number, color: string) {
+  private drawRectOutline(
+    x: number,
+    y: number,
+    w: number,
+    h: number,
+    color: string
+  ) {
     this.ctx.strokeStyle = color;
     this.ctx.strokeRect(x, y, w, h);
   }
@@ -82,8 +103,8 @@ export class TerrainApp {
     this.drawText(text, xPos, yPos + SCALE_FACTOR, color);
   }
 
-
   private draw() {
+    console.log("Drawing world");
     for (const [, chunk] of this.chunks.entries()) {
       // draw the chunk
       const worldPos = World.chunkPosToWorldPos(chunk.pos);
@@ -128,25 +149,34 @@ export class TerrainApp {
           //   String(blockPos.data[1]),
           //   "black"
           // );
-          this.drawWorldPosText(blockPos.stripY(), String(this.terrainGenerator.biomeGenerator.fringeHeight.get(blockPos.stripY().toIndex())), "black")
-
+          this.drawWorldPosText(
+            blockPos.stripY(),
+            String(
+              this.terrainGenerator.biomeGenerator.fringeHeight.get(
+                blockPos.stripY().toIndex()
+              )
+            ),
+            "black"
+          );
         }
       }
-
     }
 
-
     // Color the biomes
-    Array.from(this.terrainGenerator.biomeGenerator.biomeGrid.values()).forEach(biomeSection => {
-      if (!biomeSection.hasBiome) return;
+    Array.from(this.terrainGenerator.biomeGenerator.biomeGrid.values()).forEach(
+      (biomeSection) => {
+        if (!biomeSection.hasBiome) return;
 
-      this.drawWorldPosRect(biomeSection.biomeWorldPos, "blue");
-    });
+        this.drawWorldPosRect(biomeSection.biomeWorldPos, "blue");
+      }
+    );
 
     // Draw the biome sections
-    this.terrainGenerator.biomeGenerator.biomeGrid.forEach(section => {
-      const xPos = (section.sectionPos.data[0] * BIOME_SIZE + this.offsetX) * SCALE_FACTOR;
-      const yPos = (section.sectionPos.data[1] * BIOME_SIZE + this.offsetY) * SCALE_FACTOR;
+    this.terrainGenerator.biomeGenerator.biomeGrid.forEach((section) => {
+      const xPos =
+        (section.sectionPos.data[0] * BIOME_SIZE + this.offsetX) * SCALE_FACTOR;
+      const yPos =
+        (section.sectionPos.data[1] * BIOME_SIZE + this.offsetY) * SCALE_FACTOR;
       const size = SCALE_FACTOR * BIOME_SIZE;
 
       this.drawRectOutline(xPos, yPos, size, size, "white");
@@ -162,10 +192,16 @@ export class TerrainApp {
     //     "black",
     //   )
     // });
-
   }
 }
 
-Random.setSeed("Test 2");
-const app = new TerrainApp();
-export default app;
+const load = async () => {
+  console.log("Loading");
+  await WorldModule.load();
+  console.log("loaded");
+  Random.setSeed("Test 2");
+  const app = new TerrainApp();
+  console.log(app);
+};
+
+load();

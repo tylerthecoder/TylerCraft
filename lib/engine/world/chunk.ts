@@ -15,7 +15,7 @@ export interface ISerializedChunk {
     y: number;
   };
   blocks: BlockType[];
-  block_data: Map<string, "None" | { Image: string }>;
+  block_data: ("None" | { Image: string })[];
   chunkId: string;
 }
 
@@ -40,9 +40,14 @@ export class Chunk {
   }
 
   serialize(): ISerializedChunk {
-    const data = this.wasmChunk.serialize() as ISerializedChunk;
-    data.chunkId = this.uid;
-    return data;
+    const data = this.wasmChunk.serialize();
+
+    return {
+      chunkId: this.uid,
+      block_data: data.block_data,
+      blocks: data.blocks,
+      position: data.position,
+    } as ISerializedChunk;
   }
 
   set(data: ISerializedChunk) {

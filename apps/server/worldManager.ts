@@ -14,32 +14,48 @@ export class GameManager {
 
   constructor() {
     SocketInterface.listenForConnection((ws: Websocket) => {
-      SocketInterface.listenTo(ws, async (message: ISocketMessage) => {
-        // console.log(message);
-        if (message.type === ISocketMessageType.joinWorld) {
-          const { worldId, myUid } = message.joinWorldPayload!;
-          const world = await this.getWorld(worldId);
-          if (!world) {
-            return;
-          }
-          // this function sends a welcome message to the client
-          world.addSocket(myUid, ws);
-        } else if (message.type === ISocketMessageType.newWorld) {
-          const payload = message.newWorldPayload!;
-          const world = await this.createWorld(payload);
-          console.log("Create Id: ", world.gameId);
-          world.addSocket(payload.myUid, ws);
-        } else if (message.type === ISocketMessageType.saveWorld) {
-          const payload = message.saveWorldPayload!;
-          const world = this.games.get(payload.worldId);
-          if (!world) {
-            console.log("That world doesn't exist", payload);
-            return;
-          }
-          world.save();
-        }
+      SocketInterface.listenTo(ws, (message: ISocketMessage) => {
+        this.handleSocketMessage(message, ws)
+          .then(() => void 0)
+          .catch((e) => {
+            console.log("Error handling socket message", e, message);
+          });
       });
     });
+  }
+
+  async handleSocketMessage(message: ISocketMessage, ws: Websocket) {
+    if (
+      message.type === ISocketMessageType.joinWorld &&
+      message.joinWorldPayload
+    ) {
+      const { worldId, myUid } = message.joinWorldPayload;
+      const world = await this.getWorld(worldId);
+      if (!world) {
+        return;
+      }
+      // this function sends a welcome message to the client
+      world.addSocket(myUid, ws);
+    } else if (
+      message.type === ISocketMessageType.newWorld &&
+      message.newWorldPayload
+    ) {
+      const payload = message.newWorldPayload;
+      const world = await this.createWorld(payload);
+      console.log("Create Id: ", world.gameId);
+      world.addSocket(payload.myUid, ws);
+    } else if (
+      message.type === ISocketMessageType.saveWorld &&
+      message.saveWorldPayload
+    ) {
+      const payload = message.saveWorldPayload;
+      const world = this.games.get(payload.worldId);
+      if (!world) {
+        console.log("That world doesn't exist", payload);
+        return;
+      }
+      await world.save();
+    }
   }
 
   async getWorld(worldId: string): Promise<ServerGame | null> {
@@ -71,6 +87,8 @@ export class GameManager {
     const worldData = await this.worldModel.createWorld(createWorldOptions);
 
     const newWorld = await ServerGame.make(worldData, this.worldModel);
+
+    await newWorld.baseLoad();
 
     this.games.set(worldData.worldId, newWorld);
 

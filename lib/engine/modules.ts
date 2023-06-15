@@ -41,6 +41,7 @@ class WorldModuleClass {
   }
 
   public createChunkFromSerialized(data: ISerializedChunk): Chunk {
+    console.log("Creating Chunk", data);
     const wasmChunk = this.module.Chunk.deserialize(data);
     const chunkPos = new Vector2D([data.position.x, data.position.y]);
     return new Chunk(wasmChunk, chunkPos);
