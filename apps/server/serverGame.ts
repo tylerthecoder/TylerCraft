@@ -5,10 +5,7 @@ import {
   EmptyController,
   Game,
   GameAction,
-  GameActionDto,
-  GameActionHolder,
   GameStateDiff,
-  ISocketMessage,
   ISocketMessageType,
   IWorldData,
   MapArray,
@@ -17,13 +14,14 @@ import {
   GameController,
   EntityHolder,
   World,
+  SocketMessage,
 } from "@craft/engine";
 
 export class ServerGame extends Game {
   public clients: Players;
-  public actionMap: MapArray<WebSocket, GameActionDto> = new MapArray();
+  public actionMap: MapArray<WebSocket, GameAction> = new MapArray();
 
-  public controller: GameController<GameAction> = new EmptyController(this);
+  public controller: GameController = new EmptyController(this);
 
   static async make(
     worldData: IWorldData,
@@ -51,7 +49,7 @@ export class ServerGame extends Game {
     this.clients = new Players(this);
   }
 
-  onAction(_action: GameActionHolder): void {
+  onGameAction(_action: GameAction): void {
     // NO-OP
   }
 
@@ -60,10 +58,9 @@ export class ServerGame extends Game {
     // This state diff has no client sent actions so it should
     // only be passive things (An entity spawning)
     if (this.stateDiff.hasData()) {
-      this.clients.sendMessageToAll({
-        type: ISocketMessageType.gameDiff,
-        gameDiffPayload: this.stateDiff.get(),
-      });
+      this.clients.sendMessageToAll(
+        new SocketMessage(ISocketMessageType.gameDiff, this.stateDiff.get())
+      );
     }
 
     this.stateDiff.clear();
@@ -90,7 +87,7 @@ export class ServerGame extends Game {
       // Handle all the actions. The new diff should only have updates
       // for the player who made them and chunk they might have affected
       for (const action of actions) {
-        this.handleAction(action.action, action.data);
+        this.handleAction(action);
       }
 
       console.log("Diff after actions", this.stateDiff.get());
@@ -109,10 +106,10 @@ export class ServerGame extends Game {
       if (diff.hasData()) {
         const diffData = diff.get();
         console.log("Sending diff", diffData);
-        SocketInterface.send(ws, {
-          type: ISocketMessageType.gameDiff,
-          gameDiffPayload: diffData,
-        });
+        SocketInterface.send(
+          ws,
+          new SocketMessage(ISocketMessageType.gameDiff, diffData)
+        );
       }
     }
 
@@ -128,33 +125,25 @@ export class ServerGame extends Game {
     }
     if (!chunk) throw new Error("Chunk wasn't found");
     const serializedData = chunk.serialize();
-    SocketInterface.send(ws, {
-      type: ISocketMessageType.setChunk,
-      setChunkPayload: {
+    SocketInterface.send(
+      ws,
+      new SocketMessage(ISocketMessageType.setChunk, {
         pos: chunkPosString,
         data: serializedData,
-      },
-    });
+      })
+    );
   }
 
   addSocket(uid: string, ws: WebSocket): void {
     this.clients.addPlayer(uid, ws);
 
-    SocketInterface.listenTo(ws, (message: ISocketMessage) => {
+    SocketInterface.listenTo(ws, (message) => {
       console.log("Got Message", message);
-      switch (message.type) {
-        case ISocketMessageType.actions: {
-          if (!message.actionPayload) throw new Error("No actions payload");
-          const payload = message.actionPayload;
-          this.actionMap.append(ws, payload);
-          break;
-        }
-        case ISocketMessageType.getChunk: {
-          if (!message.getChunkPayload) throw new Error("No get chunk payload");
-          const payload = message.getChunkPayload;
-          this.sendChunkTo(payload.pos, ws);
-          break;
-        }
+      if (message.isType(ISocketMessageType.actions)) {
+        const gameAction = new GameAction(message.data.type, message.data.data);
+        this.actionMap.append(ws, gameAction);
+      } else if (message.isType(ISocketMessageType.getChunk)) {
+        this.sendChunkTo(message.data.pos, ws);
       }
     });
   }

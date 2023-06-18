@@ -1,6 +1,10 @@
-import { ISocketMessage } from "@craft/engine";
+import {
+  ISocketMessageType,
+  SocketMessageDto,
+  SocketMessage,
+} from "@craft/engine";
 
-export type SocketListener = (message: ISocketMessage) => void;
+export type SocketListener = (message: SocketMessage) => void;
 
 export class SocketHandler {
   private socket: WebSocket | null = null;
@@ -37,7 +41,7 @@ export class SocketHandler {
     this.listeners = this.listeners.filter((l) => l !== listener);
   }
 
-  send(obj: ISocketMessage) {
+  send(obj: SocketMessageDto) {
     if (!this.socket) {
       throw new Error("Socket is not connected");
     }
@@ -49,9 +53,26 @@ export class SocketHandler {
       throw new Error("Socket is not connected");
     }
     this.socket.onmessage = (e) => {
-      const message = JSON.parse(e.data) as ISocketMessage;
+      const message = JSON.parse(e.data) as unknown;
+
+      if (
+        typeof message !== "object" ||
+        !message ||
+        !("type" in message) ||
+        typeof message.type !== "string" ||
+        !("data" in message)
+      ) {
+        console.log("Invalid message", message);
+        return;
+      }
+
+      const holder = new SocketMessage(
+        message.type as ISocketMessageType,
+        message.data as any
+      );
+
       console.log("Message from server", message);
-      this.listeners.forEach((l) => l(message));
+      this.listeners.forEach((l) => l(holder));
     };
   }
 }

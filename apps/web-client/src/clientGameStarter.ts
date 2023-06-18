@@ -7,9 +7,9 @@ import {
 } from "./app";
 import { canvas } from "./canvas";
 import { ClientGame } from "./clientGame";
-import { MouseAndKeyController } from "./controllers/gameKeyboardController";
-import { MobileController } from "./controllers/mobileController";
-import { Quest2Controller } from "./controllers/quest2Controller";
+import { MouseAndKeyboardGameController } from "./controllers/gameKeyboardController";
+import { MobileController } from "./controllers/playerControllers/mobileController";
+import { Quest2Controller } from "./controllers/playerControllers/quest2Controller";
 
 export class GameStarter {
   private game: ClientGame | null = null;
@@ -21,7 +21,7 @@ export class GameStarter {
       } else if (canvas.isXr) {
         return Quest2Controller;
       } else {
-        return MouseAndKeyController;
+        return MouseAndKeyboardGameController;
       }
     };
 

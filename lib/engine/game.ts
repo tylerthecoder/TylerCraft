@@ -1,14 +1,14 @@
-import { Player } from "./entities/player.js";
+import { Player } from "./entities/player/player.js";
 import { ISerializedWorld, World } from "./world/world.js";
 import { IWorldData, WorldModel } from "./types.js";
 import { CONFIG, IConfig, setConfig } from "./config.js";
 import { EntityHolder, ISerializedEntities } from "./entities/entityHolder.js";
 import { Random } from "./utils/random.js";
 import {
-  GameAction,
+  GameActionType,
   GameActionData,
   GameActionHandler,
-  GameActionHolder,
+  GameAction,
 } from "./gameActions.js";
 import { GameStateDiff, GameDiffDto } from "./gameStateDiff.js";
 import { Vector2D } from "./utils/vector.js";
@@ -33,12 +33,12 @@ export interface IGameMetadata {
 // Receives client actions from somewhere.
 // Generate dirty entities and dirty chunks.
 
-export abstract class Game<Action = GameAction> {
+export abstract class Game {
   public gameId: string;
   public name: string;
   public multiPlayer: boolean;
   public stateDiff: GameStateDiff;
-  public abstract controller: GameController<Action>;
+  public abstract controller: GameController;
 
   private gameActionHandler: GameActionHandler;
   private worldModel: WorldModel;
@@ -110,14 +110,10 @@ export abstract class Game<Action = GameAction> {
   }
 
   /** This happens on a fast loop. Mark things that change as dirty */
-  abstract onAction(action: GameActionHolder): void;
-  public handleAction<T extends GameAction, U extends GameActionData[T]>(
-    action: T,
-    actionData: U
-  ) {
-    const actionHolder = GameActionHolder.create(action, actionData);
-    this.onAction(actionHolder);
-    this.gameActionHandler.handle(actionHolder);
+  abstract onGameAction(action: GameAction): void;
+  public handleAction(action: GameAction) {
+    this.onGameAction(action);
+    this.gameActionHandler.handle(action);
   }
 
   /** Currently only sent by server. Will quickly update the state of the game */
@@ -170,6 +166,11 @@ export abstract class Game<Action = GameAction> {
     }
 
     this.world.addBlock(this.stateDiff, cube);
+  }
+
+  removeBlock(cube: Cube) {
+    console.log("Removing block", cube);
+    this.world.removeBlock(this.stateDiff, cube.pos);
   }
 
   addPlayer(uid: string): Player {

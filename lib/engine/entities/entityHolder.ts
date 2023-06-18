@@ -1,7 +1,7 @@
 import { GameStateDiff } from "../gameStateDiff.js";
 import { World } from "../world/world.js";
 import { Entity, EntityDto } from "./entity.js";
-import { Player } from "./player.js";
+import { Player } from "./player/player.js";
 import { Projectile } from "./projectile.js";
 
 export const enum IEntityType {

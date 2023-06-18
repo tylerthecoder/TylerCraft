@@ -1,27 +1,29 @@
 import {
   Camera,
   Game,
-  ISocketMessage,
   ISocketMessageType,
   IWorldData,
   WorldModel,
   Player,
   GameStateDiff,
   GameAction,
-  GameActionHolder,
   GameController,
   World,
   EntityHolder,
   CONFIG,
+  EntityController,
+  SocketMessage,
 } from "@craft/engine";
 import { EntityCamera } from "./cameras/entityCamera";
 import { canvas } from "./canvas";
 import WorldRenderer from "./renders/worldRender";
 import { getMyUid, IExtendedWindow, IS_MOBILE, SocketInterface } from "./app";
 import { XrCamera } from "./cameras/xrCamera";
-import { MobileController } from "./controllers/mobileController";
-import { Quest2Controller } from "./controllers/quest2Controller";
-import { MouseAndKeyController } from "./controllers/gameKeyboardController";
+import { MobileController } from "./controllers/playerControllers/mobileController";
+import { Quest2Controller } from "./controllers/playerControllers/quest2Controller";
+import { KeyboardPlayerEntityController } from "./controllers/playerControllers/keyboardPlayerController";
+import { SocketPlayerController } from "./controllers/playerControllers/socketPlayerController";
+import { MouseAndKeyboardGameController } from "./controllers/gameKeyboardController";
 
 // This class should only read game and not write.
 // It uses game data to draw the game to the screen and handle user input
@@ -33,12 +35,15 @@ export class ClientGame extends Game {
   totTime = 0;
   pastDeltas: number[] = [];
   mainPlayer: Player;
-  controller: GameController<GameAction>;
+  controller: GameController;
+  entityControllers: Map<string, EntityController> = new Map();
 
   static async make(
     worldData: IWorldData,
     worldModel: WorldModel
   ): Promise<ClientGame> {
+    // need to pick the right controller for each entity.
+
     const entityHolder = new EntityHolder(worldData.data?.entities);
     const world = await World.make(
       worldData.chunkReader,
@@ -62,13 +67,16 @@ export class ClientGame extends Game {
 
     console.log("ClientGame created", this);
 
-    this.controller = this.makeController();
-
     this.worldRenderer = new WorldRenderer(this.world, this);
 
     this.worldRenderer.shouldRenderMainPlayer = false;
 
     this.mainPlayer = entities.createOrGetPlayer(this.stateDiff, getMyUid());
+
+    this.entityControllers.set(
+      this.mainPlayer.uid,
+      this.makePlayerController(this.mainPlayer)
+    );
 
     console.log("My UID", getMyUid());
 
@@ -86,7 +94,9 @@ export class ClientGame extends Game {
       SocketInterface.addListener(this.onSocketMessage.bind(this));
     }
 
-    this.setUpPlayer();
+    this.isSpectating = false;
+    this.camera = new EntityCamera(this.mainPlayer);
+    this.worldRenderer.addEntity(this.mainPlayer);
 
     if (canvas.isXr) {
       this.camera = new XrCamera(this.mainPlayer);
@@ -94,20 +104,19 @@ export class ClientGame extends Game {
       this.camera = new EntityCamera(this.mainPlayer);
     }
 
+    this.controller = new MouseAndKeyboardGameController(this);
+
     canvas.loop(this.renderLoop.bind(this));
   }
 
-  private makeController(): GameController<GameAction> {
-    const getClass = () => {
-      if (IS_MOBILE) {
-        return MobileController;
-      } else if (canvas.isXr) {
-        return Quest2Controller;
-      } else {
-        return MouseAndKeyController;
-      }
-    };
-    return new (getClass())(this);
+  private makePlayerController(player: Player): EntityController {
+    if (IS_MOBILE) {
+      return new MobileController(this);
+    } else if (canvas.isXr) {
+      return new Quest2Controller(this);
+    } else {
+      return new KeyboardPlayerEntityController(() => void 0, player, this);
+    }
   }
 
   get frameRate() {
@@ -118,18 +127,23 @@ export class ClientGame extends Game {
     return fps;
   }
 
-  onSocketMessage(message: ISocketMessage) {
+  onSocketMessage(message: SocketMessage) {
     console.log("Socket Message", message);
-    if (
-      message.type === ISocketMessageType.gameDiff &&
-      message.gameDiffPayload
-    ) {
-      this.handleStateDiff(message.gameDiffPayload);
+    if (message.isType(ISocketMessageType.gameDiff)) {
+      this.handleStateDiff(message.data);
     }
   }
 
   // Called by Game each tick,
   update(delta: number, stateDiff: GameStateDiff) {
+    console.log("Calling Update", this.entityControllers.values());
+
+    this.controller.update(delta);
+
+    for (const entityController of this.entityControllers.values()) {
+      entityController.update();
+    }
+
     for (const dirtyChunkId of stateDiff.getDirtyChunks()) {
       this.worldRenderer.blockUpdate(dirtyChunkId);
     }
@@ -137,10 +151,21 @@ export class ClientGame extends Game {
     for (const entityId of stateDiff.getNewEntities()) {
       const entity = this.entities.get(entityId);
       this.worldRenderer.addEntity(entity);
+
+      // create a controller for the entity
+      if (entity instanceof Player) {
+        const controller = new SocketPlayerController(this, entity);
+        this.entityControllers.set(entity.uid, controller);
+      }
     }
 
     for (const entityId of stateDiff.getRemovedEntities()) {
       this.worldRenderer.removeEntity(entityId);
+
+      // remove the controller for the entity
+      const controller = this.entityControllers.get(entityId);
+      controller?.cleanup();
+      this.entityControllers.delete(entityId);
     }
 
     // Load chunks around the player
@@ -161,11 +186,11 @@ export class ClientGame extends Game {
     this.totTime = time;
   }
 
-  onAction(actionHolder: GameActionHolder) {
+  onGameAction(actionHolder: GameAction) {
     if (this.multiPlayer) {
       SocketInterface.send({
         type: ISocketMessageType.actions,
-        actionPayload: actionHolder.getDto(),
+        data: actionHolder.getDto(),
       });
     }
   }
@@ -174,21 +199,6 @@ export class ClientGame extends Game {
     if (this.camera instanceof EntityCamera) {
       this.worldRenderer.shouldRenderMainPlayer =
         this.camera.togglePerspective();
-    }
-  }
-
-  setUpPlayer() {
-    this.isSpectating = false;
-    this.camera = new EntityCamera(this.mainPlayer);
-    this.worldRenderer.addEntity(this.mainPlayer);
-  }
-
-  toggleCreative() {
-    console.log("Toggle Creative");
-    if (this.mainPlayer.creative) {
-      this.mainPlayer.setCreative(false);
-    } else {
-      this.mainPlayer.setCreative(true);
     }
   }
 }

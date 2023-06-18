@@ -5,7 +5,7 @@ import { CanvasProgram } from "../canvas";
 import { ClientGame } from "../clientGame";
 import TextureMapper from "../textureMapper";
 import { IS_MOBILE } from "../app";
-import { Quest2Controller } from "../controllers/quest2Controller";
+import { Quest2Controller } from "../controllers/playerControllers/quest2Controller";
 
 function hide(e: HTMLElement) {
   e.style.display = "none";

@@ -1,10 +1,10 @@
 import {
-  GameAction,
+  GameActionType,
   MetaAction,
   Vector2D,
-  GameController,
+  EntityController,
 } from "@craft/engine";
-import { ClientGame } from "../clientGame";
+import { ClientGame } from "../../clientGame";
 
 interface IMobileState {
   pressing: {
@@ -12,7 +12,7 @@ interface IMobileState {
   };
 }
 
-export class MobileController extends GameController {
+export class MobileController extends EntityController {
   private state: IMobileState = {
     pressing: {
       up: false,
@@ -28,7 +28,7 @@ export class MobileController extends GameController {
   private eUseItemButton2 = document.getElementById("useItemButton2")!;
 
   constructor(public clientGame: ClientGame) {
-    super(clientGame);
+    super();
 
     let lastWindowTouch: Touch;
     const lastTouchStartPos = new Vector2D([0, 0]);
@@ -169,7 +169,7 @@ export class MobileController extends GameController {
     // item selection
     this.eToolbeltItems.forEach((item, index) => {
       item.addEventListener("touchstart", () => {
-        this.game.handleAction(GameAction.PlayerSetBeltIndex, {
+        this.game.handleAction(GameActionType.PlayerSetBeltIndex, {
           playerUid: this.clientGame.mainPlayer.uid,
           index,
         });
@@ -179,7 +179,7 @@ export class MobileController extends GameController {
     this.eUseItemButton.addEventListener("touchstart", (e: TouchEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      this.game.handleAction(GameAction.PlaceBlock, {
+      this.game.handleAction(GameActionType.PlaceBlock, {
         cameraData: this.clientGame.camera.getRay(),
         playerUid: this.clientGame.mainPlayer.uid,
       });
@@ -199,7 +199,7 @@ export class MobileController extends GameController {
       e.preventDefault();
       e.stopPropagation();
       console.log("Removing");
-      this.game.handleAction(GameAction.RemoveBlock, {
+      this.game.handleAction(GameActionType.RemoveBlock, {
         cameraData: this.clientGame.camera.getRay(),
         playerUid: this.clientGame.mainPlayer.uid,
       });
@@ -218,5 +218,9 @@ export class MobileController extends GameController {
 
   update() {
     // NO-OP
+  }
+
+  cleanup(): void {
+    throw new Error("Method not implemented.");
   }
 }

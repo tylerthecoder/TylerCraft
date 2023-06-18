@@ -1,10 +1,10 @@
 import WebSocket from "ws";
 import { IncomingMessage } from "http";
 import URL from "url";
-import { ISocketMessage } from "@craft/engine";
+import { SocketMessage, SocketMessageDto } from "@craft/engine";
 
 type ConnectionListener = (ws: WebSocket) => void;
-type MessageListener = (message: ISocketMessage) => void;
+type MessageListener = (message: SocketMessage) => void;
 
 export default class SocketServer {
   connectionListeners: ConnectionListener[] = [];
@@ -34,21 +34,24 @@ export default class SocketServer {
 
   listenTo(ws: WebSocket, func: MessageListener): void {
     ws.on("message", (data: string) => {
-      const message: ISocketMessage | undefined = (() => {
+      const message: SocketMessageDto | undefined = (() => {
         try {
-          return JSON.parse(data) as ISocketMessage;
+          return JSON.parse(data) as SocketMessageDto;
         } catch {
           console.log("Error parsing JSON");
         }
       })();
 
-      if (message) {
-        func(message);
+      if (!message) {
+        return;
       }
+
+      const validMessage = new SocketMessage(message.type, message.data);
+      func(validMessage);
     });
   }
 
-  send(ws: WebSocket, message: ISocketMessage): void {
-    ws.send(JSON.stringify(message));
+  send(ws: WebSocket, message: SocketMessage): void {
+    ws.send(JSON.stringify(message.getDto()));
   }
 }

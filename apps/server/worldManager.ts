@@ -1,8 +1,8 @@
 import { DbWorldModel } from "./dbWorldModel.js";
 import {
   ICreateWorldOptions,
-  ISocketMessage,
   ISocketMessageType,
+  SocketMessage,
 } from "@craft/engine";
 import { ServerGame } from "./serverGame.js";
 import Websocket from "ws";
@@ -14,7 +14,7 @@ export class GameManager {
 
   constructor() {
     SocketInterface.listenForConnection((ws: Websocket) => {
-      SocketInterface.listenTo(ws, (message: ISocketMessage) => {
+      SocketInterface.listenTo(ws, (message) => {
         this.handleSocketMessage(message, ws)
           .then(() => void 0)
           .catch((e) => {
@@ -24,37 +24,28 @@ export class GameManager {
     });
   }
 
-  async handleSocketMessage(message: ISocketMessage, ws: Websocket) {
-    if (
-      message.type === ISocketMessageType.joinWorld &&
-      message.joinWorldPayload
-    ) {
-      const { worldId, myUid } = message.joinWorldPayload;
+  async handleSocketMessage(message: SocketMessage, ws: Websocket) {
+    if (message.isType(ISocketMessageType.joinWorld)) {
+      const { worldId, myUid } = message.data;
       const world = await this.getWorld(worldId);
       if (!world) {
         return;
       }
       // this function sends a welcome message to the client
       world.addSocket(myUid, ws);
-    } else if (
-      message.type === ISocketMessageType.newWorld &&
-      message.newWorldPayload
-    ) {
-      const payload = message.newWorldPayload;
+    } else if (message.isType(ISocketMessageType.newWorld)) {
+      const payload = message.data;
       const world = await this.createWorld(payload);
       console.log("Create Id: ", world.gameId);
       world.addSocket(payload.myUid, ws);
-    } else if (
-      message.type === ISocketMessageType.saveWorld &&
-      message.saveWorldPayload
-    ) {
-      const payload = message.saveWorldPayload;
+    } else if (message.isType(ISocketMessageType.saveWorld)) {
+      const payload = message.data;
       const world = this.games.get(payload.worldId);
       if (!world) {
         console.log("That world doesn't exist", payload);
         return;
       }
-      await world.save();
+      await this.worldModel.saveWorld(world);
     }
   }
 
