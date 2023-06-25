@@ -18,7 +18,7 @@ export class GameManager {
         this.handleSocketMessage(message, ws)
           .then(() => void 0)
           .catch((e) => {
-            console.log("Error handling socket message", e, message);
+            console.log("Error handling socket message", message, e);
           });
       });
     });
@@ -74,7 +74,7 @@ export class GameManager {
   async createWorld(
     createWorldOptions: ICreateWorldOptions
   ): Promise<ServerGame> {
-    console.log(createWorldOptions);
+    console.log("Create world options", createWorldOptions);
     const worldData = await this.worldModel.createWorld(createWorldOptions);
 
     const newWorld = await ServerGame.make(worldData, this.worldModel);

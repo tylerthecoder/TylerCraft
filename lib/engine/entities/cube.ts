@@ -68,8 +68,7 @@ class CubeHelpersClass {
               },
       };
     } catch (err) {
-      console.log("Could not create cube from wasm cube", cube);
-      console.log(err);
+      console.log("Could not create cube from wasm cube", cube, err);
       throw err;
     }
   }
@@ -120,7 +119,6 @@ class CubeHelpersClass {
       }
 
       case BlockType.flat: {
-        console.log(cube);
         if (!cube.extraData)
           throw new Error("cube1 block should have extra data");
         const direction = faceNumberToFaceVector(cube.extraData.face);

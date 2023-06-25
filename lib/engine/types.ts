@@ -148,4 +148,11 @@ export type SocketMessageDto = MessageDto<
 export class SocketMessage extends MessageHolder<
   ISocketMessageType,
   SocketMessageData
-> {}
+> {
+  static make<T extends ISocketMessageType>(
+    type: T,
+    data: SocketMessageData[T]
+  ) {
+    return new SocketMessage(type, data);
+  }
+}

@@ -1,24 +1,22 @@
 import { GameAction, GameActionType, GameController } from "@craft/engine";
 import { ClientGame } from "../clientGame";
 
+function getEleOrError(id: string): HTMLElement {
+  const ele = document.getElementById(id);
+  if (!ele) throw new Error(`Could not find element with id ${id}`);
+  return ele;
+}
+
 export class MouseAndKeyboardGameController extends GameController {
   private keys = new Set();
   private keysPressed = new Set();
 
-  private fullScreenButton = document.getElementById("fullScreenButton")!;
-  private exitMenuButton = document.getElementById("exitMenuButton")!;
-  private menuButton = document.getElementById("menuIcon")!;
-  private gameMenu = document.getElementById("gameMenu")!;
-  private eGameNameInput = document.getElementById(
-    "gameNameInput"
-  ) as HTMLInputElement;
-  private eSaveButton = document.getElementById(
-    "saveButton"
-  ) as HTMLButtonElement;
-
-  get player() {
-    return this.clientGame.mainPlayer;
-  }
+  private fullScreenButton = getEleOrError("fullScreenButton");
+  private exitMenuButton = getEleOrError("exitMenuButton");
+  private menuButton = getEleOrError("menuIcon");
+  private gameMenu = getEleOrError("gameMenu");
+  private eGameNameInput = getEleOrError("gameNameInput") as HTMLInputElement;
+  private eSaveButton = getEleOrError("saveButton") as HTMLButtonElement;
 
   constructor(private clientGame: ClientGame) {
     super(clientGame);
@@ -37,37 +35,52 @@ export class MouseAndKeyboardGameController extends GameController {
     });
 
     this.exitMenuButton.addEventListener("click", () => {
-      this.gameMenu.style.display = "none";
+      this.closeMenu();
     });
 
     this.eGameNameInput.value = this.clientGame.name;
-    this.eGameNameInput.addEventListener("change", (e: Event) => {
+    this.eGameNameInput.addEventListener("change", (e) => {
       if (!e.target) return;
+      if (!(e.target instanceof HTMLInputElement)) return;
       // TODO debounce this
-      this.clientGame.handleAction(
-        GameAction.create(GameActionType.ChangeName, {
-          name: (e.target as HTMLInputElement).value,
-        })
-      );
+      this.changeName(e.target.value);
     });
 
     this.eSaveButton.addEventListener("click", () => {
       this.save();
     });
+
+    window.addEventListener("keydown", (e) => {
+      this.handleKeyDown(e.key);
+    });
+
+    window.addEventListener("keyup", (e) => {
+      this.handleKeyUp(e.key);
+    });
   }
 
-  save() {
-    this.game.handleAction(GameActionType.Save, undefined);
+  private save() {
+    this.game.handleAction(GameAction.create(GameActionType.Save, undefined));
   }
 
-  openMenu() {
+  private changeName(name: string) {
+    this.game.handleAction(
+      GameAction.create(GameActionType.ChangeName, { name })
+    );
+  }
+
+  private openMenu() {
     this.gameMenu.style.display = "block";
   }
 
-  handleKeyDown(key: string) {
+  private closeMenu() {
+    this.gameMenu.style.display = "none";
+  }
+
+  private handleKeyDown(key: string) {
     this.keys.add(key.toLowerCase());
     if (key === "p") {
-      this.game.handleAction(GameActionType.Save, undefined);
+      this.save();
     } else if (key === "v") {
       this.clientGame.toggleThirdPerson();
     } else if (key === "m") {
@@ -75,7 +88,7 @@ export class MouseAndKeyboardGameController extends GameController {
     }
   }
 
-  handleKeyUp(key: string) {
+  private handleKeyUp(key: string) {
     this.keys.delete(key.toLowerCase());
     this.keysPressed.add(key.toLowerCase());
   }

@@ -273,7 +273,7 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
       extraBlockData
     );
 
-    console.log(newCube);
+    console.log("Placed Cube", newCube);
 
     game.placeBlock(newCube);
   }

@@ -4,28 +4,26 @@ import {
   Game,
   Chunk,
   ICreateWorldOptions,
-  ISocketMessage,
   ISocketMessageType,
   ISocketWelcomePayload,
   IWorldData,
   WorldModel,
   IChunkReader,
   WorldModule,
+  SocketMessage,
 } from "@craft/engine";
 import { getMyUid, SocketInterface } from "../app";
 import { SocketListener } from "../socket";
+import { ApiService } from "../services/api-service";
 
 export class NetworkWorldModel extends WorldModel {
   private async waitForWelcomeMessage() {
     let listener: SocketListener | null = null;
     const welcomeMessage: ISocketWelcomePayload = await new Promise(
       (resolve) => {
-        listener = (message: ISocketMessage) => {
-          if (
-            message.type === ISocketMessageType.welcome &&
-            message.welcomePayload
-          ) {
-            resolve(message.welcomePayload);
+        listener = (message) => {
+          if (message.isType(ISocketMessageType.welcome)) {
+            resolve(message.data);
           }
         };
         SocketInterface.addListener(listener);
@@ -63,13 +61,12 @@ export class NetworkWorldModel extends WorldModel {
   public async createWorld(
     createWorldOptions: ICreateWorldOptions
   ): Promise<IWorldData> {
-    SocketInterface.send({
-      type: ISocketMessageType.newWorld,
-      newWorldPayload: {
+    SocketInterface.send(
+      SocketMessage.make(ISocketMessageType.newWorld, {
         myUid: getMyUid(),
         ...createWorldOptions,
-      },
-    });
+      })
+    );
 
     console.log("Creating world");
 
@@ -87,33 +84,29 @@ export class NetworkWorldModel extends WorldModel {
   }
 
   public async getWorld(worldId: string): Promise<IWorldData | null> {
-    SocketInterface.send({
-      type: ISocketMessageType.joinWorld,
-      joinWorldPayload: {
+    SocketInterface.send(
+      SocketMessage.make(ISocketMessageType.joinWorld, {
         worldId,
         myUid: getMyUid(),
-      },
-    });
+      })
+    );
 
     const welcomeMessage = await this.waitForWelcomeMessage();
     return this.makeGameReader(welcomeMessage);
   }
 
   public async getAllWorlds(): Promise<IGameMetadata[]> {
-    const res = await fetch("/worlds");
-    const data = (await res.json()) as IGameMetadata[];
-    return data;
+    return await ApiService.getWorlds();
   }
 
   // we might not have to send the data to the server here. Just tell the server that we want to save and it will
   // use its local copy of the game to save
   public async saveWorld(gameData: Game): Promise<void> {
-    SocketInterface.send({
-      type: ISocketMessageType.saveWorld,
-      saveWorldPayload: {
+    SocketInterface.send(
+      SocketMessage.make(ISocketMessageType.saveWorld, {
         worldId: gameData.gameId,
-      },
-    });
+      })
+    );
   }
 
   public async deleteWorld(_worldId: string) {
@@ -126,23 +119,19 @@ class ServerGameReader implements IChunkReader {
   // this could also be a rest endpoint but that isn't as fun :) Plus the socket already has some identity to it
   async getChunk(chunkPos: string) {
     // send the socket message
-    SocketInterface.send({
-      type: ISocketMessageType.getChunk,
-      getChunkPayload: {
+    SocketInterface.send(
+      SocketMessage.make(ISocketMessageType.getChunk, {
         pos: chunkPos,
-      },
-    });
+      })
+    );
 
     let listener: SocketListener | null = null;
     const chunk: Chunk = await new Promise((resolve) => {
-      listener = (message: ISocketMessage) => {
-        if (
-          message.type === ISocketMessageType.setChunk &&
-          message.setChunkPayload
-        ) {
-          const payload = message.setChunkPayload;
-          if (payload.pos !== chunkPos) return;
-          const chunk = WorldModule.createChunkFromSerialized(payload.data);
+      listener = (message) => {
+        if (message.isType(ISocketMessageType.setChunk)) {
+          const { pos, data } = message.data;
+          if (pos !== chunkPos) return;
+          const chunk = WorldModule.createChunkFromSerialized(data);
           resolve(chunk);
         }
       };

@@ -27,7 +27,12 @@ export class ServerGame extends Game {
     worldData: IWorldData,
     worldModel: WorldModel
   ): Promise<ServerGame> {
+    console.log("Making server game", worldData, worldModel);
     const entityHolder = new EntityHolder(worldData.data?.entities);
+
+    // Remove all players since none are connected yet
+    entityHolder.removeAllPlayers();
+
     const world = await World.make(
       worldData.chunkReader,
       worldData.data?.world

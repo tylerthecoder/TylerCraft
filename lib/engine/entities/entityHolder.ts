@@ -123,14 +123,16 @@ export class EntityHolder {
   }
 
   add(stateDiff: GameStateDiff, entity: Entity) {
+    console.log("Adding entity: ", entity.uid);
     if (!entity.uid) throw new Error("Must have uid");
     this.entities.set(entity.uid, entity);
     stateDiff.addEntity(entity.uid);
   }
 
   createPlayer(stateDiff: GameStateDiff, uid: string) {
+    console.log("Creating player: ", uid);
     if (this.players.has(uid)) {
-      throw new Error("Player already exists");
+      throw new Error(`Player ${uid} already exists`);
     }
     const player = Player.create(uid);
     this.players.set(player.uid, player);
@@ -163,6 +165,15 @@ export class EntityHolder {
     }
     // if (entity instanceof Player)
     this.entities.delete(entity.uid);
+  }
+
+  removeAllPlayers() {
+    this.players.clear();
+    this.entities.forEach((entity) => {
+      if (entity instanceof Player) {
+        this.entities.delete(entity.uid);
+      }
+    });
   }
 
   iterable() {

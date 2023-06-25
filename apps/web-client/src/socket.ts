@@ -1,8 +1,5 @@
-import {
-  ISocketMessageType,
-  SocketMessageDto,
-  SocketMessage,
-} from "@craft/engine";
+import { ISocketMessageType, SocketMessage } from "@craft/engine";
+import { AppConfig } from "./appConfig";
 
 export type SocketListener = (message: SocketMessage) => void;
 
@@ -11,7 +8,7 @@ export class SocketHandler {
   private listeners: SocketListener[] = [];
 
   private get wssUrl() {
-    const url = new URL(location.href);
+    const url = new URL(AppConfig.api.baseUrl);
     const protocol = url.protocol === "https:" ? "wss:" : "ws:";
     return `${protocol}//${url.host}?app=tylercraft`;
   }
@@ -41,11 +38,11 @@ export class SocketHandler {
     this.listeners = this.listeners.filter((l) => l !== listener);
   }
 
-  send(obj: SocketMessageDto) {
+  send(obj: SocketMessage) {
     if (!this.socket) {
       throw new Error("Socket is not connected");
     }
-    this.socket.send(JSON.stringify(obj));
+    this.socket.send(JSON.stringify(obj.getDto()));
   }
 
   startListening() {

@@ -22,7 +22,6 @@ import { XrCamera } from "./cameras/xrCamera";
 import { MobileController } from "./controllers/playerControllers/mobileController";
 import { Quest2Controller } from "./controllers/playerControllers/quest2Controller";
 import { KeyboardPlayerEntityController } from "./controllers/playerControllers/keyboardPlayerController";
-import { SocketPlayerController } from "./controllers/playerControllers/socketPlayerController";
 import { MouseAndKeyboardGameController } from "./controllers/gameKeyboardController";
 
 // This class should only read game and not write.
@@ -136,8 +135,6 @@ export class ClientGame extends Game {
 
   // Called by Game each tick,
   update(delta: number, stateDiff: GameStateDiff) {
-    console.log("Calling Update", this.entityControllers.values());
-
     this.controller.update(delta);
 
     for (const entityController of this.entityControllers.values()) {
@@ -153,10 +150,10 @@ export class ClientGame extends Game {
       this.worldRenderer.addEntity(entity);
 
       // create a controller for the entity
-      if (entity instanceof Player) {
-        const controller = new SocketPlayerController(this, entity);
-        this.entityControllers.set(entity.uid, controller);
-      }
+      // if (entity instanceof Player) {
+      //   const controller = new SocketPlayerController(this, entity);
+      //   this.entityControllers.set(entity.uid, controller);
+      // }
     }
 
     for (const entityId of stateDiff.getRemovedEntities()) {
@@ -187,11 +184,11 @@ export class ClientGame extends Game {
   }
 
   onGameAction(actionHolder: GameAction) {
+    console.log("Got Game Action", actionHolder);
     if (this.multiPlayer) {
-      SocketInterface.send({
-        type: ISocketMessageType.actions,
-        data: actionHolder.getDto(),
-      });
+      SocketInterface.send(
+        SocketMessage.make(ISocketMessageType.actions, actionHolder.getDto())
+      );
     }
   }
 

@@ -315,7 +315,7 @@ function showWorldOptionsScreen(worldModel: WorldModel, onBack: () => void) {
   eConfigFormExtra.innerHTML = createConfigHtmlObject(CONFIG, "");
 
   // When the game is started, update CONFIG with the the inputted values
-  eConfigFormStartButton.addEventListener("click", async () => {
+  eConfigFormStartButton.addEventListener("click", () => {
     const formData = new FormData(eConfigForm);
 
     const assignValueToConfig = (
@@ -356,15 +356,28 @@ function showWorldOptionsScreen(worldModel: WorldModel, onBack: () => void) {
 
     assignValuesToConfigObject("", CONFIG);
 
-    const newWorldData = await worldModel.createWorld({
-      config: CONFIG,
-      gameName: formData.get("name") as string,
-    });
+    console.log(
+      "Creating world",
+      formData.get("name") as string,
+      "with config",
+      CONFIG
+    );
 
-    gameStarter.start(worldModel, newWorldData).catch((err) => {
-      console.log("Game Error");
-      console.error(err);
-    });
+    worldModel
+      .createWorld({
+        config: CONFIG,
+        gameName: formData.get("name") as string,
+      })
+      .then((newWorldData) => {
+        gameStarter.start(worldModel, newWorldData).catch((err) => {
+          console.log("Game Error");
+          console.error(err);
+        });
+      })
+      .catch((err) => {
+        console.log("Error creating world");
+        console.error(err);
+      });
   });
 }
 
