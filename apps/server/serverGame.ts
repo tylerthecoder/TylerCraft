@@ -81,7 +81,7 @@ export class ServerGame extends Game {
     }
 
     if (this.actionMap.size > 0) {
-      for (const [_ws, actions] of this.actionMap.entries()) {
+      for (const actions of this.actionMap.values()) {
         console.log("Actions", actions);
       }
     }

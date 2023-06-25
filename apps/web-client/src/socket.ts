@@ -50,26 +50,26 @@ export class SocketHandler {
       throw new Error("Socket is not connected");
     }
     this.socket.onmessage = (e) => {
-      const message = JSON.parse(e.data) as unknown;
+      const rawMessage = JSON.parse(e.data) as unknown;
 
       if (
-        typeof message !== "object" ||
-        !message ||
-        !("type" in message) ||
-        typeof message.type !== "string" ||
-        !("data" in message)
+        typeof rawMessage !== "object" ||
+        !rawMessage ||
+        !("type" in rawMessage) ||
+        typeof rawMessage.type !== "string" ||
+        !("data" in rawMessage)
       ) {
-        console.log("Invalid message", message);
+        console.log("Invalid message", rawMessage);
         return;
       }
 
-      const holder = new SocketMessage(
-        message.type as ISocketMessageType,
-        message.data as any
+      const message = new SocketMessage(
+        rawMessage.type as ISocketMessageType,
+        rawMessage.data as any
       );
 
-      console.log("Message from server", message);
-      this.listeners.forEach((l) => l(holder));
+      console.log("Received socket message", message);
+      this.listeners.forEach((l) => l(message));
     };
   }
 }

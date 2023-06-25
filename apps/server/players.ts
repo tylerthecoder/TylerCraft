@@ -4,7 +4,9 @@ import {
   GameStateDiff,
   ISocketMessageType,
   Player,
+  PlayerAction,
   SocketMessage,
+  handlePlayerAction,
 } from "@craft/engine";
 import WebSocket from "ws";
 import { SocketInterface } from "./app.js";
@@ -45,6 +47,18 @@ export default class Players {
     // add them to the SYSTEM
     this.players.set(ws, player);
 
+    // listen for changes from the player
+    const listener = (message: SocketMessage) => {
+      if (message.isType(ISocketMessageType.playerActions)) {
+        const playerAction = new PlayerAction(
+          message.data.type,
+          message.data.data
+        );
+        this.onPlayerAction(ws, playerAction);
+      }
+    };
+    SocketInterface.listenTo(ws, listener);
+
     const gameDiff = new GameStateDiff(this.game);
     gameDiff.addEntity(uid);
 
@@ -80,12 +94,35 @@ export default class Players {
       ws
     );
 
+    console.log(
+      "Player left",
+      player.uid,
+      this.game.entities.getActivePlayers().length
+    );
+
     // FINISH THEM!
-    this.game.entities.remove(player.uid);
+    this.game.entities.removePlayer(player.uid);
     this.players.delete(ws);
 
     console.log(
       `Remove Player! ${this.game.entities.getActivePlayers().length} players`
+    );
+  }
+
+  onPlayerAction(ws: WebSocket, playerAction: PlayerAction) {
+    const player = this.players.get(ws);
+    if (!player) {
+      return;
+    }
+    handlePlayerAction(this.game, player, playerAction);
+
+    // tell everyone about the new action
+    this.sendMessageToAll(
+      new SocketMessage(
+        ISocketMessageType.playerActions,
+        playerAction.getDto()
+      ),
+      ws
     );
   }
 }

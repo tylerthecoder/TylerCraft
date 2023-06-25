@@ -41,18 +41,16 @@ export abstract class Game {
   public abstract controller: GameController;
 
   private gameActionHandler: GameActionHandler;
-  private worldModel: WorldModel;
   private previousTime = Date.now();
 
   constructor(
     public entities: EntityHolder,
     public world: World,
-    worldModel: WorldModel,
+    private worldModel: WorldModel,
     worldData: IWorldData
   ) {
     Random.setSeed(worldData.config.seed);
 
-    this.worldModel = worldModel;
     this.stateDiff = new GameStateDiff(this);
     this.gameActionHandler = new GameActionHandler(this);
 

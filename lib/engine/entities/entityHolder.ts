@@ -156,15 +156,20 @@ export class EntityHolder {
     const entity = this.entities.get(uid);
     if (!entity) {
       console.log("Can't find entity with that uid");
-      // throw new Error("That entity doesn't exist");
-      return;
-    }
-    // you can't delete a player
-    if (entity instanceof Player) {
       return;
     }
     // if (entity instanceof Player)
     this.entities.delete(entity.uid);
+  }
+
+  removePlayer(uid: string) {
+    const player = this.players.get(uid);
+    if (!player) {
+      console.log("Can't find player with that uid");
+      return;
+    }
+    this.players.delete(player.uid);
+    this.entities.delete(player.uid);
   }
 
   removeAllPlayers() {

@@ -11,19 +11,30 @@ import { SocketInterface } from "../../app";
 import { SocketListener } from "../../socket";
 
 export function onPlayerActions(playerAction: PlayerAction) {
-  SocketInterface.send({
-    type: ISocketMessageType.playerActions,
-    data: playerAction.getDto(),
-  });
+  SocketInterface.send(
+    SocketMessage.make(ISocketMessageType.playerActions, playerAction.getDto())
+  );
 }
 
 export class SocketPlayerController extends EntityController {
   private listener: SocketListener;
 
+  static sendPlayerAction(playerAction: PlayerAction) {
+    console.log("Sending player action", playerAction);
+    SocketInterface.send(
+      SocketMessage.make(
+        ISocketMessageType.playerActions,
+        playerAction.getDto()
+      )
+    );
+  }
+
   constructor(private game: Game, private player: Player) {
     super();
     this.listener = (message: SocketMessage) => {
       if (message.isType(ISocketMessageType.playerActions)) {
+        if (message.data.data.playerUid !== this.player.uid) return;
+
         const playerAction = new PlayerAction(
           message.data.type,
           message.data.data
