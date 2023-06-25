@@ -201,7 +201,7 @@ const load = async () => {
   console.log("loaded");
   Random.setSeed("Test 2");
   const app = new TerrainApp();
-  console.log(app);
+  console.log("Terrain app", app);
 };
 
 load();

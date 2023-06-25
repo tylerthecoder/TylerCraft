@@ -1,14 +1,14 @@
-import { Entity, FaceLocater, IEntity } from "./entity.js";
-import { arrayAdd, arrayScalarMul } from "../utils.js";
-import { IDim } from "../types.js";
-import { MovableEntity, MovableEntityDto } from "./moveableEntity.js";
-import { CONFIG } from "../config.js";
-import { Direction, Vector3D } from "../utils/vector.js";
-import { IEntityType } from "./entityHolder.js";
-import { BLOCKS, ExtraBlockData } from "../blockdata.js";
-import { Camera, CameraRay, ICameraData } from "../camera.js";
-import CubeHelpers from "./cube.js";
-import { Game } from "../game.js";
+import { Entity, FaceLocater, IEntity } from "../entity.js";
+import { arrayAdd, arrayScalarMul } from "../../utils.js";
+import { IDim } from "../../types.js";
+import { MovableEntity, MovableEntityDto } from "../moveableEntity.js";
+import { CONFIG } from "../../config.js";
+import { Direction, Vector3D } from "../../utils/vector.js";
+import { IEntityType } from "../entityHolder.js";
+import { BLOCKS, ExtraBlockData } from "../../blockdata.js";
+import { Camera, CameraRay, ICameraData } from "../../camera.js";
+import CubeHelpers from "../cube.js";
+import { Game } from "../../game.js";
 
 export interface BeltDto {
   selectedBlock: BLOCKS;
@@ -273,9 +273,17 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
       extraBlockData
     );
 
-    console.log(newCube);
+    console.log("Placed Cube", newCube);
 
     game.placeBlock(newCube);
+  }
+
+  removeBlock(game: Game, camera: CameraRay) {
+    const lookingData = game.world.lookingAt(camera);
+    if (!lookingData) return;
+    const { cube } = lookingData;
+    if (!cube) return;
+    game.removeBlock(cube);
   }
 
   fireball() {

@@ -1,10 +1,9 @@
 import { Game } from "../game.js";
-import { GameAction } from "../gameActions.js";
 
-export abstract class GameController<Action = GameAction> {
-  protected game: Game<Action>;
+export abstract class GameController {
+  protected game: Game;
 
-  constructor(game: Game<Action>) {
+  constructor(game: Game) {
     this.game = game;
   }
 

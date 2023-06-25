@@ -2,9 +2,11 @@ import {
   CONFIG,
   Game,
   GameStateDiff,
-  ISocketMessage,
   ISocketMessageType,
   Player,
+  PlayerAction,
+  SocketMessage,
+  handlePlayerAction,
 } from "@craft/engine";
 import WebSocket from "ws";
 import { SocketInterface } from "./app.js";
@@ -18,7 +20,7 @@ export default class Players {
     return Array.from(this.players.keys());
   }
 
-  sendMessageToAll(message: ISocketMessage, exclude?: WebSocket) {
+  sendMessageToAll(message: SocketMessage, exclude?: WebSocket) {
     console.log("Sending message to all", message);
     for (const socket of this.players.keys()) {
       if (exclude && socket === exclude) continue;
@@ -32,31 +34,39 @@ export default class Players {
     const player = this.game.addPlayer(uid);
 
     // send a welcoming message to the new player
-    const welcomeMessage: ISocketMessage = {
-      type: ISocketMessageType.welcome,
-      welcomePayload: {
-        uid,
-        worldId: this.game.gameId,
-        entities: this.game.entities.serialize(),
-        activePlayers: Array.from(this.players.values()).map((p) => p.uid),
-        config: CONFIG,
-        name: this.game.name,
-      },
-    };
+    const welcomeMessage = new SocketMessage(ISocketMessageType.welcome, {
+      uid,
+      worldId: this.game.gameId,
+      entities: this.game.entities.serialize(),
+      activePlayers: Array.from(this.players.values()).map((p) => p.uid),
+      config: CONFIG,
+      name: this.game.name,
+    });
     SocketInterface.send(ws, welcomeMessage);
 
     // add them to the SYSTEM
     this.players.set(ws, player);
 
+    // listen for changes from the player
+    const listener = (message: SocketMessage) => {
+      if (message.isType(ISocketMessageType.playerActions)) {
+        const playerAction = new PlayerAction(
+          message.data.type,
+          message.data.data
+        );
+        this.onPlayerAction(ws, playerAction);
+      }
+    };
+    SocketInterface.listenTo(ws, listener);
+
     const gameDiff = new GameStateDiff(this.game);
     gameDiff.addEntity(uid);
 
     // tell Everyone about the new guy
-    const newPlayerMessage: ISocketMessage = {
-      type: ISocketMessageType.gameDiff,
-      gameDiffPayload: gameDiff.get(),
-    };
-    this.sendMessageToAll(newPlayerMessage, ws);
+    this.sendMessageToAll(
+      new SocketMessage(ISocketMessageType.gameDiff, gameDiff.get()),
+      ws
+    );
 
     // If they leave, KILL THEM
     ws.on("close", this.removePlayer.bind(this, ws));
@@ -79,18 +89,40 @@ export default class Players {
     gameDiff.removeEntity(player.uid);
 
     // tell everyone about this tragedy
-    const newPlayerMessage: ISocketMessage = {
-      type: ISocketMessageType.gameDiff,
-      gameDiffPayload: gameDiff.get(),
-    };
-    this.sendMessageToAll(newPlayerMessage, ws);
+    this.sendMessageToAll(
+      new SocketMessage(ISocketMessageType.gameDiff, gameDiff.get()),
+      ws
+    );
+
+    console.log(
+      "Player left",
+      player.uid,
+      this.game.entities.getActivePlayers().length
+    );
 
     // FINISH THEM!
-    this.game.entities.remove(player.uid);
+    this.game.entities.removePlayer(player.uid);
     this.players.delete(ws);
 
     console.log(
       `Remove Player! ${this.game.entities.getActivePlayers().length} players`
+    );
+  }
+
+  onPlayerAction(ws: WebSocket, playerAction: PlayerAction) {
+    const player = this.players.get(ws);
+    if (!player) {
+      return;
+    }
+    handlePlayerAction(this.game, player, playerAction);
+
+    // tell everyone about the new action
+    this.sendMessageToAll(
+      new SocketMessage(
+        ISocketMessageType.playerActions,
+        playerAction.getDto()
+      ),
+      ws
     );
   }
 }

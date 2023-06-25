@@ -1,9 +1,11 @@
 import { IConfig } from "./config.js";
 import { EntityDto } from "./entities/entity.js";
 import { ISerializedEntities } from "./entities/entityHolder.js";
+import { PlayerActionDto } from "./entities/player/playerActions.js";
 import { Game, IGameMetadata, ISerializedGame } from "./game.js";
 import { GameActionDto } from "./gameActions.js";
 import { GameDiffDto } from "./gameStateDiff.js";
+import { MessageDto, MessageHolder } from "./messageHelpers.js";
 import { Chunk, ISerializedChunk } from "./world/chunk.js";
 
 export type IDim = [number, number, number];
@@ -81,19 +83,52 @@ export abstract class WorldModel {
 
 export enum ISocketMessageType {
   // from client
-  getChunk, // server sends setChunk
-  newWorld, // server sends welcome
-  saveWorld,
+  getChunk = "getChunk", // server sends setChunk
+  newWorld = "newWorld", // server sends welcome
+  saveWorld = "saveWorld",
   // this could be for joining an existing world or starting up an old one
-  joinWorld, // server sends welcome
+  joinWorld = "joinWorld", // server sends welcome
   // from server
-  gameDiff,
-  welcome,
-  setChunk,
-  newPlayer,
-  playerLeave,
+  gameDiff = "gameDiff",
+  welcome = "welcome",
+  setChunk = "setChunk",
+  newPlayer = "newPlayer",
+  playerLeave = "playerLeave",
   // both
-  actions,
+  actions = "actions",
+  playerActions = "playerActions",
+}
+
+export interface SocketMessageData extends Record<ISocketMessageType, unknown> {
+  [ISocketMessageType.joinWorld]: {
+    myUid: string;
+    worldId: string;
+  };
+  [ISocketMessageType.newWorld]: {
+    myUid: string;
+    config: IConfig;
+    gameName: string;
+  };
+  [ISocketMessageType.saveWorld]: {
+    worldId: string;
+  };
+  [ISocketMessageType.getChunk]: {
+    pos: string;
+  };
+  [ISocketMessageType.welcome]: ISocketWelcomePayload;
+  [ISocketMessageType.setChunk]: {
+    pos: string;
+    data: ISerializedChunk;
+  };
+  [ISocketMessageType.newPlayer]: {
+    uid: string;
+  };
+  [ISocketMessageType.playerLeave]: {
+    uid: string;
+  };
+  [ISocketMessageType.gameDiff]: GameDiffDto;
+  [ISocketMessageType.actions]: GameActionDto;
+  [ISocketMessageType.playerActions]: PlayerActionDto;
 }
 
 export interface ISocketWelcomePayload {
@@ -105,39 +140,19 @@ export interface ISocketWelcomePayload {
   name: string;
 }
 
-export interface ISocketMessage {
-  type: ISocketMessageType;
-  // from client
-  joinWorldPayload?: {
-    myUid: string;
-    worldId: string;
-  };
-  newWorldPayload?: {
-    myUid: string;
-    config: IConfig;
-    gameName: string;
-  };
-  saveWorldPayload?: {
-    worldId: string;
-  };
-  getChunkPayload?: {
-    pos: string;
-  };
+export type SocketMessageDto = MessageDto<
+  ISocketMessageType,
+  SocketMessageData
+>;
 
-  // from server
-  welcomePayload?: ISocketWelcomePayload;
-  // newPlayerPayload?: {
-  //   uid: string,
-  // },
-  // playerLeavePayload?: {
-  //   uid: string,
-  // },
-  setChunkPayload?: {
-    pos: string;
-    data: ISerializedChunk;
-  };
-  gameDiffPayload?: GameDiffDto;
-
-  // from either
-  actionPayload?: GameActionDto;
+export class SocketMessage extends MessageHolder<
+  ISocketMessageType,
+  SocketMessageData
+> {
+  static make<T extends ISocketMessageType>(
+    type: T,
+    data: SocketMessageData[T]
+  ) {
+    return new SocketMessage(type, data);
+  }
 }

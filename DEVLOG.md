@@ -195,3 +195,35 @@ Want to work on fixing terrain gen next.
 # 6 / 15 / 23
 
 Multiplayer kind of works not but is not robust at all. And all the textures are rotated incorrectly.
+
+
+Trying to think about the best way to have an entity be controlled by gpt4. Might want an "EntityController" that moves the entity around. Entities might have a "brain" that is passed in that controls the entity.
+
+Maybe each entity needs a controller. The entity class controls the logic of the entity and the moves it can make. The controller calls those moves in interesting ways. The entity controller for a player might be a socket, a keyboard, or gpt4.
+
+type entityController = {
+  entity: Entity
+  update: () => void
+}
+
+
+examples
+keyboardPlayerController {
+  setup() {
+    // start event listeners for fast events
+  }
+  update() {
+    call some entity moves
+  }
+}
+
+socketPlayerController {
+  setup() {
+    // start socket listeners
+  }
+  update() {
+    call some entity moves
+  }
+}
+
+

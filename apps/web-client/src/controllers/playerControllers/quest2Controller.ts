@@ -1,14 +1,19 @@
-import { MetaAction, Vector3D, GameController } from "@craft/engine";
+import {
+  MetaAction,
+  Vector3D,
+  GameController,
+  EntityController,
+} from "@craft/engine";
 import { quat } from "gl-matrix";
-import { canvas } from "../canvas";
-import { ClientGame } from "../clientGame";
+import { canvas } from "../../canvas";
+import { ClientGame } from "../../clientGame";
 
-export class Quest2Controller extends GameController {
+export class Quest2Controller extends EntityController {
   constructor(protected clientGame: ClientGame) {
-    super(clientGame);
+    super();
   }
 
-  update(_delta: number) {
+  update() {
     const { webXrSession, currentXRFrame, xrRefSpace } = canvas;
 
     if (!webXrSession || !currentXRFrame || !xrRefSpace) {
@@ -100,5 +105,9 @@ export class Quest2Controller extends GameController {
         this.clientGame.mainPlayer.metaActions.delete(MetaAction.jump);
       }
     }
+  }
+
+  cleanup(): void {
+    throw new Error("Method not implemented.");
   }
 }

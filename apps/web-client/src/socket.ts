@@ -1,18 +1,19 @@
-import { ISocketMessage } from "@craft/engine";
+import { ISocketMessageType, SocketMessage } from "@craft/engine";
+import { AppConfig } from "./appConfig";
 
-export type SocketListener = (message: ISocketMessage) => void;
+export type SocketListener = (message: SocketMessage) => void;
 
 export class SocketHandler {
   private socket: WebSocket | null = null;
   private listeners: SocketListener[] = [];
 
   private get wssUrl() {
-    const url = new URL(location.href);
+    const url = new URL(AppConfig.api.baseUrl);
     const protocol = url.protocol === "https:" ? "wss:" : "ws:";
     return `${protocol}//${url.host}?app=tylercraft`;
   }
 
-  connect() {
+  connect(onClose: () => void) {
     console.log("Connecting to socket", this.wssUrl);
     return new Promise<void>((resolve) => {
       this.socket = new WebSocket(this.wssUrl);
@@ -20,6 +21,11 @@ export class SocketHandler {
         console.log("Socket Connected");
         resolve();
         this.startListening();
+      };
+
+      this.socket.onclose = () => {
+        console.log("Socket Closed");
+        onClose();
       };
     });
   }
@@ -32,11 +38,11 @@ export class SocketHandler {
     this.listeners = this.listeners.filter((l) => l !== listener);
   }
 
-  send(obj: ISocketMessage) {
+  send(obj: SocketMessage) {
     if (!this.socket) {
       throw new Error("Socket is not connected");
     }
-    this.socket.send(JSON.stringify(obj));
+    this.socket.send(JSON.stringify(obj.getDto()));
   }
 
   startListening() {
@@ -44,8 +50,25 @@ export class SocketHandler {
       throw new Error("Socket is not connected");
     }
     this.socket.onmessage = (e) => {
-      const message = JSON.parse(e.data) as ISocketMessage;
-      console.log("Message from server", message);
+      const rawMessage = JSON.parse(e.data) as unknown;
+
+      if (
+        typeof rawMessage !== "object" ||
+        !rawMessage ||
+        !("type" in rawMessage) ||
+        typeof rawMessage.type !== "string" ||
+        !("data" in rawMessage)
+      ) {
+        console.log("Invalid message", rawMessage);
+        return;
+      }
+
+      const message = new SocketMessage(
+        rawMessage.type as ISocketMessageType,
+        rawMessage.data as any
+      );
+
+      console.log("Received socket message", message);
       this.listeners.forEach((l) => l(message));
     };
   }

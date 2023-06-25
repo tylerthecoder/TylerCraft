@@ -1,7 +1,7 @@
 import { GameStateDiff } from "../gameStateDiff.js";
 import { World } from "../world/world.js";
 import { Entity, EntityDto } from "./entity.js";
-import { Player } from "./player.js";
+import { Player } from "./player/player.js";
 import { Projectile } from "./projectile.js";
 
 export const enum IEntityType {
@@ -123,9 +123,21 @@ export class EntityHolder {
   }
 
   add(stateDiff: GameStateDiff, entity: Entity) {
+    console.log("Adding entity: ", entity.uid);
     if (!entity.uid) throw new Error("Must have uid");
     this.entities.set(entity.uid, entity);
     stateDiff.addEntity(entity.uid);
+  }
+
+  createPlayer(stateDiff: GameStateDiff, uid: string) {
+    console.log("Creating player: ", uid);
+    if (this.players.has(uid)) {
+      throw new Error(`Player ${uid} already exists`);
+    }
+    const player = Player.create(uid);
+    this.players.set(player.uid, player);
+    this.add(stateDiff, player);
+    return player;
   }
 
   createOrGetPlayer(stateDiff: GameStateDiff, uid: string): Player {
@@ -137,25 +149,36 @@ export class EntityHolder {
       return player;
     }
 
-    const newPlayer = Player.create(uid);
-    this.players.set(newPlayer.uid, newPlayer);
-    this.add(stateDiff, newPlayer);
-    return newPlayer;
+    return this.createPlayer(stateDiff, uid);
   }
 
   remove(uid: string) {
     const entity = this.entities.get(uid);
     if (!entity) {
       console.log("Can't find entity with that uid");
-      // throw new Error("That entity doesn't exist");
-      return;
-    }
-    // you can't delete a player
-    if (entity instanceof Player) {
       return;
     }
     // if (entity instanceof Player)
     this.entities.delete(entity.uid);
+  }
+
+  removePlayer(uid: string) {
+    const player = this.players.get(uid);
+    if (!player) {
+      console.log("Can't find player with that uid");
+      return;
+    }
+    this.players.delete(player.uid);
+    this.entities.delete(player.uid);
+  }
+
+  removeAllPlayers() {
+    this.players.clear();
+    this.entities.forEach((entity) => {
+      if (entity instanceof Player) {
+        this.entities.delete(entity.uid);
+      }
+    });
   }
 
   iterable() {
