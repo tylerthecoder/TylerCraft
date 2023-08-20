@@ -4,7 +4,15 @@ This is Tylercraft, a version of minecraft written using webgl.
 
 # Development
 
-Dev commands `yarn server dev`, `yarn client dev`, `yarn world dev`
+## Install
+
+`yarn`
+
+Need to install global cargo packages: `cargo install cargo-watch` and `cargo install wasm-bindgen-cli`
+
+## Running
+
+`yarn dev`
 
 # Deploying
 
@@ -35,8 +43,10 @@ WorldModels are pre game. They create the game by either asking the client stora
 
 ## Project structure
 
-- src
-  - web - Front end and rendering code - Deps: game
+This is a yarn workspace monorepo
+
+- apps
+  - web-client - Front end and rendering code - Deps: game
     - assets - All the images and whatnot
     - shared - The shared rendering and game logic - Deps: game, assets
     - app - Starts the game and displays to screen. Contains build code - Deps: web/shared [moduleName]
@@ -44,14 +54,11 @@ WorldModels are pre game. They create the game by either asking the client stora
       - terrain
     - terrain-map-app - a separate app for viewing terrain - Deps: assets
   - server - Backend code - Deps: game
-  - logic - Logic for everything - Deps: none
-  - modules
-    - [moduleName] - More game logic - Deps: web/shared, game
-      - web
-      - logic
-
-
-
+  - terrain-app - A separate app for viewing terrain - Deps: assets
+- lib
+  - engine - Logic for everything - Deps: none
+  - eslint
+  - world
 
 ## Debug
 

@@ -227,3 +227,7 @@ socketPlayerController {
 }
 
 
+# 08/23/23
+
+Thinking of what to work on next. I think rewritting the terrain generator in rust could be a good project
+

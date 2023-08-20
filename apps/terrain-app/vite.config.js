@@ -4,7 +4,7 @@ import topLevelAwait from "vite-plugin-top-level-await";
 
 export default defineConfig({
   optimizeDeps: {
-    exclude: ["@craft/engine"],
+    exclude: ["@craft/engine", "@craft/terrain-gen"],
   },
   clearScreen: false,
   server: {
@@ -13,7 +13,7 @@ export default defineConfig({
   build: {
     target: "esnext",
     commonjsOptions: {
-      include: [/@craft\/engine/, /node_modules/],
+        include: [ /@craft\/engine/, /node_modules/ ],
     },
   },
   plugins: [wasm(), topLevelAwait()],

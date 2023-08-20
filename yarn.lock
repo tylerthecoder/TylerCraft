@@ -961,9 +961,18 @@ __metadata:
   dependencies:
     "@craft/engine": 1.0.0
     "@craft/eslint-config-tylercraft": ^1.0.0
+    "@craft/terrain-gen": 1.0.0
     eslint: ^8.42.0
     typescript: ^4.9.5
     vite: ^4.3.9
+    vite-plugin-top-level-await: ^1.3.1
+    vite-plugin-wasm: ^3.2.2
+  languageName: unknown
+  linkType: soft
+
+"@craft/terrain-gen@1.0.0, @craft/terrain-gen@workspace:lib/terrain-gen":
+  version: 0.0.0-use.local
+  resolution: "@craft/terrain-gen@workspace:lib/terrain-gen"
   languageName: unknown
   linkType: soft
 
@@ -6439,7 +6448,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite-plugin-top-level-await@npm:^1.2.2":
+"vite-plugin-top-level-await@npm:^1.2.2, vite-plugin-top-level-await@npm:^1.3.1":
   version: 1.3.1
   resolution: "vite-plugin-top-level-await@npm:1.3.1"
   dependencies:
@@ -6452,7 +6461,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vite-plugin-wasm@npm:^3.1.1":
+"vite-plugin-wasm@npm:^3.1.1, vite-plugin-wasm@npm:^3.2.2":
   version: 3.2.2
   resolution: "vite-plugin-wasm@npm:3.2.2"
   peerDependencies:

@@ -5,7 +5,8 @@
 			"outputs": [
 				"dist/**",
 				"pkg/**"
-			]
+			],
+            "dependsOn": ["^build"]
 		},
 		"lint": {},
 		"dev": {

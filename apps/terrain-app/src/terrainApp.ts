@@ -10,8 +10,9 @@ import {
   World,
   WorldModule,
 } from "@craft/engine";
+import * as TerrainGen from "@craft/terrain-gen";
 
-console.log("Hello World");
+console.log("Hello World", TerrainGen);
 
 const LOAD_DIST = 6;
 const SCALE_FACTOR = 10;
