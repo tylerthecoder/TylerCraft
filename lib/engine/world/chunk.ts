@@ -80,7 +80,9 @@ export class Chunk {
       x,
       y,
       z,
-    }) as BLOCKS;
+    }) as {
+      block_type: BLOCKS;
+    };
 
     return block;
   }

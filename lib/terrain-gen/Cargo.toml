@@ -20,6 +20,8 @@ world = { path = "../world" }
 # all the `std::fmt` and `std::panicking` infrastructure, so isn't great for
 # code size when deploying.
 console_error_panic_hook = { version = "0.1.7", optional = true }
+noise = "0.8.2"
+web-sys = "0.3.64"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.34"

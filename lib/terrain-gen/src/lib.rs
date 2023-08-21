@@ -1,6 +1,11 @@
 mod utils;
+use noise::{NoiseFn, Perlin, Worley};
 use wasm_bindgen::prelude::*;
-use world::{block::{self, ChunkBlock, BlockType}, chunk::{Chunk, CHUNK_WIDTH}, positions::{ChunkPos, InnerChunkPos}};
+use world::{
+    block::{self, BlockType, ChunkBlock},
+    chunk::{Chunk, CHUNK_WIDTH},
+    positions::{ChunkPos, InnerChunkPos},
+};
 
 #[wasm_bindgen]
 extern "C" {
@@ -12,17 +17,22 @@ pub fn greet() {
     alert("Hello, terrain-gen!");
 }
 
-
-// GOAL: create a chunk 4 tall with grass on top and stone below
 #[wasm_bindgen]
 pub fn get_chunk() -> Chunk {
-    let mut chunk = Chunk::new(
-        ChunkPos::new(0, 0),
-    );
+    let mut chunk = Chunk::new(ChunkPos::new(0, 0));
 
     for x in 0u8..CHUNK_WIDTH as u8 {
         for z in 0u8..CHUNK_WIDTH as u8 {
-            for y in 0u8..3 {
+            // determine the height of world using perlin noise
+
+            let perlin = Worley::new(100);
+            let per_val: f64 = perlin.get([x as f64, z as f64]);
+            let height: u8 = ((per_val.abs() * 10.0) + 5.0) as u8;
+            use web_sys::console;
+
+            console::log_1(&format!("height: {}", height).into());
+
+            for y in 0u8..height {
                 let block = ChunkBlock {
                     pos: InnerChunkPos::new(x, y, z),
                     block_type: BlockType::Stone,
@@ -33,7 +43,7 @@ pub fn get_chunk() -> Chunk {
             }
             // add top grass block
             let block = ChunkBlock {
-                pos: InnerChunkPos::new(x, 3, z),
+                pos: InnerChunkPos::new(x, height, z),
                 block_type: BlockType::Grass,
                 extra_data: block::BlockData::None,
             };
@@ -43,7 +53,3 @@ pub fn get_chunk() -> Chunk {
 
     chunk
 }
-
-
-
-

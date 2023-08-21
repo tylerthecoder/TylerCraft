@@ -179,11 +179,11 @@ export class TerrainApp {
           }
 
           let color = "red";
-          if (cube === BLOCKS.grass) {
+          if (cube.block_type === BLOCKS.grass) {
             color = "green";
-          } else if (cube === BLOCKS.stone) {
+          } else if (cube.block_type === BLOCKS.stone) {
             color = "grey";
-          } else if (cube === BLOCKS.wood) {
+          } else if (cube.block_type === BLOCKS.wood) {
             color = "tan";
           }
 
