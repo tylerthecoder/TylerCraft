@@ -13,7 +13,7 @@ export default defineConfig({
   build: {
     target: "esnext",
     commonjsOptions: {
-        include: [ /@craft\/engine/, /node_modules/ ],
+      include: [/@craft\/engine/, /node_modules/, /@craft\/terrain-gen/],
     },
   },
   plugins: [wasm(), topLevelAwait()],

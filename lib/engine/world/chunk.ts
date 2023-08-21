@@ -1,7 +1,7 @@
 import { Cube } from "../entities/cube.js";
 import { CONFIG } from "../config.js";
 import { Vector3D, Vector2D, Direction } from "../utils/vector.js";
-import { BlockType } from "../blockdata.js";
+import { BLOCKS, BlockType } from "../blockdata.js";
 import { WorldModuleTypes } from "../modules.js";
 export interface ILookingAtData {
   cube: Cube;
@@ -68,13 +68,20 @@ export class Chunk {
   }
 
   getBlockFromWorldPos(worldPos: Vector3D) {
-    const scaledPos = worldPos.data.map((dim) =>
-      Math.floor(dim / CONFIG.terrain.chunkSize)
-    );
+    const scaleCoord = (coord: number) =>
+      ((coord % CONFIG.terrain.chunkSize) + CONFIG.terrain.chunkSize) %
+      CONFIG.terrain.chunkSize;
 
-    const block = this.wasmChunk.get_block_wasm(
-      new Vector3D(scaledPos).toCartIntObj()
-    ) as Cube;
+    const x = scaleCoord(worldPos.get(0));
+    const y = worldPos.get(1);
+    const z = scaleCoord(worldPos.get(2));
+
+    const block = this.wasmChunk.get_block_wasm({
+      x,
+      y,
+      z,
+    }) as BLOCKS;
+
     return block;
   }
 

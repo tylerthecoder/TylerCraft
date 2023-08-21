@@ -1,6 +1,4 @@
 mod utils;
-
-
 use wasm_bindgen::prelude::*;
 use world::{block::{self, ChunkBlock, BlockType}, chunk::{Chunk, CHUNK_WIDTH}, positions::{ChunkPos, InnerChunkPos}};
 
@@ -27,7 +25,7 @@ pub fn get_chunk() -> Chunk {
             for y in 0u8..3 {
                 let block = ChunkBlock {
                     pos: InnerChunkPos::new(x, y, z),
-                    block_type: BlockType::Grass,
+                    block_type: BlockType::Stone,
                     extra_data: block::BlockData::None,
                 };
 
