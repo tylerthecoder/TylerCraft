@@ -157,7 +157,7 @@ export class TerrainGenerator {
 
     const chunkString = chunkPos.toIndex();
     if (this.blocksToRender.has(chunkString)) {
-      this.blocksToRender.get(chunkString)!.forEach((cube) => {
+      this.blocksToRender.get(chunkString)?.forEach((cube) => {
         chunk.addBlock(cube);
       });
       this.blocksToRender.delete(chunkString);

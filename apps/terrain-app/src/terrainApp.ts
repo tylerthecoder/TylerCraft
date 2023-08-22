@@ -12,8 +12,6 @@ import {
 } from "@craft/engine";
 import * as TerrainGen from "@craft/terrain-gen";
 
-console.log("Hello World", TerrainGen.get_chunk().serialize());
-
 const LOAD_DIST = 3;
 const SCALE_FACTOR = 20;
 
@@ -25,7 +23,8 @@ export class TerrainApp {
   private eCanvas = document.getElementById(
     "terrainCanvas"
   ) as HTMLCanvasElement;
-  private ctx = this.eCanvas.getContext("2d")!;
+
+  private ctx = this.eCanvas.getContext("2d") as CanvasRenderingContext2D;
   private chunks: Map<string, Chunk> = new Map();
 
   private offsetX = 50;
@@ -56,7 +55,7 @@ export class TerrainApp {
       for (let j = -LOAD_DIST; j < LOAD_DIST; j++) {
         const chunkPos = new Vector2D([i, j]);
 
-        const genChunk = new Chunk(TerrainGen.get_chunk(), chunkPos);
+        const genChunk = new Chunk(TerrainGen.get_chunk_wasm(i, j), chunkPos);
 
         // const chunk = this.terrainGenerator.generateChunk(chunkPos);
         //
@@ -170,12 +169,18 @@ export class TerrainApp {
         for (let j = 0; j < CONFIG.terrain.chunkSize; j++) {
           const blockPos = worldPos.add(new Vector3D([i, this.yLvl, j]));
 
-          const cube = chunk.getBlockFromWorldPos(blockPos);
+          let cube = chunk.getBlockFromWorldPos(blockPos);
 
           if (!cube) {
             // clear cube so we can see the background
             this.drawWorldPosRect(blockPos.stripY(), "white");
             return;
+          }
+
+          // loop down until we find a block
+          for (let k = this.yLvl - 1; k >= 0; k--) {
+            if (cube.block_type !== BLOCKS.void) break;
+            cube = chunk.getBlockFromWorldPos(new Vector3D([i, k, j]));
           }
 
           let color = "red";

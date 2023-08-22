@@ -1,5 +1,5 @@
 mod utils;
-use noise::{NoiseFn, Perlin, Worley};
+use noise::{NoiseFn, Perlin};
 use wasm_bindgen::prelude::*;
 use world::{
     block::{self, BlockType, ChunkBlock},
@@ -8,28 +8,27 @@ use world::{
 };
 
 #[wasm_bindgen]
-extern "C" {
-    fn alert(s: &str);
-}
+pub fn get_chunk_wasm(chunk_x: i16, chunk_y: i16) -> Chunk {
+    let seed = 100;
+    let jag_factor = 1.0 / 100.0;
+    let height_multiplier = 10.0;
 
-#[wasm_bindgen]
-pub fn greet() {
-    alert("Hello, terrain-gen!");
-}
+    let noise = Perlin::new(seed);
 
-#[wasm_bindgen]
-pub fn get_chunk() -> Chunk {
-    let mut chunk = Chunk::new(ChunkPos::new(0, 0));
+    let mut chunk = Chunk::new(ChunkPos {
+        x: chunk_x,
+        y: chunk_y,
+    });
 
     for x in 0u8..CHUNK_WIDTH as u8 {
         for z in 0u8..CHUNK_WIDTH as u8 {
-            // determine the height of world using perlin noise
+            let world_x = (chunk_x * CHUNK_WIDTH as i16) as f64 + (x as f64);
+            let world_z = (chunk_y * CHUNK_WIDTH as i16) as f64 + (z as f64);
 
-            let perlin = Worley::new(100);
-            let per_val: f64 = perlin.get([x as f64, z as f64]);
-            let height: u8 = ((per_val.abs() * 10.0) + 5.0) as u8;
+            let per_val = noise.get([world_x * jag_factor, world_z * jag_factor]);
+            let height = ((per_val.abs() * height_multiplier) + 5.0) as u8;
+
             use web_sys::console;
-
             console::log_1(&format!("height: {}", height).into());
 
             for y in 0u8..height {
