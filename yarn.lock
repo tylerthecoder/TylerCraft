@@ -902,6 +902,7 @@ __metadata:
   dependencies:
     "@craft/eslint-config-tylercraft": ^1.0.0
     "@craft/rust-world": 1.0.0
+    "@craft/terrain-gen": 1.0.0
     "@types/seedrandom": ^3.0.4
     eslint: ^8.42.0
     random: ^4.1.0

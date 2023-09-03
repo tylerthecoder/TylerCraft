@@ -11,8 +11,55 @@ import {
   ChunkReader,
   Vector2D,
   WorldModule,
+  IConfig,
 } from "@craft/engine";
+import { TerrainGenModule } from "@craft/engine/modules";
 import TerrainWorker from "../workers/terrain.worker?worker";
+
+const WasmChunkGetter = {
+  getChunk: async (chunkPos: string) => {
+    const terrainVector = Vector2D.fromIndex(chunkPos);
+    await TerrainGenModule.load();
+    return TerrainGenModule.genChunk(terrainVector);
+  },
+};
+
+const WorkerChunkGetter = (config: IConfig, worker: Worker) => {
+  worker.postMessage({
+    type: "setConfig",
+    config,
+  });
+  const chunkPromises: { [chunkPos: string]: Promise<Chunk> } = {};
+  return {
+    getChunk: async (chunkPos: string) => {
+      let chunkPromise = chunkPromises[chunkPos];
+      if (chunkPromise) return chunkPromise;
+
+      const terrainVector = Vector2D.fromIndex(chunkPos);
+      worker.postMessage({
+        type: "getChunk",
+        x: terrainVector.data[0],
+        y: terrainVector.data[1],
+      });
+
+      chunkPromise = new Promise<Chunk>((resolve) => {
+        const onTerrainMessage = (data: { data: ISerializedChunk }) => {
+          if (data.data.chunkId !== chunkPos) return;
+
+          const chunk = WorldModule.createChunkFromSerialized(data.data);
+
+          resolve(chunk);
+          worker.removeEventListener("message", onTerrainMessage);
+        };
+
+        worker.addEventListener("message", onTerrainMessage);
+      });
+      chunkPromises[chunkPos] = chunkPromise;
+
+      return chunkPromise;
+    },
+  };
+};
 
 export class ClientDb extends WorldModel {
   private terrainWorker: Worker;
@@ -62,46 +109,12 @@ export class ClientDb extends WorldModel {
   ): Promise<IWorldData> {
     const worldId = Math.random() + "";
 
-    const chunkPromises: { [chunkPos: string]: Promise<Chunk> } = {};
+    const chunkReader = new ChunkReader(WasmChunkGetter);
 
-    this.terrainWorker.postMessage({
-      type: "setConfig",
-      config: createWorldOptions.config,
-    });
-
-    const chunkReader: INullableChunkReader = {
-      getChunk: async (chunkPos) => {
-        let chunkPromise = chunkPromises[chunkPos];
-        if (chunkPromise) return chunkPromise;
-
-        const terrainVector = Vector2D.fromIndex(chunkPos);
-        this.terrainWorker.postMessage({
-          type: "getChunk",
-          x: terrainVector.data[0],
-          y: terrainVector.data[1],
-        });
-
-        chunkPromise = new Promise<Chunk>((resolve) => {
-          const onTerrainMessage = (data: { data: ISerializedChunk }) => {
-            if (data.data.chunkId !== chunkPos) return;
-
-            const chunk = WorldModule.createChunkFromSerialized(data.data);
-
-            resolve(chunk);
-            this.terrainWorker.removeEventListener("message", onTerrainMessage);
-          };
-
-          this.terrainWorker.addEventListener("message", onTerrainMessage);
-        });
-        chunkPromises[chunkPos] = chunkPromise;
-
-        return chunkPromise;
-      },
-    };
     return {
       worldId,
+      chunkReader,
       name: createWorldOptions.gameName,
-      chunkReader: new ChunkReader(chunkReader),
       config: createWorldOptions.config,
     };
   }

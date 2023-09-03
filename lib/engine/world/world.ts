@@ -14,7 +14,7 @@ import {
   Direction,
   getDirectionFromString,
 } from "../utils/vector.js";
-import WorldModule, { WorldModuleTypes } from "../modules.js";
+import WorldModule, { TerrainGenModule, WorldModuleTypes } from "../modules.js";
 import { BLOCK_DATA } from "../blockdata.js";
 import { GameStateDiff } from "../gameStateDiff.js";
 import { ChunkMesh } from "./chunkMesh.js";
@@ -119,6 +119,7 @@ export class World {
   ): Promise<World> {
     console.log("Loading world");
     await WorldModule.load();
+    await TerrainGenModule.load();
 
     console.log("Loaded module");
     const wasmWorld = WorldModule.module.World.new_wasm();

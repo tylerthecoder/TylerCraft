@@ -38,6 +38,7 @@ where
 
 struct Tree {
     blocks: Vec<WorldBlock>,
+    base_block_pos: WorldPos,
 }
 
 impl Tree {
@@ -70,7 +71,10 @@ impl Tree {
             extra_data: block::BlockData::None,
         });
 
-        Self { blocks }
+        Self {
+            blocks,
+            base_block_pos: center_pos.to_owned(),
+        }
     }
 }
 
@@ -182,18 +186,31 @@ pub fn get_chunk_wasm(chunk_x: i16, chunk_y: i16) -> Chunk {
         y: chunk_y,
     });
 
-    fn main() -> Result<(), NormalError> {
-        let mut rng = thread_rng();
-        let normal = Normal::new(2.0, 3.0)?;
-        let v = normal.sample(&mut rng);
-        use web_sys::console;
-        console::log_1(&format!("Dist: {}", v).into());
-        Ok(())
-    }
-
-    main().unwrap();
-
     let trees_in_chunk = TreeRandomSpreadGenerator { seed: 100 };
+
+    let trees = trees_in_chunk.get_trees(ChunkPos {
+        x: chunk_x,
+        y: chunk_y,
+    });
+
+    for tree in trees {
+        for block in tree.blocks {
+            let per_val = noise.get([
+                (tree.base_block_pos.x as f64) * jag_factor,
+                (tree.base_block_pos.z as f64) * jag_factor,
+            ]);
+            let height = ((per_val.abs() * height_multiplier) + 5.0) as i32;
+            let height_offset = height - tree.base_block_pos.y;
+            chunk.add_block(ChunkBlock {
+                pos: block
+                    .world_pos
+                    .to_inner_chunk_pos()
+                    .add_vec(InnerChunkPos::new(0, height_offset as u8, 0)),
+                block_type: block.block_type,
+                extra_data: block.extra_data,
+            });
+        }
+    }
 
     for x in 0u8..CHUNK_WIDTH as u8 {
         for z in 0u8..CHUNK_WIDTH as u8 {
@@ -222,26 +239,6 @@ pub fn get_chunk_wasm(chunk_x: i16, chunk_y: i16) -> Chunk {
                 extra_data: block::BlockData::None,
             };
             chunk.add_block(block);
-
-            // add all the trees in the chunk
-
-            let trees = trees_in_chunk.get_trees(ChunkPos {
-                x: chunk_x,
-                y: chunk_y,
-            });
-
-            for tree in trees {
-                for block in tree.blocks {
-                    chunk.add_block(ChunkBlock {
-                        pos: block
-                            .world_pos
-                            .to_inner_chunk_pos()
-                            .add_vec(InnerChunkPos::new(0, height as u8, 0)),
-                        block_type: block.block_type,
-                        extra_data: block.extra_data,
-                    });
-                }
-            }
         }
     }
 
