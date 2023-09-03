@@ -12,8 +12,8 @@ import {
 } from "@craft/engine";
 import * as TerrainGen from "@craft/terrain-gen";
 
-const LOAD_DIST = 3;
-const SCALE_FACTOR = 20;
+const LOAD_DIST = 5;
+const SCALE_FACTOR = 8;
 
 export class TerrainApp {
   private terrainGenerator = new TerrainGenerator(
@@ -75,6 +75,7 @@ export class TerrainApp {
   private drawRect(x: number, y: number, w: number, h: number, color: string) {
     this.ctx.fillStyle = color;
     this.ctx.fillRect(x, y, w, h);
+    this.ctx.lineWidth = 0.5;
     this.ctx.strokeStyle = "white";
     this.ctx.strokeRect(x, y, w, h);
   }
@@ -87,6 +88,7 @@ export class TerrainApp {
     color: string
   ) {
     this.ctx.strokeStyle = color;
+    this.ctx.lineWidth = 6;
     this.ctx.strokeRect(x, y, w, h);
   }
 
@@ -189,7 +191,7 @@ export class TerrainApp {
           } else if (cube.block_type === BLOCKS.stone) {
             color = "grey";
           } else if (cube.block_type === BLOCKS.wood) {
-            color = "tan";
+            color = "brown";
           }
 
           this.drawWorldPosRect(blockPos.stripY(), color);
