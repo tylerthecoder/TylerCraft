@@ -1,13 +1,13 @@
 mod utils;
 use noise::{NoiseFn, Perlin};
 use rand::rngs::StdRng;
-use rand::thread_rng;
 use rand::SeedableRng;
-use rand_distr::{Distribution, Normal, NormalError, Uniform};
+use rand_distr::{Distribution, Uniform};
 use wasm_bindgen::prelude::*;
 use world::{
     block::{self, BlockType, ChunkBlock},
     chunk::{Chunk, CHUNK_WIDTH},
+    direction::Direction,
     positions::{ChunkPos, InnerChunkPos, WorldPos},
     world::world_block::WorldBlock,
 };
@@ -43,33 +43,37 @@ struct Tree {
 
 impl Tree {
     fn make_simple(center_pos: &WorldPos) -> Self {
-        let mut blocks = Vec::new();
+        let height = 5;
 
-        blocks.push(WorldBlock {
-            world_pos: center_pos.to_owned(),
-            block_type: BlockType::Wood,
-            extra_data: block::BlockData::None,
-        });
+        // make trunk
+        let mut blocks = (0..height)
+            .map(|y| WorldBlock {
+                world_pos: WorldPos {
+                    x: center_pos.x,
+                    y: center_pos.y + y,
+                    z: center_pos.z,
+                },
+                block_type: BlockType::Wood,
+                extra_data: block::BlockData::None,
+            })
+            .collect::<Vec<WorldBlock>>();
 
-        blocks.push(WorldBlock {
-            world_pos: WorldPos {
+        // add leaves at top
+        for x in [Direction::Up].iter() {
+            let pos = WorldPos {
                 x: center_pos.x,
-                y: center_pos.y + 1,
+                y: center_pos.y + height,
                 z: center_pos.z,
-            },
-            block_type: BlockType::Wood,
-            extra_data: block::BlockData::None,
-        });
+            };
 
-        blocks.push(WorldBlock {
-            world_pos: WorldPos {
-                x: center_pos.x,
-                y: center_pos.y + 2,
-                z: center_pos.z,
-            },
-            block_type: BlockType::Wood,
-            extra_data: block::BlockData::None,
-        });
+            pos.move_direction(x);
+
+            blocks.push(WorldBlock {
+                world_pos: pos,
+                block_type: BlockType::Leaf,
+                extra_data: block::BlockData::None,
+            });
+        }
 
         Self {
             blocks,
@@ -173,6 +177,65 @@ impl TreeRandomSpreadGenerator {
     }
 }
 
+struct FlowerGetter {
+    seed: u64,
+}
+
+#[derive(Eq, PartialEq)]
+struct FlowerLocator {
+    world_x: i32,
+    world_z: i32,
+}
+
+impl FlowerLocator {
+    fn make_chunk_block(self: &Self, y_pos: i32) -> ChunkBlock {
+        ChunkBlock {
+            pos: WorldPos::new(
+                self.world_x % CHUNK_WIDTH as i32,
+                y_pos,
+                self.world_z % CHUNK_WIDTH as i32,
+            )
+            .to_inner_chunk_pos(),
+            block_type: BlockType::RedFlower,
+            extra_data: block::BlockData::None,
+        }
+    }
+}
+
+impl FlowerGetter {
+    fn get_flowers(self: &Self, chunk_pos: ChunkPos) -> Vec<FlowerLocator> {
+        // generate 15-25 random flowers per chunk
+        let chunk_seed = self.seed + (chunk_pos.x as u64 * 1000) + (chunk_pos.y as u64 * 1000000);
+        let mut rng: StdRng = SeedableRng::seed_from_u64(chunk_seed);
+        let dist = Uniform::new(0, CHUNK_WIDTH);
+        let flower_count_getter = Uniform::new(15, 25);
+
+        let flower_count = flower_count_getter.sample(&mut rng);
+
+        let mut flowers = Vec::new();
+
+        for _ in 0..flower_count {
+            let x = dist.sample(&mut rng);
+            let z = dist.sample(&mut rng);
+
+            let loc = FlowerLocator {
+                world_x: (chunk_pos.x * CHUNK_WIDTH) as i32 + x as i32,
+                world_z: (chunk_pos.y * CHUNK_WIDTH) as i32 + z as i32,
+            };
+
+            let already_has_flower = flowers.iter().any(|other_loc| *other_loc == loc);
+
+            if already_has_flower {
+                continue;
+            }
+
+            flowers.push(loc);
+        }
+
+        flowers
+    }
+}
+
 #[wasm_bindgen]
 pub fn get_chunk_wasm(chunk_x: i16, chunk_y: i16) -> Chunk {
     let seed = 100;
@@ -180,6 +243,12 @@ pub fn get_chunk_wasm(chunk_x: i16, chunk_y: i16) -> Chunk {
     let height_multiplier = 10.0;
 
     let noise = Perlin::new(seed);
+
+    let get_height = |x: f64, z: f64| -> f64 {
+        let per_val = noise.get([x * jag_factor, z * jag_factor]);
+        let height = ((per_val.abs() * height_multiplier) + 5.0) as i32;
+        height as f64
+    };
 
     let mut chunk = Chunk::new(ChunkPos {
         x: chunk_x,
@@ -195,11 +264,7 @@ pub fn get_chunk_wasm(chunk_x: i16, chunk_y: i16) -> Chunk {
 
     for tree in trees {
         for block in tree.blocks {
-            let per_val = noise.get([
-                (tree.base_block_pos.x as f64) * jag_factor,
-                (tree.base_block_pos.z as f64) * jag_factor,
-            ]);
-            let height = ((per_val.abs() * height_multiplier) + 5.0) as i32;
+            let height = get_height(block.world_pos.x as f64, block.world_pos.z as f64) as i32;
             let height_offset = height - tree.base_block_pos.y;
             chunk.add_block(ChunkBlock {
                 pos: block
@@ -210,6 +275,22 @@ pub fn get_chunk_wasm(chunk_x: i16, chunk_y: i16) -> Chunk {
                 extra_data: block.extra_data,
             });
         }
+    }
+
+    // place flowers
+    let flowers_in_chunk = FlowerGetter { seed: 100 };
+
+    let flowers = flowers_in_chunk.get_flowers(ChunkPos {
+        x: chunk_x,
+        y: chunk_y,
+    });
+
+    use web_sys::console;
+    console::log_1(&format!("Flower count: {}", flowers.len()).into());
+
+    for flower in flowers {
+        let height = get_height(flower.world_x as f64, flower.world_z as f64) as i32;
+        chunk.add_block(flower.make_chunk_block(height + 1));
     }
 
     for x in 0u8..CHUNK_WIDTH as u8 {

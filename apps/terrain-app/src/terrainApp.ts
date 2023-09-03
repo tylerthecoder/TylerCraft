@@ -192,6 +192,10 @@ export class TerrainApp {
             color = "grey";
           } else if (cube.block_type === BLOCKS.wood) {
             color = "brown";
+          } else if (cube.block_type === BLOCKS.redFlower) {
+            color = "pink";
+          } else if (cube.block_type === BLOCKS.leaf) {
+            color = "darkgreen";
           }
 
           this.drawWorldPosRect(blockPos.stripY(), color);
