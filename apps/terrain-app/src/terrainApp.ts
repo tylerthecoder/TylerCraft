@@ -10,11 +10,10 @@ import {
   World,
   WorldModule,
 } from "@craft/engine";
+import * as TerrainGen from "@craft/terrain-gen";
 
-console.log("Hello World");
-
-const LOAD_DIST = 6;
-const SCALE_FACTOR = 10;
+const LOAD_DIST = 5;
+const SCALE_FACTOR = 8;
 
 export class TerrainApp {
   private terrainGenerator = new TerrainGenerator(
@@ -24,7 +23,8 @@ export class TerrainApp {
   private eCanvas = document.getElementById(
     "terrainCanvas"
   ) as HTMLCanvasElement;
-  private ctx = this.eCanvas.getContext("2d")!;
+
+  private ctx = this.eCanvas.getContext("2d") as CanvasRenderingContext2D;
   private chunks: Map<string, Chunk> = new Map();
 
   private offsetX = 50;
@@ -33,6 +33,7 @@ export class TerrainApp {
   constructor() {
     // setup canvas
     const getCanvasDimensions = () => {
+      console.log("getting canvas dimensions");
       this.eCanvas.height = window.innerHeight;
       this.eCanvas.width = window.innerWidth;
       this.draw();
@@ -53,8 +54,12 @@ export class TerrainApp {
     for (let i = -LOAD_DIST; i < LOAD_DIST; i++) {
       for (let j = -LOAD_DIST; j < LOAD_DIST; j++) {
         const chunkPos = new Vector2D([i, j]);
-        const chunk = this.terrainGenerator.generateChunk(chunkPos);
-        this.chunks.set(chunkPos.toIndex(), chunk);
+
+        const genChunk = new Chunk(TerrainGen.get_chunk_wasm(i, j), chunkPos);
+
+        // const chunk = this.terrainGenerator.generateChunk(chunkPos);
+        //
+        this.chunks.set(chunkPos.toIndex(), genChunk);
       }
     }
   }
@@ -70,6 +75,9 @@ export class TerrainApp {
   private drawRect(x: number, y: number, w: number, h: number, color: string) {
     this.ctx.fillStyle = color;
     this.ctx.fillRect(x, y, w, h);
+    this.ctx.lineWidth = 0.5;
+    this.ctx.strokeStyle = "white";
+    this.ctx.strokeRect(x, y, w, h);
   }
 
   private drawRectOutline(
@@ -80,6 +88,7 @@ export class TerrainApp {
     color: string
   ) {
     this.ctx.strokeStyle = color;
+    this.ctx.lineWidth = 6;
     this.ctx.strokeRect(x, y, w, h);
   }
 
@@ -103,10 +112,53 @@ export class TerrainApp {
     this.drawText(text, xPos, yPos + SCALE_FACTOR, color);
   }
 
+  private yLvl = 0;
+  public increaseYLvl() {
+    this.yLvl++;
+    this.draw();
+  }
+
+  public decreaseYLvl() {
+    if (this.yLvl === 0) {
+      return;
+    }
+    this.yLvl--;
+    this.draw();
+  }
+
+  public moveUp() {
+    this.offsetY += SCALE_FACTOR;
+    this.draw();
+  }
+
+  public moveDown() {
+    this.offsetY -= SCALE_FACTOR;
+    this.draw();
+  }
+
+  public moveLeft() {
+    this.offsetX += SCALE_FACTOR;
+    this.draw();
+  }
+
+  public moveRight() {
+    this.offsetX -= SCALE_FACTOR;
+    this.draw();
+  }
+
   private draw() {
-    console.log("Drawing world");
+    console.log(
+      "Drawing world Y level: ",
+      this.yLvl,
+      "offset-x: ",
+      this.offsetX,
+      "offset-y: ",
+      this.offsetY
+    );
+    // clear the screen
+    this.ctx.clearRect(0, 0, this.eCanvas.width, this.eCanvas.height);
+
     for (const [, chunk] of this.chunks.entries()) {
-      // draw the chunk
       const worldPos = World.chunkPosToWorldPos(chunk.pos);
 
       const xPos = (worldPos.data[0] + this.offsetX) * SCALE_FACTOR;
@@ -115,49 +167,34 @@ export class TerrainApp {
 
       this.drawRectOutline(xPos, yPos, size, size, "black");
 
-      // get the top block of each pos
       for (let i = 0; i < CONFIG.terrain.chunkSize; i++) {
         for (let j = 0; j < CONFIG.terrain.chunkSize; j++) {
-          let blockPos = worldPos.add(new Vector3D([i, 0, j]));
+          const blockPos = worldPos.add(new Vector3D([i, this.yLvl, j]));
 
-          // Keep moving up until we find the top block
-          while (chunk.containsWorldPos(blockPos)) {
-            blockPos = blockPos.add(new Vector3D([0, 1, 0]));
-          }
-          // go down one
-          blockPos = blockPos.add(new Vector3D([0, -1, 0]));
+          let cube = chunk.getBlockFromWorldPos(blockPos);
 
-          const cube = chunk.getBlockFromWorldPos(blockPos);
           if (!cube) {
+            // clear cube so we can see the background
+            this.drawWorldPosRect(blockPos.stripY(), "white");
             return;
           }
 
+          // loop down until we find a block
+          for (let k = this.yLvl - 1; k >= 0; k--) {
+            if (cube.block_type !== BLOCKS.void) break;
+            cube = chunk.getBlockFromWorldPos(new Vector3D([i, k, j]));
+          }
+
           let color = "red";
-          if (cube.type === BLOCKS.grass) {
+          if (cube.block_type === BLOCKS.grass) {
             color = "green";
-          } else if (cube.type === BLOCKS.stone) {
+          } else if (cube.block_type === BLOCKS.stone) {
             color = "grey";
-          } else if (cube.type === BLOCKS.wood) {
-            color = "tan";
+          } else if (cube.block_type === BLOCKS.wood) {
+            color = "brown";
           }
 
           this.drawWorldPosRect(blockPos.stripY(), color);
-
-          // Print the y level
-          // this.drawWorldPosText(
-          //   blockPos.stripY(),
-          //   String(blockPos.data[1]),
-          //   "black"
-          // );
-          this.drawWorldPosText(
-            blockPos.stripY(),
-            String(
-              this.terrainGenerator.biomeGenerator.fringeHeight.get(
-                blockPos.stripY().toIndex()
-              )
-            ),
-            "black"
-          );
         }
       }
     }
@@ -196,12 +233,29 @@ export class TerrainApp {
 }
 
 const load = async () => {
-  console.log("Loading");
+  console.log("Loading. Config: ", CONFIG);
   await WorldModule.load();
   console.log("loaded");
   Random.setSeed("Test 2");
   const app = new TerrainApp();
   console.log("Terrain app", app);
+
+  // bind functions to keys
+  window.onkeydown = (e) => {
+    if (e.key === "ArrowUp") {
+      app.increaseYLvl();
+    } else if (e.key === "ArrowDown") {
+      app.decreaseYLvl();
+    } else if (e.key === "j") {
+      app.moveDown();
+    } else if (e.key === "k") {
+      app.moveUp();
+    } else if (e.key === "h") {
+      app.moveLeft();
+    } else if (e.key === "l") {
+      app.moveRight();
+    }
+  };
 };
 
 load();

@@ -41,7 +41,7 @@ pub struct WasmImageData {
     pub dir: Direction,
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct ChunkBlock {
     pub block_type: BlockType,
     pub extra_data: BlockData,

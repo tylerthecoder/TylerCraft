@@ -13,6 +13,7 @@
 	},
 	"dependencies": {
 		"@craft/rust-world": "1.0.0",
+		"@craft/terrain-gen": "1.0.0",
 		"random": "^4.1.0",
 		"seedrandom": "^3.0.5",
 		"simplex-noise": "^2.4.0"

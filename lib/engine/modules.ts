@@ -1,7 +1,15 @@
 import * as WorldWasm from "@craft/rust-world";
+import * as TerrainGenWasm from "@craft/terrain-gen";
 import { Vector2D } from "./utils/vector.js";
 import { Chunk, ISerializedChunk } from "./world/index.js";
 export * as WorldModuleTypes from "@craft/rust-world";
+
+async function loadWasmModule(module: any) {
+  console.log("Loading Wasm Module", module);
+  const loadedModule = module.default ? await module.default : await module;
+  console.log("Loaded Wasm Module", loadedModule);
+  return loadedModule;
+}
 
 // Wrapper class for world logic
 class WorldModuleClass {
@@ -15,21 +23,7 @@ class WorldModuleClass {
   }
 
   async load(): Promise<void> {
-    if (this._module) {
-      return;
-    }
-    console.log("Loading WorldWasm engine", WorldWasm);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const wasm = WorldWasm as any;
-    if (wasm.default?.then) {
-      (wasm as { default: Promise<typeof WorldWasm> }).default
-        .then((data) => (this._module = data))
-        .then(() => console.log("Modules Loaded ES6", this._module));
-    } else {
-      // It may or may not be a promise
-      this._module = await wasm;
-      console.log("Modules Loaded node", this._module);
-    }
+    this._module = await loadWasmModule(TerrainGenWasm);
   }
 
   public createChunk(chunkPos: Vector2D): Chunk {
@@ -50,3 +44,28 @@ class WorldModuleClass {
 
 const WorldModule = new WorldModuleClass();
 export default WorldModule;
+
+class TerrainGenModuleClass {
+  private _module: typeof TerrainGenWasm | null = null;
+
+  private get module() {
+    if (!this._module) {
+      throw new Error("Terrain gen module not loaded");
+    }
+    return this._module;
+  }
+
+  public async load(): Promise<void> {
+    if (this._module) return;
+    this._module = await loadWasmModule(TerrainGenWasm);
+  }
+
+  genChunk(chunkPos: Vector2D): Chunk {
+    return new Chunk(
+      this.module.get_chunk_wasm(chunkPos.get(0), chunkPos.get(1)),
+      chunkPos
+    );
+  }
+}
+
+export const TerrainGenModule = new TerrainGenModuleClass();

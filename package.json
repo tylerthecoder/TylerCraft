@@ -7,6 +7,7 @@
     "apps/web-client",
     "lib/engine",
     "lib/world",
+    "lib/terrain-gen",
     "lib/eslint"
   ],
   "license": "MIT",

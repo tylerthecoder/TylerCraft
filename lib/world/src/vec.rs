@@ -1,9 +1,9 @@
 use crate::direction::{Direction, Directions, FlatDirection, EVERY_FLAT_DIRECTION};
-use num::{One, Zero};
+use num::{traits::real::Real, One, Zero};
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::Display,
-    ops::{Add, AddAssign, Mul, Sub, SubAssign, Neg}
+    ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign},
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -217,6 +217,19 @@ impl<
         sum_f32.sqrt()
     }
 
+    pub fn distance_to_2<U, V>(&self, vec: &Vec3<U>) -> V
+    where
+        U: Sub<U, Output = T> + Copy + Mul<T, Output = T> + Add<T, Output = T>,
+        T: Sub<U, Output = T> + Copy + Mul<T, Output = T> + Add<T, Output = T>,
+        V: From<T> + Real,
+    {
+        let diff = *self - *vec;
+        let diff_squared = diff * diff;
+        let sum = diff_squared.sum();
+        let sum_f32: V = sum.into();
+        sum_f32.sqrt()
+    }
+
     pub fn map<B, F>(&self, f: F) -> Vec3<B>
     where
         F: Fn(T) -> B,
@@ -254,7 +267,7 @@ impl<
      */
     pub fn get_cube_vecs(&self) -> Vec<Vec3<T>>
     where
-        T: Add<Output = T> + Sub<Output = T> + Copy + One + Neg< Output = T> + Zero,
+        T: Add<Output = T> + Sub<Output = T> + Copy + One + Neg<Output = T> + Zero,
     {
         let mut vecs = Vec::new();
 
@@ -270,10 +283,6 @@ impl<
 
         vecs
     }
-
-
-
-
 }
 
 #[cfg(test)]

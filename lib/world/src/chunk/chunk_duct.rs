@@ -10,7 +10,7 @@ use wasm_bindgen::prelude::*;
 impl Chunk {
     pub fn get_block_wasm(&self, val: JsValue) -> Result<JsValue, Error> {
         from_value(val).and_then(|pos: InnerChunkPos| {
-            let block = self.get_block_type(&pos);
+            let block = self.get_block(&pos);
             to_value(&block)
         })
     }
