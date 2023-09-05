@@ -4,7 +4,6 @@ import {
   arraySub,
   BlockType,
   getBlockData,
-  faceVectorToFaceNumber,
   IDim,
   ChunkMesh,
   Vector3D,
@@ -12,7 +11,6 @@ import {
   BLOCKS,
 } from "@craft/engine";
 import TextureMapper from "../textureMapper";
-import { ImageRenderer } from "./imageRender";
 import ShapeBuilder from "../services/shapeBuilder";
 import { canvas } from "../canvas";
 
@@ -93,7 +91,7 @@ export class ChunkRenderer extends Renderer {
           break;
         }
         case BlockType.x: {
-          const texturePos = TextureMapper.getTextureCords(cube.type);
+          const texturePos = TextureMapper.getXTextureCores(cube.type);
           ShapeBuilder.buildX(blockRenData, relativePos);
 
           blockRenData.pushData({

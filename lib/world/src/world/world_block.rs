@@ -39,9 +39,13 @@ impl WorldBlock {
         }
 
         let block_data = self.get_metadata();
-        let new_block_data = adjacent_block.get_metadata();
+        let adjacent_block_data = adjacent_block.get_metadata();
 
-        if block_data.fluid && new_block_data.fluid {
+        if adjacent_block_data.transparent {
+            return true;
+        }
+
+        if block_data.fluid && adjacent_block_data.fluid {
             return true;
         }
 
@@ -50,7 +54,7 @@ impl WorldBlock {
 
     pub fn get_visible_faces(&self, adjacent_blocks: HashMap<Direction, WorldBlock>) -> Directions {
         if self.block_type == BlockType::Void {
-            return Directions::empty()
+            return Directions::empty();
         }
 
         self.get_faces()

@@ -7,7 +7,7 @@ use wasm_bindgen::prelude::*;
 use world::{
     block::{self, BlockType, ChunkBlock},
     chunk::{Chunk, CHUNK_WIDTH},
-    direction::Direction,
+    direction::{Direction, Directions, EVERY_FLAT_DIRECTION},
     positions::{ChunkPos, InnerChunkPos, WorldPos},
     world::world_block::WorldBlock,
 };
@@ -36,22 +36,51 @@ where
     out_positions
 }
 
-struct Tree {
-    blocks: Vec<WorldBlock>,
-    base_block_pos: WorldPos,
+struct TreeLocator {
+    world_x: i32,
+    world_z: i32,
 }
 
-impl Tree {
-    fn make_simple(center_pos: &WorldPos) -> Self {
+impl TreeLocator {
+    fn is_in_chunk(&self, chunk_pos: &ChunkPos) -> bool {
+        let my_chunk_pos = WorldPos {
+            x: self.world_x,
+            y: 0,
+            z: self.world_z,
+        }
+        .to_chunk_pos();
+
+        if my_chunk_pos == *chunk_pos {
+            return true;
+        }
+
+        // check leaf blocks
+        for x in Directions::flat() {
+            let other_pos = WorldPos {
+                x: self.world_x,
+                y: 0,
+                z: self.world_z,
+            }
+            .move_direction(&x)
+            .to_chunk_pos();
+            if other_pos == *chunk_pos {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    fn get_world_blocks(&self, y_pos: i32) -> Vec<WorldBlock> {
         let height = 5;
 
         // make trunk
         let mut blocks = (0..height)
             .map(|y| WorldBlock {
                 world_pos: WorldPos {
-                    x: center_pos.x,
-                    y: center_pos.y + y,
-                    z: center_pos.z,
+                    x: self.world_x,
+                    y: y + y_pos,
+                    z: self.world_z,
                 },
                 block_type: BlockType::Wood,
                 extra_data: block::BlockData::None,
@@ -59,14 +88,15 @@ impl Tree {
             .collect::<Vec<WorldBlock>>();
 
         // add leaves at top
-        for x in [Direction::Up].iter() {
+        let mut leaf_dirs = Directions::all();
+        leaf_dirs.remove_direction(Direction::Down);
+        for x in leaf_dirs {
             let pos = WorldPos {
-                x: center_pos.x,
-                y: center_pos.y + height,
-                z: center_pos.z,
-            };
-
-            pos.move_direction(x);
+                x: self.world_x,
+                y: height + y_pos,
+                z: self.world_z,
+            }
+            .move_direction(&x);
 
             blocks.push(WorldBlock {
                 world_pos: pos,
@@ -75,10 +105,7 @@ impl Tree {
             });
         }
 
-        Self {
-            blocks,
-            base_block_pos: center_pos.to_owned(),
-        }
+        blocks
     }
 }
 
@@ -164,13 +191,33 @@ impl TreeRandomSpreadGenerator {
         t
     }
 
-    fn get_trees(self: &Self, chunk_pos: ChunkPos) -> Vec<Tree> {
+    fn get_trees(self: &Self, chunk_pos: ChunkPos) -> Vec<TreeLocator> {
         let tree_locations = self.get_tree_locations(chunk_pos);
 
         let mut trees = Vec::new();
 
         for tree_location in tree_locations {
-            trees.push(Tree::make_simple(&tree_location));
+            trees.push(TreeLocator {
+                world_x: tree_location.x,
+                world_z: tree_location.z,
+            });
+        }
+
+        // loop over nearby chunks to make sure there isn't an overlaping tree
+        for x in EVERY_FLAT_DIRECTION {
+            let other_chunk_pos = chunk_pos.move_in_flat_direction(&x);
+            let other_tree_locations = self.get_tree_locations(other_chunk_pos);
+
+            let other_trees = other_tree_locations
+                .into_iter()
+                .map(|tree_location| TreeLocator {
+                    world_x: tree_location.x,
+                    world_z: tree_location.z,
+                })
+                .filter(|tree_location| tree_location.is_in_chunk(&other_chunk_pos))
+                .collect::<Vec<TreeLocator>>();
+
+            trees.extend(other_trees);
         }
 
         trees
@@ -203,7 +250,7 @@ impl FlowerLocator {
 }
 
 impl FlowerGetter {
-    fn get_flowers(self: &Self, chunk_pos: ChunkPos) -> Vec<FlowerLocator> {
+    fn get_flowers(self: &Self, chunk_pos: &ChunkPos) -> Vec<FlowerLocator> {
         // generate 15-25 random flowers per chunk
         let chunk_seed = self.seed + (chunk_pos.x as u64 * 1000) + (chunk_pos.y as u64 * 1000000);
         let mut rng: StdRng = SeedableRng::seed_from_u64(chunk_seed);
@@ -244,6 +291,11 @@ pub fn get_chunk_wasm(chunk_x: i16, chunk_y: i16) -> Chunk {
 
     let noise = Perlin::new(seed);
 
+    let chunk_pos = ChunkPos {
+        x: chunk_x,
+        y: chunk_y,
+    };
+
     let get_height = |x: f64, z: f64| -> f64 {
         let per_val = noise.get([x * jag_factor, z * jag_factor]);
         let height = ((per_val.abs() * height_multiplier) + 5.0) as i32;
@@ -263,34 +315,33 @@ pub fn get_chunk_wasm(chunk_x: i16, chunk_y: i16) -> Chunk {
     });
 
     for tree in trees {
-        for block in tree.blocks {
-            let height = get_height(block.world_pos.x as f64, block.world_pos.z as f64) as i32;
-            let height_offset = height - tree.base_block_pos.y;
-            chunk.add_block(ChunkBlock {
-                pos: block
-                    .world_pos
-                    .to_inner_chunk_pos()
-                    .add_vec(InnerChunkPos::new(0, height_offset as u8, 0)),
-                block_type: block.block_type,
-                extra_data: block.extra_data,
-            });
+        let height = get_height(tree.world_x as f64, tree.world_z as f64) as i32;
+        let blocks = tree.get_world_blocks(height);
+        for block in blocks {
+            let block_chunnk_pos = block.world_pos.to_chunk_pos();
+            if block_chunnk_pos != chunk_pos {
+                continue;
+            }
+            chunk.add_block(block.to_chunk_block());
         }
     }
 
     // place flowers
     let flowers_in_chunk = FlowerGetter { seed: 100 };
 
-    let flowers = flowers_in_chunk.get_flowers(ChunkPos {
-        x: chunk_x,
-        y: chunk_y,
-    });
-
-    use web_sys::console;
-    console::log_1(&format!("Flower count: {}", flowers.len()).into());
+    let flowers = flowers_in_chunk.get_flowers(&chunk_pos);
 
     for flower in flowers {
         let height = get_height(flower.world_x as f64, flower.world_z as f64) as i32;
-        chunk.add_block(flower.make_chunk_block(height + 1));
+
+        let flower = flower.make_chunk_block(height + 1);
+
+        // only place block if there isn't already a block there
+        if chunk.has_block(&flower.pos) {
+            continue;
+        }
+
+        chunk.add_block(flower);
     }
 
     for x in 0u8..CHUNK_WIDTH as u8 {

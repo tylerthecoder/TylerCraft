@@ -26,11 +26,6 @@ pub enum FlatDirection {
     West = 3,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Directions {
-    data: [bool; 6],
-}
-
 pub const EVERY_FLAT_DIRECTION: [FlatDirection; 4] = [
     FlatDirection::North,
     FlatDirection::South,
@@ -46,6 +41,11 @@ pub const EVERY_DIRECTION: [Direction; 6] = [
     Direction::East,
     Direction::West,
 ];
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Directions {
+    data: [bool; 6],
+}
 
 impl FromIterator<Direction> for Directions {
     fn from_iter<I: IntoIterator<Item = Direction>>(iter: I) -> Self {
@@ -76,6 +76,12 @@ impl Directions {
 
     pub fn empty() -> Directions {
         Directions { data: [false; 6] }
+    }
+
+    pub fn flat() -> Directions {
+        Directions {
+            data: [true, true, false, false, true, true],
+        }
     }
 
     pub fn remove_direction(&mut self, direction: Direction) {

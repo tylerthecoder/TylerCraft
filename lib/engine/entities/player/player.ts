@@ -6,7 +6,7 @@ import { CONFIG } from "../../config.js";
 import { Direction, Vector3D } from "../../utils/vector.js";
 import { IEntityType } from "../entityHolder.js";
 import { BLOCKS, ExtraBlockData } from "../../blockdata.js";
-import { Camera, CameraRay, ICameraData } from "../../camera.js";
+import { CameraRay } from "../../camera.js";
 import CubeHelpers from "../cube.js";
 import { Game } from "../../game.js";
 
@@ -231,7 +231,7 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     this.baseUpdate(delta);
 
     if (this.pos.get(1) < -10) {
-      this.pos.set(1, 2);
+      this.pos.set(1, 30);
       this.vel.set(1, -0.1);
     }
   }

@@ -39,12 +39,27 @@ class Textures {
     const endY = startY + yStepVal;
 
     return [
-      [midX, midY, midX, startY, startX, startY, startX, midY], // front
-      [midX, midY, midX, startY, startX, startY, startX, midY], // back
+      [startX, midY, midX, midY, midX, startY, startX, startY], // front
+      [startX, midY, midX, midY, midX, startY, startX, startY], // back
       [midX, startY, midX, midY, endX, midY, endX, startY], // top
       [midX, endY, midX, midY, startX, midY, startX, endY], // bottom
-      [midX, endY, endX, endY, endX, midY, midX, midY], // right
-      [startX, midY, midX, midY, midX, startY, startX, startY], // left
+      [endX, endY, endX, midY, midX, midY, midX, endY], // right
+      [midX, midY, midX, startY, startX, startY, startX, midY], // left
+    ];
+  }
+
+  public getXTextureCores(type: BLOCKS) {
+    const { offsetX, offsetY } = this.getTextureData(type);
+
+    const startX = offsetX * xStepVal;
+    const midX = startX + xStepVal / 2;
+
+    const startY = offsetY * yStepVal;
+    const midY = startY + yStepVal / 2;
+
+    return [
+      [midX, midY, midX, startY, startX, startY, startX, midY], // front
+      [midX, midY, midX, startY, startX, startY, startX, midY], // back
     ];
   }
 

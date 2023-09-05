@@ -231,3 +231,18 @@ socketPlayerController {
 
 Thinking of what to work on next. I think rewritting the terrain generator in rust could be a good project
 
+
+# 09/03/23
+
+I've got covid, so I've had time to rewrite this is rust a bit. I've created a terrain gen app that does smooth height transitions, generates trees, and generates flowers. Making the trees be spread a part randomly is hard, but I solved it by doing it chunk by chunk and lazily loading the tree in nearby chunks to make sure there is no overlap. 
+
+I noticed that the transparency is broken and that some of the textures are rotated incorrectly. I think I will fix that next.
+
+
+
+# 09/04/23
+
+Fixed transparency, it was an issue with the new way I'm doing mesh generation. Fixed textured being rotated incorrectly too. Now noticing that a tree's leafs are not included if they go over a chunk boundary. Tackling that next. 
+
+Then I'll start thinking about biomes. 
+

@@ -10,7 +10,6 @@ pub mod chunk_mesh;
 #[cfg(test)]
 mod chunk_unit_tests;
 
-
 #[wasm_bindgen(typescript_custom_section)]
 const ITEXT_STYLE: &'static str = r#"
 interface ITextStyle {
@@ -19,7 +18,6 @@ interface ITextStyle {
     size: number;
 }
 "#;
-
 
 pub const CHUNK_WIDTH: i16 = 16;
 pub const CHUNK_HEIGHT: i16 = 64;
@@ -117,6 +115,10 @@ impl Chunk {
 
     pub fn get_world_block(&self, pos: &InnerChunkPos) -> WorldBlock {
         self.get_world_block_from_index(pos.to_chunk_index())
+    }
+
+    pub fn has_block(&self, pos: &InnerChunkPos) -> bool {
+        self.get_block_type(pos) != BlockType::Void
     }
 
     pub fn get_block(&self, pos: &InnerChunkPos) -> ChunkBlock {
