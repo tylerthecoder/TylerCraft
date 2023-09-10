@@ -232,6 +232,7 @@ export class KeyboardPlayerEntityController extends EntityController {
   }
 
   handleAction(action: PlayerAction) {
+    console.log("Keyboard controller hanling action", action);
     handlePlayerAction(this.clientGame, this.player, action);
     this.actionListener(action);
   }

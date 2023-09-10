@@ -120,8 +120,7 @@ export class World {
     console.log("Loading world");
     await WorldModule.load();
     await TerrainGenModule.load();
-
-    console.log("Loaded module");
+    // const wasmWorld = new WorldModule.module.World();
     const wasmWorld = WorldModule.module.World.new_wasm();
     console.log("Created wasm world");
     const world = new World(wasmWorld, chunkReader, data);
@@ -133,7 +132,7 @@ export class World {
 
   constructor(
     public wasmWorld: WorldModuleTypes.World,
-    private chunkReader: IChunkReader,
+    chunkReader: IChunkReader,
     data?: ISerializedWorld
   ) {
     console.log("wasm world", this.wasmWorld);

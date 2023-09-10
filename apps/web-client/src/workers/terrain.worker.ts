@@ -27,11 +27,12 @@ interface IWorkerMessage {
 // // We alias self to ctx and give it our newly created type
 const ctx: Worker = self as any;
 
+console.log("Log from worker");
+
 ctx.onmessage = async function (e: IWorkerMessage) {
   await WorldModule.load();
   if (e.data.type === "getChunk") {
     const chunk = getChunk2(e.data.x, e.data.y);
-
     postMessage(chunk);
   } else if (e.data.type === "setConfig") {
     setConfig(e.data.config);
@@ -49,10 +50,7 @@ Random.setSeed("bungus");
 
 const getChunk2 = (x: number, y: number): ISerializedChunk => {
   const pos = new Vector2D([x, y]);
-
   const chunk = terrainGenerator.generateChunk(pos);
-
   chunks.set(chunk.uid, chunk);
-
   return chunk.serialize();
 };

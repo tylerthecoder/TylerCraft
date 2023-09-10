@@ -1,21 +1,20 @@
 import Players from "./players.js";
 import WebSocket from "ws";
-import { SocketInterface } from "./app.js";
 import {
   EmptyController,
   Game,
   GameAction,
   GameStateDiff,
   ISocketMessageType,
-  IWorldData,
   MapArray,
   Vector2D,
-  WorldModel,
   GameController,
   EntityHolder,
   World,
   SocketMessage,
+  IGameData,
 } from "@craft/engine";
+import { SocketInterface } from "./server.js";
 
 export class ServerGame extends Game {
   public clients: Players;
@@ -23,33 +22,22 @@ export class ServerGame extends Game {
 
   public controller: GameController = new EmptyController(this);
 
-  static async make(
-    worldData: IWorldData,
-    worldModel: WorldModel
-  ): Promise<ServerGame> {
-    console.log("Making server game", worldData, worldModel);
-    const entityHolder = new EntityHolder(worldData.data?.entities);
+  static async make(gameData: IGameData): Promise<ServerGame> {
+    console.log("Making server game", gameData);
+    const entityHolder = new EntityHolder(gameData.data?.entities);
 
     // Remove all players since none are connected yet
     entityHolder.removeAllPlayers();
 
-    const world = await World.make(
-      worldData.chunkReader,
-      worldData.data?.world
-    );
+    const world = await World.make(gameData.chunkReader, gameData.data?.world);
 
-    const game = new ServerGame(entityHolder, world, worldModel, worldData);
+    const game = new ServerGame(entityHolder, world, gameData);
 
     return game;
   }
 
-  constructor(
-    entities: EntityHolder,
-    world: World,
-    worldModel: WorldModel,
-    worldData: IWorldData
-  ) {
-    super(entities, world, worldModel, worldData);
+  constructor(entities: EntityHolder, world: World, gameData: IGameData) {
+    super(entities, world, gameData);
 
     this.clients = new Players(this);
   }

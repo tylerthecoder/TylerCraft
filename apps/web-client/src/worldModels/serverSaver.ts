@@ -3,20 +3,20 @@ import {
   IGameMetadata,
   Game,
   Chunk,
-  ICreateWorldOptions,
   ISocketMessageType,
   ISocketWelcomePayload,
-  IWorldData,
-  WorldModel,
   IChunkReader,
   WorldModule,
   SocketMessage,
+  IGameManager,
+  ICreateGameOptions,
+  IGameData,
 } from "@craft/engine";
 import { getMyUid, SocketInterface } from "../app";
 import { SocketListener } from "../socket";
 import { ApiService } from "../services/api-service";
 
-export class NetworkWorldModel extends WorldModel {
+export class NetworkGameManager implements IGameManager {
   private async waitForWelcomeMessage() {
     let listener: SocketListener | null = null;
     const welcomeMessage: ISocketWelcomePayload = await new Promise(
@@ -33,7 +33,7 @@ export class NetworkWorldModel extends WorldModel {
     return welcomeMessage;
   }
 
-  private makeGameReader(welcomeMessage: ISocketWelcomePayload): IWorldData {
+  private makeGameReader(welcomeMessage: ISocketWelcomePayload): IGameData {
     return {
       data: {
         // send this over socket soon
@@ -44,27 +44,27 @@ export class NetworkWorldModel extends WorldModel {
         // just an empty world (the chunk reader should fill it)
         world: {
           chunks: [],
-          // tg: {
-          //   blocksToRender: [],
-          // }
         },
       },
-      chunkReader: new ServerGameReader(),
+      chunkReader: new ServerChunkReader(),
       activePlayers: welcomeMessage.activePlayers,
-      worldId: welcomeMessage.worldId,
+      id: welcomeMessage.worldId,
+      gameSaver: {
+        save: async (game: Game) => {
+          this.saveGame(game);
+        },
+      },
       config: welcomeMessage.config,
       name: welcomeMessage.name,
       multiplayer: true,
     };
   }
 
-  public async createWorld(
-    createWorldOptions: ICreateWorldOptions
-  ): Promise<IWorldData> {
+  public async createGame(options: ICreateGameOptions): Promise<IGameData> {
     SocketInterface.send(
       SocketMessage.make(ISocketMessageType.newWorld, {
         myUid: getMyUid(),
-        ...createWorldOptions,
+        ...options,
       })
     );
 
@@ -74,19 +74,13 @@ export class NetworkWorldModel extends WorldModel {
 
     console.log("Welcome Message", welcomeMessage);
 
-    return {
-      worldId: welcomeMessage.worldId,
-      chunkReader: new ServerGameReader(),
-      name: createWorldOptions.gameName,
-      config: createWorldOptions.config,
-      multiplayer: true,
-    };
+    return this.makeGameReader(welcomeMessage);
   }
 
-  public async getWorld(worldId: string): Promise<IWorldData | null> {
+  public async getGame(gameId: string): Promise<IGameData | null> {
     SocketInterface.send(
       SocketMessage.make(ISocketMessageType.joinWorld, {
-        worldId,
+        worldId: gameId,
         myUid: getMyUid(),
       })
     );
@@ -95,13 +89,13 @@ export class NetworkWorldModel extends WorldModel {
     return this.makeGameReader(welcomeMessage);
   }
 
-  public async getAllWorlds(): Promise<IGameMetadata[]> {
+  public async getAllGames(): Promise<IGameMetadata[]> {
     return await ApiService.getWorlds();
   }
 
   // we might not have to send the data to the server here. Just tell the server that we want to save and it will
   // use its local copy of the game to save
-  public async saveWorld(gameData: Game): Promise<void> {
+  public async saveGame(gameData: Game): Promise<void> {
     SocketInterface.send(
       SocketMessage.make(ISocketMessageType.saveWorld, {
         worldId: gameData.gameId,
@@ -109,12 +103,12 @@ export class NetworkWorldModel extends WorldModel {
     );
   }
 
-  public async deleteWorld(_worldId: string) {
+  public async deleteGame(_gameId: string) {
     // TO-DO implement this (REST)
   }
 }
 
-class ServerGameReader implements IChunkReader {
+class ServerChunkReader implements IChunkReader {
   // send a socket message asking for the chunk then wait for the reply
   // this could also be a rest endpoint but that isn't as fun :) Plus the socket already has some identity to it
   async getChunk(chunkPos: string) {

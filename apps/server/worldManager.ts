@@ -1,18 +1,49 @@
-import { DbWorldModel } from "./dbWorldModel.js";
 import {
-  ICreateWorldOptions,
+  Chunk,
+  IChunkReader,
+  ICreateGameOptions,
+  IGameData,
+  ISerializedGame,
   ISocketMessageType,
   SocketMessage,
+  TerrainGenerator,
+  Vector2D,
+  WorldModule,
 } from "@craft/engine";
 import { ServerGame } from "./serverGame.js";
 import Websocket from "ws";
-import { SocketInterface } from "./app.js";
+import { IDbManager } from "./db.js";
+import { SocketInterface } from "./server.js";
+
+export class RamChunkReader implements IChunkReader {
+  private chunkMap = new Map<string, Chunk>();
+  private terrainGenerator: TerrainGenerator;
+
+  constructor(serializedGame?: ISerializedGame) {
+    this.terrainGenerator = new TerrainGenerator(
+      (chunkPos) => this.chunkMap.has(chunkPos.toIndex()),
+      (chunkPos) => this.chunkMap.get(chunkPos.toIndex())
+    );
+    if (!serializedGame) return;
+    for (const chunkData of serializedGame.world.chunks) {
+      const chunk = WorldModule.createChunkFromSerialized(chunkData);
+      this.chunkMap.set(chunk.uid, chunk);
+    }
+  }
+
+  async getChunk(chunkPos: string) {
+    let chunk = this.chunkMap.get(chunkPos);
+    if (!chunk) {
+      chunk = this.terrainGenerator.generateChunk(Vector2D.fromIndex(chunkPos));
+    }
+    return chunk;
+  }
+}
 
 export class GameManager {
   private games: Map<string, ServerGame> = new Map();
-  private worldModel = new DbWorldModel();
 
-  constructor() {
+  constructor(private dbManager: IDbManager) {
     SocketInterface.listenForConnection((ws: Websocket) => {
       SocketInterface.listenTo(ws, (message) => {
         this.handleSocketMessage(message, ws)
@@ -35,7 +66,7 @@ export class GameManager {
       world.addSocket(myUid, ws);
     } else if (message.isType(ISocketMessageType.newWorld)) {
       const payload = message.data;
-      const world = await this.createWorld(payload);
+      const world = await this.createGame(payload);
       console.log("Create Id: ", world.gameId);
       world.addSocket(payload.myUid, ws);
     } else if (message.isType(ISocketMessageType.saveWorld)) {
@@ -45,43 +76,71 @@ export class GameManager {
         console.log("That world doesn't exist", payload);
         return;
       }
-      await this.worldModel.saveWorld(world);
+      await this.dbManager.saveGame(world.serialize());
     }
   }
 
-  async getWorld(worldId: string): Promise<ServerGame | null> {
-    const world = this.games.get(worldId);
+  async getWorld(gameId: string): Promise<ServerGame | null> {
+    const world = this.games.get(gameId);
     if (world) {
       return world;
     }
 
-    // we don't have the world, time to fetch it
-    const loadedWorldData = await this.worldModel.getWorld(worldId);
+    const dbGame = await this.dbManager.getGame(gameId);
+    if (!dbGame) {
+      return null;
+    }
 
-    if (!loadedWorldData) return null;
+    const gameData: IGameData = {
+      id: gameId,
+      name: dbGame.name,
+      gameSaver: {
+        save: async (game: ServerGame) => {
+          await this.dbManager.saveGame(game.serialize());
+        },
+      },
+      chunkReader: new RamChunkReader(),
+      data: dbGame,
+      config: dbGame.config,
+      multiplayer: true,
+      activePlayers: [],
+    };
 
     // add the world to our local list
-    const serverWorld = await ServerGame.make(loadedWorldData, this.worldModel);
+    const serverWorld = await ServerGame.make(gameData);
 
-    this.games.set(worldId, serverWorld);
+    this.games.set(gameId, serverWorld);
     return serverWorld;
   }
 
   async getAllWorlds() {
-    return this.worldModel.getAllWorlds();
+    return this.dbManager.getAllGameMetadata();
   }
 
-  async createWorld(
-    createWorldOptions: ICreateWorldOptions
-  ): Promise<ServerGame> {
-    console.log("Create world options", createWorldOptions);
-    const worldData = await this.worldModel.createWorld(createWorldOptions);
+  async createGame(options: ICreateGameOptions): Promise<ServerGame> {
+    console.log("Create world options", options);
 
-    const newWorld = await ServerGame.make(worldData, this.worldModel);
+    const id = String(Math.random());
+
+    const gameData: IGameData = {
+      id,
+      name: options.name,
+      gameSaver: {
+        save: async (game: ServerGame) => {
+          await this.dbManager.saveGame(game.serialize());
+        },
+      },
+      chunkReader: new RamChunkReader(),
+      config: options.config,
+      multiplayer: true,
+      activePlayers: [],
+    };
+
+    const newWorld = await ServerGame.make(gameData);
 
     await newWorld.baseLoad();
 
-    this.games.set(worldData.worldId, newWorld);
+    this.games.set(id, newWorld);
 
     return newWorld;
   }

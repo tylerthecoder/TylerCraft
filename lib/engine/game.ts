@@ -1,21 +1,14 @@
 import { Player } from "./entities/player/player.js";
 import { ISerializedWorld, World } from "./world/world.js";
-import { IWorldData, WorldModel } from "./types.js";
+import { IGameData, IGameSaver } from "./types.js";
 import { CONFIG, IConfig, setConfig } from "./config.js";
 import { EntityHolder, ISerializedEntities } from "./entities/entityHolder.js";
 import { Random } from "./utils/random.js";
-import {
-  GameActionType,
-  GameActionData,
-  GameActionHandler,
-  GameAction,
-} from "./gameActions.js";
+import { GameActionHandler, GameAction } from "./gameActions.js";
 import { GameStateDiff, GameDiffDto } from "./gameStateDiff.js";
 import { Vector2D } from "./utils/vector.js";
 import { GameController } from "./controllers/controller.js";
 import CubeHelpers, { Cube } from "./entities/cube.js";
-
-console.log("Tylercraft Engine");
 
 export interface ISerializedGame {
   config: IConfig;
@@ -43,30 +36,30 @@ export abstract class Game {
   private gameActionHandler: GameActionHandler;
   private previousTime = Date.now();
 
+  private gameSaver: IGameSaver;
+
   constructor(
     public entities: EntityHolder,
     public world: World,
-    private worldModel: WorldModel,
-    worldData: IWorldData
+    gameData: IGameData
   ) {
-    Random.setSeed(worldData.config.seed);
+    Random.setSeed(gameData.config.seed);
 
+    this.gameSaver = gameData.gameSaver;
     this.stateDiff = new GameStateDiff(this);
     this.gameActionHandler = new GameActionHandler(this);
 
-    this.multiPlayer = Boolean(worldData.multiplayer);
+    this.multiPlayer = Boolean(gameData.multiplayer);
 
-    this.gameId = worldData.worldId;
-    this.name = worldData.name;
+    this.gameId = gameData.id;
+    this.name = gameData.name;
 
-    if (worldData.config) {
+    if (gameData.config) {
       setConfig({
         ...CONFIG,
-        ...worldData.config,
+        ...gameData.config,
       });
     }
-
-    // this.load();
   }
 
   // abstract load(): Promise<void>;
@@ -176,6 +169,6 @@ export abstract class Game {
   }
 
   async save() {
-    await this.worldModel.saveWorld(this);
+    await this.gameSaver.save(this);
   }
 }

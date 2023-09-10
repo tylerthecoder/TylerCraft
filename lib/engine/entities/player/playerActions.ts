@@ -85,6 +85,7 @@ export const handlePlayerAction = (
   player: Player,
   action: PlayerAction
 ) => {
+  console.log("Handling player action", player, action);
   if (action.isType(PlayerActionType.Rotate)) {
     const { playerRot } = action.data;
     player.rot = new Vector3D(playerRot);
