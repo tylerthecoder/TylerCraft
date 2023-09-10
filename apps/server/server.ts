@@ -1,16 +1,13 @@
 import express from "express";
-import TylerCraftApp from "./app.js";
+import { Request, Response } from "express";
 import { WebSocketServer } from "ws";
-import { MongoClient } from "mongodb";
 import cors from "cors";
 import { WorldModule } from "@craft/engine";
+import { DBManager } from "./db.js";
+import { GameManager } from "./worldManager.js";
+import SocketServer from "./socket.js";
 
 export const PORT = process.env.PORT ?? 3000;
-export const DB_URL = process.env.DB_URL;
-
-if (!DB_URL) {
-  throw new Error("DB_URL not defined");
-}
 
 export const app = express();
 
@@ -23,33 +20,29 @@ const webClientPath = new URL("../../web-client/dist", import.meta.url)
 console.log("Serving web client, path: ", webClientPath);
 app.use(express.static(webClientPath));
 
-TylerCraftApp.addRoutes(app);
-
-export const server = app.listen(PORT, () =>
-  console.log(`Server running on port ${PORT}`)
-);
-
-const wss = new WebSocketServer({ server });
+export let SocketInterface: SocketServer;
 
 const start = async () => {
-  console.log("DB URI: ", DB_URL);
-  // create the mongo client
-  const client = await MongoClient.connect(DB_URL, {
-    auth: {
-      username: "admin",
-      password: "admin",
-    },
-    // useNewUrlParser: true,
-    // useUnifiedTopology: true,
-    // useCreateIndex: true,
-    // useFindAndModify: true,
-  });
+  const server = app.listen(PORT, () =>
+    console.log(`Server running on port ${PORT}`)
+  );
+  const wss = new WebSocketServer({ server });
 
   console.log("Loading world module");
   await WorldModule.load();
   console.log("World module loaded");
 
-  await TylerCraftApp.main(client, wss);
+  const db = await DBManager.makeClient();
+  console.log("Database Connected");
+
+  SocketInterface = new SocketServer(wss);
+
+  const worldManager = new GameManager(db);
+
+  app.get("/worlds", async (_req: Request, res: Response) => {
+    const worlds = await worldManager.getAllWorlds();
+    res.send(worlds);
+  });
 };
 
 start()

@@ -2,8 +2,6 @@ import {
   Camera,
   Game,
   ISocketMessageType,
-  IWorldData,
-  WorldModel,
   Player,
   GameStateDiff,
   GameAction,
@@ -14,6 +12,7 @@ import {
   EntityController,
   SocketMessage,
   PlayerAction,
+  IGameData,
 } from "@craft/engine";
 import { EntityCamera } from "./cameras/entityCamera";
 import { canvas } from "./canvas";
@@ -39,19 +38,13 @@ export class ClientGame extends Game {
   controller: GameController;
   entityControllers: Map<string, EntityController[]> = new Map();
 
-  static async make(
-    worldData: IWorldData,
-    worldModel: WorldModel
-  ): Promise<ClientGame> {
+  static async make(gameData: IGameData): Promise<ClientGame> {
     // need to pick the right controller for each entity.
 
-    const entityHolder = new EntityHolder(worldData.data?.entities);
-    const world = await World.make(
-      worldData.chunkReader,
-      worldData.data?.world
-    );
+    const entityHolder = new EntityHolder(gameData.data?.entities);
+    const world = await World.make(gameData.chunkReader, gameData.data?.world);
 
-    const game = new ClientGame(entityHolder, world, worldModel, worldData);
+    const game = new ClientGame(entityHolder, world, gameData);
 
     return game;
   }
@@ -59,10 +52,9 @@ export class ClientGame extends Game {
   private constructor(
     entities: EntityHolder,
     world: World,
-    worldModel: WorldModel,
-    worldData: IWorldData
+    gameData: IGameData
   ) {
-    super(entities, world, worldModel, worldData);
+    super(entities, world, gameData);
 
     (window as IExtendedWindow).clientGame = this;
 

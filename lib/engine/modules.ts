@@ -5,7 +5,7 @@ import { Chunk, ISerializedChunk } from "./world/index.js";
 export * as WorldModuleTypes from "@craft/rust-world";
 
 async function loadWasmModule(module: any) {
-  console.log("Loading Wasm Module", module);
+  console.log("Loading Wasm Module");
   const loadedModule = module.default ? await module.default : await module;
   console.log("Loaded Wasm Module", loadedModule);
   return loadedModule;
@@ -61,10 +61,11 @@ class TerrainGenModuleClass {
   }
 
   genChunk(chunkPos: Vector2D): Chunk {
-    return new Chunk(
-      this.module.get_chunk_wasm(chunkPos.get(0), chunkPos.get(1)),
-      chunkPos
-    );
+    throw new Error("Method not implemented.");
+    // return new Chunk(
+    //   this.module.get_chunk_wasm(chunkPos.get(0), chunkPos.get(1)),
+    //   chunkPos
+    // );
   }
 }
 

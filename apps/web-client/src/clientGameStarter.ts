@@ -1,4 +1,9 @@
-import { GameController, IWorldData, WorldModel } from "@craft/engine";
+import {
+  GameController,
+  IGameData,
+  IWorldData,
+  WorldModel,
+} from "@craft/engine";
 import {
   ePickWorldScreen,
   eStartMenu,
@@ -28,9 +33,9 @@ export class GameStarter {
     return new (getClass())(clientGame);
   }
 
-  public async start(worldModel: WorldModel, worldData: IWorldData) {
+  public async start(gameData: IGameData) {
     console.log("Loading game");
-    this.game = await ClientGame.make(worldData, worldModel);
+    this.game = await ClientGame.make(gameData);
 
     console.log("Game Loaded, Starting game", this.game);
     (window as IExtendedWindow).game = this.game;

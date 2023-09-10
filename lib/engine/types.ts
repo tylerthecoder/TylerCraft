@@ -53,12 +53,21 @@ export interface ICreateWorldOptions {
   config: IConfig;
 }
 
+export interface ICreateGameOptions {
+  name: string;
+  config: IConfig;
+}
+
 export interface IChunkReader {
   getChunk(chunkPos: string): Promise<Chunk>;
 }
 
 export interface INullableChunkReader {
   getChunk(chunkPos: string): Promise<Chunk | null>;
+}
+
+export interface IGameSaver {
+  save(game: Game): Promise<void>;
 }
 
 export interface IWorldData {
@@ -69,6 +78,25 @@ export interface IWorldData {
   activePlayers?: string[];
   data?: ISerializedGame;
   multiplayer?: boolean;
+}
+
+export interface IGameData {
+  chunkReader: IChunkReader;
+  gameSaver: IGameSaver;
+  id: string;
+  name: string;
+  config: IConfig;
+  activePlayers?: string[];
+  data?: ISerializedGame;
+  multiplayer?: boolean;
+}
+
+export interface IGameManager {
+  createGame(createGameOptions: ICreateGameOptions): Promise<IGameData>;
+  getGame(gameId: string): Promise<IGameData | null>;
+  getAllGames(): Promise<IGameMetadata[]>;
+  saveGame(game: Game): Promise<void>;
+  deleteGame(gameId: string): Promise<void>;
 }
 
 export abstract class WorldModel {
@@ -107,7 +135,7 @@ export interface SocketMessageData extends Record<ISocketMessageType, unknown> {
   [ISocketMessageType.newWorld]: {
     myUid: string;
     config: IConfig;
-    gameName: string;
+    name: string;
   };
   [ISocketMessageType.saveWorld]: {
     worldId: string;

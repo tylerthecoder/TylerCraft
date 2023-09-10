@@ -2,36 +2,51 @@ import {
   Game,
   IGameMetadata,
   ISerializedGame,
-  ICreateWorldOptions,
-  INullableChunkReader,
-  IWorldData,
-  WorldModel,
+  IGameManager,
   Chunk,
   ISerializedChunk,
-  ChunkReader,
   Vector2D,
   WorldModule,
   IConfig,
+  IChunkReader,
+  ICreateGameOptions,
+  IGameData,
+  IGameSaver,
 } from "@craft/engine";
 import { TerrainGenModule } from "@craft/engine/modules";
 import TerrainWorker from "../workers/terrain.worker?worker";
 
-const WasmChunkGetter = {
-  getChunk: async (chunkPos: string) => {
-    const terrainVector = Vector2D.fromIndex(chunkPos);
-    await TerrainGenModule.load();
-    return TerrainGenModule.genChunk(terrainVector);
-  },
+const USE_WASM_CHUNK_GETTER = false;
+
+const WasmChunkGetter = (config: IConfig): IChunkReader => {
+  console.log("WasmChunkGetter", config);
+  return {
+    getChunk: async (chunkPos: string) => {
+      const terrainVector = Vector2D.fromIndex(chunkPos);
+      await TerrainGenModule.load();
+      return TerrainGenModule.genChunk(terrainVector);
+    },
+  };
 };
 
-const WorkerChunkGetter = (config: IConfig, worker: Worker) => {
+const WorkerChunkGetter = (config: IConfig): IChunkReader => {
+  const worker = new TerrainWorker();
+  console.log("The worker", worker);
   worker.postMessage({
     type: "setConfig",
     config,
   });
+  worker.onerror = (e) => {
+    console.error("Error from worker", e);
+  };
+  worker.onmessageerror = (e) => {
+    console.error("Message error from worker", e);
+  };
   const chunkPromises: { [chunkPos: string]: Promise<Chunk> } = {};
   return {
     getChunk: async (chunkPos: string) => {
+      console.log("WorkerChunkGetter", chunkPos);
+
       let chunkPromise = chunkPromises[chunkPos];
       if (chunkPromise) return chunkPromise;
 
@@ -61,9 +76,7 @@ const WorkerChunkGetter = (config: IConfig, worker: Worker) => {
   };
 };
 
-export class ClientDb extends WorldModel {
-  private terrainWorker: Worker;
-
+export class ClientDbGameManger implements IGameManager {
   private static WORLDS_OBS = "worlds";
 
   static async factory() {
@@ -96,33 +109,46 @@ export class ClientDb extends WorldModel {
       };
     });
 
-    return new ClientDb(db);
+    return new ClientDbGameManger(db);
   }
 
-  private constructor(private db: IDBDatabase) {
-    super();
-    this.terrainWorker = new TerrainWorker();
-  }
+  private constructor(private db: IDBDatabase) {}
 
-  async createWorld(
-    createWorldOptions: ICreateWorldOptions
-  ): Promise<IWorldData> {
-    const worldId = Math.random() + "";
+  private getChunkReader = async (config: IConfig): Promise<IChunkReader> => {
+    if (USE_WASM_CHUNK_GETTER) {
+      return WasmChunkGetter(config);
+    } else {
+      const chunkGetter = WorkerChunkGetter(config);
+      // wait for worker to load, need sto be a way to listen for this
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      return chunkGetter;
+    }
+  };
 
-    const chunkReader = new ChunkReader(WasmChunkGetter);
-
+  private getGameSaver = (): IGameSaver => {
     return {
-      worldId,
-      chunkReader,
-      name: createWorldOptions.gameName,
-      config: createWorldOptions.config,
+      save: async (game: Game) => {
+        this.saveGame(game);
+      },
+    };
+  };
+
+  async createGame(createGameOptions: ICreateGameOptions): Promise<IGameData> {
+    return {
+      id: String(Math.random()),
+      chunkReader: await this.getChunkReader(createGameOptions.config),
+      gameSaver: this.getGameSaver(),
+      name: createGameOptions.name,
+      config: createGameOptions.config,
     };
   }
 
-  getAllWorlds(): Promise<IGameMetadata[]> {
+  getAllGames(): Promise<IGameMetadata[]> {
     return new Promise((resolve) => {
-      const transaction = this.db.transaction([ClientDb.WORLDS_OBS]);
-      const objectStore = transaction.objectStore(ClientDb.WORLDS_OBS);
+      const transaction = this.db.transaction([ClientDbGameManger.WORLDS_OBS]);
+      const objectStore = transaction.objectStore(
+        ClientDbGameManger.WORLDS_OBS
+      );
 
       const getAllRequest = objectStore.getAll();
       getAllRequest.onsuccess = (event: any) => {
@@ -141,50 +167,32 @@ export class ClientDb extends WorldModel {
     });
   }
 
-  async getWorld(worldId: string): Promise<IWorldData> {
-    const world: ISerializedGame = await new Promise((resolve) => {
-      const transaction = this.db.transaction([ClientDb.WORLDS_OBS]);
-      const objectStore = transaction.objectStore(ClientDb.WORLDS_OBS);
+  async getGame(gameId: string): Promise<IGameData | null> {
+    const world: ISerializedGame | null = await new Promise((resolve) => {
+      const transaction = this.db.transaction([ClientDbGameManger.WORLDS_OBS]);
+      const objectStore = transaction.objectStore(
+        ClientDbGameManger.WORLDS_OBS
+      );
 
-      const request = objectStore.get(worldId);
+      const request = objectStore.get(gameId);
 
       request.onsuccess = (event: any) => {
         const data = event.target.result as ISerializedGame;
-
+        if (!data) {
+          resolve(null);
+          return;
+        }
         resolve(data);
       };
     });
+
+    if (!world) return null;
 
     // later have an entire object store to keep chunks in.
     const chunkMap = new Map<string, ISerializedChunk>();
     for (const chunk of world.world.chunks) {
       chunkMap.set(chunk.chunkId, chunk);
     }
-
-    const chunkReader: INullableChunkReader = {
-      getChunk: async (chunkPos) => {
-        const serializedChunk = chunkMap.get(chunkPos);
-
-        if (serializedChunk)
-          return WorldModule.createChunkFromSerialized(serializedChunk);
-
-        const terrainVector = Vector2D.fromIndex(chunkPos);
-        this.terrainWorker.postMessage({
-          x: terrainVector.data[0],
-          y: terrainVector.data[1],
-        });
-        return new Promise((resolve) => {
-          this.terrainWorker.addEventListener(
-            "message",
-            (data: { data: ISerializedChunk }) => {
-              const chunk = WorldModule.createChunkFromSerialized(data.data);
-
-              resolve(chunk);
-            }
-          );
-        });
-      },
-    };
 
     return {
       data: {
@@ -193,24 +201,25 @@ export class ClientDb extends WorldModel {
         entities: world.entities,
         world: {
           chunks: [],
-          // tg: {
-          //   blocksToRender: []
-          // }
         },
         name: world.name,
       },
+      gameSaver: this.getGameSaver(),
       config: world.config,
-      chunkReader: new ChunkReader(chunkReader),
+      chunkReader: await this.getChunkReader(world.config),
       activePlayers: [],
-      worldId,
+      id: gameId,
       name: world.name,
     };
   }
 
-  async saveWorld(data: Game) {
-    const transaction = this.db.transaction([ClientDb.WORLDS_OBS], "readwrite");
+  async saveGame(data: Game) {
+    const transaction = this.db.transaction(
+      [ClientDbGameManger.WORLDS_OBS],
+      "readwrite"
+    );
 
-    console.log(data);
+    console.log("Saving game", data);
 
     transaction.oncomplete = () => {
       console.log("All done!");
@@ -223,8 +232,11 @@ export class ClientDb extends WorldModel {
     objStore.put(data.serialize());
   }
 
-  async deleteWorld(gameId: string) {
-    const transaction = this.db.transaction([ClientDb.WORLDS_OBS], "readwrite");
+  async deleteGame(gameId: string) {
+    const transaction = this.db.transaction(
+      [ClientDbGameManger.WORLDS_OBS],
+      "readwrite"
+    );
 
     transaction.oncomplete = () => {
       console.log("All done!");

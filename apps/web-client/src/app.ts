@@ -2,22 +2,22 @@
  * Controls string UI and creating the game
  */
 import * as Engine from "@craft/engine";
-console.log("Engine", Engine, (Engine as any).default);
+console.log("Engine", Engine);
 import {
   camelCaseToNormalCase,
   CONFIG,
   Game,
+  IGameManager,
   IGameMetadata,
-  WorldModel,
 } from "@craft/engine";
-import { ClientDb } from "./worldModels/clientdb";
-import { NetworkWorldModel } from "./worldModels/serverSaver";
+import { NetworkGameManager } from "./worldModels/serverSaver";
 import { ClientGame } from "./clientGame";
 import { SocketHandler } from "./socket";
 import { GameStarter } from "./clientGameStarter";
+import { ClientDbGameManger } from "./worldModels/clientdb";
 
 export interface IExtendedWindow extends Window {
-  clientDb?: ClientDb;
+  clientDb?: ClientDbGameManger;
   game?: Game;
   clientGame?: ClientGame;
 }
@@ -101,13 +101,13 @@ if (location.hash === "#local") {
 }
 
 export async function getLocalWorldModel() {
-  const clientDb = await ClientDb.factory();
+  const clientDb = await ClientDbGameManger.factory();
   (window as IExtendedWindow).clientDb = clientDb;
   return clientDb;
 }
 
 async function getOnlineWorldModel() {
-  const serverWorldModel = new NetworkWorldModel();
+  const serverWorldModel = new NetworkGameManager();
   await SocketInterface.connect(() => gameStarter.stop());
   return serverWorldModel;
 }
@@ -119,29 +119,28 @@ if (idQuery) {
   loadWorldById(idQuery);
 }
 
-export async function loadWorldById(worldId: string) {
+export async function loadWorldById(gameId: string) {
+  const findAndStartGame = async (
+    gameId: string,
+    gameManager: IGameManager
+  ) => {
+    const gameData = await gameManager.getGame(gameId);
+    if (gameData) {
+      console.log("Found Game", gameData);
+      await gameStarter.start(gameData);
+      return true;
+    }
+    return false;
+  };
+
+  console.log("Loading game", gameId);
+
   const clientWorldModel = await getLocalWorldModel();
-
-  console.log("Loading world", worldId);
-
-  const clientWorlds = await clientWorldModel.getAllWorlds();
-  const clientHasWorld = clientWorlds.some((world) => world.gameId === worldId);
-  if (clientHasWorld) {
-    console.log("Found Client World");
-    const clientWorld = await clientWorldModel.getWorld(worldId);
-    gameStarter.start(clientWorldModel, clientWorld);
+  if (await findAndStartGame(gameId, clientWorldModel)) {
     return;
   }
-
   const serverWorldModel = await getOnlineWorldModel();
-  const serverWorlds = await serverWorldModel.getAllWorlds();
-  const serverHasWorld = serverWorlds.some((world) => world.gameId === worldId);
-  if (serverHasWorld) {
-    const serverWorld = await serverWorldModel.getWorld(worldId);
-    if (serverWorld) {
-      console.log("Found Server World");
-      gameStarter.start(serverWorldModel, serverWorld);
-    }
+  if (await findAndStartGame(gameId, serverWorldModel)) {
     return;
   }
 
@@ -179,7 +178,7 @@ async function showOnlineNewWorldScreen() {
 }
 
 async function showWorldPicker(
-  worldModel: WorldModel,
+  gameManager: IGameManager,
   currentHash: string,
   nextHash: string,
   onBack: () => void
@@ -190,7 +189,7 @@ async function showWorldPicker(
   // show a loading spinner here
 
   // get all the saved worlds
-  const games = await worldModel.getAllWorlds();
+  const games = await gameManager.getAllGames();
   const gamesMap = new Map<string, IGameMetadata>();
 
   console.log(games, gamesMap);
@@ -235,16 +234,17 @@ async function showWorldPicker(
 
       if (ele.id === "game-new") {
         console.log("new World");
-        showWorldOptionsScreen(worldModel, onBack);
+        showWorldOptionsScreen(gameManager, onBack);
         return;
       }
 
       const worldId = ele.id.substr(5);
-      const worldData = await worldModel.getWorld(worldId);
-      if (!worldData)
+      const gameData = await gameManager.getGame(worldId);
+      if (!gameData) {
         throw new Error("World wasn't found. Db must be effed up");
+      }
 
-      gameStarter.start(worldModel, worldData);
+      gameStarter.start(gameData);
     });
   });
 }
@@ -301,7 +301,7 @@ function createConfigHtml(
   return "";
 }
 
-function showWorldOptionsScreen(worldModel: WorldModel, onBack: () => void) {
+function showWorldOptionsScreen(gameManager: IGameManager, onBack: () => void) {
   showElement(eWorldOptionsScreen);
   showElement(eBackButton);
   hideElement(ePickWorldScreen);
@@ -327,7 +327,6 @@ function showWorldOptionsScreen(worldModel: WorldModel, onBack: () => void) {
       const newValue = formData.get(prefix + configKey);
       switch (typeof configValue) {
         case "number":
-          console.log(prefix, configKey, configValue, newValue);
           obj[configKey] = Number(newValue);
           break;
         case "boolean":
@@ -363,13 +362,13 @@ function showWorldOptionsScreen(worldModel: WorldModel, onBack: () => void) {
       CONFIG
     );
 
-    worldModel
-      .createWorld({
+    gameManager
+      .createGame({
         config: CONFIG,
-        gameName: formData.get("name") as string,
+        name: formData.get("name") as string,
       })
-      .then((newWorldData) => {
-        gameStarter.start(worldModel, newWorldData).catch((err) => {
+      .then((newGameData) => {
+        gameStarter.start(newGameData).catch((err) => {
           console.log("Game Error");
           console.error(err);
         });
@@ -379,8 +378,4 @@ function showWorldOptionsScreen(worldModel: WorldModel, onBack: () => void) {
         console.error(err);
       });
   });
-}
-
-export class AppClass {
-  // private texture
 }
