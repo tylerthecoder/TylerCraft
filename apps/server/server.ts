@@ -3,9 +3,9 @@ import { Request, Response } from "express";
 import { WebSocketServer } from "ws";
 import cors from "cors";
 import { WorldModule } from "@craft/engine";
-import { DBManager } from "./db.js";
 import { GameManager } from "./worldManager.js";
 import SocketServer from "./socket.js";
+import { DBManager } from "./db.js";
 
 export const PORT = process.env.PORT ?? 3000;
 
