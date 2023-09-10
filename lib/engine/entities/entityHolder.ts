@@ -123,7 +123,6 @@ export class EntityHolder {
 
   add(stateDiff: GameStateDiff, entity: Entity) {
     console.log("Adding entity: ", entity.uid);
-    // does entity already exist?
     if (this.entities.has(entity.uid)) {
       throw new Error(`Entity ${entity.uid} already exists`);
     }
