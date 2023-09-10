@@ -31,8 +31,6 @@ export default class Players {
   addPlayer(uid: string, ws: WebSocket): void {
     // generate a random ID for the new player
 
-    const player = this.game.addPlayer(uid);
-
     // send a welcoming message to the new player
     const welcomeMessage = new SocketMessage(ISocketMessageType.welcome, {
       uid,
@@ -43,6 +41,8 @@ export default class Players {
       name: this.game.name,
     });
     SocketInterface.send(ws, welcomeMessage);
+
+    const player = this.game.addPlayer(uid);
 
     // add them to the SYSTEM
     this.players.set(ws, player);
@@ -61,6 +61,8 @@ export default class Players {
 
     const gameDiff = new GameStateDiff(this.game);
     gameDiff.addEntity(uid);
+
+    console.log("Alerting about new guy");
 
     // tell Everyone about the new guy
     this.sendMessageToAll(

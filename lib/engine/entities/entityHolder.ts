@@ -76,7 +76,6 @@ export class EntityHolder {
     }
     return ent;
   }
-
   getActivePlayers() {
     return Array.from(this.players.values());
   }
@@ -124,6 +123,10 @@ export class EntityHolder {
 
   add(stateDiff: GameStateDiff, entity: Entity) {
     console.log("Adding entity: ", entity.uid);
+    // does entity already exist?
+    if (this.entities.has(entity.uid)) {
+      throw new Error(`Entity ${entity.uid} already exists`);
+    }
     if (!entity.uid) throw new Error("Must have uid");
     this.entities.set(entity.uid, entity);
     stateDiff.addEntity(entity.uid);

@@ -66,6 +66,8 @@ export class ClientGame extends Game {
 
     this.mainPlayer = entities.createOrGetPlayer(this.stateDiff, getMyUid());
 
+    console.log("Main Player", this.mainPlayer);
+
     this.entityControllers.set(this.mainPlayer.uid, [
       this.makePlayerController(this.mainPlayer),
     ]);
@@ -74,6 +76,7 @@ export class ClientGame extends Game {
 
     // Create renderers for initial entities
     for (const entity of this.entities.iterable()) {
+      console.log("Adding entity in game", entity);
       this.worldRenderer.addEntity(entity);
     }
 
@@ -159,11 +162,11 @@ export class ClientGame extends Game {
     for (const entityId of stateDiff.getNewEntities()) {
       const entity = this.entities.get(entityId);
       this.worldRenderer.addEntity(entity);
-      console.log("Adding entity", entity);
+      console.log("Adding entity from stateDiff", entity);
 
       // create a controller for the entity
       if (this.multiPlayer) {
-        if (entity instanceof Player) {
+        if (entity instanceof Player && entity.uid !== getMyUid()) {
           const controller = new SocketPlayerController(this, entity);
           const controllers = this.entityControllers.get(entityId) || [];
           controllers.push(controller);
