@@ -9,7 +9,7 @@ import {
   handlePlayerAction,
 } from "@craft/engine";
 import WebSocket from "ws";
-import { SocketInterface } from "./app.js";
+import { SocketInterface } from "./server";
 
 export default class Players {
   players: Map<WebSocket, Player> = new Map();

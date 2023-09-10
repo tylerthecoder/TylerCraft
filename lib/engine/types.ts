@@ -48,11 +48,6 @@ export type StateUpdate =
   | IEntityRemoveStateUpdate
   | IChunkUpdateStateUpdate;
 
-export interface ICreateWorldOptions {
-  gameName: string;
-  config: IConfig;
-}
-
 export interface ICreateGameOptions {
   name: string;
   config: IConfig;
@@ -68,16 +63,6 @@ export interface INullableChunkReader {
 
 export interface IGameSaver {
   save(game: Game): Promise<void>;
-}
-
-export interface IWorldData {
-  chunkReader: IChunkReader;
-  worldId: string;
-  name: string;
-  config: IConfig;
-  activePlayers?: string[];
-  data?: ISerializedGame;
-  multiplayer?: boolean;
 }
 
 export interface IGameData {
@@ -97,16 +82,6 @@ export interface IGameManager {
   getAllGames(): Promise<IGameMetadata[]>;
   saveGame(game: Game): Promise<void>;
   deleteGame(gameId: string): Promise<void>;
-}
-
-export abstract class WorldModel {
-  abstract createWorld(
-    createWorldOptions: ICreateWorldOptions
-  ): Promise<IWorldData>;
-  abstract getWorld(worldId: string): Promise<IWorldData | null>;
-  abstract saveWorld(data: Game): Promise<void>;
-  abstract getAllWorlds(): Promise<IGameMetadata[]>;
-  abstract deleteWorld(worldId: string): Promise<void>;
 }
 
 export enum ISocketMessageType {
