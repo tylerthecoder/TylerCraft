@@ -3,12 +3,13 @@ import {
   IChunkReader,
   ICreateGameOptions,
   IGameData,
+  IGameMetadata,
   ISerializedGame,
   TerrainGenerator,
   Vector2D,
   WorldModule,
 } from "@craft/engine";
-import { ServerGame } from "./serverGame.js";
+import { ServerGame } from "./server-game.js";
 import { IDbManager } from "./db.js";
 
 export class RamChunkReader implements IChunkReader {
@@ -36,7 +37,13 @@ export class RamChunkReader implements IChunkReader {
   }
 }
 
-export class GameManager {
+export interface IGameService {
+  getWorld(gameId: string): Promise<ServerGame | null>;
+  getAllWorlds(): Promise<IGameMetadata[]>;
+  createGame(options: ICreateGameOptions): Promise<ServerGame>;
+}
+
+export class GameService implements IGameService {
   private games: Map<string, ServerGame> = new Map();
 
   constructor(private dbManager: IDbManager) {}

@@ -9,12 +9,10 @@ import {
   SocketMessage,
   SocketMessageDto,
   Vector2D,
-  WorldModule,
   handlePlayerAction,
 } from "@craft/engine";
-import { GameManager } from "./worldManager.js";
-import { DBManager } from "./db.js";
 import { ServerWebSocket } from "bun";
+import { IGameService } from "./game-service";
 
 const webClientPath = new URL("../../web-client/dist", import.meta.url)
   .pathname;
@@ -25,23 +23,19 @@ interface WebsocketData {
   userId: string;
 }
 
-const start = async () => {
-  const db = await DBManager.makeClient();
-  await WorldModule.load();
-  const gameManager = new GameManager(db);
-
+export const startServer = async (gameService: IGameService) => {
   Bun.serve({
     fetch: async (req, server) => {
       const url = new URL(req.url);
 
       if (url.pathname === "/worlds") {
-        const worlds = await gameManager.getAllWorlds();
+        const worlds = await gameService.getAllWorlds();
         return new Response(JSON.stringify(worlds));
       }
 
       if (url.pathname === "/create-game") {
         const options = await req.json<ICreateGameOptions>();
-        const world = await gameManager.createGame(options);
+        const world = await gameService.createGame(options);
         return new Response(JSON.stringify(world));
       }
 
@@ -54,7 +48,7 @@ const start = async () => {
         if (!userId) {
           return new Response("No user id provided", { status: 400 });
         }
-        const game = await gameManager.getWorld(worldId);
+        const game = await gameService.getWorld(worldId);
         if (!game) {
           return new Response("World not found", { status: 404 });
         }
@@ -77,7 +71,7 @@ const start = async () => {
         console.log("Client connected");
         const { gameId, userId } = ws.data;
 
-        const game = await gameManager.getWorld(gameId);
+        const game = await gameService.getWorld(gameId);
         if (!game) {
           console.error("World not found");
           return;
@@ -114,7 +108,7 @@ const start = async () => {
       async message(ws: ServerWebSocket<WebsocketData>, messageRaw) {
         const { gameId, userId } = ws.data;
 
-        const game = await gameManager.getWorld(gameId);
+        const game = await gameService.getWorld(gameId);
         if (!game) {
           console.error("World not found");
           return;
@@ -210,13 +204,13 @@ const start = async () => {
         console.log("Client disconnected");
         const { gameId, userId } = ws.data;
 
-        const game = await gameManager.getWorld(gameId);
+        const game = await gameService.getWorld(gameId);
         if (!game) {
           console.error("World not found");
           return;
         }
 
-        // This really shoudl alter the gamediff itself, or return one
+        // This really should alter the gamediff itself, or return one
         game.entities.removePlayer(userId);
 
         console.log(

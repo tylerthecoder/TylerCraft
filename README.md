@@ -14,6 +14,14 @@ Need to install global cargo packages: `cargo install cargo-watch` and `cargo in
 
 `yarn dev`
 
+
+## Running just one app
+
+```
+bunx turbo dev --filter=web-client...
+```
+
+
 # Deploying
 
 The server lives on my raspberry pi. The whole app can be deployed by running `make deploy-pi` when on the same network as the pi.
