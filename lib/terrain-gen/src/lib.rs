@@ -283,96 +283,144 @@ impl FlowerGetter {
     }
 }
 
-#[wasm_bindgen]
-pub fn get_chunk_wasm(chunk_x: i16, chunk_y: i16) -> Chunk {
-    let seed = 100;
-    let jag_factor = 1.0 / 100.0;
-    let height_multiplier = 10.0;
+struct BasicChunkGetter {
+    seed: u32,
+    jag_factor: f64,
+    height_multiplier: f64,
+}
 
-    let noise = Perlin::new(seed);
+impl BasicChunkGetter {
+    pub fn make(seed: u32) -> BasicChunkGetter {
+        BasicChunkGetter {
+            seed,
+            jag_factor: 1.0 / 100.0,
+            height_multiplier: 10.0,
+        }
+    }
 
-    let chunk_pos = ChunkPos {
-        x: chunk_x,
-        y: chunk_y,
-    };
+    pub fn get_chunk(&self, chunk_pos: &ChunkPos) -> Chunk {
+        let noise = Perlin::new(self.seed);
 
-    let get_height = |x: f64, z: f64| -> f64 {
-        let per_val = noise.get([x * jag_factor, z * jag_factor]);
-        let height = ((per_val.abs() * height_multiplier) + 5.0) as i32;
-        height as f64
-    };
+        let get_height = |x: f64, z: f64| -> f64 {
+            let per_val = noise.get([x * self.jag_factor, z * self.jag_factor]);
+            let height = ((per_val.abs() * self.height_multiplier) + 5.0) as i32;
+            height as f64
+        };
 
-    let mut chunk = Chunk::new(ChunkPos {
-        x: chunk_x,
-        y: chunk_y,
-    });
+        let mut chunk = Chunk::new(*chunk_pos);
 
-    let trees_in_chunk = TreeRandomSpreadGenerator { seed: 100 };
+        let trees_in_chunk = TreeRandomSpreadGenerator { seed: 100 };
 
-    let trees = trees_in_chunk.get_trees(ChunkPos {
-        x: chunk_x,
-        y: chunk_y,
-    });
+        let trees = trees_in_chunk.get_trees(*chunk_pos);
 
-    for tree in trees {
-        let height = get_height(tree.world_x as f64, tree.world_z as f64) as i32;
-        let blocks = tree.get_world_blocks(height);
-        for block in blocks {
-            let block_chunnk_pos = block.world_pos.to_chunk_pos();
-            if block_chunnk_pos != chunk_pos {
+        for tree in trees {
+            let height = get_height(tree.world_x as f64, tree.world_z as f64) as i32;
+            let blocks = tree.get_world_blocks(height);
+            for block in blocks {
+                let block_chunnk_pos = block.world_pos.to_chunk_pos();
+                if block_chunnk_pos != *chunk_pos {
+                    continue;
+                }
+                chunk.add_block(block.to_chunk_block());
+            }
+        }
+
+        // place flowers
+        let flowers_in_chunk = FlowerGetter { seed: 100 };
+
+        let flowers = flowers_in_chunk.get_flowers(&chunk_pos);
+
+        for flower in flowers {
+            let height = get_height(flower.world_x as f64, flower.world_z as f64) as i32;
+
+            let flower = flower.make_chunk_block(height + 1);
+
+            // only place block if there isn't already a block there
+            if chunk.has_block(&flower.pos) {
                 continue;
             }
-            chunk.add_block(block.to_chunk_block());
-        }
-    }
 
-    // place flowers
-    let flowers_in_chunk = FlowerGetter { seed: 100 };
-
-    let flowers = flowers_in_chunk.get_flowers(&chunk_pos);
-
-    for flower in flowers {
-        let height = get_height(flower.world_x as f64, flower.world_z as f64) as i32;
-
-        let flower = flower.make_chunk_block(height + 1);
-
-        // only place block if there isn't already a block there
-        if chunk.has_block(&flower.pos) {
-            continue;
+            chunk.add_block(flower);
         }
 
-        chunk.add_block(flower);
-    }
+        for x in 0u8..CHUNK_WIDTH as u8 {
+            for z in 0u8..CHUNK_WIDTH as u8 {
+                let world_x = (chunk_pos.x * CHUNK_WIDTH as i16) as f64 + (x as f64);
+                let world_z = (chunk_pos.y * CHUNK_WIDTH as i16) as f64 + (z as f64);
 
-    for x in 0u8..CHUNK_WIDTH as u8 {
-        for z in 0u8..CHUNK_WIDTH as u8 {
-            let world_x = (chunk_x * CHUNK_WIDTH as i16) as f64 + (x as f64);
-            let world_z = (chunk_y * CHUNK_WIDTH as i16) as f64 + (z as f64);
+                let per_val = noise.get([world_x * self.jag_factor, world_z * self.jag_factor]);
+                let height = ((per_val.abs() * self.height_multiplier) + 5.0) as u8;
 
-            let per_val = noise.get([world_x * jag_factor, world_z * jag_factor]);
-            let height = ((per_val.abs() * height_multiplier) + 5.0) as u8;
+                // use web_sys::console;
+                // console::log_1(&format!("height: {}", height).into());
 
-            // use web_sys::console;
-            // console::log_1(&format!("height: {}", height).into());
+                for y in 0u8..height {
+                    let block = ChunkBlock {
+                        pos: InnerChunkPos::new(x, y, z),
+                        block_type: BlockType::Stone,
+                        extra_data: block::BlockData::None,
+                    };
 
-            for y in 0u8..height {
+                    chunk.add_block(block);
+                }
+                // add top grass block
                 let block = ChunkBlock {
-                    pos: InnerChunkPos::new(x, y, z),
-                    block_type: BlockType::Stone,
+                    pos: InnerChunkPos::new(x, height, z),
+                    block_type: BlockType::Grass,
                     extra_data: block::BlockData::None,
                 };
-
                 chunk.add_block(block);
             }
-            // add top grass block
-            let block = ChunkBlock {
-                pos: InnerChunkPos::new(x, height, z),
-                block_type: BlockType::Grass,
-                extra_data: block::BlockData::None,
-            };
-            chunk.add_block(block);
         }
+
+        chunk
+    }
+}
+
+struct FlatWorldChunkGetter {}
+
+impl FlatWorldChunkGetter {
+    pub fn get_chunk(&self, chunk_pos: &ChunkPos) -> Chunk {
+        let mut chunk = Chunk::new(*chunk_pos);
+        for x in 0u8..CHUNK_WIDTH as u8 {
+            for z in 0u8..CHUNK_WIDTH as u8 {
+                let block = ChunkBlock {
+                    pos: InnerChunkPos::new(x, 0, z),
+                    block_type: BlockType::Grass,
+                    extra_data: block::BlockData::None,
+                };
+                chunk.add_block(block);
+            }
+        }
+        chunk
+    }
+}
+
+#[wasm_bindgen]
+pub struct TerrainGenerator {
+    pub seed: u32,
+    pub flat_world: bool,
+}
+
+#[wasm_bindgen]
+impl TerrainGenerator {
+    #[wasm_bindgen(constructor)]
+    pub fn new(seed: u32, flat_world: bool) -> TerrainGenerator {
+        TerrainGenerator { seed, flat_world }
     }
 
-    chunk
+    pub fn get_chunk(&self, chunk_x: i16, chunk_y: i16) -> Chunk {
+        let chunk_pos = ChunkPos {
+            x: chunk_x,
+            y: chunk_y,
+        };
+
+        if self.flat_world {
+            let chunk_getter = FlatWorldChunkGetter {};
+            return chunk_getter.get_chunk(&chunk_pos);
+        }
+
+        let chunk_getter = BasicChunkGetter::make(self.seed);
+        chunk_getter.get_chunk(&chunk_pos)
+    }
 }
