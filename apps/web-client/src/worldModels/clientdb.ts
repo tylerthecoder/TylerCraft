@@ -18,13 +18,20 @@ import TerrainWorker from "../workers/terrain.worker?worker";
 
 const USE_WASM_CHUNK_GETTER = false;
 
-const WasmChunkGetter = (config: IConfig): IChunkReader => {
+const WasmChunkGetter = async (config: IConfig): Promise<IChunkReader> => {
   console.log("WasmChunkGetter", config);
+
+  await TerrainGenModule.load();
+
+  const terrainGenerator = TerrainGenModule.getTerrainGenerator(
+    Number(config.seed),
+    config.terrain.flatWorld
+  );
+
   return {
     getChunk: async (chunkPos: string) => {
       const terrainVector = Vector2D.fromIndex(chunkPos);
-      await TerrainGenModule.load();
-      return TerrainGenModule.genChunk(terrainVector);
+      return terrainGenerator.getChunk(terrainVector);
     },
   };
 };

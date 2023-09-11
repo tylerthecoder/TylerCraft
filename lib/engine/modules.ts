@@ -60,12 +60,18 @@ class TerrainGenModuleClass {
     this._module = await loadWasmModule(TerrainGenWasm);
   }
 
-  genChunk(chunkPos: Vector2D): Chunk {
-    throw new Error("Method not implemented.");
-    // return new Chunk(
-    //   this.module.get_chunk_wasm(chunkPos.get(0), chunkPos.get(1)),
-    //   chunkPos
-    // );
+  getTerrainGenerator(seed: number, flatWorld: boolean) {
+    const terrainGenerator = new this.module.TerrainGenerator(seed, flatWorld);
+
+    return {
+      getChunk: (chunkPos: Vector2D) => {
+        const chunk = terrainGenerator.get_chunk(
+          chunkPos.get(0),
+          chunkPos.get(1)
+        );
+        return new Chunk(chunk, chunkPos);
+      },
+    };
   }
 }
 
