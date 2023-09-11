@@ -3,12 +3,11 @@
 	"version": "1.0.0",
 	"type": "module",
 	"scripts": {
-		"start": "node --experimental-modules --experimental-wasm-modules -r dotenv/config ./dist/server.js",
-		"build": "tsc -b",
-		"dev:build": "tsc -b -w --preserveWatchOutput",
-		"nodemon": "nodemon",
-		"buildAndRun": "yarn build && yarn start",
-		"dev": "npm-run-all --parallel nodemon dev:build",
+		"start": "bun run server.ts",
+		"start:watch": "bun --watch run server.ts",
+		"dev": "npm-run-all --parallel start:watch typecheck",
+		"debug": "bun --watch run --inspect server.ts",
+		"typecheck": "tsc -w",
 		"clean": "rm -rf ./dist",
 		"lint": "eslint --ext .ts ."
 	},
@@ -25,10 +24,9 @@
 		"@types/express": "^4.17.7",
 		"@types/mongodb": "^4.0.7",
 		"@types/ws": "^8.5.3",
-		"dotenv": "^16.1.4",
+		"bun-types": "^1.0.1",
 		"eslint": "^8.42.0",
-		"nodemon": "1.19.1",
 		"npm-run-all": "^4.1.5",
-		"typescript": "^4.9.5"
+		"typescript": "^5.2.2"
 	}
 }

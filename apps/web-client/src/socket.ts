@@ -10,7 +10,7 @@ export class SocketHandler {
   private get wssUrl() {
     const url = new URL(AppConfig.api.baseUrl);
     const protocol = url.protocol === "https:" ? "wss:" : "ws:";
-    return `${protocol}//${url.host}?app=tylercraft`;
+    return `${protocol}//${url.host}/join-world`;
   }
 
   connect(onClose: () => void) {

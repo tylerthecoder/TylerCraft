@@ -5,9 +5,9 @@ import { Chunk, ISerializedChunk } from "./world/index.js";
 export * as WorldModuleTypes from "@craft/rust-world";
 
 async function loadWasmModule(module: any) {
-  console.log("Loading Wasm Module");
+  console.log("Loading wasm module");
   const loadedModule = module.default ? await module.default : await module;
-  console.log("Loaded Wasm Module", loadedModule);
+  console.log("Loaded wasm module");
   return loadedModule;
 }
 

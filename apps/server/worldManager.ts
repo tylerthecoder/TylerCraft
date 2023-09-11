@@ -4,16 +4,12 @@ import {
   ICreateGameOptions,
   IGameData,
   ISerializedGame,
-  ISocketMessageType,
-  SocketMessage,
   TerrainGenerator,
   Vector2D,
   WorldModule,
 } from "@craft/engine";
 import { ServerGame } from "./serverGame.js";
-import Websocket from "ws";
 import { IDbManager } from "./db.js";
-import { SocketInterface } from "./server.js";
 
 export class RamChunkReader implements IChunkReader {
   private chunkMap = new Map<string, Chunk>();
@@ -43,42 +39,7 @@ export class RamChunkReader implements IChunkReader {
 export class GameManager {
   private games: Map<string, ServerGame> = new Map();
 
-  constructor(private dbManager: IDbManager) {
-    SocketInterface.listenForConnection((ws: Websocket) => {
-      SocketInterface.listenTo(ws, (message) => {
-        this.handleSocketMessage(message, ws)
-          .then(() => void 0)
-          .catch((e) => {
-            console.log("Error handling socket message", message, e);
-          });
-      });
-    });
-  }
-
-  async handleSocketMessage(message: SocketMessage, ws: Websocket) {
-    if (message.isType(ISocketMessageType.joinWorld)) {
-      const { worldId, myUid } = message.data;
-      const world = await this.getWorld(worldId);
-      if (!world) {
-        return;
-      }
-      // this function sends a welcome message to the client
-      world.addSocket(myUid, ws);
-    } else if (message.isType(ISocketMessageType.newWorld)) {
-      const payload = message.data;
-      const world = await this.createGame(payload);
-      console.log("Create Id: ", world.gameId);
-      world.addSocket(payload.myUid, ws);
-    } else if (message.isType(ISocketMessageType.saveWorld)) {
-      const payload = message.data;
-      const world = this.games.get(payload.worldId);
-      if (!world) {
-        console.log("That world doesn't exist", payload);
-        return;
-      }
-      await this.dbManager.saveGame(world.serialize());
-    }
-  }
+  constructor(private dbManager: IDbManager) {}
 
   async getWorld(gameId: string): Promise<ServerGame | null> {
     const world = this.games.get(gameId);
