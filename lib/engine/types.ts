@@ -88,7 +88,6 @@ export enum ISocketMessageType {
   // from client
   getChunk = "getChunk", // server sends setChunk
   newWorld = "newWorld", // server sends welcome
-  saveWorld = "saveWorld",
   // this could be for joining an existing world or starting up an old one
   joinWorld = "joinWorld", // server sends welcome
   // from server
@@ -111,9 +110,6 @@ export interface SocketMessageData extends Record<ISocketMessageType, unknown> {
     myUid: string;
     config: IConfig;
     name: string;
-  };
-  [ISocketMessageType.saveWorld]: {
-    worldId: string;
   };
   [ISocketMessageType.getChunk]: {
     pos: string;

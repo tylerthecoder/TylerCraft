@@ -3,10 +3,21 @@
   "compilerOptions": {
     "outDir": "./dist",
     "allowSyntheticDefaultImports": true,
+
+    "types": ["bun-types"],
+    
+    "lib": ["esnext"],
     "module": "esnext",
-    "moduleResolution": "node"
+    "target": "esnext",
+
+    "moduleResolution": "node",
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "moduleDetection": "force",
+
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
   },
   "include": ["./**/*.ts"],
-  "exclude": ["dist/**"],
   "references": [{ "path": "../../lib/engine" }]
 }

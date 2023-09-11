@@ -15,6 +15,7 @@ export class DBManager implements IDbManager {
       throw new Error("DB_URL not defined");
     }
     const client = await MongoClient.connect(DB_URL);
+    console.log("Database Connected");
     return new DBManager(client);
   }
 

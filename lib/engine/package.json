@@ -22,6 +22,6 @@
 		"@craft/eslint-config-tylercraft": "^1.0.0",
 		"@types/seedrandom": "^3.0.4",
 		"eslint": "^8.42.0",
-		"typescript": "^5.1.3"
+		"typescript": "^5.2.2"
 	}
 }

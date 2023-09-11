@@ -16,6 +16,7 @@ import { getMyUid, SocketInterface } from "../app";
 import { SocketListener } from "../socket";
 import { ApiService } from "../services/api-service";
 
+// when do we connect to the socket?
 export class NetworkGameManager implements IGameManager {
   private async waitForWelcomeMessage() {
     let listener: SocketListener | null = null;
