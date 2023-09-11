@@ -948,7 +948,7 @@ __metadata:
     dotenv: ^16.1.4
     eslint: ^8.42.0
     express: ^4.18.1
-    mongodb: ^4.12.1
+    mongodb: ^4.17.0
     nodemon: 1.19.1
     npm-run-all: ^4.1.5
     typescript: ^4.9.5
@@ -1220,6 +1220,15 @@ __metadata:
   version: 1.2.1
   resolution: "@humanwhocodes/object-schema@npm:1.2.1"
   checksum: a824a1ec31591231e4bad5787641f59e9633827d0a2eaae131a288d33c9ef0290bd16fda8da6f7c0fcb014147865d12118df10db57f27f41e20da92369fcb3f1
+  languageName: node
+  linkType: hard
+
+"@mongodb-js/saslprep@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "@mongodb-js/saslprep@npm:1.1.0"
+  dependencies:
+    sparse-bitfield: ^3.0.3
+  checksum: 1479a43e216734672f8eb1a2a55165b6896841bd00fb5bd645390a24374ef6c29f0f6d19a43618a19b8f1912fcbd2b2cc2210a62361103d1f28dce6852cf31d4
   languageName: node
   linkType: hard
 
@@ -4856,7 +4865,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mongodb-connection-string-url@npm:^2.5.4, mongodb-connection-string-url@npm:^2.6.0":
+"mongodb-connection-string-url@npm:^2.6.0":
   version: 2.6.0
   resolution: "mongodb-connection-string-url@npm:2.6.0"
   dependencies:
@@ -4892,21 +4901,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mongodb@npm:^4.12.1":
-  version: 4.16.0
-  resolution: "mongodb@npm:4.16.0"
+"mongodb@npm:^4.17.0":
+  version: 4.17.1
+  resolution: "mongodb@npm:4.17.1"
   dependencies:
     "@aws-sdk/credential-providers": ^3.186.0
+    "@mongodb-js/saslprep": ^1.1.0
     bson: ^4.7.2
-    mongodb-connection-string-url: ^2.5.4
-    saslprep: ^1.0.3
+    mongodb-connection-string-url: ^2.6.0
     socks: ^2.7.1
   dependenciesMeta:
     "@aws-sdk/credential-providers":
       optional: true
-    saslprep:
+    "@mongodb-js/saslprep":
       optional: true
-  checksum: f0b1347739cc362b82b3aabc7e7d4d74bc7a344ed1bbafd6f92681bcab440f6cc618ffa0438d41d2789cb34818f3b09d4c78f517b42160ebae55bf2c96f13953
+  checksum: e7f280570d0f23d60c308b2a484ed55762ec8e523946c0de1a0b3b398f24efcf1916a745e5407f32cd1c105b2f19d8ac75474c92f73cdf651affe3430a963f54
   languageName: node
   linkType: hard
 
