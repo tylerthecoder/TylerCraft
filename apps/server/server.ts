@@ -2,7 +2,7 @@ import {
   CONFIG,
   GameAction,
   GameStateDiff,
-  ICreateGameOptions,
+  IConfig,
   ISocketMessageType,
   Player,
   PlayerAction,
@@ -12,7 +12,7 @@ import {
   handlePlayerAction,
 } from "@craft/engine";
 import { ServerWebSocket } from "bun";
-import { IGameService } from "./game-service";
+import { IGameService } from "./game-service.js";
 
 const webClientPath = new URL("../../web-client/dist", import.meta.url)
   .pathname;
@@ -23,8 +23,13 @@ interface WebsocketData {
   userId: string;
 }
 
+interface ICreateGameRequest {
+  name: string;
+  config: IConfig;
+}
+
 export const startServer = async (gameService: IGameService) => {
-  Bun.serve({
+  return Bun.serve({
     fetch: async (req, server) => {
       const url = new URL(req.url);
 
@@ -34,25 +39,25 @@ export const startServer = async (gameService: IGameService) => {
       }
 
       if (url.pathname === "/create-game") {
-        const options = await req.json<ICreateGameOptions>();
-        const world = await gameService.createGame(options);
-        return new Response(JSON.stringify(world));
+        const options = await req.json<ICreateGameRequest>();
+        const game = await gameService.createGame(options);
+        return new Response(game.gameId);
       }
 
       if (url.pathname === "/join-game") {
-        const worldId = url.searchParams.get("worldId");
-        if (!worldId) {
+        const gameId = url.searchParams.get("gameId");
+        if (!gameId) {
           return new Response("No world id provided", { status: 400 });
         }
         const userId = url.searchParams.get("userId");
         if (!userId) {
           return new Response("No user id provided", { status: 400 });
         }
-        const game = await gameService.getWorld(worldId);
+        const game = await gameService.getWorld(gameId);
         if (!game) {
           return new Response("World not found", { status: 404 });
         }
-        server.upgrade(req, { data: { worldId, userId } });
+        server.upgrade(req, { data: { gameId, userId } });
       }
 
       // all other requests are for staticly served files
@@ -233,7 +238,3 @@ export const startServer = async (gameService: IGameService) => {
     },
   });
 };
-
-start()
-  .then(() => console.log("Server started"))
-  .catch((err) => console.error(err));

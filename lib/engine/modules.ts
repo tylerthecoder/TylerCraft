@@ -23,10 +23,11 @@ class WorldModuleClass {
   }
 
   async load(): Promise<void> {
-    this._module = await loadWasmModule(TerrainGenWasm);
+    this._module = await loadWasmModule(WorldWasm);
   }
 
   public createChunk(chunkPos: Vector2D): Chunk {
+    console.log(this.module);
     const wasmChunk = this.module.Chunk.make_wasm(
       chunkPos.get(0),
       chunkPos.get(1)

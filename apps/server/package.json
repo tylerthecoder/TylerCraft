@@ -3,10 +3,10 @@
 	"version": "1.0.0",
 	"type": "module",
 	"scripts": {
-		"start": "bun run server.ts",
-		"start:watch": "bun --watch run server.ts",
+		"start": "bun run index.ts",
+		"start:watch": "bun --watch run index.ts",
 		"dev": "npm-run-all --parallel start:watch typecheck",
-		"debug": "bun --watch run --inspect server.ts",
+		"debug": "bun --watch run --inspect index.ts",
 		"typecheck": "tsc -w",
 		"clean": "rm -rf ./dist",
 		"lint": "eslint --ext .ts ."

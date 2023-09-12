@@ -121,7 +121,8 @@ export class World {
     await WorldModule.load();
     await TerrainGenModule.load();
     // const wasmWorld = new WorldModule.module.World();
-    const wasmWorld = WorldModule.module.World.new_wasm();
+    console.log(new WorldModule.module.World());
+    const wasmWorld = new WorldModule.module.World();
     console.log("Created wasm world");
     const world = new World(wasmWorld, chunkReader, data);
     console.log("Created world");
