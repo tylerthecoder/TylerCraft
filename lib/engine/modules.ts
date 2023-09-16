@@ -2,6 +2,7 @@ import * as WorldWasm from "@craft/rust-world";
 import * as TerrainGenWasm from "@craft/terrain-gen";
 import { Vector2D } from "./utils/vector.js";
 import { Chunk, ISerializedChunk } from "./world/index.js";
+import { IChunkReader, ISerializedWorld, World } from "./index.js";
 export * as WorldModuleTypes from "@craft/rust-world";
 
 async function loadWasmModule(module: any) {
@@ -15,7 +16,7 @@ async function loadWasmModule(module: any) {
 class WorldModuleClass {
   private _module: typeof WorldWasm | null = null;
 
-  public get module() {
+  private get module() {
     if (!this._module) {
       throw new Error("Module not loaded");
     }
@@ -23,7 +24,14 @@ class WorldModuleClass {
   }
 
   async load(): Promise<void> {
-    this._module = await loadWasmModule(TerrainGenWasm);
+    this._module = await loadWasmModule(WorldWasm);
+  }
+
+  public createWorld(chunkReader: IChunkReader, data?: ISerializedWorld) {
+    console.log("Creating wasm world");
+    const wasmWorld = WorldModule.module.World.new_wasm();
+    const world = new World(wasmWorld, chunkReader, data);
+    return world;
   }
 
   public createChunk(chunkPos: Vector2D): Chunk {
@@ -42,8 +50,7 @@ class WorldModuleClass {
   }
 }
 
-const WorldModule = new WorldModuleClass();
-export default WorldModule;
+export const WorldModule = new WorldModuleClass();
 
 class TerrainGenModuleClass {
   private _module: typeof TerrainGenWasm | null = null;

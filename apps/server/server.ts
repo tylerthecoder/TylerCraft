@@ -2,10 +2,10 @@ import express from "express";
 import { Request, Response } from "express";
 import { WebSocketServer } from "ws";
 import cors from "cors";
-import { WorldModule } from "@craft/engine";
-import { GameManager } from "./worldManager.js";
+import { TerrainGenModule, WorldModule } from "@craft/engine";
 import SocketServer from "./socket.js";
 import { DBManager } from "./db.js";
+import { GameService, IGameService } from "./game-service.js";
 
 export const PORT = process.env.PORT ?? 3000;
 
@@ -22,29 +22,32 @@ app.use(express.static(webClientPath));
 
 export let SocketInterface: SocketServer;
 
-const start = async () => {
+const start = async (gameService: IGameService) => {
   const server = app.listen(PORT, () =>
     console.log(`Server running on port ${PORT}`)
   );
   const wss = new WebSocketServer({ server });
 
-  console.log("Loading world module");
+  console.log("Loading wasm modules");
   await WorldModule.load();
-  console.log("World module loaded");
-
-  const db = await DBManager.makeClient();
-  console.log("Database Connected");
+  await TerrainGenModule.load();
+  console.log("Wasm modules loaded");
 
   SocketInterface = new SocketServer(wss);
 
-  const worldManager = new GameManager(db);
-
   app.get("/worlds", async (_req: Request, res: Response) => {
-    const worlds = await worldManager.getAllWorlds();
+    const worlds = await gameService.getAllWorlds();
     res.send(worlds);
   });
 };
 
-start()
+const startApp = async () => {
+  const db = await DBManager.makeClient();
+  console.log("Database Connected");
+  const gameService = new GameService(db);
+  await start(gameService);
+};
+
+startApp()
   .then(() => console.log("Server started"))
   .catch((err) => console.error(err));

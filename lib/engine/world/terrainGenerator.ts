@@ -5,8 +5,8 @@ import { BLOCKS } from "../blockdata.js";
 import CubeHelpers, { Cube } from "../entities/cube.js";
 import { World } from "./world.js";
 import { BiomeGenerator, Biome } from "./biome.js";
-import WorldModule from "../modules.js";
 import { Chunk } from "./index.js";
+import { WorldModule } from "../modules.js";
 
 export interface ISerializedTerrainGenerator {
   blocksToRender: Array<{

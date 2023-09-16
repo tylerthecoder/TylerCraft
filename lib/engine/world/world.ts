@@ -14,7 +14,7 @@ import {
   Direction,
   getDirectionFromString,
 } from "../utils/vector.js";
-import WorldModule, { TerrainGenModule, WorldModuleTypes } from "../modules.js";
+import { TerrainGenModule, WorldModule, WorldModuleTypes } from "../modules.js";
 import { BLOCK_DATA } from "../blockdata.js";
 import { GameStateDiff } from "../gameStateDiff.js";
 import { ChunkMesh } from "./chunkMesh.js";
@@ -34,9 +34,7 @@ export class ChunkHolder {
   ) {
     if (data) {
       data.forEach((ser) => {
-        const chunkPos = new Vector2D([ser.position.x, ser.position.y]);
-        const wasmChunk = WorldModule.module.Chunk.deserialize(ser);
-        const chunk = new Chunk(wasmChunk, chunkPos);
+        const chunk = WorldModule.createChunkFromSerialized(ser);
         this.addOrUpdate(chunk);
       });
     }
@@ -110,21 +108,13 @@ export interface ISerializedWorld {
 }
 
 export class World {
-  // public terrainGenerator: TerrainGenerator;
   public chunks: ChunkHolder;
 
   static async make(
     chunkReader: IChunkReader,
     data?: ISerializedWorld
   ): Promise<World> {
-    console.log("Loading world");
-    await WorldModule.load();
-    await TerrainGenModule.load();
-    // const wasmWorld = new WorldModule.module.World();
-    const wasmWorld = WorldModule.module.World.new_wasm();
-    console.log("Created wasm world");
-    const world = new World(wasmWorld, chunkReader, data);
-    console.log("Created world");
+    const world = WorldModule.createWorld(chunkReader, data);
     await world.load();
     console.log("World loaded");
     return world;
@@ -135,8 +125,6 @@ export class World {
     chunkReader: IChunkReader,
     data?: ISerializedWorld
   ) {
-    console.log("wasm world", this.wasmWorld);
-
     this.chunks = new ChunkHolder(wasmWorld, chunkReader, data?.chunks);
   }
 

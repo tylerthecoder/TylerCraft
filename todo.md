@@ -1,11 +1,9 @@
 # TODO
 
 ## Current "Sprint"
-
-- Creating adding and getting blocks from the world.
-- Make a "Universe" module that holds all the "Universe" code
-- Move over everything to esmodules
 - Add hot reloading of the world when the rust changes
+
+
 
 ## Tower Defense Project
 
