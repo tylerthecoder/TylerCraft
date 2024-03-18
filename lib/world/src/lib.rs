@@ -7,6 +7,7 @@ pub mod positions;
 mod utils;
 pub mod vec;
 pub mod world;
+pub mod entities;
 
 use wasm_bindgen::prelude::*;
 

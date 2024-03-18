@@ -7,15 +7,15 @@ pub struct LookingAt {
     /**
      * The block a camera is pointing at
     	*/
-    block: WorldBlock,
+    pub block: WorldBlock,
     /**
      * The face of the block that is being looked at
      */
-    face: Direction,
+    pub face: Direction,
     /**
      * How far the face is away from the camera
      */
-    distance: f32,
+    pub distance: f32,
 }
 
 impl World {

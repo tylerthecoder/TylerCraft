@@ -8,7 +8,16 @@ This is Tylercraft, a version of minecraft written using webgl.
 
 `yarn`
 
-Need to install global cargo packages: `cargo install cargo-watch` and `cargo install wasm-bindgen-cli`
+Other dependencies:
+- Cargo watch
+    - https://crates.io/crates/cargo-watch
+    - `cargo install cargo-watch`
+- Wasm Pack 
+    - https://rustwasm.github.io/wasm-pack/installer/
+    - `curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh`
+- Wasm bindgen
+    - `cargo install wasm-bindgen-cli`
+
 
 ## Running
 
