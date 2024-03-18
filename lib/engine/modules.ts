@@ -5,10 +5,10 @@ import { Chunk, ISerializedChunk } from "./world/index.js";
 import { IChunkReader, ISerializedWorld, World } from "./index.js";
 export * as WorldModuleTypes from "@craft/rust-world";
 
-async function loadWasmModule(module: any) {
-  console.log("Loading Wasm Module");
+async function loadWasmModule(module: any, name = "") {
+  console.log("Loading Wasm Module: ", name);
   const loadedModule = module.default ? await module.default : await module;
-  console.log("Loaded Wasm Module 🎉");
+  console.log(`Loaded Wasm Module: ${name} 🎉`);
   return loadedModule;
 }
 
@@ -24,7 +24,8 @@ class WorldModuleClass {
   }
 
   async load(): Promise<void> {
-    this._module = await loadWasmModule(WorldWasm);
+    if (this._module) return;
+    this._module = await loadWasmModule(WorldWasm, "World");
   }
 
   public createWorld(chunkReader: IChunkReader, data?: ISerializedWorld) {
@@ -64,7 +65,7 @@ class TerrainGenModuleClass {
 
   public async load(): Promise<void> {
     if (this._module) return;
-    this._module = await loadWasmModule(TerrainGenWasm);
+    this._module = await loadWasmModule(TerrainGenWasm, "TerrainGen");
   }
 
   getTerrainGenerator(seed: number, flatWorld: boolean) {

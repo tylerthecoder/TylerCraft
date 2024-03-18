@@ -1,5 +1,5 @@
 import { Entity, FaceLocater, IEntity } from "./entity.js";
-import { IEntityType } from "./entityHolder.js";
+import { IEntityType } from "./entityType.js";
 import { MovableEntity, MovableEntityDto } from "./moveableEntity.js";
 
 export interface ProjectileDto extends MovableEntityDto {

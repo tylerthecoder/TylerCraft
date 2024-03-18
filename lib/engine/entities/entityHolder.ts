@@ -1,13 +1,9 @@
 import { GameStateDiff } from "../gameStateDiff.js";
 import { World } from "../world/world.js";
 import { Entity, EntityDto } from "./entity.js";
+import { IEntityType } from "./entityType.js";
 import { Player } from "./player/player.js";
 import { Projectile } from "./projectile.js";
-
-export const enum IEntityType {
-  Player = 0,
-  Projectile = 1,
-}
 
 // Types that need to be updated
 export const GameEntityClassMap = {

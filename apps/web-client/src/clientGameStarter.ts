@@ -1,39 +1,13 @@
-import {
-  GameController,
-  IGameData,
-  IWorldData,
-  WorldModel,
-} from "@craft/engine";
-import {
-  ePickWorldScreen,
-  eStartMenu,
-  IExtendedWindow,
-  IS_MOBILE,
-} from "./app";
-import { canvas } from "./canvas";
+import { IGameData, WorldModule } from "@craft/engine";
+import { ePickWorldScreen, eStartMenu, IExtendedWindow } from "./app";
 import { ClientGame } from "./clientGame";
-import { MouseAndKeyboardGameController } from "./controllers/gameKeyboardController";
-import { MobileController } from "./controllers/playerControllers/mobileController";
-import { Quest2Controller } from "./controllers/playerControllers/quest2Controller";
 
 export class GameStarter {
   private game: ClientGame | null = null;
 
-  private static getController(clientGame: ClientGame): GameController {
-    const getClass = () => {
-      if (IS_MOBILE) {
-        return MobileController;
-      } else if (canvas.isXr) {
-        return Quest2Controller;
-      } else {
-        return MouseAndKeyboardGameController;
-      }
-    };
-
-    return new (getClass())(clientGame);
-  }
-
   public async start(gameData: IGameData) {
+    await WorldModule.load();
+
     console.log("Loading game");
     this.game = await ClientGame.make(gameData);
 

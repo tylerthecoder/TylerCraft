@@ -1,7 +1,7 @@
 import { IDim } from "../types.js";
 import { Vector3D } from "../utils/vector.js";
-import CubeHelpers, { Cube, CUBE_DIM, HitBox } from "./cube.js";
-import { IEntityType } from "./entityHolder.js";
+import CubeHelpers, { Cube, CUBE_DIM } from "./cube.js";
+import { IEntityType } from "./entityType.js";
 
 export enum RenderType {
   CUBE,

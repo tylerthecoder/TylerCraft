@@ -4,11 +4,11 @@ import { IDim } from "../../types.js";
 import { MovableEntity, MovableEntityDto } from "../moveableEntity.js";
 import { CONFIG } from "../../config.js";
 import { Direction, Vector3D } from "../../utils/vector.js";
-import { IEntityType } from "../entityHolder.js";
 import { BLOCKS, ExtraBlockData } from "../../blockdata.js";
 import { CameraRay } from "../../camera.js";
 import CubeHelpers from "../cube.js";
 import { Game } from "../../game.js";
+import { IEntityType } from "../entityType.js";
 
 export interface BeltDto {
   selectedBlock: BLOCKS;

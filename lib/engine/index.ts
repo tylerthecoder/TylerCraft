@@ -16,6 +16,7 @@ export * from "./utils.js";
 export * from "./entities/cube.js";
 export * from "./entities/entity.js";
 export * from "./entities/entityHolder.js";
+export * from "./entities/entityType.js";
 export * from "./entities/entityController.js";
 export * from "./entities/moveableEntity.js";
 export * from "./entities/player/player.js";
