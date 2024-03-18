@@ -14,7 +14,7 @@ import {
 import { ServerGame } from "./server-game.js";
 import Websocket from "ws";
 import { IDbManager } from "./db.js";
-import { SocketInterface } from "./server.js";
+import SocketServer from "./socket.js";
 
 export class RamChunkReader implements IChunkReader {
   private chunkMap = new Map<string, Chunk>();
@@ -50,9 +50,12 @@ export interface IGameService {
 export class GameService implements IGameService {
   private games: Map<string, ServerGame> = new Map();
 
-  constructor(private dbManager: IDbManager) {
-    SocketInterface.listenForConnection((ws: Websocket) => {
-      SocketInterface.listenTo(ws, (message) => {
+  constructor(
+    private dbManager: IDbManager,
+    private socketInterface: SocketServer
+  ) {
+    this.socketInterface.listenForConnection((ws: Websocket) => {
+      this.socketInterface.listenTo(ws, (message) => {
         this.handleSocketMessage(message, ws)
           .then(() => void 0)
           .catch((e) => {
@@ -114,7 +117,7 @@ export class GameService implements IGameService {
     };
 
     // add the world to our local list
-    const serverWorld = await ServerGame.make(gameData);
+    const serverWorld = await ServerGame.make(gameData, this.socketInterface);
 
     this.games.set(gameId, serverWorld);
     return serverWorld;
@@ -143,7 +146,7 @@ export class GameService implements IGameService {
       activePlayers: [],
     };
 
-    const newWorld = await ServerGame.make(gameData);
+    const newWorld = await ServerGame.make(gameData, this.socketInterface);
 
     await newWorld.baseLoad();
 

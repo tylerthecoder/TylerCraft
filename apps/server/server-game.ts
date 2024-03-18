@@ -14,7 +14,7 @@ import {
   SocketMessage,
   IGameData,
 } from "@craft/engine";
-import { SocketInterface } from "./server.js";
+import SocketServer from "./socket.js";
 
 export class ServerGame extends Game {
   public clients: Players;
@@ -22,7 +22,10 @@ export class ServerGame extends Game {
 
   public controller: GameController = new EmptyController(this);
 
-  static async make(gameData: IGameData): Promise<ServerGame> {
+  static async make(
+    gameData: IGameData,
+    socketInterface: SocketServer
+  ): Promise<ServerGame> {
     console.log("Making server game", gameData);
     const entityHolder = new EntityHolder(gameData.data?.entities);
 
@@ -31,15 +34,20 @@ export class ServerGame extends Game {
 
     const world = await World.make(gameData.chunkReader, gameData.data?.world);
 
-    const game = new ServerGame(entityHolder, world, gameData);
+    const game = new ServerGame(entityHolder, world, gameData, socketInterface);
 
     return game;
   }
 
-  constructor(entities: EntityHolder, world: World, gameData: IGameData) {
+  constructor(
+    entities: EntityHolder,
+    world: World,
+    gameData: IGameData,
+    private socketInterface: SocketServer
+  ) {
     super(entities, world, gameData);
 
-    this.clients = new Players(this);
+    this.clients = new Players(this, socketInterface);
   }
 
   onGameAction(_action: GameAction): void {
@@ -99,7 +107,7 @@ export class ServerGame extends Game {
       if (diff.hasData()) {
         const diffData = diff.get();
         console.log("Sending diff", diffData);
-        SocketInterface.send(
+        this.socketInterface.send(
           ws,
           new SocketMessage(ISocketMessageType.gameDiff, diffData)
         );
@@ -118,7 +126,7 @@ export class ServerGame extends Game {
     }
     if (!chunk) throw new Error("Chunk wasn't found");
     const serializedData = chunk.serialize();
-    SocketInterface.send(
+    this.socketInterface.send(
       ws,
       new SocketMessage(ISocketMessageType.setChunk, {
         pos: chunkPosString,
@@ -130,7 +138,7 @@ export class ServerGame extends Game {
   addSocket(uid: string, ws: WebSocket): void {
     this.clients.addPlayer(uid, ws);
 
-    SocketInterface.listenTo(ws, (message) => {
+    this.socketInterface.listenTo(ws, (message) => {
       console.log("Got Message", message);
       if (message.isType(ISocketMessageType.actions)) {
         const gameAction = new GameAction(message.data.type, message.data.data);

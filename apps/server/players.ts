@@ -9,12 +9,12 @@ import {
   handlePlayerAction,
 } from "@craft/engine";
 import WebSocket from "ws";
-import { SocketInterface } from "./server.js";
+import SocketServer from "./socket";
 
 export default class Players {
   players: Map<WebSocket, Player> = new Map();
 
-  constructor(public game: Game) {}
+  constructor(public game: Game, private socketInterface: SocketServer) {}
 
   getSockets(): WebSocket[] {
     return Array.from(this.players.keys());
@@ -24,7 +24,7 @@ export default class Players {
     console.log("Sending message to all", message);
     for (const socket of this.players.keys()) {
       if (exclude && socket === exclude) continue;
-      SocketInterface.send(socket, message);
+      this.socketInterface.send(socket, message);
     }
   }
 
@@ -40,7 +40,7 @@ export default class Players {
       config: CONFIG,
       name: this.game.name,
     });
-    SocketInterface.send(ws, welcomeMessage);
+    this.socketInterface.send(ws, welcomeMessage);
 
     const player = this.game.addPlayer(uid);
 
@@ -57,7 +57,7 @@ export default class Players {
         this.onPlayerAction(ws, playerAction);
       }
     };
-    SocketInterface.listenTo(ws, listener);
+    this.socketInterface.listenTo(ws, listener);
 
     const gameDiff = new GameStateDiff(this.game);
     gameDiff.addEntity(uid);

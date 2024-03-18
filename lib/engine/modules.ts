@@ -8,7 +8,7 @@ export * as WorldModuleTypes from "@craft/rust-world";
 async function loadWasmModule(module: any) {
   console.log("Loading Wasm Module");
   const loadedModule = module.default ? await module.default : await module;
-  console.log("Loaded Wasm Module", loadedModule);
+  console.log("Loaded Wasm Module 🎉");
   return loadedModule;
 }
 
