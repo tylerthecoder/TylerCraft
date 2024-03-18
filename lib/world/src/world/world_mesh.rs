@@ -3,18 +3,10 @@ use std::collections::HashSet;
 use super::{ChunkNotLoadedError, World, WorldStateDiff};
 use crate::{
     chunk::chunk_mesh::{BlockMesh, ChunkMesh},
-    positions::{ChunkPos, WorldPos}, geometry::box_mesh::BoxMesh,
+    positions::{ChunkPos, WorldPos},
 };
 
-// idea: make a world mesh that is a different struct on the world.
-// It will be able to detect intersections with objects like players and fireballs. 
-
 impl World {
-    // You give me a mesh I return the mesh pushed out of me. 
-    pub fn push_out(&self, mesh: BoxMesh) {
-        let chunk_mesh = self.get_mesh_at_pos(mesh.pos);
-    }
-
     pub fn update_mesh_at_pos(&mut self, world_pos: WorldPos) -> Result<(), ChunkNotLoadedError> {
         let world_block = self.get_block(&world_pos);
 

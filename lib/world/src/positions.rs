@@ -65,10 +65,6 @@ impl WorldPos {
             y: y as i16,
         }
     }
-
-    pub fn to_fine_world_pos(&self) -> FineWorldPos {
-        FineWorldPos::new(self.x as f32, self.y as f32, self.z as f32)
-    }
 }
 
 impl ChunkPos {

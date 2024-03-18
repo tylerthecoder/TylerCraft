@@ -1,5 +1,5 @@
 use super::rotation::SphericalRotation;
-use crate::{chunk::chunk_mesh::BlockMesh, plane::WorldPlane, positions::FineWorldPos, vec::Vec3, direction::Direction};
+use crate::{chunk::chunk_mesh::BlockMesh, plane::WorldPlane, positions::FineWorldPos, vec::Vec3};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 
@@ -62,13 +62,6 @@ impl Ray {
         }
     }
 }
-
-
-pub struct DirectionRay {
-    pub direction: Direction,
-    pub length: f32
-}
-
 
 #[cfg(test)]
 mod tests {

@@ -13,7 +13,6 @@ use world::{
 };
 
 // remove all the positions that are too close to each other in the chunk
-
 fn remove_close_positions<'a, I, J>(pos_iter: I, checking_pos_iter: J) -> Vec<WorldPos>
 where
     I: IntoIterator<Item = &'a WorldPos>,
