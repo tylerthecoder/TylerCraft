@@ -42,7 +42,6 @@ watch = "0.2.3"
 
 [dev-dependencies]
 wasm-bindgen-test = "0.3.13"
-cargo-watch = "8.5.2"
 
 [profile.release]
 # Tell `rustc` to optimize for small code size.

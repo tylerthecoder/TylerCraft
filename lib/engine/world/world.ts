@@ -14,7 +14,7 @@ import {
   Direction,
   getDirectionFromString,
 } from "../utils/vector.js";
-import { WorldModule, WorldModuleTypes } from "../modules.js";
+import { TerrainGenModule, WorldModule, WorldModuleTypes } from "../modules.js";
 import { BLOCK_DATA } from "../blockdata.js";
 import { GameStateDiff } from "../gameStateDiff.js";
 import { ChunkMesh } from "./chunkMesh.js";

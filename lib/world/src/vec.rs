@@ -94,16 +94,6 @@ pub struct Vec3<T> {
     pub z: T,
 }
 
-impl<T> IntoIterator for Vec3<T> {
-    type Item = T;
-    type IntoIter = std::vec::IntoIter<T>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        vec![self.x, self.y, self.z].into_iter()
-    }
-}
-
-
 impl<T, U> Sub<Vec3<U>> for Vec3<T>
 where
     T: Sub<U, Output = T> + Copy,
