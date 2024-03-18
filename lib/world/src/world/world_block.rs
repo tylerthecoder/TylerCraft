@@ -1,10 +1,11 @@
 use crate::{
     block::{BlockData, BlockMetaData, BlockShape, BlockType, ChunkBlock},
     direction::{Direction, Directions},
-    positions::WorldPos,
+    positions::WorldPos, geometry::{box_mesh::{BoxMesh, Size3}, ray::DirectionRay},
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Copy)]
 pub struct WorldBlock {
@@ -79,6 +80,71 @@ impl WorldBlock {
 
     pub fn get_metadata(&self) -> &BlockMetaData {
         BlockMetaData::get_for_type(self.block_type)
+    }
+
+
+    // MESH
+    // Pass in a box mesh and I'll return the shortest distance it needs to move to leave the box
+    pub fn push_out(&self, box_mesh: &BoxMesh) -> Option<DirectionRay> {
+        let my_mesh = BoxMesh {
+            pos: self.world_pos.to_fine_world_pos(),
+            dim: Size3::new(1.0, 1.0, 1.0),
+        };
+
+        let inside_corners = box_mesh.get_world_points().iter().filter(|corner| {
+            my_mesh.is_point_inside(*corner)
+        }).collect::<Vec<_>>();
+
+        let cube_size: Size3 = crate::vec::Vec3 { x:1.0, y:1.0, z:1.0 };
+
+        let pos = self.world_pos.into_iter();
+        let dim = cube_size.into_iter();
+
+        let mesh_pos = box_mesh.pos.into_iter();
+        let mesh_dim = box_mesh.dim.into_iter();
+
+        let zipped = pos.zip(dim).zip(mesh_pos).zip(mesh_dim);
+
+        zipped.map(|(((my_pos, my_dim), mesh_pos), mesh_dim)| {
+            let my_pt_1 = my_pos as f32;
+            let my_pt_2 = my_pos as f32 + my_dim;
+
+            let mesh_pt_1 = mesh_pos as f32;
+            let mesh_pt_2 = mesh_pos as f32 + mesh_dim;
+
+            // Are either of the mesh points in me? 
+
+            if my_pt_1 < mesh_pt_1 && mesh_pt_1 < my_pt_2 {
+                // mesh_pt_1 is in me
+            } else if my_pt_1 < mesh_pt_2 && mesh_pt_2 < my_pt_2 {
+                // mesh_pt_2 is in me
+            } else {
+                // neither are in me
+            }
+        });
+
+        // zip pos and dimention together
+        // for (((my_pos, my_dim), mesh_pos), mesh_dim) in zipped { 
+        //
+        //     let my_pt_1 = my_pos as f32;
+        //     let my_pt_2 = my_pos as f32 + my_dim;
+        //
+        //     let mesh_pt_1 = mesh_pos as f32;
+        //     let mesh_pt_2 = mesh_pos as f32 + mesh_dim;
+        //
+        //     // Are either of the mesh points in me? 
+        //
+        //     if my_pt_1 < mesh_pt_1 && mesh_pt_1 < my_pt_2 {
+        //         // mesh_pt_1 is in me
+        //     } else if my_pt_1 < mesh_pt_2 && mesh_pt_2 < my_pt_2 {
+        //         // mesh_pt_2 is in me
+        //     } else {
+        //         // neither are in me
+        //         continue;
+        //     }
+        // }
+
+        Some(())
     }
 }
 
