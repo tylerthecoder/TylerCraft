@@ -16,9 +16,7 @@ import { SocketHandler } from "./socket";
 import { GameStarter } from "./clientGameStarter";
 import { ClientDbGameManger } from "./worldModels/clientdb";
 import { renderWorldPicker } from "./world-picker";
-
-const worldPicker = renderWorldPicker();
-console.log(worldPicker);
+import { createRoot } from "react-dom/client";
 
 export interface IExtendedWindow extends Window {
   clientDb?: ClientDbGameManger;
@@ -194,63 +192,44 @@ async function showWorldPicker(
 
   // get all the saved worlds
   const games = await gameManager.getAllGames();
-  const gamesMap = new Map<string, IGameMetadata>();
 
-  console.log(games, gamesMap);
+  const onGameSelect = async (game: IGameMetadata) => {
+    location.hash = nextHash;
+    const gameData = await gameManager.getGame(game.gameId);
+    if (!gameData) {
+      throw new Error("World wasn't found. Db must be effed up");
+    }
 
-  games.forEach((game) => gamesMap.set(game.gameId, game));
+    gameStarter.start(gameData);
+  };
 
-  let gamesHtml = games.reduce(
-    (acc, game) => `
-    ${acc}
-    <button class="gameItem" id="game-${game.gameId}">
-      ${game.name}
-    </button>
-  `,
-    ""
-  );
+  const onNewGame = () => {
+    console.log("Starting new game");
+    showWorldOptionsScreen(gameManager, onBack);
+  };
 
-  gamesHtml += `
-    <button class="gameItem" id="game-new">
-      New Game
-    </button>
-  `;
+  const gamePickerHtml = renderWorldPicker({
+    games,
+    onGameSelect,
+    onNewGame,
+  });
 
-  ePickWorldScreen.innerHTML = gamesHtml;
+  const root = createRoot(ePickWorldScreen); // createRoot(container!) if you use TypeScript
+  root.render(gamePickerHtml);
+
+  // ePickWorldScreen.innerHTML = gamePickerHtml;
 
   // Display the games now that they are populated
   location.hash = currentHash;
   showElement(ePickWorldScreen);
   showElement(eBackButton);
+
   eBackButton.onclick = () => {
     location.hash = "";
     hideElement(ePickWorldScreen);
     hideElement(eBackButton);
     showElement(eGameTypeScreen);
   };
-
-  const eGameItems = document.getElementsByClassName("gameItem");
-
-  Array.from(eGameItems).forEach((ele) => {
-    // you clicked a world
-    ele.addEventListener("click", async () => {
-      location.hash = nextHash;
-
-      if (ele.id === "game-new") {
-        console.log("new World");
-        showWorldOptionsScreen(gameManager, onBack);
-        return;
-      }
-
-      const worldId = ele.id.substr(5);
-      const gameData = await gameManager.getGame(worldId);
-      if (!gameData) {
-        throw new Error("World wasn't found. Db must be effed up");
-      }
-
-      gameStarter.start(gameData);
-    });
-  });
 }
 
 function createConfigHtmlObject(

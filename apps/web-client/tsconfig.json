@@ -9,7 +9,7 @@
     "moduleResolution": "node",
     "types": ["vite/client"],
 
-    "jsx": "preserve",
+    "jsx": "react",
   },
   "include": ["./src/**/*"],
   "references": [

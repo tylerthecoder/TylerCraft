@@ -1,26 +1,30 @@
 {
-	"name": "@craft/web-client",
-	"version": "1.0.0",
-	"type": "module",
-	"scripts": {
-		"dev": "vite",
-		"build": "vite build",
-		"clean": "rm -rf dist build",
-		"lint": "eslint --ext .ts src"
-	},
-	"dependencies": {
-		"@craft/engine": "1.0.0",
-		"gl-matrix": "2.4.0"
-	},
-	"devDependencies": {
-		"@craft/eslint-config-tylercraft": "^1.0.0",
-		"@types/gl-matrix": "^2.4.5",
-		"@types/webxr": "^0.2.3",
-		"eslint": "^8.42.0",
-		"jsx-dom": "^8.1.3",
-		"typescript": "^5.4.2",
-		"vite": "^5.1.6",
-		"vite-plugin-top-level-await": "^1.4.1",
-		"vite-plugin-wasm": "^3.3.0"
-	}
+  "name": "@craft/web-client",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "clean": "rm -rf dist build",
+    "lint": "eslint --ext .ts src"
+  },
+  "dependencies": {
+    "@craft/engine": "1.0.0",
+    "gl-matrix": "2.4.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@craft/eslint-config-tylercraft": "^1.0.0",
+    "@types/gl-matrix": "^2.4.5",
+    "@types/react": "^18.2.67",
+    "@types/react-dom": "^18",
+    "@types/webxr": "^0.2.3",
+    "@vitejs/plugin-react": "^4.2.1",
+    "eslint": "^8.42.0",
+    "typescript": "^5.4.2",
+    "vite": "^5.1.6",
+    "vite-plugin-top-level-await": "^1.4.1",
+    "vite-plugin-wasm": "^3.3.0"
+  }
 }
