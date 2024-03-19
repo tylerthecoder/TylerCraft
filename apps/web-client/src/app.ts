@@ -15,6 +15,10 @@ import { ClientGame } from "./clientGame";
 import { SocketHandler } from "./socket";
 import { GameStarter } from "./clientGameStarter";
 import { ClientDbGameManger } from "./worldModels/clientdb";
+import { renderWorldPicker } from "./world-picker";
+
+const worldPicker = renderWorldPicker();
+console.log(worldPicker);
 
 export interface IExtendedWindow extends Window {
   clientDb?: ClientDbGameManger;

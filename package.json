@@ -34,7 +34,7 @@
     "terrain-app": "yarn workspace @craft/terrain-app"
   },
   "devDependencies": {
-    "turbo": "^1.10.3"
+    "turbo": "^1.12.5"
   },
   "nodemonConfig": {
     "ignore": [

@@ -15,6 +15,10 @@ export default defineConfig({
   plugins: [wasm(), topLevelAwait()],
   worker: {
     format: "es",
-    plugins: [wasm(), topLevelAwait()],
+    plugins: () => [wasm(), topLevelAwait()],
+  },
+  esbuild: {
+    jsxFactory: "h",
+    jsxFragment: "Fragment",
   },
 });
