@@ -1,13 +1,21 @@
 <head>
   <title> TylerCraft </title>
-  <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0,
-     user-scalable=0'>
+  <meta 
+    name='viewport' 
+    content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0'
+  >
   <link rel="stylesheet" type="text/css" href="app.css" />
   <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&family=Roboto&display=swap" rel="stylesheet">
 </head>
 
 <body>
   <div id="app">
+    <div id="loadingScreen" class="hidden">
+        <div>
+            <p id="loadingScreenMsg"></p>
+            <img src="./img/loading.gif"/>
+        </div>
+    </div>
     <div id="startMenu">
       <span id="backButton"> &larr; </span>
       <h1> Tyler Craft </h1>
@@ -21,9 +29,8 @@
         <div class="gameItem"></div>
       </template>
 
-      <div id="pickWorldScreen" class="hidden">
+      <div id="pickWorldScreen" class="hidden"></div>
 
-      </div>
 
       <div id="worldOptionsScreen" class="hidden">
 
@@ -38,6 +45,7 @@
         </form>
         <button id="configFormStartButton"> Start </button>
       </div>
+
     </div>
 
     <div id="canvasHolder">

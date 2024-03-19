@@ -13,7 +13,6 @@ import {
 import { NetworkGameManager } from "./worldModels/serverSaver";
 import { ClientGame } from "./clientGame";
 import { SocketHandler } from "./socket";
-import { GameStarter } from "./clientGameStarter";
 import { ClientDbGameManger } from "./worldModels/clientdb";
 import { renderWorldPicker } from "./world-picker";
 import { createRoot } from "react-dom/client";
@@ -25,9 +24,6 @@ export interface IExtendedWindow extends Window {
 }
 
 export const IS_MOBILE = /Mobi/.test(window.navigator.userAgent);
-
-const gameStarter = new GameStarter();
-
 console.log("Is Mobile: ", IS_MOBILE);
 
 // helper functions
@@ -75,6 +71,21 @@ const eConfigFormExtra = getElementByIdOrThrow("configFormExtra");
 const eConfigFormStartButton = getElementByIdOrThrow(
   "configFormStartButton"
 ) as HTMLButtonElement;
+const eLoadingScreen = getElementByIdOrThrow("loadingScreen");
+const eLoadingScreenMsg = getElementByIdOrThrow("loadingScreenMsg");
+
+const LoadingScreen = {
+  show: (msg: string) => {
+    showElement(eLoadingScreen);
+    eLoadingScreenMsg.innerHTML = msg;
+  },
+  hide: () => {
+    hideElement(eLoadingScreen);
+  },
+  fade: () => {
+    eLoadingScreen.classList.add("fade");
+  },
+};
 
 // Add listeners
 ePlayLocalButton.addEventListener("click", showLocalWorldPicker);
@@ -110,7 +121,9 @@ export async function getLocalWorldModel() {
 
 async function getOnlineWorldModel() {
   const serverWorldModel = new NetworkGameManager();
-  await SocketInterface.connect(() => gameStarter.stop());
+  await SocketInterface.connect(() => {
+    console.error("Failed to connect to server");
+  });
   return serverWorldModel;
 }
 
@@ -128,8 +141,7 @@ export async function loadWorldById(gameId: string) {
   ) => {
     const gameData = await gameManager.getGame(gameId);
     if (gameData) {
-      console.log("Found Game", gameData);
-      await gameStarter.start(gameData);
+      await startGame(gameData);
       return true;
     }
     return false;
@@ -188,8 +200,6 @@ async function showWorldPicker(
   hideElement(eGameTypeScreen);
   hideElement(eWorldOptionsScreen);
 
-  // show a loading spinner here
-
   // get all the saved worlds
   const games = await gameManager.getAllGames();
 
@@ -200,7 +210,7 @@ async function showWorldPicker(
       throw new Error("World wasn't found. Db must be effed up");
     }
 
-    gameStarter.start(gameData);
+    await startGame(gameData);
   };
 
   const onNewGame = () => {
@@ -214,10 +224,8 @@ async function showWorldPicker(
     onNewGame,
   });
 
-  const root = createRoot(ePickWorldScreen); // createRoot(container!) if you use TypeScript
+  const root = createRoot(ePickWorldScreen);
   root.render(gamePickerHtml);
-
-  // ePickWorldScreen.innerHTML = gamePickerHtml;
 
   // Display the games now that they are populated
   location.hash = currentHash;
@@ -298,7 +306,7 @@ function showWorldOptionsScreen(gameManager: IGameManager, onBack: () => void) {
   eConfigFormExtra.innerHTML = createConfigHtmlObject(CONFIG, "");
 
   // When the game is started, update CONFIG with the the inputted values
-  eConfigFormStartButton.addEventListener("click", () => {
+  eConfigFormStartButton.addEventListener("click", async () => {
     const formData = new FormData(eConfigForm);
 
     const assignValueToConfig = (
@@ -338,27 +346,48 @@ function showWorldOptionsScreen(gameManager: IGameManager, onBack: () => void) {
 
     assignValuesToConfigObject("", CONFIG);
 
-    console.log(
-      "Creating world",
-      formData.get("name") as string,
-      "with config",
-      CONFIG
-    );
+    const name = formData.get("name") as string;
 
-    gameManager
-      .createGame({
-        config: CONFIG,
-        name: formData.get("name") as string,
-      })
-      .then((newGameData) => {
-        gameStarter.start(newGameData).catch((err) => {
-          console.log("Game Error");
-          console.error(err);
-        });
-      })
-      .catch((err) => {
-        console.log("Error creating world");
-        console.error(err);
-      });
+    await createGame(gameManager, CONFIG, name);
   });
+}
+
+async function createGame(
+  gameManager: IGameManager,
+  config: typeof CONFIG,
+  name: string
+) {
+  hideElement(eWorldOptionsScreen);
+  hideElement(eStartMenu);
+  console.log("Creating Game | name=", name, "config=", config);
+  LoadingScreen.show("Booting up");
+  const gameData = await gameManager.createGame({
+    config,
+    name,
+  });
+  await startGame(gameData);
+}
+
+async function startGame(gameData: Engine.IGameData) {
+  hideElement(eWorldOptionsScreen);
+  hideElement(eStartMenu);
+  console.log("Starting Game", gameData);
+  LoadingScreen.show("Gathering Materials");
+  await Engine.WorldModule.load();
+
+  LoadingScreen.show("Painting the Sky");
+  console.log("Loading game");
+  const game = await ClientGame.make(gameData);
+  console.log("Game Loaded, Starting game", game);
+
+  (window as IExtendedWindow).game = game;
+  history.pushState("Game", "", `?worldId=${game.gameId}`);
+
+  LoadingScreen.show("Building Mountains");
+  await game.baseLoad();
+  console.log("Game Loaded");
+
+  LoadingScreen.fade();
+  ePickWorldScreen.classList.add("fade");
+  eStartMenu.classList.add("fade");
 }
