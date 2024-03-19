@@ -1256,7 +1256,6 @@ __metadata:
     "@vitejs/plugin-react": ^4.2.1
     eslint: ^8.42.0
     gl-matrix: 2.4.0
-    jsx-dom: ^8.1.3
     react: ^18.2.0
     react-dom: ^18.2.0
     typescript: ^5.4.2
@@ -3227,7 +3226,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"csstype@npm:^3.0.2, csstype@npm:^3.1.3":
+"csstype@npm:^3.0.2":
   version: 3.1.3
   resolution: "csstype@npm:3.1.3"
   checksum: 8db785cc92d259102725b3c694ec0c823f5619a84741b5c7991b8ad135dfaa66093038a1cc63e03361a6cd28d122be48f2106ae72334e067dd619a51f49eddf7
@@ -5054,15 +5053,6 @@ __metadata:
   bin:
     json5: lib/cli.js
   checksum: 2a7436a93393830bce797d4626275152e37e877b265e94ca69c99e3d20c2b9dab021279146a39cdb700e71b2dd32a4cebd1514cd57cee102b1af906ce5040349
-  languageName: node
-  linkType: hard
-
-"jsx-dom@npm:^8.1.3":
-  version: 8.1.3
-  resolution: "jsx-dom@npm:8.1.3"
-  dependencies:
-    csstype: ^3.1.3
-  checksum: b1cf7bb22903aa7499350bd024ee94cbb342264ba52446270642c1cc95537d90b8e019c3a6afd56c5ee01a1bb00194cd2abcd711118eabea410562674c86e5ce
   languageName: node
   linkType: hard
 

@@ -246,3 +246,9 @@ Fixed transparency, it was an issue with the new way I'm doing mesh generation. 
 
 Then I'll start thinking about biomes. 
 
+
+# 03/19/23
+
+I've been fixing little things here and there. Added react to the home screen
+
+

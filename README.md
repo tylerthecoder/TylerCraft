@@ -1,26 +1,28 @@
 # Tylercraft
 
-This is Tylercraft, a version of minecraft written using webgl.
+Welcome to Tylercraft, a version of minecraft written using webgl.
 
-# Development
+## Usage
 
-## Install
+Install yarn and rust
 
-`yarn`
+run `yarn` to install all dependencies
 
-Need to install global cargo packages: `cargo install cargo-watch` and `cargo install wasm-bindgen-cli`
+global cargo packages:
+- cargo install cargo-watch
+- cargo install wasm-bindgen-cli
 
-## Running
+Turborepo is used to manage multiple workspaces
 
-`yarn dev`
+`yarn dev` starts the dev server for all packages
 
-# Deploying
+### Deploying
 
-The server lives on my raspberry pi. The whole app can be deployed by running `make deploy-pi` when on the same network as the pi.
+Deployed on my private server. Run `./scripts/web-start.sh` to install and deploy
 
-# Random Docs
+## Random Docs
 
-## Flow of events
+### Flow of events
 
 Client controller generates client events
 Events are sent to Game on both the server and client
@@ -41,7 +43,7 @@ EntityHandlers control entities by pushing MicroActions to them. Entities take t
 
 WorldModels are pre game. They create the game by either asking the client storage or the server.
 
-## Project structure
+### Project structure
 
 This is a yarn workspace monorepo
 
@@ -60,7 +62,7 @@ This is a yarn workspace monorepo
   - eslint
   - world
 
-## Debug
+### Debug
 
 Currently only works in chrome. Server doesn't work, have to run dev for web, engine, and world.
 
