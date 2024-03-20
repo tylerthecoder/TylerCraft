@@ -1,0 +1,14 @@
+[Unit]
+Description=TylerCraft: A 3d sandbox
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/apps/TylerCraft
+ExecStart=/root/apps/TylerCraft/scripts/prod-start.sh
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
+
