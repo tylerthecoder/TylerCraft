@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Do everything needed to start web app
 cd "$(dirname "$0")"
 
