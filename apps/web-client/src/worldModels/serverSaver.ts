@@ -19,11 +19,14 @@ import { ApiService } from "../services/api-service";
 export class NetworkGameManager implements IGameManager {
   private async waitForWelcomeMessage() {
     let listener: SocketListener | null = null;
-    const welcomeMessage: ISocketWelcomePayload = await new Promise(
+    const welcomeMessage: ISocketWelcomePayload | null = await new Promise(
       (resolve) => {
         listener = (message) => {
           if (message.isType(ISocketMessageType.welcome)) {
             resolve(message.data);
+          } else if (message.isType(ISocketMessageType.worldNotFound)) {
+            resolve(null);
+            console.error("Requested world not found");
           }
         };
         SocketInterface.addListener(listener);
@@ -72,6 +75,10 @@ export class NetworkGameManager implements IGameManager {
 
     const welcomeMessage = await this.waitForWelcomeMessage();
 
+    if (!welcomeMessage) {
+      throw new Error("Server didn't create the world");
+    }
+
     console.log("Welcome Message", welcomeMessage);
 
     return this.makeGameReader(welcomeMessage);
@@ -86,6 +93,11 @@ export class NetworkGameManager implements IGameManager {
     );
 
     const welcomeMessage = await this.waitForWelcomeMessage();
+
+    if (!welcomeMessage) {
+      return null;
+    }
+
     return this.makeGameReader(welcomeMessage);
   }
 

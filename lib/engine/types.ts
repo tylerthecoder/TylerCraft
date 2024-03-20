@@ -90,10 +90,11 @@ export enum ISocketMessageType {
   newWorld = "newWorld", // server sends welcome
   saveWorld = "saveWorld",
   // this could be for joining an existing world or starting up an old one
-  joinWorld = "joinWorld", // server sends welcome
+  joinWorld = "joinWorld", // server sends welcome or worldNotFound
   // from server
-  gameDiff = "gameDiff",
   welcome = "welcome",
+  worldNotFound = "worldNotFound",
+  gameDiff = "gameDiff",
   setChunk = "setChunk",
   newPlayer = "newPlayer",
   playerLeave = "playerLeave",
@@ -119,6 +120,7 @@ export interface SocketMessageData extends Record<ISocketMessageType, unknown> {
     pos: string;
   };
   [ISocketMessageType.welcome]: ISocketWelcomePayload;
+  [ISocketMessageType.worldNotFound]: {};
   [ISocketMessageType.setChunk]: {
     pos: string;
     data: ISerializedChunk;

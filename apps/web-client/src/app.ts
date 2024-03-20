@@ -127,18 +127,19 @@ async function getOnlineWorldModel() {
   return serverWorldModel;
 }
 
-// Auto load a world if a URL query is present
-const idQuery = new URL(location.href).searchParams.get("worldId");
+// Auto load a game if a URL query is present
+async function loadGameFromUrl() {
+  const gameId = new URL(location.href).searchParams.get("worldId");
 
-if (idQuery) {
-  loadWorldById(idQuery);
-}
+  if (!gameId) {
+    console.log("No id found in url");
+    return;
+  }
 
-export async function loadWorldById(gameId: string) {
-  const findAndStartGame = async (
-    gameId: string,
-    gameManager: IGameManager
-  ) => {
+  hideElement(eStartMenu);
+  LoadingScreen.show("Pinpointing Location");
+
+  const findAndStartGame = async (gameManager: IGameManager) => {
     const gameData = await gameManager.getGame(gameId);
     if (gameData) {
       await startGame(gameData);
@@ -150,21 +151,33 @@ export async function loadWorldById(gameId: string) {
   console.log("Loading game", gameId);
 
   const clientWorldModel = await getLocalWorldModel();
-  if (await findAndStartGame(gameId, clientWorldModel)) {
+  if (await findAndStartGame(clientWorldModel)) {
     return;
   }
+
+  LoadingScreen.show("Searching the Cloud");
+
   const serverWorldModel = await getOnlineWorldModel();
-  if (await findAndStartGame(gameId, serverWorldModel)) {
+  if (await findAndStartGame(serverWorldModel)) {
     return;
   }
 
   console.log("Id not found");
+
+  LoadingScreen.show("Game not found 😱");
+
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+
+  showElement(eStartMenu);
+  LoadingScreen.hide();
 
   // remove id from url
   const url = new URL(location.href);
   url.searchParams.delete("worldId");
   history.replaceState(null, "", url.href);
 }
+
+await loadGameFromUrl();
 
 // Display Screen Functions
 async function showLocalWorldPicker() {

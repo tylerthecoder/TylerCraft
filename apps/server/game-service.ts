@@ -12,7 +12,7 @@ import {
   WorldModule,
 } from "@craft/engine";
 import { ServerGame } from "./server-game.js";
-import Websocket from "ws";
+import Websocket, { WebSocketServer } from "ws";
 import { IDbManager } from "./db.js";
 import SocketServer from "./socket.js";
 
@@ -70,6 +70,13 @@ export class GameService implements IGameService {
       const { worldId, myUid } = message.data;
       const world = await this.getWorld(worldId);
       if (!world) {
+        console.log("That world doesn't exist", worldId);
+
+        this.socketInterface.send(
+          ws,
+          new SocketMessage(ISocketMessageType.worldNotFound, {})
+        );
+
         return;
       }
       // this function sends a welcome message to the client
