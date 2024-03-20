@@ -4,8 +4,8 @@ import { WebSocketServer } from "ws";
 import cors from "cors";
 import { TerrainGenModule, WorldModule } from "@craft/engine";
 import SocketServer from "./socket.js";
-import { DBManager } from "./db.js";
 import { GameService } from "./game-service.js";
+import { FileDb } from "./file-db.js";
 
 const PORT = process.env.PORT ?? 3000;
 
@@ -20,7 +20,9 @@ const webClientPath = new URL("../../web-client/dist", import.meta.url)
 console.log("Serving web client, path: ", webClientPath);
 app.use(express.static(webClientPath));
 
-const db = await DBManager.makeClient();
+// const db = await DBManager.makeClient();
+const fileDb = new FileDb();
+
 const server = app.listen(PORT, () =>
   console.log(`Server running on port ${PORT} 🚀`)
 );
@@ -31,7 +33,7 @@ const socketService = new SocketServer(wss);
 await WorldModule.load();
 await TerrainGenModule.load();
 
-const gameService = new GameService(db, socketService);
+const gameService = new GameService(fileDb, socketService);
 
 app.get("/worlds", async (_req: Request, res: Response) => {
   const worlds = await gameService.getAllWorlds();

@@ -68,6 +68,8 @@ export class GameService implements IGameService {
   async handleSocketMessage(message: SocketMessage, ws: Websocket) {
     if (message.isType(ISocketMessageType.joinWorld)) {
       const { worldId, myUid } = message.data;
+      console.log("Got join world message", worldId, myUid);
+
       const world = await this.getWorld(worldId);
       if (!world) {
         console.log("That world doesn't exist", worldId);

@@ -251,4 +251,4 @@ Then I'll start thinking about biomes.
 
 I've been fixing little things here and there. Added react to the home screen
 
-
+I think the server isn't updating the game in it memory, it is just passing actions? Every time a game is fetched the progress isn't saved

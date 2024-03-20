@@ -20,6 +20,7 @@ export VITE_API_URL="https://craft.tylertracy.com"
 yarn build
 
 export PORT=4000
+export DATA_DIR="/opt/tylercraft"
 
 source ./secrets.sh
 
