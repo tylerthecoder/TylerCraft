@@ -15,10 +15,11 @@ echo $(which node)
 
 yarn
 
+export VITE_API_URL="https://craft.tylertracy.com"
+
 yarn build
 
 export PORT=4000
-export VITE_API_URL="https://craft.tylertracy.com"
 
 source ./secrets.sh
 
