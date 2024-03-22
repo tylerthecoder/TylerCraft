@@ -100,13 +100,17 @@ export class GameService implements IGameService {
   }
 
   async getWorld(gameId: string): Promise<ServerGame | null> {
+    console.log("Getting game", gameId);
+
     const world = this.games.get(gameId);
     if (world) {
+      console.log("Found game in memory");
       return world;
     }
 
     const dbGame = await this.dbManager.getGame(gameId);
     if (!dbGame) {
+      console.log("Game not found");
       return null;
     }
 
@@ -118,7 +122,7 @@ export class GameService implements IGameService {
           await this.dbManager.saveGame(game.serialize());
         },
       },
-      chunkReader: new RamChunkReader(),
+      chunkReader: new RamChunkReader(dbGame),
       data: dbGame,
       config: dbGame.config,
       multiplayer: true,
@@ -127,6 +131,8 @@ export class GameService implements IGameService {
 
     // add the world to our local list
     const serverWorld = await ServerGame.make(gameData, this.socketInterface);
+
+    console.log("Created new game in memory");
 
     this.games.set(gameId, serverWorld);
     return serverWorld;
@@ -137,7 +143,7 @@ export class GameService implements IGameService {
   }
 
   async createGame(options: ICreateGameOptions): Promise<ServerGame> {
-    console.log("Create world options", options);
+    console.log("Creating game with options", options);
 
     const id = String(Math.random());
 

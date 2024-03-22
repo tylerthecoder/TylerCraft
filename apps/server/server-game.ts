@@ -118,6 +118,7 @@ export class ServerGame extends Game {
   }
 
   private async sendChunkTo(chunkPosString: string, ws: WebSocket) {
+    console.log("ServerGame: Sending chunk to player: ", chunkPosString);
     const chunkPos = Vector2D.fromIndex(chunkPosString);
     let chunk = this.world.getChunkFromPos(chunkPos);
     if (!chunk) {

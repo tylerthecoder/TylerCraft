@@ -1,7 +1,7 @@
 import { Cube } from "../entities/cube.js";
 import { CONFIG } from "../config.js";
 import { Vector3D, Vector2D, Direction } from "../utils/vector.js";
-import { BLOCKS, BlockType } from "../blockdata.js";
+import { BLOCKS } from "../blockdata.js";
 import { WorldModuleTypes } from "../modules.js";
 export interface ILookingAtData {
   cube: Cube;
@@ -14,7 +14,7 @@ export interface ISerializedChunk {
     x: number;
     y: number;
   };
-  blocks: BlockType[];
+  blocks: BLOCKS[];
   block_data: ("None" | { Image: string })[];
   chunkId: string;
 }

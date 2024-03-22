@@ -15,7 +15,7 @@ import {
   getDirectionFromString,
 } from "../utils/vector.js";
 import { TerrainGenModule, WorldModule, WorldModuleTypes } from "../modules.js";
-import { BLOCK_DATA } from "../blockdata.js";
+import { BLOCK_DATA, BLOCKS } from "../blockdata.js";
 import { GameStateDiff } from "../gameStateDiff.js";
 import { ChunkMesh } from "./chunkMesh.js";
 import { CameraRay } from "../index.js";
@@ -313,10 +313,11 @@ export class World {
     cube: Cube,
     options?: { loadChunkIfNotLoaded: boolean }
   ) {
-    const chunk = this.getChunkFromWorldPoint(cube.pos);
+    console.log("World: Adding block", cube);
+    let chunk = this.getChunkFromWorldPoint(cube.pos);
     if (!chunk) {
       if (options?.loadChunkIfNotLoaded) {
-        await this.chunks.immediateLoadChunk(
+        chunk = await this.chunks.immediateLoadChunk(
           World.worldPosToChunkPos(cube.pos)
         );
       } else {
@@ -332,6 +333,11 @@ export class World {
         z: cube.pos.get(2),
       },
     });
+
+    // Very important to update the chunk too
+    chunk.addBlock(cube);
+
+    console.log("Chunks to updated after adding block: ", diff);
 
     diff.chunk_ids.forEach((id) => stateDiff.updateChunk(id));
   }

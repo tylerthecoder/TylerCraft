@@ -147,7 +147,7 @@ export abstract class Game {
   }
 
   placeBlock(cube: Cube) {
-    console.log("Adding block", cube);
+    console.log("Game: Adding block", cube);
     // Check if an entity is in the way
     for (const entity of this.entities.iterable()) {
       if (CubeHelpers.isPointInsideOfCube(cube, entity.pos)) {
