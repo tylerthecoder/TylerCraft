@@ -54,10 +54,10 @@ export class KeyboardPlayerEntityController extends EntityController {
         return;
       }
 
-      if (e.button === 0) {
+      if (e.button === 2) {
         // right click
         this.placeBlock();
-      } else if (e.button === 2) {
+      } else if (e.button === 0) {
         // left click
         this.removeBlock();
       }
