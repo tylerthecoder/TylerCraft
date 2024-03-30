@@ -99,13 +99,13 @@ export const handlePlayerAction = (
 
   if (action.isType(PlayerActionType.PlaceBlock)) {
     const { cameraData } = action.data;
-    player.useItem(game, cameraData);
+    player.doPrimaryAction(game, cameraData);
     return;
   }
 
   if (action.isType(PlayerActionType.RemoveBlock)) {
     const { cameraData } = action.data;
-    player.removeBlock(game, cameraData);
+    player.doSecondaryAction(game, cameraData);
     return;
   }
 

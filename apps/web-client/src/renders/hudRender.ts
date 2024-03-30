@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import { Renderer } from "./renderer";
-import { Camera, Vector2D } from "@craft/engine";
+import { Camera, PlayerItem, Vector2D } from "@craft/engine";
 import { CanvasProgram } from "../canvas";
 import { ClientGame } from "../clientGame";
 import TextureMapper from "../textureMapper";
@@ -120,6 +120,11 @@ export class HudRenderer extends Renderer {
       if (!item) {
         continue;
       }
+
+      if (item === PlayerItem.Fireball) {
+        continue;
+      }
+
       const { cords } = TextureMapper.getBlockPreviewCords(
         item,
         this.textureImg.width,

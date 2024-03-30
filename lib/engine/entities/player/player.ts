@@ -11,41 +11,45 @@ import { Game } from "../../game.js";
 import { IEntityType } from "../entityType.js";
 
 export interface BeltDto {
-  selectedBlock: BLOCKS;
+  selectedBlock: BLOCKS | PlayerItem;
+}
+
+export enum PlayerItem {
+  Fireball = "fireball",
 }
 
 class Belt {
   public selectedIndex = 0;
   public length = 10;
-  public items: [BLOCKS, number][] = [];
 
-  constructor() {
-    this.items = [
-      [BLOCKS.stone, 1],
-      [BLOCKS.gold, 1],
-      [BLOCKS.grass, 1],
-      [BLOCKS.wood, 1],
-      [BLOCKS.redFlower, 1],
-      [BLOCKS.cloud, 1],
-      [BLOCKS.leaf, 1],
-      [BLOCKS.water, 1],
-    ];
-  }
+  public itemActions: ((game: Game) => void)[] = [];
 
-  get selectedBlock() {
-    return this.items[this.selectedIndex][0];
+  public items = [
+    BLOCKS.stone,
+    BLOCKS.gold,
+    BLOCKS.grass,
+    BLOCKS.wood,
+    BLOCKS.redFlower,
+    BLOCKS.cloud,
+    BLOCKS.leaf,
+    BLOCKS.water,
+    PlayerItem.Fireball,
+  ];
+
+  get selectedItem() {
+    return this.items[this.selectedIndex];
   }
 
   getDto(): BeltDto {
     return {
-      selectedBlock: this.selectedBlock,
+      selectedBlock: this.selectedItem,
     };
   }
 
   public getItem(index: number) {
     const val = this.items[index];
     if (val) {
-      return val[0];
+      return val;
     }
     return null;
   }
@@ -254,14 +258,31 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
   }
 
   // TODO get camera data from the player's rot
-  useItem(game: Game, camera: CameraRay) {
+  doPrimaryAction(game: Game, camera: CameraRay) {
+    const item = this.belt.selectedItem;
+
+    if (item === PlayerItem.Fireball) {
+      this.fireball();
+    } else {
+      this.placeBlock(game, camera, item);
+    }
+  }
+
+  doSecondaryAction(game: Game, camera: CameraRay) {
+    const lookingData = game.world.lookingAt(camera);
+    if (!lookingData) return;
+    const { cube } = lookingData;
+    if (!cube) return;
+    game.removeBlock(cube);
+  }
+
+  // Player actions
+  placeBlock(game: Game, camera: CameraRay, blockType: BLOCKS) {
     const lookingData = game.world.lookingAt(camera);
     if (!lookingData) return;
     console.log("Looking at data", lookingData);
     const { cube } = lookingData;
     if (!cube) return;
-
-    const blockType = this.belt.selectedBlock;
 
     let extraBlockData: ExtraBlockData | undefined = undefined;
 
@@ -285,14 +306,6 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     console.log("Placed Cube", newCube);
 
     game.placeBlock(newCube);
-  }
-
-  removeBlock(game: Game, camera: CameraRay) {
-    const lookingData = game.world.lookingAt(camera);
-    if (!lookingData) return;
-    const { cube } = lookingData;
-    if (!cube) return;
-    game.removeBlock(cube);
   }
 
   fireball() {

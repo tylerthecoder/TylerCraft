@@ -381,6 +381,14 @@ export class Vector3D extends Vector<[number, number, number]> {
     return this.data.join(",");
   }
 
+  toXYZObj(): { x: number; y: number; z: number } {
+    return {
+      x: this.data[0],
+      y: this.data[1],
+      z: this.data[2],
+    };
+  }
+
   toCartIntObj(): { x: number; y: number; z: number } {
     // convert numbers to ints
     return {
