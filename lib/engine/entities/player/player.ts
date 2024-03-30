@@ -16,17 +16,18 @@ export interface BeltDto {
 
 class Belt {
   public selectedIndex = 0;
+  public length = 10;
   public items: [BLOCKS, number][] = [];
 
   constructor() {
     this.items = [
-      [BLOCKS.cloud, 1],
+      [BLOCKS.stone, 1],
       [BLOCKS.gold, 1],
       [BLOCKS.grass, 1],
-      [BLOCKS.leaf, 1],
-      [BLOCKS.stone, 1],
-      [BLOCKS.redFlower, 1],
       [BLOCKS.wood, 1],
+      [BLOCKS.redFlower, 1],
+      [BLOCKS.cloud, 1],
+      [BLOCKS.leaf, 1],
       [BLOCKS.water, 1],
     ];
   }
@@ -39,6 +40,14 @@ class Belt {
     return {
       selectedBlock: this.selectedBlock,
     };
+  }
+
+  public getItem(index: number) {
+    const val = this.items[index];
+    if (val) {
+      return val[0];
+    }
+    return null;
   }
 
   public moveLeft() {

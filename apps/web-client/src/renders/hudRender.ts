@@ -28,6 +28,7 @@ export class HudRenderer extends Renderer {
     super();
     this.textureImg = document.createElement("img");
     this.textureImg.src = "./img/texture_map.png";
+    document.body.appendChild(this.textureImg);
 
     const hudElement = document.getElementById("hud")!;
     hudElement.style.visibility = "visible";
@@ -97,10 +98,6 @@ export class HudRenderer extends Renderer {
   }
 
   drawBelt() {
-    this.eToolbeltItems.forEach(
-      (item, index) => (item.innerHTML = `<h2>${index}</h2>`)
-    );
-
     this.eToolbeltItems.forEach((item, index) => {
       if (index === this.game.mainPlayer?.belt.selectedIndex) {
         item.classList.add("selected");
@@ -111,12 +108,45 @@ export class HudRenderer extends Renderer {
 
     const itemDim = this.eToolbeltItems[0].clientHeight;
 
+    const belt = this.game.mainPlayer?.belt;
+
+    if (!belt) {
+      return;
+    }
+
     // draw the icons
-    for (let i = 0; i < 10; i++) {
-      const { cords } = TextureMapper.getBlockPreviewCords(1, itemDim, itemDim);
+    for (let i = 0; i < belt.length; i++) {
+      const item = belt.getItem(i);
+      if (!item) {
+        continue;
+      }
+      const { cords } = TextureMapper.getBlockPreviewCords(
+        item,
+        this.textureImg.width,
+        this.textureImg.height
+      );
+      // Clip the textImage to the cords
+      const img = this.textureImg;
+      const croppedImg = document.createElement("canvas");
+      croppedImg.width = itemDim;
+      croppedImg.height = itemDim;
+      const ctx = croppedImg.getContext("2d")!;
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(
+        img,
+        cords.x1,
+        cords.y1,
+        cords.x2 - cords.x1,
+        cords.y2 - cords.y1,
+        0,
+        0,
+        croppedImg.width,
+        croppedImg.height
+      );
       this.eToolbeltItems[
         i
-      ].style.clipPath = `polygon(${cords.x1} ${cords.y1} ${cords.x2} ${cords.y2})`;
+      ].style.backgroundImage = `url(${croppedImg.toDataURL()})`;
+      this.eToolbeltItems[i].style.backgroundSize = "contain";
     }
   }
 

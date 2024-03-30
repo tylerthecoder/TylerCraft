@@ -73,9 +73,9 @@ class Textures {
       },
       cords: {
         x1: offsetX * xStepVal * width,
-        x2: offsetX * (xStepVal + 0.5) * width,
+        x2: (offsetX + 0.5) * xStepVal * width,
         y1: offsetY * yStepVal * height,
-        y2: offsetY * (yStepVal + 0.5) * height,
+        y2: (offsetY + 0.5) * yStepVal * height,
       },
     };
   }

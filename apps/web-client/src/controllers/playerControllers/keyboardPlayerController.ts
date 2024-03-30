@@ -95,7 +95,7 @@ export class KeyboardPlayerEntityController extends EntityController {
       if (totalWheelDelta > 100) {
         totalWheelDelta = 0;
         this.handleAction(
-          PlayerAction.make(PlayerActionType.BeltLeft, {
+          PlayerAction.make(PlayerActionType.BeltRight, {
             playerUid: this.player.uid,
           })
         );
@@ -104,7 +104,7 @@ export class KeyboardPlayerEntityController extends EntityController {
       if (totalWheelDelta < -100) {
         totalWheelDelta = 0;
         this.handleAction(
-          PlayerAction.make(PlayerActionType.BeltRight, {
+          PlayerAction.make(PlayerActionType.BeltLeft, {
             playerUid: this.player.uid,
           })
         );
