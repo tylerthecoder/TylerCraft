@@ -46,6 +46,10 @@ impl WorldBlock {
         }
 
         if block_data.fluid && adjacent_block_data.fluid {
+            return false;
+        }
+
+        if !block_data.fluid && adjacent_block_data.fluid {
             return true;
         }
 

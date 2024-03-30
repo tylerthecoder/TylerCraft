@@ -39,7 +39,8 @@ export default class WorldRenderer {
   }
 
   getFilter(camera: Camera): Vector3D | null {
-    const block = this.world.getBlockFromWorldPoint(camera.pos);
+    const shiftedDown = camera.pos.sub(new Vector3D([0, 0.5, 0]));
+    const block = this.world.getBlockFromWorldPoint(shiftedDown);
 
     if (block?.type === BLOCKS.water) {
       return new Vector3D([0, 0.3, 1]);

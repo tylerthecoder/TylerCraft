@@ -194,9 +194,9 @@ lazy_static! {
             BlockMetaData {
                 gravitable: false,
                 intangible: false,
-                fluid: false,
+                fluid: true,
                 shape: BlockShape::Cube,
-                transparent: true,
+                transparent: false,
             },
         );
         map.insert(
