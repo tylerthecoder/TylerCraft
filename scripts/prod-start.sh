@@ -17,6 +17,8 @@ yarn
 
 export VITE_API_URL="https://craft.tylertracy.com"
 
+export PATH="$PATH:/root/.cargo/bin:"
+
 yarn build
 
 export PORT=4000
