@@ -4,21 +4,59 @@ Welcome to Tylercraft, a version of minecraft written using webgl.
 
 ## Usage
 
-Install yarn and rust
+### Installation
 
-run `yarn` to install all dependencies
+Run `yarn` to install node dependencies
 
-global cargo packages:
-- cargo install cargo-watch
-- cargo install wasm-bindgen-cli
+Install global cargo packages:
+```
+cargo install cargo-watch wasm-bindgen-cli wasm-pack
+```
+
+Add wasm target to rust:
+```
+rustup target add wasm32-unknown-unknown
+```
+
+### Development
 
 Turborepo is used to manage multiple workspaces
 
 `yarn dev` starts the dev server for all packages
 
+Worlds are saved to disk. The default directory is `./game-data`. Override by setting the `DATA_DIR` environment variable.
+
 ### Deploying
 
+Run `./scripts/deploy` to deploy code on server via ssh
+
 Deployed on my private server. Run `./scripts/web-start.sh` to install and deploy
+
+## Project Structure
+
+This is a yarn workspace monorepo
+
+- apps
+  - web-client
+    - Front end and rendering code 
+    - Depends on lib/engine
+    - public: All the images and css
+  - server 
+    - Backend code 
+    - Depends on lib/engine
+  - terrain-app 
+    - An app for viewing terrain in a 2D grid
+    - Depends on lib/engine
+- lib
+  - engine
+    - Logic for everything 
+    - Depends on lib/{engine, world}
+  - eslint
+    - Shared linting config
+  - world
+    - Rust app
+  - terrain-gen
+    - Rust app
 
 ## Random Docs
 
@@ -43,24 +81,6 @@ EntityHandlers control entities by pushing MicroActions to them. Entities take t
 
 WorldModels are pre game. They create the game by either asking the client storage or the server.
 
-### Project structure
-
-This is a yarn workspace monorepo
-
-- apps
-  - web-client - Front end and rendering code - Deps: game
-    - assets - All the images and whatnot
-    - shared - The shared rendering and game logic - Deps: game, assets
-    - app - Starts the game and displays to screen. Contains build code - Deps: web/shared [moduleName]
-    - workers
-      - terrain
-    - terrain-map-app - a separate app for viewing terrain - Deps: assets
-  - server - Backend code - Deps: game
-  - terrain-app - A separate app for viewing terrain - Deps: assets
-- lib
-  - engine - Logic for everything - Deps: none
-  - eslint
-  - world
 
 ### Debug
 

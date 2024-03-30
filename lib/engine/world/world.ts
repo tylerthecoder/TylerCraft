@@ -14,8 +14,8 @@ import {
   Direction,
   getDirectionFromString,
 } from "../utils/vector.js";
-import { TerrainGenModule, WorldModule, WorldModuleTypes } from "../modules.js";
-import { BLOCK_DATA, BLOCKS } from "../blockdata.js";
+import { WorldModule, WorldModuleTypes } from "../modules.js";
+import { BLOCK_DATA } from "../blockdata.js";
 import { GameStateDiff } from "../gameStateDiff.js";
 import { ChunkMesh } from "./chunkMesh.js";
 import { CameraRay } from "../index.js";
@@ -351,6 +351,9 @@ export class World {
       cubePos.get(1),
       cubePos.get(2)
     );
+
+    chunk.removeBlock(cubePos);
+
     console.log("Diff from removing block", diff);
     diff.chunk_ids.forEach((id) => stateDiff.updateChunk(id));
   }

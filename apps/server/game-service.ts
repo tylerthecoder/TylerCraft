@@ -10,6 +10,7 @@ import {
   TerrainGenerator,
   Vector2D,
   WorldModule,
+  setConfig,
 } from "@craft/engine";
 import { ServerGame } from "./server-game.js";
 import Websocket, { WebSocketServer } from "ws";
@@ -144,6 +145,8 @@ export class GameService implements IGameService {
 
   async createGame(options: ICreateGameOptions): Promise<ServerGame> {
     console.log("Creating game with options", options);
+
+    setConfig(options.config);
 
     const id = String(Math.random());
 

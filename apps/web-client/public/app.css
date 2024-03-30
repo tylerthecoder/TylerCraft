@@ -24,6 +24,7 @@ body {
   margin: 0px;
   padding: 0px;
   overflow: hidden;
+  font-family: "Roboto", sans-serif;
 }
 
 /* ========================
@@ -169,7 +170,10 @@ body {
   position: absolute;
   right: 5px;
   top: 5px;
-  background-color: wheat;
+  padding: 2px 5px;
+  border-radius: 5px;
+  background-color: white;
+  cursor: pointer;
 }
 
 /* ========================
@@ -185,9 +189,10 @@ body {
   height: 90%;
   top: 5%;
   left: 5%;
-  opacity: 0.9;
+  opacity: 0.95;
   padding: 30px;
   box-sizing: border-box;
+  z-index: 10;
 }
 
 #gameMenu .container {

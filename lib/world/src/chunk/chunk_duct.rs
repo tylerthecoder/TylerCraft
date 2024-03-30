@@ -26,6 +26,13 @@ impl Chunk {
         })
     }
 
+    pub fn remove_block_wasm(&mut self, js_pos: JsValue) -> Result<(), Error> {
+        from_value(js_pos).and_then(|pos: InnerChunkPos| {
+            self.remove_block(&pos);
+            Ok(())
+        })
+    }
+
     pub fn deserialize(js_value: JsValue) -> Result<Chunk, Error> {
         from_value(js_value).and_then(|chunk: Chunk| Ok(chunk))
     }

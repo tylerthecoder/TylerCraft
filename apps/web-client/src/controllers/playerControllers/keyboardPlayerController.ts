@@ -11,6 +11,12 @@ import {
 import { canvas } from "../../canvas";
 import { ClientGame } from "../../clientGame";
 
+function getEleOrError(id: string): HTMLElement {
+  const ele = document.getElementById(id);
+  if (!ele) throw new Error(`Could not find element with id ${id}`);
+  return ele;
+}
+
 export class KeyboardPlayerEntityController extends EntityController {
   cleanup(): void {
     throw new Error("Method not implemented.");
@@ -30,16 +36,28 @@ export class KeyboardPlayerEntityController extends EntityController {
     private clientGame: ClientGame
   ) {
     super();
-    window.addEventListener("mousedown", (e: MouseEvent) => {
-      if (document.pointerLockElement !== canvas.eCanvas) {
-        canvas.eCanvas.requestPointerLock();
+
+    // Pointer lock to the canvas
+    canvas.eHud.addEventListener("mousedown", (e: MouseEvent) => {
+      // make sure just the hud is clicked
+      if (e.target !== canvas.eHud) {
         return;
       }
 
-      if (e.which === 3) {
+      if (document.pointerLockElement !== canvas.eCanvas) {
+        canvas.eCanvas.requestPointerLock();
+      }
+    });
+
+    window.addEventListener("mousedown", (e: MouseEvent) => {
+      if (document.pointerLockElement !== canvas.eCanvas) {
+        return;
+      }
+
+      if (e.button === 0) {
         // right click
         this.placeBlock();
-      } else if (e.which === 1) {
+      } else if (e.button === 2) {
         // left click
         this.removeBlock();
       }

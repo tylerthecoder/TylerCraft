@@ -67,6 +67,22 @@ export class Chunk {
     this.wasmChunk.add_block_wasm(wasmBlock);
   }
 
+  removeBlock(worldPos: Vector3D) {
+    const scaleCoord = (coord: number) =>
+      ((coord % CONFIG.terrain.chunkSize) + CONFIG.terrain.chunkSize) %
+      CONFIG.terrain.chunkSize;
+
+    const x = scaleCoord(worldPos.get(0));
+    const y = worldPos.get(1);
+    const z = scaleCoord(worldPos.get(2));
+
+    this.wasmChunk.remove_block_wasm({
+      x,
+      y,
+      z,
+    });
+  }
+
   getBlockFromWorldPos(worldPos: Vector3D) {
     const scaleCoord = (coord: number) =>
       ((coord % CONFIG.terrain.chunkSize) + CONFIG.terrain.chunkSize) %
@@ -87,12 +103,10 @@ export class Chunk {
     return block;
   }
 
-  /**
-   * @param pos Is an inner chunk pos
-   * @returns
-   */
-  getBlockData(pos: Vector3D) {
-    const block = this.wasmChunk.get_block_wasm(pos.toCartIntObj()) as Cube;
+  getBlockData(innerChunkPos: Vector3D) {
+    const block = this.wasmChunk.get_block_wasm(
+      innerChunkPos.toCartIntObj()
+    ) as Cube;
     return block.extraData;
   }
 

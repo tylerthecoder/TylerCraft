@@ -13,6 +13,8 @@ import {
   World,
   SocketMessage,
   IGameData,
+  setConfig,
+  IConfig,
 } from "@craft/engine";
 import SocketServer from "./socket.js";
 
@@ -34,12 +36,20 @@ export class ServerGame extends Game {
 
     const world = await World.make(gameData.chunkReader, gameData.data?.world);
 
-    const game = new ServerGame(entityHolder, world, gameData, socketInterface);
+    setConfig(gameData.config);
+    const game = new ServerGame(
+      gameData.config,
+      entityHolder,
+      world,
+      gameData,
+      socketInterface
+    );
 
     return game;
   }
 
   constructor(
+    private config: IConfig,
     entities: EntityHolder,
     world: World,
     gameData: IGameData,
@@ -55,6 +65,9 @@ export class ServerGame extends Game {
   }
 
   update(_delta: number): void {
+    // Set the config for the game (This is a hack since the config is global)
+    setConfig(this.config);
+
     // Send the initial state diff to all clients
     // This state diff has no client sent actions so it should
     // only be passive things (An entity spawning)
@@ -118,6 +131,8 @@ export class ServerGame extends Game {
   }
 
   private async sendChunkTo(chunkPosString: string, ws: WebSocket) {
+    // Set the config for the game (This is a hack since the config is global)
+    setConfig(this.config);
     console.log("ServerGame: Sending chunk to player: ", chunkPosString);
     const chunkPos = Vector2D.fromIndex(chunkPosString);
     let chunk = this.world.getChunkFromPos(chunkPos);
