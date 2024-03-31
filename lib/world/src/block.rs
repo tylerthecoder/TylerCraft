@@ -32,12 +32,6 @@ pub enum BlockType {
 }
 
 #[wasm_bindgen]
-pub struct WasmBlock {
-    pub block_type: BlockType,
-    pub extra_data: Option<WasmImageData>,
-}
-
-#[wasm_bindgen]
 #[derive(Clone, Copy)]
 pub struct WasmImageData {
     pub dir: Direction,

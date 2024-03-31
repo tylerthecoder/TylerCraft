@@ -1,3 +1,4 @@
+import { Item, ThrowableItem } from "@craft/engine/item";
 import { BlockType } from "@craft/rust-world";
 
 const TEXTURE_ATLAS_WIDTH = 4;
@@ -7,7 +8,7 @@ const xStepVal = 1 / TEXTURE_ATLAS_WIDTH;
 const yStepVal = 1 / TEXTURE_ATLAS_HEIGHT;
 
 const textureData = new Map<
-  BlockType,
+  Item,
   { offsetX: number; offsetY: number } | null
 >();
 textureData.set(BlockType.Grass, { offsetX: 0, offsetY: 0 });
@@ -20,6 +21,7 @@ textureData.set(BlockType.RedFlower, { offsetX: 0, offsetY: 2 });
 textureData.set(BlockType.Water, { offsetX: 2, offsetY: 2 });
 textureData.set(BlockType.Planks, { offsetX: 3, offsetY: 0 });
 textureData.set(BlockType.Red, { offsetX: 3, offsetY: 2 });
+textureData.set(ThrowableItem.Fireball, { offsetX: 3, offsetY: 1 });
 
 class Textures {
   private getTextureData(type: BlockType) {
@@ -65,20 +67,14 @@ class Textures {
     ];
   }
 
-  public getBlockPreviewCords(type: BlockType, width: number, height: number) {
+  public getBlockPreviewCords(type: Item, width: number, height: number) {
     const { offsetX, offsetY } = textureData.get(type)!;
 
     return {
-      offset: {
-        x: offsetX,
-        y: offsetY,
-      },
-      cords: {
-        x1: offsetX * xStepVal * width,
-        x2: (offsetX + 0.5) * xStepVal * width,
-        y1: offsetY * yStepVal * height,
-        y2: (offsetY + 0.5) * yStepVal * height,
-      },
+      x1: offsetX * xStepVal * width,
+      x2: (offsetX + 0.5) * xStepVal * width,
+      y1: offsetY * yStepVal * height,
+      y2: (offsetY + 0.5) * yStepVal * height,
     };
   }
 

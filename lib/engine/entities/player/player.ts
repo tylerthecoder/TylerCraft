@@ -9,13 +9,10 @@ import CubeHelpers from "../cube.js";
 import { Game } from "../../game.js";
 import { IEntityType } from "../entityType.js";
 import { BlockType } from "@craft/rust-world";
+import { Item, ThrowableItem } from "../../item.js";
 
 export interface BeltDto {
-  selectedBlock: BlockType | PlayerItem;
-}
-
-export enum PlayerItem {
-  Fireball = "fireball",
+  selectedBlock: Item;
 }
 
 class Belt {
@@ -24,7 +21,7 @@ class Belt {
 
   public itemActions: ((game: Game) => void)[] = [];
 
-  public items = [
+  public items: Item[] = [
     BlockType.Stone,
     BlockType.Gold,
     BlockType.Grass,
@@ -34,7 +31,7 @@ class Belt {
     BlockType.Red,
     BlockType.Planks,
     BlockType.Leaf,
-    PlayerItem.Fireball,
+    ThrowableItem.Fireball,
   ];
 
   get selectedItem() {
@@ -262,7 +259,7 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
   doPrimaryAction(game: Game, camera: CameraRay) {
     const item = this.belt.selectedItem;
 
-    if (item === PlayerItem.Fireball) {
+    if (item === ThrowableItem.Fireball) {
       this.fireball();
     } else {
       this.placeBlock(game, camera, item);

@@ -123,11 +123,7 @@ export class HudRenderer extends Renderer {
         continue;
       }
 
-      if (item === PlayerItem.Fireball) {
-        continue;
-      }
-
-      const { cords } = TextureMapper.getBlockPreviewCords(
+      const cords = TextureMapper.getBlockPreviewCords(
         item,
         this.textureImg.width,
         this.textureImg.height
