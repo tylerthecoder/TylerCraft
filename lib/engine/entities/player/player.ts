@@ -31,6 +31,8 @@ class Belt {
     BlockType.Wood,
     BlockType.RedFlower,
     BlockType.Cloud,
+    BlockType.Red,
+    BlockType.Planks,
     BlockType.Leaf,
     PlayerItem.Fireball,
   ];

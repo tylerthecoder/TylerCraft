@@ -27,6 +27,8 @@ pub enum BlockType {
     Water = 7,
     Grass = 8,
     Image = 9,
+    Planks = 10,
+    Red = 11,
 }
 
 #[wasm_bindgen]
@@ -236,6 +238,28 @@ lazy_static! {
                 fluid: false,
                 shape: BlockShape::X,
                 transparent: true,
+            },
+        );
+
+        map.insert(
+            BlockType::Planks,
+            BlockMetaData {
+                gravitable: false,
+                intangible: false,
+                fluid: false,
+                shape: BlockShape::Cube,
+                transparent: false,
+            },
+        );
+
+        map.insert(
+            BlockType::Red,
+            BlockMetaData {
+                gravitable: false,
+                intangible: false,
+                fluid: false,
+                shape: BlockShape::Cube,
+                transparent: false,
             },
         );
 

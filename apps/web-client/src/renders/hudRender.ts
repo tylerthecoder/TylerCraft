@@ -37,7 +37,9 @@ export class HudRenderer extends Renderer {
       this.hideControls();
     }
 
-    this.drawBelt();
+    this.textureImg.onload = () => {
+      this.drawBelt();
+    };
   }
 
   private getScreenDim(): [sw: number, sh: number] {

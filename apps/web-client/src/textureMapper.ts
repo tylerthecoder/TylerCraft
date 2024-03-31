@@ -18,6 +18,8 @@ textureData.set(BlockType.Cloud, { offsetX: 2, offsetY: 0 });
 textureData.set(BlockType.Gold, { offsetX: 2, offsetY: 1 });
 textureData.set(BlockType.RedFlower, { offsetX: 0, offsetY: 2 });
 textureData.set(BlockType.Water, { offsetX: 2, offsetY: 2 });
+textureData.set(BlockType.Planks, { offsetX: 3, offsetY: 0 });
+textureData.set(BlockType.Red, { offsetX: 3, offsetY: 2 });
 
 class Textures {
   private getTextureData(type: BlockType) {
