@@ -62,7 +62,7 @@ export class ChunkRenderer extends Renderer {
       const blockData = getBlockData(cube.type);
       const blockRenData = blockData.transparent ? transRenData : renData;
 
-      switch (blockData.blockType) {
+      switch (blockData.shape) {
         case BlockShape.cube: {
           const texturePos = TextureMapper.getTextureCords(cube.type);
           // loop through all the faces to get their cords

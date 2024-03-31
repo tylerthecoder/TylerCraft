@@ -85,6 +85,7 @@ pub enum BlockShape {
     Flat,
 }
 
+#[wasm_bindgen]
 #[derive(Clone, Copy)]
 pub struct BlockMetaData {
     pub gravitable: bool,
@@ -103,6 +104,13 @@ impl BlockMetaData {
             shape: BlockShape::Cube,
             transparent: false,
         })
+    }
+}
+
+#[wasm_bindgen]
+impl BlockMetaData {
+    pub fn get_for_type_wasm(block_type: BlockType) -> BlockMetaData {
+        *BlockMetaData::get_for_type(block_type)
     }
 }
 

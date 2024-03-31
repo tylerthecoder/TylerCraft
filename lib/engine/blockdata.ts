@@ -25,52 +25,52 @@ export interface IImageBlockData {
 export type ExtraBlockData = IImageBlockData | undefined;
 
 export interface BlockMetaData {
-  blockType: BlockShape;
+  shape: BlockShape;
   transparent?: boolean;
   intangible?: boolean;
 }
 
 const BLOCK_DATA: Map<BLOCKS, BlockMetaData> = new Map();
 
-export function getBlockData(block: BLOCKS) {
+export function getBlockData(block: BLOCKS): BlockMetaData {
   const data = BLOCK_DATA.get(block);
   if (!data) throw new Error("Block data not found for " + block);
   return data;
 }
 
 BLOCK_DATA.set(BLOCKS.void, {
-  blockType: BlockShape.cube,
+  shape: BlockShape.cube,
   intangible: true,
 });
 BLOCK_DATA.set(BLOCKS.grass, {
-  blockType: BlockShape.cube,
+  shape: BlockShape.cube,
 });
 BLOCK_DATA.set(BLOCKS.stone, {
-  blockType: BlockShape.cube,
+  shape: BlockShape.cube,
 });
 BLOCK_DATA.set(BLOCKS.wood, {
-  blockType: BlockShape.cube,
+  shape: BlockShape.cube,
 });
 BLOCK_DATA.set(BLOCKS.leaf, {
-  blockType: BlockShape.cube,
+  shape: BlockShape.cube,
   transparent: true,
 });
 BLOCK_DATA.set(BLOCKS.cloud, {
-  blockType: BlockShape.cube,
+  shape: BlockShape.cube,
 });
 BLOCK_DATA.set(BLOCKS.gold, {
-  blockType: BlockShape.cube,
+  shape: BlockShape.cube,
 });
 BLOCK_DATA.set(BLOCKS.redFlower, {
-  blockType: BlockShape.x,
+  shape: BlockShape.x,
   transparent: true,
   intangible: true,
 });
 BLOCK_DATA.set(BLOCKS.water, {
-  blockType: BlockShape.cube,
+  shape: BlockShape.cube,
   transparent: true,
   intangible: true,
 });
 BLOCK_DATA.set(BLOCKS.image, {
-  blockType: BlockShape.flat,
+  shape: BlockShape.flat,
 });

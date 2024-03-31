@@ -5,11 +5,7 @@ import {
   getBlockData,
 } from "../blockdata.js";
 import { Direction, Vector3D } from "../utils/vector.js";
-import {
-  faceNumberToFaceVector,
-  faceVectorToFaceNumber,
-} from "../utils/face.js";
-import { World } from "../world/world.js";
+import { faceNumberToFaceVector } from "../utils/face.js";
 import { IDim } from "../types.js";
 import { Entity, FaceLocater } from "./entity.js";
 
@@ -111,7 +107,7 @@ class CubeHelpersClass {
   getCubeObscuringPositions(cube: Cube): Vector3D[] {
     const blockData = getBlockData(cube.type);
 
-    switch (blockData.blockType) {
+    switch (blockData.shape) {
       case BlockShape.x:
       case BlockShape.cube: {
         return Vector3D.unitVectors;
