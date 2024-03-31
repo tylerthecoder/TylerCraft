@@ -11,11 +11,10 @@ export enum BLOCKS {
   image = 9,
 }
 
-export enum BlockType {
+export enum BlockShape {
   cube = 0,
   x = 1,
-  fluid = 2,
-  flat = 3,
+  flat = 2,
 }
 
 export interface IImageBlockData {
@@ -26,13 +25,12 @@ export interface IImageBlockData {
 export type ExtraBlockData = IImageBlockData | undefined;
 
 export interface BlockMetaData {
-  gravitable: boolean;
-  blockType: BlockType;
+  blockType: BlockShape;
   transparent?: boolean;
   intangible?: boolean;
 }
 
-export const BLOCK_DATA: Map<BLOCKS, BlockMetaData> = new Map();
+const BLOCK_DATA: Map<BLOCKS, BlockMetaData> = new Map();
 
 export function getBlockData(block: BLOCKS) {
   const data = BLOCK_DATA.get(block);
@@ -41,48 +39,38 @@ export function getBlockData(block: BLOCKS) {
 }
 
 BLOCK_DATA.set(BLOCKS.void, {
-  gravitable: false,
-  blockType: BlockType.cube,
+  blockType: BlockShape.cube,
   intangible: true,
 });
 BLOCK_DATA.set(BLOCKS.grass, {
-  gravitable: false,
-  blockType: BlockType.cube,
+  blockType: BlockShape.cube,
 });
 BLOCK_DATA.set(BLOCKS.stone, {
-  gravitable: false,
-  blockType: BlockType.cube,
+  blockType: BlockShape.cube,
 });
 BLOCK_DATA.set(BLOCKS.wood, {
-  gravitable: false,
-  blockType: BlockType.cube,
+  blockType: BlockShape.cube,
 });
 BLOCK_DATA.set(BLOCKS.leaf, {
-  gravitable: false,
-  blockType: BlockType.cube,
+  blockType: BlockShape.cube,
   transparent: true,
 });
 BLOCK_DATA.set(BLOCKS.cloud, {
-  gravitable: false,
-  blockType: BlockType.cube,
+  blockType: BlockShape.cube,
 });
 BLOCK_DATA.set(BLOCKS.gold, {
-  gravitable: false,
-  blockType: BlockType.cube,
+  blockType: BlockShape.cube,
 });
 BLOCK_DATA.set(BLOCKS.redFlower, {
-  gravitable: false,
-  blockType: BlockType.x,
+  blockType: BlockShape.x,
   transparent: true,
   intangible: true,
 });
 BLOCK_DATA.set(BLOCKS.water, {
-  gravitable: false,
-  blockType: BlockType.fluid,
+  blockType: BlockShape.cube,
   transparent: true,
   intangible: true,
 });
 BLOCK_DATA.set(BLOCKS.image, {
-  gravitable: false,
-  blockType: BlockType.flat,
+  blockType: BlockShape.flat,
 });

@@ -1,6 +1,6 @@
 import {
   BLOCKS,
-  BlockType,
+  BlockShape,
   ExtraBlockData,
   getBlockData,
 } from "../blockdata.js";
@@ -112,53 +112,18 @@ class CubeHelpersClass {
     const blockData = getBlockData(cube.type);
 
     switch (blockData.blockType) {
-      case BlockType.fluid:
-      case BlockType.x:
-      case BlockType.cube: {
+      case BlockShape.x:
+      case BlockShape.cube: {
         return Vector3D.unitVectors;
       }
 
-      case BlockType.flat: {
+      case BlockShape.flat: {
         if (!cube.extraData)
           throw new Error("cube1 block should have extra data");
         const direction = faceNumberToFaceVector(cube.extraData.face);
         return [direction];
       }
     }
-  }
-
-  isCubeFaceVisible(cube: Cube, world: World, direction: Vector3D) {
-    const checkingBlockPosition = cube.pos.add(direction);
-
-    // cube1 is outside of the world, so we don't have to show cube1 face
-    if (checkingBlockPosition.get(1) < 0) return true;
-
-    const checkingBlock = world.getBlockFromWorldPoint(checkingBlockPosition);
-    // There isn't a block, so we should show the face
-    if (checkingBlock === null) return true;
-
-    const blockData = getBlockData(checkingBlock.type);
-    const currentBlockData = getBlockData(cube.type);
-
-    if (
-      blockData.blockType === BlockType.fluid &&
-      currentBlockData.blockType === BlockType.fluid
-    ) {
-      return true;
-    }
-
-    if (blockData.blockType === BlockType.flat && checkingBlock.extraData) {
-      const faceIndex = faceVectorToFaceNumber(direction);
-      if (faceIndex !== checkingBlock.extraData.face) {
-        return false;
-      }
-    }
-
-    if (blockData.transparent) {
-      return true;
-    }
-
-    return true;
   }
 
   isCollide(cube1: Box, cube2: Box): boolean {

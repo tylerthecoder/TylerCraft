@@ -2,13 +2,13 @@ import { Renderer, RenderData } from "./renderer";
 import {
   Camera,
   arraySub,
-  BlockType,
   getBlockData,
   IDim,
   ChunkMesh,
   Vector3D,
   Vector2D,
   BLOCKS,
+  BlockShape,
 } from "@craft/engine";
 import TextureMapper from "../textureMapper";
 import ShapeBuilder from "../services/shapeBuilder";
@@ -63,8 +63,7 @@ export class ChunkRenderer extends Renderer {
       const blockRenData = blockData.transparent ? transRenData : renData;
 
       switch (blockData.blockType) {
-        case BlockType.cube:
-        case BlockType.fluid: {
+        case BlockShape.cube: {
           const texturePos = TextureMapper.getTextureCords(cube.type);
           // loop through all the faces to get their cords
           for (const direction of faces) {
@@ -77,7 +76,7 @@ export class ChunkRenderer extends Renderer {
 
           break;
         }
-        case BlockType.flat: {
+        case BlockShape.flat: {
           // TODO get extra data rendering working
           // const extraBlockData = this.chunkMesh.getBlockData(cube.pos);
           // if (!extraBlockData) return;
@@ -90,7 +89,7 @@ export class ChunkRenderer extends Renderer {
           // this.otherRenders.push(imageRender);
           break;
         }
-        case BlockType.x: {
+        case BlockShape.x: {
           const texturePos = TextureMapper.getXTextureCores(cube.type);
           ShapeBuilder.buildX(blockRenData, relativePos);
 

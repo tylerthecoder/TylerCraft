@@ -77,7 +77,7 @@ class TerrainGenModuleClass {
           chunkPos.get(0),
           chunkPos.get(1)
         );
-        return new Chunk(chunk, chunkPos);
+        return new Chunk(chunk as any, chunkPos);
       },
     };
   }
