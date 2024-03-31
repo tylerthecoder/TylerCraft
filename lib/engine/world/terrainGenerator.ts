@@ -1,12 +1,12 @@
 import { Vector2D, Vector3D } from "../utils/vector.js";
 import { CONFIG } from "../config.js";
 import { Random } from "../utils/random.js";
-import { BLOCKS } from "../blockdata.js";
 import CubeHelpers, { Cube } from "../entities/cube.js";
 import { World } from "./world.js";
 import { BiomeGenerator, Biome } from "./biome.js";
 import { Chunk } from "./index.js";
 import { WorldModule } from "../modules.js";
+import { BlockType } from "@craft/rust-world";
 
 export interface ISerializedTerrainGenerator {
   blocksToRender: Array<{
@@ -76,21 +76,21 @@ export class TerrainGenerator {
     return Math.floor(Random.noise(pos.data[0], pos.data[1]) * biomeHeight);
   }
 
-  private getTopBlock(biome: Biome): BLOCKS {
+  private getTopBlock(biome: Biome): BlockType {
     if (biome === Biome.Forest) {
-      return BLOCKS.grass;
+      return BlockType.Grass;
     }
     if (biome === Biome.Mountain) {
       if (Random.randomFloat(0, 1) > 0.5) {
-        return BLOCKS.stone;
+        return BlockType.Stone;
       } else {
-        return BLOCKS.grass;
+        return BlockType.Grass;
       }
     }
     if (biome === Biome.Plains) {
-      return BLOCKS.grass;
+      return BlockType.Grass;
     }
-    return BLOCKS.grass;
+    return BlockType.Grass;
   }
 
   generateChunk(chunkPos: Vector2D): Chunk {
@@ -118,7 +118,7 @@ export class TerrainGenerator {
           for (let k = y; k < 3; k++) {
             const cubePos = [x, k, z];
             const cube = CubeHelpers.createCube(
-              BLOCKS.water,
+              BlockType.Water,
               new Vector3D(cubePos)
             );
             chunk.addBlock(cube);
@@ -134,8 +134,8 @@ export class TerrainGenerator {
             k === y
               ? topBlock
               : Random.randomNum() > 0.9
-              ? BLOCKS.gold
-              : BLOCKS.stone;
+              ? BlockType.Gold
+              : BlockType.Stone;
           const cube = CubeHelpers.createCube(blockType, new Vector3D(cubePos));
           chunk.addBlock(cube);
         }
@@ -147,7 +147,7 @@ export class TerrainGenerator {
           CONFIG.terrain.flowers
         ) {
           const cube = CubeHelpers.createCube(
-            BLOCKS.redFlower,
+            BlockType.RedFlower,
             new Vector3D([x, y + 1, z])
           );
           chunk.addBlock(cube);
@@ -164,16 +164,16 @@ export class TerrainGenerator {
     }
 
     chunk.addBlock(
-      CubeHelpers.createCube(BLOCKS.cloud, new Vector3D([0, 0, 0]))
+      CubeHelpers.createCube(BlockType.Cloud, new Vector3D([0, 0, 0]))
     );
     chunk.addBlock(
-      CubeHelpers.createCube(BLOCKS.cloud, new Vector3D([0, 0, 15]))
+      CubeHelpers.createCube(BlockType.Cloud, new Vector3D([0, 0, 15]))
     );
     chunk.addBlock(
-      CubeHelpers.createCube(BLOCKS.cloud, new Vector3D([15, 0, 15]))
+      CubeHelpers.createCube(BlockType.Cloud, new Vector3D([15, 0, 15]))
     );
     chunk.addBlock(
-      CubeHelpers.createCube(BLOCKS.cloud, new Vector3D([15, 0, 0]))
+      CubeHelpers.createCube(BlockType.Cloud, new Vector3D([15, 0, 0]))
     );
 
     return chunk;
@@ -261,7 +261,7 @@ export class TerrainGenerator {
     // trunk
     for (let i = 1; i <= 5; i++) {
       const newCubePos = startingPos.add(new Vector3D([0, i, 0]));
-      const cube = CubeHelpers.createCube(BLOCKS.wood, newCubePos);
+      const cube = CubeHelpers.createCube(BlockType.Wood, newCubePos);
       cubes.push(cube);
     }
 
@@ -278,7 +278,7 @@ export class TerrainGenerator {
           ) {
             continue;
           }
-          const cube = CubeHelpers.createCube(BLOCKS.leaf, newPos);
+          const cube = CubeHelpers.createCube(BlockType.Leaf, newPos);
           cubes.push(cube);
         }
       }
@@ -307,7 +307,7 @@ export class TerrainGenerator {
 
         for (let k = 0; k <= y; k++) {
           const newCubePos = cubePos.add(new Vector3D([0, k, 0]));
-          const cube = CubeHelpers.createCube(BLOCKS.cloud, newCubePos);
+          const cube = CubeHelpers.createCube(BlockType.Cloud, newCubePos);
           cubes.push(cube);
         }
       }

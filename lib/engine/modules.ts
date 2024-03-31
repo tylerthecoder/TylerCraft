@@ -73,11 +73,12 @@ class TerrainGenModuleClass {
 
     return {
       getChunk: (chunkPos: Vector2D) => {
+        console.log("Getting chunk", chunkPos);
         const chunk = terrainGenerator.get_chunk(
           chunkPos.get(0),
           chunkPos.get(1)
         );
-        return new Chunk(chunk, chunkPos);
+        return new Chunk(chunk as any, chunkPos);
       },
     };
   }

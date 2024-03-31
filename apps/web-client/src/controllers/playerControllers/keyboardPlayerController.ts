@@ -122,6 +122,7 @@ export class KeyboardPlayerEntityController extends EntityController {
 
   handleKeyDown(key: string) {
     this.keys.add(key.toLowerCase());
+    console.log("Key down", key);
     switch (key) {
       case "w":
         this.currentMoveDirections.add(Direction.Forwards);
@@ -200,6 +201,7 @@ export class KeyboardPlayerEntityController extends EntityController {
   }
 
   update() {
+    console.log("Keyboard controller update", this.currentMoveDirections);
     if (this.hasMouseMoved) {
       this.handleAction(
         PlayerAction.make(PlayerActionType.Rotate, {

@@ -1,6 +1,5 @@
 import {
   BIOME_SIZE,
-  BLOCKS,
   Chunk,
   CONFIG,
   Random,
@@ -10,6 +9,7 @@ import {
   World,
   WorldModule,
 } from "@craft/engine";
+import { BlockType } from "@craft/rust-world";
 import * as TerrainGen from "@craft/terrain-gen";
 
 const LOAD_DIST = 5;
@@ -181,20 +181,20 @@ export class TerrainApp {
 
           // loop down until we find a block
           for (let k = this.yLvl - 1; k >= 0; k--) {
-            if (cube.block_type !== BLOCKS.void) break;
+            if (cube.block_type !== BlockType.Void) break;
             cube = chunk.getBlockFromWorldPos(new Vector3D([i, k, j]));
           }
 
           let color = "red";
-          if (cube.block_type === BLOCKS.grass) {
+          if (cube.block_type === BlockType.Grass) {
             color = "green";
-          } else if (cube.block_type === BLOCKS.stone) {
+          } else if (cube.block_type === BlockType.Stone) {
             color = "grey";
-          } else if (cube.block_type === BLOCKS.wood) {
+          } else if (cube.block_type === BlockType.Wood) {
             color = "brown";
-          } else if (cube.block_type === BLOCKS.redFlower) {
+          } else if (cube.block_type === BlockType.RedFlower) {
             color = "pink";
-          } else if (cube.block_type === BLOCKS.leaf) {
+          } else if (cube.block_type === BlockType.Leaf) {
             color = "darkgreen";
           }
 

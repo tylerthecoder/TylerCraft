@@ -85,6 +85,7 @@ pub enum BlockShape {
     Flat,
 }
 
+#[wasm_bindgen]
 #[derive(Clone, Copy)]
 pub struct BlockMetaData {
     pub gravitable: bool,
@@ -94,15 +95,29 @@ pub struct BlockMetaData {
     pub fluid: bool,
 }
 
-impl BlockMetaData {
-    pub fn get_for_type(block_type: BlockType) -> &'static BlockMetaData {
-        BLOCK_DATA.get(&block_type).unwrap_or(&BlockMetaData {
+// Define a default value for BlockMetaData
+impl Default for &BlockMetaData {
+    fn default() -> Self {
+        &BlockMetaData {
             gravitable: false,
             intangible: false,
             fluid: false,
             shape: BlockShape::Cube,
             transparent: false,
-        })
+        }
+    }
+}
+
+impl BlockMetaData {
+    pub fn get_for_type(block_type: BlockType) -> &'static BlockMetaData {
+        BLOCK_DATA.get(&block_type).unwrap_or_default()
+    }
+}
+
+#[wasm_bindgen]
+impl BlockMetaData {
+    pub fn get_for_type_wasm(block_type: BlockType) -> BlockMetaData {
+        *BLOCK_DATA.get(&block_type).unwrap_or_default()
     }
 }
 

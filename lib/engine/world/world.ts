@@ -15,10 +15,9 @@ import {
   getDirectionFromString,
 } from "../utils/vector.js";
 import { WorldModule, WorldModuleTypes } from "../modules.js";
-import { BLOCK_DATA } from "../blockdata.js";
 import { GameStateDiff } from "../gameStateDiff.js";
 import { ChunkMesh } from "./chunkMesh.js";
-import { CameraRay } from "../index.js";
+import { CameraRay, getBlockData } from "../index.js";
 
 type ISerializedChunkHolder = ISerializedChunk[];
 
@@ -275,7 +274,7 @@ export class World {
       const cube = this.getBlockFromWorldPoint(pos);
       if (!cube) return;
 
-      const cubeData = BLOCK_DATA.get(cube.type);
+      const cubeData = getBlockData(cube.type);
 
       if (!CubeHelpers.isCollide(cube, ent)) return;
       if (!cubeData) return;

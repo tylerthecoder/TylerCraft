@@ -1,38 +1,30 @@
-import {
-  BLOCKS,
-  BlockType,
-  ExtraBlockData,
-  getBlockData,
-} from "../blockdata.js";
+import { ExtraBlockData, getBlockData } from "../blockdata.js";
 import { Direction, Vector3D } from "../utils/vector.js";
-import {
-  faceNumberToFaceVector,
-  faceVectorToFaceNumber,
-} from "../utils/face.js";
-import { World } from "../world/world.js";
+import { faceNumberToFaceVector } from "../utils/face.js";
 import { IDim } from "../types.js";
 import { Entity, FaceLocater } from "./entity.js";
+import { BlockShape, BlockType } from "@craft/rust-world";
 
 export type CubeDto = {
-  type: BLOCKS;
+  type: BlockType;
   pos: IDim;
   extraData?: ExtraBlockData;
 };
 
 export type Cube = {
-  type: BLOCKS;
+  type: BlockType;
   pos: Vector3D;
   extraData?: ExtraBlockData;
 };
 
 export type ISerializedCube = {
-  block_type: BLOCKS;
+  block_type: BlockType;
   extra_data: "None";
   world_pos: { x: number; y: number; z: number };
 };
 
 export type WasmCube = {
-  block_type: BLOCKS;
+  block_type: BlockType;
   world_pos: { x: number; y: number; z: number };
   extraData?: { Image: Direction } | "None";
 };
@@ -73,7 +65,7 @@ class CubeHelpersClass {
     }
   }
 
-  createCube(type: BLOCKS, pos: Vector3D, extraData?: ExtraBlockData) {
+  createCube(type: BlockType, pos: Vector3D, extraData?: ExtraBlockData) {
     return {
       type,
       pos,
@@ -111,54 +103,19 @@ class CubeHelpersClass {
   getCubeObscuringPositions(cube: Cube): Vector3D[] {
     const blockData = getBlockData(cube.type);
 
-    switch (blockData.blockType) {
-      case BlockType.fluid:
-      case BlockType.x:
-      case BlockType.cube: {
+    switch (blockData.shape) {
+      case BlockShape.X:
+      case BlockShape.Cube: {
         return Vector3D.unitVectors;
       }
 
-      case BlockType.flat: {
+      case BlockShape.Flat: {
         if (!cube.extraData)
           throw new Error("cube1 block should have extra data");
         const direction = faceNumberToFaceVector(cube.extraData.face);
         return [direction];
       }
     }
-  }
-
-  isCubeFaceVisible(cube: Cube, world: World, direction: Vector3D) {
-    const checkingBlockPosition = cube.pos.add(direction);
-
-    // cube1 is outside of the world, so we don't have to show cube1 face
-    if (checkingBlockPosition.get(1) < 0) return true;
-
-    const checkingBlock = world.getBlockFromWorldPoint(checkingBlockPosition);
-    // There isn't a block, so we should show the face
-    if (checkingBlock === null) return true;
-
-    const blockData = getBlockData(checkingBlock.type);
-    const currentBlockData = getBlockData(cube.type);
-
-    if (
-      blockData.blockType === BlockType.fluid &&
-      currentBlockData.blockType === BlockType.fluid
-    ) {
-      return true;
-    }
-
-    if (blockData.blockType === BlockType.flat && checkingBlock.extraData) {
-      const faceIndex = faceVectorToFaceNumber(direction);
-      if (faceIndex !== checkingBlock.extraData.face) {
-        return false;
-      }
-    }
-
-    if (blockData.transparent) {
-      return true;
-    }
-
-    return true;
   }
 
   isCollide(cube1: Box, cube2: Box): boolean {

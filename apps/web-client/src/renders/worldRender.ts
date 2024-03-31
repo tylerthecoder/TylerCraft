@@ -5,7 +5,6 @@ import {
   Camera,
   Player,
   Projectile,
-  BLOCKS,
   Vector2D,
   Vector3D,
   Chunk,
@@ -17,6 +16,7 @@ import { HudRenderer } from "./hudRender";
 import { ClientGame } from "../clientGame";
 import { SphereRenderer } from "./sphereRender";
 import { PlayerRenderer } from "./playerRender";
+import { BlockType } from "@craft/rust-world";
 
 export default class WorldRenderer {
   private renderers: Renderer[] = [];
@@ -42,7 +42,7 @@ export default class WorldRenderer {
     const shiftedDown = camera.pos.sub(new Vector3D([0, 0.5, 0]));
     const block = this.world.getBlockFromWorldPoint(shiftedDown);
 
-    if (block?.type === BLOCKS.water) {
+    if (block?.type === BlockType.Water) {
       return new Vector3D([0, 0.3, 1]);
     } else {
       return Vector3D.zero;
