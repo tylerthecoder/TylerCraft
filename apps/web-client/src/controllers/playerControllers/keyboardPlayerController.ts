@@ -122,6 +122,7 @@ export class KeyboardPlayerEntityController extends EntityController {
 
   handleKeyDown(key: string) {
     this.keys.add(key.toLowerCase());
+    console.log("Key down", key);
     switch (key) {
       case "w":
         this.currentMoveDirections.add(Direction.Forwards);
@@ -226,6 +227,7 @@ export class KeyboardPlayerEntityController extends EntityController {
     }
 
     if (areDifferent) {
+      console.log("ARe different", this.currentMoveDirections);
       this.handleAction(
         PlayerAction.make(PlayerActionType.Move, {
           directions: Array.from(this.currentMoveDirections.values()),

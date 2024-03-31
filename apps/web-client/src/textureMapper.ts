@@ -1,33 +1,33 @@
-import { BLOCKS } from "@craft/engine";
+import { BlockType } from "@craft/rust-world";
 
-const TEXTURE_ATLAS_WIDTH = 3;
+const TEXTURE_ATLAS_WIDTH = 4;
 const TEXTURE_ATLAS_HEIGHT = 4;
 
 const xStepVal = 1 / TEXTURE_ATLAS_WIDTH;
 const yStepVal = 1 / TEXTURE_ATLAS_HEIGHT;
 
 const textureData = new Map<
-  BLOCKS,
+  BlockType,
   { offsetX: number; offsetY: number } | null
 >();
-textureData.set(BLOCKS.grass, { offsetX: 0, offsetY: 0 });
-textureData.set(BLOCKS.stone, { offsetX: 1, offsetY: 0 });
-textureData.set(BLOCKS.wood, { offsetX: 0, offsetY: 1 });
-textureData.set(BLOCKS.leaf, { offsetX: 1, offsetY: 1 });
-textureData.set(BLOCKS.cloud, { offsetX: 2, offsetY: 0 });
-textureData.set(BLOCKS.gold, { offsetX: 2, offsetY: 1 });
-textureData.set(BLOCKS.redFlower, { offsetX: 0, offsetY: 2 });
-textureData.set(BLOCKS.water, { offsetX: 2, offsetY: 2 });
+textureData.set(BlockType.Grass, { offsetX: 0, offsetY: 0 });
+textureData.set(BlockType.Stone, { offsetX: 1, offsetY: 0 });
+textureData.set(BlockType.Wood, { offsetX: 0, offsetY: 1 });
+textureData.set(BlockType.Leaf, { offsetX: 1, offsetY: 1 });
+textureData.set(BlockType.Cloud, { offsetX: 2, offsetY: 0 });
+textureData.set(BlockType.Gold, { offsetX: 2, offsetY: 1 });
+textureData.set(BlockType.RedFlower, { offsetX: 0, offsetY: 2 });
+textureData.set(BlockType.Water, { offsetX: 2, offsetY: 2 });
 
 class Textures {
-  private getTextureData(type: BLOCKS) {
+  private getTextureData(type: BlockType) {
     const data = textureData.get(type);
     if (!data)
       throw new Error(`Texture data fro texture ${type} was not found`);
     return data;
   }
 
-  public getTextureCords(type: BLOCKS) {
+  public getTextureCords(type: BlockType) {
     const { offsetX, offsetY } = this.getTextureData(type);
 
     const startX = offsetX * xStepVal;
@@ -48,7 +48,7 @@ class Textures {
     ];
   }
 
-  public getXTextureCores(type: BLOCKS) {
+  public getXTextureCores(type: BlockType) {
     const { offsetX, offsetY } = this.getTextureData(type);
 
     const startX = offsetX * xStepVal;
@@ -63,7 +63,7 @@ class Textures {
     ];
   }
 
-  public getBlockPreviewCords(type: BLOCKS, width: number, height: number) {
+  public getBlockPreviewCords(type: BlockType, width: number, height: number) {
     const { offsetX, offsetY } = textureData.get(type)!;
 
     return {

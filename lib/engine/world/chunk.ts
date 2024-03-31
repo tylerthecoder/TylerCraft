@@ -1,8 +1,8 @@
 import { Cube } from "../entities/cube.js";
 import { CONFIG } from "../config.js";
 import { Vector3D, Vector2D, Direction } from "../utils/vector.js";
-import { BLOCKS } from "../blockdata.js";
 import { WorldModuleTypes } from "../modules.js";
+import { BlockType } from "@craft/rust-world";
 export interface ILookingAtData {
   cube: Cube;
   face: Direction;
@@ -14,7 +14,7 @@ export interface ISerializedChunk {
     x: number;
     y: number;
   };
-  blocks: BLOCKS[];
+  blocks: BlockType[];
   block_data: ("None" | { Image: string })[];
   chunkId: string;
 }
@@ -97,7 +97,7 @@ export class Chunk {
       y,
       z,
     }) as {
-      block_type: BLOCKS;
+      block_type: BlockType;
     };
 
     return block;
@@ -107,7 +107,7 @@ export class Chunk {
     const block = this.wasmChunk.get_block_wasm(
       innerChunkPos.toCartIntObj()
     ) as Cube;
-    return block.extraData;
+    return undefined;
   }
 
   containsWorldPos(worldPos: Vector3D) {

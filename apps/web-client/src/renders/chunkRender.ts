@@ -7,12 +7,11 @@ import {
   ChunkMesh,
   Vector3D,
   Vector2D,
-  BLOCKS,
-  BlockShape,
 } from "@craft/engine";
 import TextureMapper from "../textureMapper";
 import ShapeBuilder from "../services/shapeBuilder";
 import { canvas } from "../canvas";
+import { BlockShape, BlockType } from "@craft/rust-world";
 
 // TODO:
 // instead of passing a chunk, pass a way to get the visible faces
@@ -56,14 +55,14 @@ export class ChunkRenderer extends Renderer {
     this.chunkMesh.mesh.forEach((face) => {
       const { block: cube, faces } = face;
 
-      if (cube.type === BLOCKS.void) return;
+      if (cube.type === BlockType.Void) return;
 
       const relativePos = arraySub(cube.pos.data, this.worldPos.data);
       const blockData = getBlockData(cube.type);
       const blockRenData = blockData.transparent ? transRenData : renData;
 
       switch (blockData.shape) {
-        case BlockShape.cube: {
+        case BlockShape.Cube: {
           const texturePos = TextureMapper.getTextureCords(cube.type);
           // loop through all the faces to get their cords
           for (const direction of faces) {
@@ -76,7 +75,7 @@ export class ChunkRenderer extends Renderer {
 
           break;
         }
-        case BlockShape.flat: {
+        case BlockShape.Flat: {
           // TODO get extra data rendering working
           // const extraBlockData = this.chunkMesh.getBlockData(cube.pos);
           // if (!extraBlockData) return;
@@ -89,7 +88,7 @@ export class ChunkRenderer extends Renderer {
           // this.otherRenders.push(imageRender);
           break;
         }
-        case BlockShape.x: {
+        case BlockShape.X: {
           const texturePos = TextureMapper.getXTextureCores(cube.type);
           ShapeBuilder.buildX(blockRenData, relativePos);
 

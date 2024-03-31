@@ -95,22 +95,33 @@ pub struct BlockMetaData {
     pub fluid: bool,
 }
 
-impl BlockMetaData {
-    pub fn get_for_type(block_type: BlockType) -> &'static BlockMetaData {
-        BLOCK_DATA.get(&block_type).unwrap_or(&BlockMetaData {
+// Define a default value for BlockMetaData
+impl Default for &BlockMetaData {
+    fn default() -> Self {
+        &BlockMetaData {
             gravitable: false,
             intangible: false,
             fluid: false,
             shape: BlockShape::Cube,
             transparent: false,
-        })
+        }
+    }
+}
+
+impl BlockMetaData {
+    pub fn get_for_type(block_type: BlockType) -> &'static BlockMetaData {
+        BLOCK_DATA.get(&block_type).unwrap_or_default()
     }
 }
 
 #[wasm_bindgen]
 impl BlockMetaData {
-    pub fn get_for_type_wasm(block_type: BlockType) -> BlockMetaData {
-        *BlockMetaData::get_for_type(block_type)
+    pub fn get_all() -> Vec<BlockMetaData> {
+        BLOCK_DATA.values().copied().collect()
+    }
+
+    pub fn get_for_type_wasm(block_type: BlockType) -> Option<BlockMetaData> {
+        BLOCK_DATA.get(&block_type).copied()
     }
 }
 
@@ -121,9 +132,19 @@ lazy_static! {
             BlockType::Void,
             BlockMetaData {
                 gravitable: false,
-                intangible: false,
+                intangible: true,
                 shape: BlockShape::Cube,
                 transparent: true,
+                fluid: false,
+            },
+        );
+        map.insert(
+            BlockType::Stone,
+            BlockMetaData {
+                gravitable: false,
+                intangible: false,
+                shape: BlockShape::Cube,
+                transparent: false,
                 fluid: false,
             },
         );

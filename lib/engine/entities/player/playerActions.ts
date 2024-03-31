@@ -1,11 +1,5 @@
-import {
-  BLOCKS,
-  CameraRay,
-  Direction,
-  Game,
-  IDim,
-  Vector3D,
-} from "../../index.js";
+import { BlockType } from "@craft/rust-world";
+import { CameraRay, Direction, Game, IDim, Vector3D } from "../../index.js";
 import { MessageDto, MessageHolder } from "../../messageHelpers.js";
 import CubeHelpers from "../cube.js";
 import { Player } from "./player.js";
@@ -137,7 +131,7 @@ export const handlePlayerAction = (
 
   if (action.isType(PlayerActionType.PlaceDebugBlock)) {
     const pos = player.pos.floor();
-    const cube = CubeHelpers.createCube(BLOCKS.gold, pos);
+    const cube = CubeHelpers.createCube(BlockType.Gold, pos);
     game.world.addBlock(game.stateDiff, cube, {
       loadChunkIfNotLoaded: true,
     });

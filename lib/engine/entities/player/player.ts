@@ -4,14 +4,14 @@ import { IDim } from "../../types.js";
 import { MovableEntity, MovableEntityDto } from "../moveableEntity.js";
 import { CONFIG } from "../../config.js";
 import { Direction, Vector3D } from "../../utils/vector.js";
-import { BLOCKS, ExtraBlockData } from "../../blockdata.js";
 import { CameraRay } from "../../camera.js";
 import CubeHelpers from "../cube.js";
 import { Game } from "../../game.js";
 import { IEntityType } from "../entityType.js";
+import { BlockType } from "@craft/rust-world";
 
 export interface BeltDto {
-  selectedBlock: BLOCKS | PlayerItem;
+  selectedBlock: BlockType | PlayerItem;
 }
 
 export enum PlayerItem {
@@ -25,14 +25,13 @@ class Belt {
   public itemActions: ((game: Game) => void)[] = [];
 
   public items = [
-    BLOCKS.stone,
-    BLOCKS.gold,
-    BLOCKS.grass,
-    BLOCKS.wood,
-    BLOCKS.redFlower,
-    BLOCKS.cloud,
-    BLOCKS.leaf,
-    BLOCKS.water,
+    BlockType.Stone,
+    BlockType.Gold,
+    BlockType.Grass,
+    BlockType.Wood,
+    BlockType.RedFlower,
+    BlockType.Cloud,
+    BlockType.Leaf,
     PlayerItem.Fireball,
   ];
 
@@ -277,31 +276,18 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
   }
 
   // Player actions
-  placeBlock(game: Game, camera: CameraRay, blockType: BLOCKS) {
+  placeBlock(game: Game, camera: CameraRay, blockType: BlockType) {
     const lookingData = game.world.lookingAt(camera);
     if (!lookingData) return;
     console.log("Looking at data", lookingData);
     const { cube } = lookingData;
     if (!cube) return;
 
-    let extraBlockData: ExtraBlockData | undefined = undefined;
-
-    if (blockType === BLOCKS.image) {
-      extraBlockData = {
-        galleryIndex: 0,
-        face: lookingData.face,
-      };
-    }
-
     const newCubePos = lookingData.cube.pos.add(
       Vector3D.fromDirection(lookingData.face)
     );
 
-    const newCube = CubeHelpers.createCube(
-      blockType,
-      newCubePos,
-      extraBlockData
-    );
+    const newCube = CubeHelpers.createCube(blockType, newCubePos);
 
     console.log("Placed Cube", newCube);
 

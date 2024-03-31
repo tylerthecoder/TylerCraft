@@ -1,34 +1,28 @@
-import {
-  BLOCKS,
-  BlockShape,
-  ExtraBlockData,
-  getBlockData,
-} from "../blockdata.js";
+import { getBlockData } from "../blockdata.js";
 import { Direction, Vector3D } from "../utils/vector.js";
 import { faceNumberToFaceVector } from "../utils/face.js";
 import { IDim } from "../types.js";
 import { Entity, FaceLocater } from "./entity.js";
+import { BlockShape, BlockType } from "@craft/rust-world";
 
 export type CubeDto = {
-  type: BLOCKS;
+  type: BlockType;
   pos: IDim;
-  extraData?: ExtraBlockData;
 };
 
 export type Cube = {
-  type: BLOCKS;
+  type: BlockType;
   pos: Vector3D;
-  extraData?: ExtraBlockData;
 };
 
 export type ISerializedCube = {
-  block_type: BLOCKS;
+  block_type: BlockType;
   extra_data: "None";
   world_pos: { x: number; y: number; z: number };
 };
 
 export type WasmCube = {
-  block_type: BLOCKS;
+  block_type: BlockType;
   world_pos: { x: number; y: number; z: number };
   extraData?: { Image: Direction } | "None";
 };
@@ -55,13 +49,6 @@ class CubeHelpersClass {
           cube.world_pos.z,
         ]),
         type: cube.block_type,
-        extraData:
-          !cube.extraData || cube.extraData === "None"
-            ? undefined
-            : {
-                face: cube.extraData.Image,
-                galleryIndex: 0,
-              },
       };
     } catch (err) {
       console.log("Could not create cube from wasm cube", cube, err);
@@ -69,11 +56,10 @@ class CubeHelpersClass {
     }
   }
 
-  createCube(type: BLOCKS, pos: Vector3D, extraData?: ExtraBlockData) {
+  createCube(type: BlockType, pos: Vector3D) {
     return {
       type,
       pos,
-      extraData,
     };
   }
 
@@ -81,7 +67,6 @@ class CubeHelpersClass {
     return {
       type: cubeDto.type,
       pos: new Vector3D(cubeDto.pos),
-      extraData: cubeDto.extraData,
     };
   }
 
@@ -89,7 +74,6 @@ class CubeHelpersClass {
     return {
       type: cube.type,
       pos: cube.pos.data as IDim,
-      extraData: cube.extraData,
     };
   }
 
@@ -108,17 +92,16 @@ class CubeHelpersClass {
     const blockData = getBlockData(cube.type);
 
     switch (blockData.shape) {
-      case BlockShape.x:
-      case BlockShape.cube: {
+      case BlockShape.X:
+      case BlockShape.Flat:
+      case BlockShape.Cube: {
         return Vector3D.unitVectors;
       }
 
-      case BlockShape.flat: {
-        if (!cube.extraData)
-          throw new Error("cube1 block should have extra data");
-        const direction = faceNumberToFaceVector(cube.extraData.face);
-        return [direction];
-      }
+      // case BlockShape.Flat: {
+      // const direction = faceNumberToFaceVector(cube.extraData.face);
+      // return [direction];
+      // }
     }
   }
 
