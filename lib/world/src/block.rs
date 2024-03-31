@@ -128,7 +128,7 @@ lazy_static! {
             BlockType::Void,
             BlockMetaData {
                 gravitable: false,
-                intangible: false,
+                intangible: true,
                 shape: BlockShape::Cube,
                 transparent: true,
                 fluid: false,

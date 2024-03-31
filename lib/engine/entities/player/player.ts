@@ -4,12 +4,19 @@ import { IDim } from "../../types.js";
 import { MovableEntity, MovableEntityDto } from "../moveableEntity.js";
 import { CONFIG } from "../../config.js";
 import { Direction, Vector3D } from "../../utils/vector.js";
+<<<<<<< Updated upstream
 import { ExtraBlockData } from "../../blockdata.js";
+=======
+>>>>>>> Stashed changes
 import { CameraRay } from "../../camera.js";
 import CubeHelpers from "../cube.js";
 import { Game } from "../../game.js";
 import { IEntityType } from "../entityType.js";
+<<<<<<< Updated upstream
 import { BlockType } from "@craft/rust-world";
+=======
+import { BlockMetaData, BlockShape, BlockType } from "@craft/rust-world";
+>>>>>>> Stashed changes
 
 export interface BeltDto {
   selectedBlock: BlockType | PlayerItem;
@@ -284,24 +291,11 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     const { cube } = lookingData;
     if (!cube) return;
 
-    let extraBlockData: ExtraBlockData | undefined = undefined;
-
-    if (blockType === BlockType.Image) {
-      extraBlockData = {
-        galleryIndex: 0,
-        face: lookingData.face,
-      };
-    }
-
     const newCubePos = lookingData.cube.pos.add(
       Vector3D.fromDirection(lookingData.face)
     );
 
-    const newCube = CubeHelpers.createCube(
-      blockType,
-      newCubePos,
-      extraBlockData
-    );
+    const newCube = CubeHelpers.createCube(blockType, newCubePos);
 
     console.log("Placed Cube", newCube);
 
