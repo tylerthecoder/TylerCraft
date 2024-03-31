@@ -10,6 +10,7 @@ import { Game } from "../../game.js";
 import { IEntityType } from "../entityType.js";
 import { BlockType } from "@craft/rust-world";
 import { Item, ThrowableItem } from "../../item.js";
+import { Projectile } from "../projectile.js";
 
 export interface BeltDto {
   selectedBlock: Item;
@@ -247,7 +248,7 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     }
   }
 
-  hit(_entity: Entity, where: FaceLocater) {
+  hit(_game: Game, _entity: Entity, where: FaceLocater) {
     this.vel.set(where.side, 0);
     if (where.side === 1 && where.dir === 0) {
       this.onGround = true;
@@ -259,8 +260,10 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
   doPrimaryAction(game: Game, camera: CameraRay) {
     const item = this.belt.selectedItem;
 
+    console.log("Doing primary action", item);
+
     if (item === ThrowableItem.Fireball) {
-      this.fireball();
+      this.fireball(game);
     } else {
       this.placeBlock(game, camera, item);
     }
@@ -293,22 +296,24 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     game.placeBlock(newCube);
   }
 
-  fireball() {
+  fireball(game: Game) {
     if (this.fire.count > 0) return;
 
     const vel = this.rotCart.scalarMultiply(-0.4).data as IDim;
+    vel[1] = -vel[1];
+
     const pos = arrayAdd(
       arrayAdd(this.pos.data, arrayScalarMul(vel, 4)),
       [0.5, 2, 0.5]
     ) as IDim;
-    // const ball = new Projectile(new Vector3D(pos), new Vector3D(vel));
+    const ball = new Projectile({
+      uid: "fireball-" + Math.random().toString().slice(2),
+      pos,
+      vel,
+    });
+    ball.vel = new Vector3D(vel);
 
-    // this.actions.push({
-    //   type: IActionType.addEntity,
-    //   payload: {
-    //     ent: ball.serialize(IEntityType.Projectile),
-    //   }
-    // });
+    game.addEntity(ball);
 
     this.fire.count = this.fire.coolDown;
   }

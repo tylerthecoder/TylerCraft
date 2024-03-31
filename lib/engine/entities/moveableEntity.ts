@@ -3,6 +3,7 @@ import { CONFIG } from "../config.js";
 import { bindValue } from "../utils.js";
 import { Vector3D } from "../utils/vector.js";
 import { Entity, EntityDto, MetaAction } from "./entity.js";
+import { Game } from "../game.js";
 
 export interface MovableEntityDto extends EntityDto {
   vel: IDim;
@@ -49,9 +50,9 @@ export abstract class MovableEntity<
     this.pos = this.pos.add(scaledVel);
   }
 
-  baseHit(entity: Entity) {
-    const where = this.pushOut(entity);
-    this.hit(entity, where);
+  baseHit(game: Game, entity: Entity) {
+    const where = this.pushOut(game, entity);
+    this.hit(game, entity, where);
   }
 
   private static gravityVector = new Vector3D([0, CONFIG.gravity, 0]);

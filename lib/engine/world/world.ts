@@ -17,7 +17,7 @@ import {
 import { WorldModule, WorldModuleTypes } from "../modules.js";
 import { GameStateDiff } from "../gameStateDiff.js";
 import { ChunkMesh } from "./chunkMesh.js";
-import { CameraRay, getBlockData } from "../index.js";
+import { CameraRay, Game, getBlockData } from "../index.js";
 
 type ISerializedChunkHolder = ISerializedChunk[];
 
@@ -249,23 +249,23 @@ export class World {
     }
   }
 
-  update(entities: Entity[]) {
+  update(game: Game, entities: Entity[]) {
     for (const entity of entities) {
       // if ((entity as Spectator).intangible) return;
 
-      this.pushOut(entity);
+      this.pushOut(game, entity);
 
       for (const e of entities) {
         if (e === entity) continue;
         const isCollide = e.isCollide(entity);
         if (isCollide) {
-          entity.pushOut(e);
+          entity.pushOut(game, e);
         }
       }
     }
   }
 
-  pushOut(ent: Entity) {
+  pushOut(game: Game, ent: Entity) {
     const entDim = ent instanceof Entity ? ent.dim : CUBE_DIM;
 
     const ifCubeExistThenPushOut = (pos: Vector3D) => {
@@ -281,7 +281,7 @@ export class World {
       if (cubeData.intangible) return;
 
       if (ent instanceof Entity) {
-        ent.pushOut(cube);
+        ent.pushOut(game, cube);
       }
     };
 

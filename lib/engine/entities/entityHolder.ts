@@ -1,3 +1,4 @@
+import { Game } from "../game.js";
 import { GameStateDiff } from "../gameStateDiff.js";
 import { World } from "../world/world.js";
 import { Entity, EntityDto } from "./entity.js";
@@ -93,10 +94,10 @@ export class EntityHolder {
   // Update
   //========================
 
-  update(world: World, delta: number) {
+  update(game: Game, world: World, delta: number) {
     const entityArray = Array.from(this.entities.values());
     entityArray.forEach((entity) => entity.update(delta));
-    world.update(entityArray);
+    world.update(game, entityArray);
   }
 
   updateEntity<T extends EntityDto>(entityDto: Partial<T> & { uid: string }) {

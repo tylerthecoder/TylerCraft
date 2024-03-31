@@ -16,7 +16,7 @@ import {
 import { TerrainGenModule } from "@craft/engine/modules";
 import TerrainWorker from "../workers/terrain.worker?worker";
 
-const USE_WASM_CHUNK_GETTER = false;
+const USE_WASM_CHUNK_GETTER = true;
 
 const WasmChunkGetter = async (config: IConfig): Promise<IChunkReader> => {
   console.log("WasmChunkGetter", config);

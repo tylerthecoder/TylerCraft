@@ -9,6 +9,7 @@ import { GameStateDiff, GameDiffDto } from "./gameStateDiff.js";
 import { Vector2D } from "./utils/vector.js";
 import { GameController } from "./controllers/controller.js";
 import CubeHelpers, { Cube } from "./entities/cube.js";
+import { Entity } from "./index.js";
 
 export interface ISerializedGame {
   config: IConfig;
@@ -89,9 +90,9 @@ export abstract class Game {
 
     this.controller.update(delta);
 
-    this.update(delta, this.stateDiff);
+    this.entities.update(this, this.world, delta);
 
-    this.entities.update(this.world, delta);
+    this.update(delta, this.stateDiff);
 
     this.stateDiff.clear();
 
@@ -166,6 +167,16 @@ export abstract class Game {
 
   addPlayer(uid: string): Player {
     return this.entities.createPlayer(this.stateDiff, uid);
+  }
+
+  addEntity(entity: Entity) {
+    console.log("Adding entity", entity);
+    this.entities.add(this.stateDiff, entity);
+  }
+
+  removeEntity(entity: Entity) {
+    console.log("Removing entity", entity);
+    this.entities.remove(entity.uid);
   }
 
   async save() {

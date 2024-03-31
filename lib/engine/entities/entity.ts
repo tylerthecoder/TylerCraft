@@ -1,3 +1,4 @@
+import { Game } from "../index.js";
 import { IDim } from "../types.js";
 import { Vector3D } from "../utils/vector.js";
 import CubeHelpers, { Cube, CUBE_DIM } from "./cube.js";
@@ -95,7 +96,7 @@ export abstract class Entity<
   }
 
   abstract update(delta: number): void;
-  abstract hit(entity: Entity | Cube, where: FaceLocater): void;
+  abstract hit(game: Game, entity: Entity | Cube, where: FaceLocater): void;
 
   setUid(uid: string) {
     this.uid = uid;
@@ -106,7 +107,7 @@ export abstract class Entity<
   }
 
   // push me (this) out of the supplied entity (ent)
-  pushOut(ent: Entity | Cube): FaceLocater {
+  pushOut(game: Game, ent: Entity | Cube): FaceLocater {
     let min = [Infinity];
 
     // 0 -> 1, 1 -> 0
@@ -134,13 +135,13 @@ export abstract class Entity<
 
     this.pos.set(i, newPos);
 
-    this.hit(ent, {
+    this.hit(game, ent, {
       side: i,
       dir: dir as 0 | 1,
     });
 
     if (ent instanceof Entity) {
-      ent.hit(this, {
+      ent.hit(game, this, {
         side: i,
         dir: dir as 0 | 1,
       });

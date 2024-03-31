@@ -1,3 +1,5 @@
+import { Cube, Game, IDim, Player } from "../index.js";
+import { Vector3D } from "../utils/vector.js";
 import { Entity, FaceLocater, IEntity } from "./entity.js";
 import { IEntityType } from "./entityType.js";
 import { MovableEntity, MovableEntityDto } from "./moveableEntity.js";
@@ -16,7 +18,7 @@ export class Projectile
     return Projectile.type;
   }
 
-  gravitable = false;
+  gravitable = true;
 
   getDto(): ProjectileDto {
     return {
@@ -31,45 +33,19 @@ export class Projectile
 
   update(delta: number) {
     this.baseUpdate(delta);
+    this.soil();
   }
 
-  hit(ent: Entity, _where: FaceLocater) {
-    // TODO remove block on world instead of returning action
-    // do damage or delete block
-    // if (ent instanceof Cube) {
-    //   this.actions.push(
-    //     {
-    //       dontSendToServer: true,
-    //       type: IActionType.removeBlock,
-    //       removeBlock: {
-    //         blockPos: ent.pos.data as IDim,
-    //       },
-    //     },
-    //     {
-    //       dontSendToServer: true,
-    //       type: IActionType.removeEntity,
-    //       removeEntity: {
-    //         uid: this.uid,
-    //       }
-    //     }
-    //   )
-    // } else {
-    //   this.actions.push(
-    //     {
-    //       type: IActionType.hurtEntity,
-    //       hurtEntity: {
-    //         uid: ent.uid,
-    //         amount: 5,
-    //       }
-    //     },
-    //     {
-    //       dontSendToServer: true,
-    //       type: IActionType.removeEntity,
-    //       removeEntity: {
-    //         uid: this.uid,
-    //       }
-    //     }
-    //   )
-    // }
+  hit(game: Game, ent: Entity | Cube, _where: FaceLocater) {
+    console.log("HIT", ent);
+    if (ent instanceof Entity) {
+      if (ent instanceof Player) {
+        ent.hurt(5);
+      }
+
+      game.removeEntity(this);
+    } else {
+      game.removeBlock(ent);
+    }
   }
 }
