@@ -112,10 +112,6 @@ impl BlockMetaData {
 
 #[wasm_bindgen]
 impl BlockMetaData {
-    pub fn get_all() -> Vec<BlockMetaData> {
-        BLOCK_DATA.values().copied().collect()
-    }
-
     pub fn get_for_type_wasm(block_type: BlockType) -> Option<BlockMetaData> {
         BLOCK_DATA.get(&block_type).copied()
     }
