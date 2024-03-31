@@ -96,12 +96,8 @@ class CubeHelpersClass {
       case BlockShape.Cube: {
         return Vector3D.unitVectors;
       }
-
-      // case BlockShape.Flat: {
-      // const direction = faceNumberToFaceVector(cube.extraData.face);
-      // return [direction];
-      // }
     }
+    return [];
   }
 
   isCollide(cube1: Box, cube2: Box): boolean {
