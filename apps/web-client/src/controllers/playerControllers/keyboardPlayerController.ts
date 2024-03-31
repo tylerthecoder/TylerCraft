@@ -201,7 +201,6 @@ export class KeyboardPlayerEntityController extends EntityController {
   }
 
   update() {
-    console.log("Keyboard controller update", this.currentMoveDirections);
     if (this.hasMouseMoved) {
       this.handleAction(
         PlayerAction.make(PlayerActionType.Rotate, {
@@ -228,6 +227,7 @@ export class KeyboardPlayerEntityController extends EntityController {
     }
 
     if (areDifferent) {
+      console.log("ARe different", this.currentMoveDirections);
       this.handleAction(
         PlayerAction.make(PlayerActionType.Move, {
           directions: Array.from(this.currentMoveDirections.values()),
