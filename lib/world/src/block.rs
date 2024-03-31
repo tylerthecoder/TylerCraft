@@ -214,7 +214,7 @@ lazy_static! {
             BlockType::Water,
             BlockMetaData {
                 gravitable: false,
-                intangible: false,
+                intangible: true,
                 fluid: true,
                 shape: BlockShape::Cube,
                 transparent: false,
