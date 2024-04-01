@@ -1,8 +1,11 @@
 import {
-  GameActionType,
   MetaAction,
   Vector2D,
   EntityController,
+  Player,
+  handlePlayerAction,
+  PlayerAction,
+  PlayerActionType,
 } from "@craft/engine";
 import { ClientGame } from "../../clientGame";
 
@@ -27,7 +30,7 @@ export class MobileController extends EntityController {
   private eUseItemButton = document.getElementById("useItemButton")!;
   private eUseItemButton2 = document.getElementById("useItemButton2")!;
 
-  constructor(public clientGame: ClientGame) {
+  constructor(public clientGame: ClientGame, private player: Player) {
     super();
 
     let lastWindowTouch: Touch;
@@ -88,7 +91,7 @@ export class MobileController extends EntityController {
         jumpTouches.push(touches.item(i)!);
       }
 
-      this.clientGame.mainPlayer.metaActions.add(MetaAction.jump);
+      this.player.metaActions.add(MetaAction.jump);
     });
 
     this.eJumpButton.addEventListener("touchmove", (e: TouchEvent) => {
@@ -110,7 +113,7 @@ export class MobileController extends EntityController {
       }
 
       if (shouldJump) {
-        this.clientGame.mainPlayer.metaActions.add(MetaAction.jump);
+        this.player.metaActions.add(MetaAction.jump);
       }
 
       e.preventDefault();
@@ -130,7 +133,7 @@ export class MobileController extends EntityController {
       }
 
       // e.touches.
-      this.clientGame.mainPlayer.metaActions.delete(MetaAction.jump);
+      this.player.metaActions.delete(MetaAction.jump);
     });
 
     // handle forward button
@@ -139,7 +142,7 @@ export class MobileController extends EntityController {
       e.preventDefault();
       e.stopPropagation();
       lastForwardTouch = e.changedTouches.item(0)!;
-      this.clientGame.mainPlayer.metaActions.add(MetaAction.forward);
+      this.player.metaActions.add(MetaAction.forward);
     });
 
     this.eForwardButton.addEventListener("touchmove", (e: TouchEvent) => {
@@ -152,9 +155,9 @@ export class MobileController extends EntityController {
         const diffY = lastForwardTouch.clientY - touch.clientY;
 
         if (diffY > 50) {
-          this.clientGame.mainPlayer.metaActions.add(MetaAction.jump);
+          this.player.metaActions.add(MetaAction.jump);
         } else {
-          this.clientGame.mainPlayer.metaActions.delete(MetaAction.jump);
+          this.player.metaActions.delete(MetaAction.jump);
         }
       }
     });
@@ -162,27 +165,32 @@ export class MobileController extends EntityController {
     this.eForwardButton.addEventListener("touchend", (e: TouchEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      this.clientGame.mainPlayer.metaActions.delete(MetaAction.forward);
-      this.clientGame.mainPlayer.metaActions.delete(MetaAction.jump);
+      this.player.metaActions.delete(MetaAction.forward);
+      this.player.metaActions.delete(MetaAction.jump);
     });
 
     // item selection
     this.eToolbeltItems.forEach((item, index) => {
       item.addEventListener("touchstart", () => {
-        this.game.handleAction(GameActionType.PlayerSetBeltIndex, {
-          playerUid: this.clientGame.mainPlayer.uid,
-          index,
-        });
+        this.handleAction(
+          PlayerAction.make(PlayerActionType.SetBeltIndex, {
+            playerUid: this.player.uid,
+            index,
+          })
+        );
       });
     });
 
     this.eUseItemButton.addEventListener("touchstart", (e: TouchEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      this.game.handleAction(GameActionType.PlaceBlock, {
-        cameraData: this.clientGame.camera.getRay(),
-        playerUid: this.clientGame.mainPlayer.uid,
-      });
+
+      this.handleAction(
+        PlayerAction.make(PlayerActionType.PlaceBlock, {
+          playerUid: this.player.uid,
+          cameraData: this.clientGame.camera.getRay(),
+        })
+      );
     });
 
     this.eUseItemButton.addEventListener("touchmove", (e: TouchEvent) => {
@@ -199,10 +207,12 @@ export class MobileController extends EntityController {
       e.preventDefault();
       e.stopPropagation();
       console.log("Removing");
-      this.game.handleAction(GameActionType.RemoveBlock, {
-        cameraData: this.clientGame.camera.getRay(),
-        playerUid: this.clientGame.mainPlayer.uid,
-      });
+      this.handleAction(
+        PlayerAction.make(PlayerActionType.RemoveBlock, {
+          playerUid: this.player.uid,
+          cameraData: this.clientGame.camera.getRay(),
+        })
+      );
     });
 
     this.eUseItemButton2.addEventListener("touchmove", (e: TouchEvent) => {
@@ -214,6 +224,11 @@ export class MobileController extends EntityController {
       e.preventDefault();
       e.stopPropagation();
     });
+  }
+
+  handleAction(action: PlayerAction) {
+    console.log("Keyboard controller hanling action", action);
+    handlePlayerAction(this.clientGame, this.player, action);
   }
 
   update() {

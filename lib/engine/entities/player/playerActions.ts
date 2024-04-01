@@ -79,6 +79,8 @@ export const handlePlayerAction = (
   player: Player,
   action: PlayerAction
 ) => {
+  player.handleAction(action);
+
   console.log("Handling player action", player, action);
   if (action.isType(PlayerActionType.Rotate)) {
     const { playerRot } = action.data;

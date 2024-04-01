@@ -1,7 +1,7 @@
-import { Camera, MovableEntity, Vector3D } from "@craft/engine";
+import { Camera, Entity, Vector3D } from "@craft/engine";
 
 export class XrCamera extends Camera {
-  constructor(public entity: MovableEntity) {
+  constructor(public entity: Entity) {
     super();
   }
 

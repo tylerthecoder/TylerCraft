@@ -11,17 +11,20 @@ import {
   IGameMetadata,
 } from "@craft/engine";
 import { NetworkGameManager } from "./worldModels/serverSaver";
-import { ClientGame } from "./clientGame";
 import { SocketHandler } from "./socket";
 import { ClientDbGameManger } from "./worldModels/clientdb";
 import { renderWorldPicker } from "./world-picker";
 import { createRoot } from "react-dom/client";
+import { BasicUsecase, TimerRunner } from "./runners";
 
 export interface IExtendedWindow extends Window {
   clientDb?: ClientDbGameManger;
   game?: Game;
-  clientGame?: ClientGame;
+  usecase?: BasicUsecase;
+  runner?: TimerRunner;
 }
+
+const WINDOW = window as IExtendedWindow;
 
 export const IS_MOBILE = /Mobi/.test(window.navigator.userAgent);
 console.log("Is Mobile: ", IS_MOBILE);
@@ -390,14 +393,19 @@ async function startGame(gameData: Engine.IGameData) {
 
   LoadingScreen.show("Painting the Sky");
   console.log("Loading game");
-  const game = await ClientGame.make(gameData);
+  const game = await Game.make(gameData);
+
   console.log("Game Loaded, Starting game", game);
 
   (window as IExtendedWindow).game = game;
   history.pushState("Game", "", `?worldId=${game.gameId}`);
 
-  LoadingScreen.show("Building Mountains");
-  await game.baseLoad();
+  WINDOW.usecase = new BasicUsecase(game);
+
+  WINDOW.runner = new TimerRunner(game);
+  // LoadingScreen.show("Building Mountains");
+  // await game.baseLoad();
+
   console.log("Game Loaded");
 
   LoadingScreen.fade();

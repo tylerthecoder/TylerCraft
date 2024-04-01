@@ -1,9 +1,9 @@
 import {
   Chunk,
+  Game,
   IChunkReader,
   ICreateGameOptions,
   IGameData,
-  IGameMetadata,
   ISerializedGame,
   ISocketMessageType,
   SocketMessage,
@@ -13,7 +13,7 @@ import {
   setConfig,
 } from "@craft/engine";
 import { ServerGame } from "./server-game.js";
-import Websocket, { WebSocketServer } from "ws";
+import Websocket from "ws";
 import { IDbManager } from "./db.js";
 import SocketServer from "./socket.js";
 
@@ -42,13 +42,7 @@ export class RamChunkReader implements IChunkReader {
   }
 }
 
-export interface IGameService {
-  getWorld(gameId: string): Promise<ServerGame | null>;
-  getAllWorlds(): Promise<IGameMetadata[]>;
-  createGame(options: ICreateGameOptions): Promise<ServerGame>;
-}
-
-export class GameService implements IGameService {
+export class GameService {
   private games: Map<string, ServerGame> = new Map();
 
   constructor(
@@ -87,7 +81,7 @@ export class GameService implements IGameService {
     } else if (message.isType(ISocketMessageType.newWorld)) {
       const payload = message.data;
       const world = await this.createGame(payload);
-      console.log("Create Id: ", world.gameId);
+      console.log("Create Id: ", world.game.gameId);
       world.addSocket(payload.myUid, ws);
     } else if (message.isType(ISocketMessageType.saveWorld)) {
       const payload = message.data;
@@ -96,7 +90,7 @@ export class GameService implements IGameService {
         console.log("That world doesn't exist", payload);
         return;
       }
-      await this.dbManager.saveGame(world.serialize());
+      await this.dbManager.saveGame(world.game.serialize());
     }
   }
 
@@ -119,7 +113,7 @@ export class GameService implements IGameService {
       id: gameId,
       name: dbGame.name,
       gameSaver: {
-        save: async (game: ServerGame) => {
+        save: async (game: Game) => {
           await this.dbManager.saveGame(game.serialize());
         },
       },
@@ -130,13 +124,20 @@ export class GameService implements IGameService {
       activePlayers: [],
     };
 
-    // add the world to our local list
-    const serverWorld = await ServerGame.make(gameData, this.socketInterface);
+    const game = await Game.make(gameData);
+
+    const serverGame = new ServerGame(
+      dbGame.config,
+      this.socketInterface,
+      game
+    );
 
     console.log("Created new game in memory");
 
-    this.games.set(gameId, serverWorld);
-    return serverWorld;
+    // add the world to our local list
+    this.games.set(gameId, serverGame);
+
+    return serverGame;
   }
 
   async getAllWorlds() {
@@ -154,7 +155,7 @@ export class GameService implements IGameService {
       id,
       name: options.name,
       gameSaver: {
-        save: async (game: ServerGame) => {
+        save: async (game: Game) => {
           await this.dbManager.saveGame(game.serialize());
         },
       },
@@ -164,12 +165,16 @@ export class GameService implements IGameService {
       activePlayers: [],
     };
 
-    const newWorld = await ServerGame.make(gameData, this.socketInterface);
+    const game = await Game.make(gameData);
 
-    await newWorld.baseLoad();
+    const serverUsecase = new ServerGame(
+      options.config,
+      this.socketInterface,
+      game
+    );
 
-    this.games.set(id, newWorld);
+    this.games.set(id, serverUsecase);
 
-    return newWorld;
+    return serverUsecase;
   }
 }

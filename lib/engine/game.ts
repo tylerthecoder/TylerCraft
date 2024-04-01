@@ -9,7 +9,7 @@ import { GameStateDiff, GameDiffDto } from "./gameStateDiff.js";
 import { Vector2D } from "./utils/vector.js";
 import { GameController } from "./controllers/controller.js";
 import CubeHelpers, { Cube } from "./entities/cube.js";
-import { Entity } from "./index.js";
+import { Entity, EntityController } from "./index.js";
 
 export interface ISerializedGame {
   config: IConfig;
@@ -27,20 +27,28 @@ export interface IGameMetadata {
 // Receives client actions from somewhere.
 // Generate dirty entities and dirty chunks.
 
-export abstract class Game {
+export class Game {
   public gameId: string;
   public name: string;
   public multiPlayer: boolean;
   public stateDiff: GameStateDiff;
-  public abstract controller: GameController;
-
   private gameActionHandler: GameActionHandler;
-  private previousTime = Date.now();
-
+  public gameController: GameController | null = null;
   private gameSaver: IGameSaver;
+
+  static async make(gameData: IGameData): Promise<Game> {
+    const entities = new EntityHolder(gameData.data?.entities);
+    const world = await World.make(gameData.chunkReader, gameData.data?.world);
+    const entityControllers = new Map<string, EntityController[]>();
+
+    const game = new Game(entities, entityControllers, world, gameData);
+
+    return game;
+  }
 
   constructor(
     public entities: EntityHolder,
+    public entityControllers: Map<string, EntityController[]>,
     public world: World,
     gameData: IGameData
   ) {
@@ -63,13 +71,6 @@ export abstract class Game {
     }
   }
 
-  // abstract load(): Promise<void>;
-  async baseLoad() {
-    // Setup timer
-    this.previousTime = Date.now();
-    this.baseUpdate();
-  }
-
   public serialize(): ISerializedGame {
     return {
       config: CONFIG,
@@ -80,32 +81,40 @@ export abstract class Game {
     };
   }
 
-  /**
-   * Called 20 times a second
-   */
-  abstract update(delta: number, stateDiff: GameStateDiff): void;
-  public baseUpdate() {
-    const now = Date.now();
-    const delta = now - this.previousTime;
+  private updateListeners: ((delta: number) => void)[] = [];
+  addUpdateListener(listener: (delta: number) => void) {
+    this.updateListeners.push(listener);
+  }
 
-    this.controller.update(delta);
+  public update(delta: number) {
+    this.gameController?.update(delta);
+
+    for (const entityController of this.entityControllers.values()) {
+      for (const controller of entityController) {
+        controller.update();
+      }
+    }
 
     this.entities.update(this, this.world, delta);
 
-    this.update(delta, this.stateDiff);
-
     this.stateDiff.clear();
 
-    this.previousTime = now;
-
-    setTimeout(this.baseUpdate.bind(this), 1000 / 40);
+    // Tell everyone else
+    for (const listener of this.updateListeners) {
+      listener(delta);
+    }
   }
 
+  private gameActionListeners: ((action: GameAction) => void)[] = [];
+  addGameActionListener(listener: (action: GameAction) => void) {
+    this.gameActionListeners.push(listener);
+  }
   /** This happens on a fast loop. Mark things that change as dirty */
-  abstract onGameAction(action: GameAction): void;
   public handleAction(action: GameAction) {
-    this.onGameAction(action);
     this.gameActionHandler.handle(action);
+    for (const listener of this.gameActionListeners) {
+      listener(action);
+    }
   }
 
   /** Currently only sent by server. Will quickly update the state of the game */
@@ -128,6 +137,7 @@ export abstract class Game {
       const adds = stateDiff.entities.add;
       for (const add of adds) {
         const ent = this.entities.createEntity(add);
+        console.log("Adding entity from stateDiff", add);
         this.entities.add(this.stateDiff, ent);
       }
     }
@@ -141,8 +151,20 @@ export abstract class Game {
 
     if (stateDiff.entities.remove) {
       const removes = stateDiff.entities.remove;
-      for (const remove of removes) {
-        this.entities.remove(remove);
+      for (const removeId of removes) {
+        console.log("Removing entity", removeId);
+        this.entities.remove(removeId);
+        // remove the controller for the entity
+        const controllers = this.entityControllers.get(removeId);
+
+        if (controllers) {
+          for (const controller of controllers) {
+            controller.cleanup();
+            this.entityControllers.delete(removeId);
+          }
+        }
+
+        console.log("EntityControllers", this.entityControllers);
       }
     }
   }
