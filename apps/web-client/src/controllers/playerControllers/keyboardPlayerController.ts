@@ -246,7 +246,7 @@ export class KeyboardPlayerEntityController extends EntityController {
 
   handleAction(action: PlayerAction) {
     console.log("Keyboard controller hanling action", action);
-    handlePlayerAction(this.clientGame, this.player, action);
+    handlePlayerAction(this.rendererUsecase.game, this.player, action);
   }
 
   sendPos() {
@@ -261,7 +261,7 @@ export class KeyboardPlayerEntityController extends EntityController {
   placeBlock() {
     this.handleAction(
       PlayerAction.make(PlayerActionType.PlaceBlock, {
-        cameraData: this.clientGame.camera.getRay(),
+        cameraData: this.rendererUsecase.camera.getRay(),
         playerUid: this.player.uid,
       })
     );
@@ -270,7 +270,7 @@ export class KeyboardPlayerEntityController extends EntityController {
   removeBlock() {
     this.handleAction(
       PlayerAction.make(PlayerActionType.RemoveBlock, {
-        cameraData: this.clientGame.camera.getRay(),
+        cameraData: this.rendererUsecase.camera.getRay(),
         playerUid: this.player.uid,
       })
     );

@@ -228,8 +228,6 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
   }
 
   update(delta: number) {
-    console.log("Updating player", this, this.pos.data);
-
     this.moveInDirections();
 
     this.onGround = false;

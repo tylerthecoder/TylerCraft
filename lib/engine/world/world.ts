@@ -268,8 +268,6 @@ export class World {
   pushOut(game: Game, ent: Entity) {
     const entDim = ent instanceof Entity ? ent.dim : CUBE_DIM;
 
-    console.log(ent);
-
     const ifCubeExistThenPushOut = (pos: Vector3D) => {
       pos.data = pos.data.map(Math.floor);
 

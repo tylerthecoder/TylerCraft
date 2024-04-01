@@ -21,15 +21,15 @@ export class TimerRunner {
   private lastTime = Date.now();
 
   constructor(private game: Game) {
-    // setInterval(this.update, 1000 / 40);
-    setInterval(this.update.bind(this), 1000 / 4);
+    setInterval(this.update.bind(this), 1000 / 40);
+    // setInterval(this.update.bind(this), 1000 / 4);
   }
 
   update() {
-    console.log("Updating");
     const now = Date.now();
     const diff = now - this.lastTime;
     this.game.update(diff);
+    this.lastTime = now;
   }
 }
 
@@ -114,6 +114,8 @@ export class BasicUsecase {
 
     const playerController = this.makePlayerController();
     game.entityControllers.set(this.mainPlayer.uid, [playerController]);
+
+    console.log("Main player pos 2", this.mainPlayer.pos);
   }
 
   update() {

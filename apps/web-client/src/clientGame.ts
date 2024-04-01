@@ -53,6 +53,7 @@ export class CanvasRenderUsecase {
     const stateDiff = this.game.stateDiff;
 
     for (const dirtyChunkId of stateDiff.getDirtyChunks()) {
+      console.log("Dirty chunk, rerendering", dirtyChunkId);
       this.worldRenderer.blockUpdate(dirtyChunkId);
     }
 

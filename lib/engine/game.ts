@@ -188,7 +188,7 @@ export class Game {
   }
 
   addPlayer(uid: string): Player {
-    return this.entities.createPlayer(this.stateDiff, uid);
+    return this.entities.createOrGetPlayer(this.stateDiff, uid);
   }
 
   addEntity(entity: Entity) {
