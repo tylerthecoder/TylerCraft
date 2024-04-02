@@ -285,7 +285,9 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
 
   // Right now this just send the action, the handling happens in playerAction.ts
   handleAction(action: PlayerAction) {
+    console.log("Handling actionin palyer", action);
     for (const listener of this.actionListeners) {
+      console.log("Calling listener");
       listener(action);
     }
   }

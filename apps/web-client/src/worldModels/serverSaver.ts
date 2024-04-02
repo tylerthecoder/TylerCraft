@@ -59,7 +59,6 @@ export class NetworkGameManager implements IGameManager {
       },
       config: welcomeMessage.config,
       name: welcomeMessage.name,
-      multiplayer: true,
     };
   }
 

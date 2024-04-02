@@ -73,7 +73,6 @@ export interface IGameData {
   config: IConfig;
   activePlayers?: string[];
   data?: ISerializedGame;
-  multiplayer?: boolean;
 }
 
 export interface IGameManager {

@@ -400,7 +400,9 @@ async function startGame(gameData: Engine.IGameData) {
   (window as IExtendedWindow).game = game;
   history.pushState("Game", "", `?worldId=${game.gameId}`);
 
-  WINDOW.usecase = new BasicUsecase(game);
+  const multiplayer = true;
+
+  WINDOW.usecase = new BasicUsecase(game, multiplayer);
 
   WINDOW.runner = new TimerRunner(game);
   // LoadingScreen.show("Building Mountains");

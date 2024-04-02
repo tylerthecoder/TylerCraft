@@ -1,11 +1,10 @@
-import { Camera, Game, Player, GameStateDiff } from "@craft/engine";
+import { Camera, Game, Player } from "@craft/engine";
 import { EntityCamera } from "./cameras/entityCamera";
 import { canvas } from "./canvas";
 import WorldRenderer from "./renders/worldRender";
 import { XrCamera } from "./cameras/xrCamera";
 
 // This class should only read game and not write.
-// It uses game data to draw the game to the screen and handle user input
 export class CanvasRenderUsecase {
   worldRenderer: WorldRenderer;
   isSpectating = false;
@@ -16,8 +15,6 @@ export class CanvasRenderUsecase {
 
   constructor(public game: Game, public mainPlayer: Player) {
     console.log("Canvas Render Usecase", this);
-
-    game.addUpdateListener(this.update.bind(this));
 
     this.worldRenderer = new WorldRenderer(game.world, this);
     this.worldRenderer.shouldRenderMainPlayer = false;
@@ -39,6 +36,7 @@ export class CanvasRenderUsecase {
       : new EntityCamera(this.mainPlayer);
 
     canvas.loop(this.renderLoop.bind(this));
+    game.addUpdateListener(this.update.bind(this));
   }
 
   get frameRate() {
@@ -58,7 +56,11 @@ export class CanvasRenderUsecase {
     }
 
     for (const entityId of stateDiff.getNewEntities()) {
-      const entity = this.game.entities.get(entityId);
+      const entity = this.game.entities.tryGet(entityId);
+      if (!entity) {
+        console.warn("Entity not found", entityId);
+        continue;
+      }
       this.worldRenderer.addEntity(entity);
     }
 

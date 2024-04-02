@@ -30,7 +30,6 @@ export interface IGameMetadata {
 export class Game {
   public gameId: string;
   public name: string;
-  public multiPlayer: boolean;
   public stateDiff: GameStateDiff;
   private gameActionHandler: GameActionHandler;
   public gameController: GameController | null = null;
@@ -57,8 +56,6 @@ export class Game {
     this.gameSaver = gameData.gameSaver;
     this.stateDiff = new GameStateDiff(this);
     this.gameActionHandler = new GameActionHandler(this);
-
-    this.multiPlayer = Boolean(gameData.multiplayer);
 
     this.gameId = gameData.id;
     this.name = gameData.name;
@@ -97,12 +94,12 @@ export class Game {
 
     this.entities.update(this, this.world, delta);
 
-    this.stateDiff.clear();
-
     // Tell everyone else
     for (const listener of this.updateListeners) {
       listener(delta);
     }
+
+    this.stateDiff.clear();
   }
 
   private gameActionListeners: ((action: GameAction) => void)[] = [];

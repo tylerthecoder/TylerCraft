@@ -42,9 +42,14 @@ export abstract class MovableEntity<
   baseUpdate(delta: number) {
     if (this.gravitable && !this.onGround) this.gravity();
 
-    // if we leave the tab for a long time delta gets very big.
-    // idk if this is the best solution but I'm going to make them stop moving
-    const scaleFactor = delta > 10000 ? 0 : delta / 16;
+    // if we leave the tab for a long time delta gets very big, and the play falls out of the world.
+    // I'm just going to make them not move for now, but I need to remove make the system more tollerant of large deltas
+    if (delta > 100) {
+      console.log("Skipping update, delta is too large", delta);
+      return;
+    }
+
+    const scaleFactor = delta / 16;
     const scaledVel = this.vel.scalarMultiply(scaleFactor);
 
     this.pos = this.pos.add(scaledVel);
