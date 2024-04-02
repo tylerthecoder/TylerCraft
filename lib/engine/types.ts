@@ -81,6 +81,7 @@ export interface IGameManager {
   getAllGames(): Promise<IGameMetadata[]>;
   saveGame(game: Game): Promise<void>;
   deleteGame(gameId: string): Promise<void>;
+  startGame(game: Game): Promise<void>;
 }
 
 export enum ISocketMessageType {

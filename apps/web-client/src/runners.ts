@@ -6,7 +6,6 @@ import { KeyboardPlayerEntityController } from "./controllers/playerControllers/
 import { Quest2Controller } from "./controllers/playerControllers/quest2Controller";
 import { MobileController } from "./controllers/playerControllers/mobileController";
 import { CanvasRenderUsecase } from "./clientGame";
-import { MultiplayerUseCase } from "./multiplayer";
 
 export class TimerRunner {
   private lastTime = Date.now();
@@ -25,7 +24,7 @@ export class TimerRunner {
 }
 
 export class BasicUsecase {
-  private mainPlayer: Player;
+  public mainPlayer: Player;
 
   private renderUsecase: CanvasRenderUsecase;
 
@@ -42,28 +41,19 @@ export class BasicUsecase {
     }
   }
 
-  constructor(private game: Game, isMultiplayer: boolean) {
+  constructor(private game: Game) {
     console.log("Starting basic usecase");
     console.log("My UID", getMyUid());
     game.addUpdateListener(this.update.bind(this));
     this.mainPlayer = game.addPlayer(getMyUid());
-
     console.log("Main player", this.mainPlayer);
 
-    console.log("Main player pos", this.mainPlayer.pos);
-
     this.renderUsecase = new CanvasRenderUsecase(game, this.mainPlayer);
-
-    if (isMultiplayer) {
-      new MultiplayerUseCase(game, this.mainPlayer);
-    }
 
     game.gameController = new MouseAndKeyboardGameController(game);
 
     const playerController = this.makePlayerController();
     game.entityControllers.set(this.mainPlayer.uid, [playerController]);
-
-    console.log("Main player pos 2", this.mainPlayer.pos);
   }
 
   update() {

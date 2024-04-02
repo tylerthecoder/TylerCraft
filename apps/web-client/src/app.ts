@@ -10,21 +10,18 @@ import {
   IGameManager,
   IGameMetadata,
 } from "@craft/engine";
-import { NetworkGameManager } from "./worldModels/serverSaver";
 import { SocketHandler } from "./socket";
-import { ClientDbGameManger } from "./worldModels/clientdb";
 import { renderWorldPicker } from "./world-picker";
 import { createRoot } from "react-dom/client";
 import { BasicUsecase, TimerRunner } from "./runners";
+import { ClientDbGameManger } from "./singleplayer";
+import { NetworkGameManager } from "./multiplayer";
 
 export interface IExtendedWindow extends Window {
-  clientDb?: ClientDbGameManger;
   game?: Game;
   usecase?: BasicUsecase;
   runner?: TimerRunner;
 }
-
-const WINDOW = window as IExtendedWindow;
 
 export const IS_MOBILE = /Mobi/.test(window.navigator.userAgent);
 console.log("Is Mobile: ", IS_MOBILE);
@@ -118,7 +115,6 @@ if (location.hash === "#local") {
 
 export async function getLocalWorldModel() {
   const clientDb = await ClientDbGameManger.factory();
-  (window as IExtendedWindow).clientDb = clientDb;
   return clientDb;
 }
 
@@ -145,7 +141,7 @@ async function loadGameFromUrl() {
   const findAndStartGame = async (gameManager: IGameManager) => {
     const gameData = await gameManager.getGame(gameId);
     if (gameData) {
-      await startGame(gameData);
+      await startGame(gameManager, gameData);
       return true;
     }
     return false;
@@ -226,7 +222,7 @@ async function showWorldPicker(
       throw new Error("World wasn't found. Db must be effed up");
     }
 
-    await startGame(gameData);
+    await startGame(gameManager, gameData);
   };
 
   const onNewGame = () => {
@@ -381,10 +377,13 @@ async function createGame(
     config,
     name,
   });
-  await startGame(gameData);
+  await startGame(gameManager, gameData);
 }
 
-async function startGame(gameData: Engine.IGameData) {
+async function startGame(
+  gameManager: IGameManager,
+  gameData: Engine.IGameData
+) {
   hideElement(eWorldOptionsScreen);
   hideElement(eStartMenu);
   console.log("Starting Game", gameData);
@@ -400,13 +399,9 @@ async function startGame(gameData: Engine.IGameData) {
   (window as IExtendedWindow).game = game;
   history.pushState("Game", "", `?worldId=${game.gameId}`);
 
-  const multiplayer = true;
+  LoadingScreen.show("Building Mountains");
 
-  WINDOW.usecase = new BasicUsecase(game, multiplayer);
-
-  WINDOW.runner = new TimerRunner(game);
-  // LoadingScreen.show("Building Mountains");
-  // await game.baseLoad();
+  await gameManager.startGame(game);
 
   console.log("Game Loaded");
 
