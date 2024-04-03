@@ -11,21 +11,19 @@ import {
   Game,
   GameAction,
   ISocketMessageType,
-  Player,
   PlayerAction,
   SocketMessage,
-  handlePlayerAction,
 } from "@craft/engine";
-import { SocketInterface, getMyUid } from "./app";
-import { SocketListener } from "./socket";
-import { ApiService } from "./services/api-service";
-import { BasicUsecase, TimerRunner } from "./runners";
+import { BasicUsecase, TimerRunner } from "./basic";
+import { SocketListener } from "../socket";
+import { SocketInterface, getMyUid } from "../app";
+import { ApiService } from "../services/api-service";
 
 export class NetworkGameManager implements IGameManager {
   async startGame(game: Game): Promise<void> {
     new TimerRunner(game);
     const basicUsecase = new BasicUsecase(game);
-    new MultiplayerGameScript(game, basicUsecase.mainPlayer);
+    new MultiplayerGameScript(basicUsecase);
   }
 
   private async waitForWelcomeMessage() {
@@ -163,9 +161,12 @@ class ServerChunkReader implements IChunkReader {
 export class MultiplayerGameScript {
   debug = true;
 
-  constructor(private game: Game, private mainPlayer: Player) {
-    game.addGameActionListener(this.onGameAction.bind(this));
-    mainPlayer.addActionListener(this.onPlayerAction.bind(this));
+  constructor(private basicUsecase: BasicUsecase) {
+    basicUsecase.game.addGameActionListener(this.onGameAction.bind(this));
+    basicUsecase.playerActionService.addActionListener(
+      basicUsecase.mainPlayer.uid,
+      this.onPlayerAction.bind(this)
+    );
     SocketInterface.addListener(this.onSocketMessage.bind(this));
   }
 
@@ -189,28 +190,20 @@ export class MultiplayerGameScript {
 
   onSocketMessage(message: SocketMessage) {
     if (message.isType(ISocketMessageType.gameDiff)) {
-      this.game.handleStateDiff(message.data);
+      this.basicUsecase.game.handleStateDiff(message.data);
     } else if (message.isType(ISocketMessageType.playerActions)) {
-      if (message.data.data.playerUid === this.mainPlayer.uid) return;
-
-      const player = this.game.entities.tryGet(message.data.data.playerUid);
-
-      if (!player) {
-        console.log("Player not found", message.data.data.playerUid);
+      if (message.data.data.playerUid === this.basicUsecase.mainPlayer.uid)
         return;
-      }
-
-      if (!(player instanceof Player)) {
-        console.log("Entity is not a player", player);
-        return;
-      }
 
       const playerAction = new PlayerAction(
         message.data.type,
         message.data.data
       );
 
-      handlePlayerAction(this.game, player, playerAction);
+      this.basicUsecase.playerActionService.performAction(
+        message.data.data.playerUid,
+        playerAction
+      );
     }
   }
 }

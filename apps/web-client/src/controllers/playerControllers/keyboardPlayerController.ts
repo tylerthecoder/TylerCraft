@@ -6,10 +6,9 @@ import {
   Player,
   PlayerAction,
   PlayerActionType,
-  handlePlayerAction,
 } from "@craft/engine";
 import { canvas } from "../../canvas";
-import { CanvasRenderUsecase } from "../../clientGame";
+import { CanvasRenderUsecase } from "../../usecases/canvas-usecase";
 
 export class KeyboardPlayerEntityController extends EntityController {
   cleanup(): void {
@@ -26,6 +25,7 @@ export class KeyboardPlayerEntityController extends EntityController {
 
   constructor(
     private player: Player,
+    private sendAction: (action: PlayerAction) => void,
     private rendererUsecase: CanvasRenderUsecase
   ) {
     super();
@@ -245,7 +245,7 @@ export class KeyboardPlayerEntityController extends EntityController {
 
   handleAction(action: PlayerAction) {
     console.log("Keyboard controller hanling action", action);
-    handlePlayerAction(this.rendererUsecase.game, this.player, action);
+    this.sendAction(action);
   }
 
   sendPos() {

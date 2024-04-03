@@ -120,7 +120,6 @@ export class GameService {
       chunkReader: new RamChunkReader(dbGame),
       data: dbGame,
       config: dbGame.config,
-      multiplayer: true,
       activePlayers: [],
     };
 
@@ -161,7 +160,6 @@ export class GameService {
       },
       chunkReader: new RamChunkReader(),
       config: options.config,
-      multiplayer: true,
       activePlayers: [],
     };
 

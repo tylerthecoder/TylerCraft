@@ -1,6 +1,6 @@
 import { Player, Camera, Vector3D, IDim } from "@craft/engine";
 import { RenderData, Renderer } from "./renderer";
-import ShapeBuilder from "../services/shapeBuilder";
+import ShapeBuilder from "../services/shape-builder";
 import { canvas } from "../canvas";
 import TextureMapper from "../textureMapper";
 

@@ -13,14 +13,11 @@ import {
 import { SocketHandler } from "./socket";
 import { renderWorldPicker } from "./world-picker";
 import { createRoot } from "react-dom/client";
-import { BasicUsecase, TimerRunner } from "./runners";
-import { ClientDbGameManger } from "./singleplayer";
-import { NetworkGameManager } from "./multiplayer";
+import { ClientDbGameManger } from "./usecases/singleplayer";
+import { NetworkGameManager } from "./usecases/multiplayer";
 
 export interface IExtendedWindow extends Window {
   game?: Game;
-  usecase?: BasicUsecase;
-  runner?: TimerRunner;
 }
 
 export const IS_MOBILE = /Mobi/.test(window.navigator.userAgent);

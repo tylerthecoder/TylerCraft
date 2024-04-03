@@ -3,25 +3,12 @@ import {
   Vector2D,
   EntityController,
   Player,
-  handlePlayerAction,
   PlayerAction,
   PlayerActionType,
 } from "@craft/engine";
-import { ClientGame } from "../../clientGame";
-
-interface IMobileState {
-  pressing: {
-    up: boolean;
-  };
-}
+import { CanvasRenderUsecase } from "../../usecases/canvas-usecase";
 
 export class MobileController extends EntityController {
-  private state: IMobileState = {
-    pressing: {
-      up: false,
-    },
-  };
-
   private eForwardButton = document.getElementById("forwardButton")!;
   private eJumpButton = document.getElementById("jumpButton")!;
   private eToolbeltItems = Array.from(
@@ -30,7 +17,12 @@ export class MobileController extends EntityController {
   private eUseItemButton = document.getElementById("useItemButton")!;
   private eUseItemButton2 = document.getElementById("useItemButton2")!;
 
-  constructor(public clientGame: ClientGame, private player: Player) {
+  constructor(
+    private player: Player,
+    private sendAction: (action: PlayerAction) => void,
+    private rendererUsecase: CanvasRenderUsecase
+  ) {
+    super();
     super();
 
     let lastWindowTouch: Touch;
@@ -66,7 +58,7 @@ export class MobileController extends EntityController {
 
         lastTouchStartPos.data = [touch.clientX, touch.clientY];
 
-        this.clientGame.camera.rotateBy(-dx, -dy);
+        this.rendererUsecase.camera.rotateBy(-dx, -dy);
       },
       { passive: false }
     );
@@ -188,7 +180,7 @@ export class MobileController extends EntityController {
       this.handleAction(
         PlayerAction.make(PlayerActionType.PlaceBlock, {
           playerUid: this.player.uid,
-          cameraData: this.clientGame.camera.getRay(),
+          cameraData: this.rendererUsecase.camera.getRay(),
         })
       );
     });
@@ -210,7 +202,7 @@ export class MobileController extends EntityController {
       this.handleAction(
         PlayerAction.make(PlayerActionType.RemoveBlock, {
           playerUid: this.player.uid,
-          cameraData: this.clientGame.camera.getRay(),
+          cameraData: this.rendererUsecase.camera.getRay(),
         })
       );
     });
@@ -227,8 +219,8 @@ export class MobileController extends EntityController {
   }
 
   handleAction(action: PlayerAction) {
-    console.log("Keyboard controller hanling action", action);
-    handlePlayerAction(this.clientGame, this.player, action);
+    console.log("Mobile controller hanling action", action);
+    this.sendAction(action);
   }
 
   update() {

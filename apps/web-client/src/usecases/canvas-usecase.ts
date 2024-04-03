@@ -1,8 +1,8 @@
 import { Camera, Game, Player } from "@craft/engine";
-import { EntityCamera } from "./cameras/entityCamera";
-import { canvas } from "./canvas";
-import WorldRenderer from "./renders/worldRender";
-import { XrCamera } from "./cameras/xrCamera";
+import WorldRenderer from "../renders/worldRender";
+import { XrCamera } from "../cameras/xrCamera";
+import { canvas } from "../canvas";
+import { EntityCamera } from "../cameras/entityCamera";
 
 // This class should only read game and not write.
 export class CanvasRenderUsecase {

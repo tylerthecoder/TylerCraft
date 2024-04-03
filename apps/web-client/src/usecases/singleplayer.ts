@@ -1,4 +1,3 @@
-import { BasicUsecase, TimerRunner } from "./runners";
 import {
   Game,
   IGameMetadata,
@@ -15,7 +14,8 @@ import {
   IGameSaver,
 } from "@craft/engine";
 import { TerrainGenModule } from "@craft/engine/modules";
-import TerrainWorker from "./workers/terrain.worker?worker";
+import TerrainWorker from "../workers/terrain.worker?worker";
+import { BasicUsecase, TimerRunner } from "./basic";
 
 const USE_WASM_CHUNK_GETTER = true;
 
@@ -261,8 +261,4 @@ export class ClientDbGameManger implements IGameManager {
     const objStore = transaction.objectStore("worlds");
     objStore.delete(gameId);
   }
-}
-
-export class SinglePlayerUsecase {
-  constructor(game: Game) {}
 }

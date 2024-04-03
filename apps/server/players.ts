@@ -5,8 +5,8 @@ import {
   ISocketMessageType,
   Player,
   PlayerAction,
+  PlayerActionService,
   SocketMessage,
-  handlePlayerAction,
 } from "@craft/engine";
 import WebSocket from "ws";
 import SocketServer from "./socket";
@@ -14,7 +14,11 @@ import SocketServer from "./socket";
 export default class Players {
   players: Map<WebSocket, Player> = new Map();
 
-  constructor(public game: Game, private socketInterface: SocketServer) {}
+  private playerActionsService: PlayerActionService;
+
+  constructor(public game: Game, private socketInterface: SocketServer) {
+    this.playerActionsService = new PlayerActionService(this.game);
+  }
 
   getSockets(): WebSocket[] {
     return Array.from(this.players.keys());
@@ -116,7 +120,7 @@ export default class Players {
     if (!player) {
       return;
     }
-    handlePlayerAction(this.game, player, playerAction);
+    this.playerActionsService.performAction(player.uid, playerAction);
 
     // tell everyone about the new action
     this.sendMessageToAll(
