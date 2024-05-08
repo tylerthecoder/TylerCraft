@@ -1,19 +1,21 @@
 import {
   Chunk,
+  EntityController,
+  EntityHolder,
+  Game,
   IChunkReader,
   ICreateGameOptions,
-  IGameData,
-  IGameMetadata,
   ISerializedGame,
   ISocketMessageType,
   SocketMessage,
   TerrainGenerator,
   Vector2D,
+  World,
   WorldModule,
   setConfig,
 } from "@craft/engine";
 import { ServerGame } from "./server-game.js";
-import Websocket, { WebSocketServer } from "ws";
+import Websocket from "ws";
 import { IDbManager } from "./db.js";
 import SocketServer from "./socket.js";
 
@@ -42,13 +44,7 @@ export class RamChunkReader implements IChunkReader {
   }
 }
 
-export interface IGameService {
-  getWorld(gameId: string): Promise<ServerGame | null>;
-  getAllWorlds(): Promise<IGameMetadata[]>;
-  createGame(options: ICreateGameOptions): Promise<ServerGame>;
-}
-
-export class GameService implements IGameService {
+export class GameService {
   private games: Map<string, ServerGame> = new Map();
 
   constructor(
@@ -87,7 +83,7 @@ export class GameService implements IGameService {
     } else if (message.isType(ISocketMessageType.newWorld)) {
       const payload = message.data;
       const world = await this.createGame(payload);
-      console.log("Create Id: ", world.gameId);
+      console.log("Create Id: ", world.game.gameId);
       world.addSocket(payload.myUid, ws);
     } else if (message.isType(ISocketMessageType.saveWorld)) {
       const payload = message.data;
@@ -96,17 +92,17 @@ export class GameService implements IGameService {
         console.log("That world doesn't exist", payload);
         return;
       }
-      await this.dbManager.saveGame(world.serialize());
+      await this.dbManager.saveGame(world.game.serialize());
     }
   }
 
   async getWorld(gameId: string): Promise<ServerGame | null> {
     console.log("Getting game", gameId);
 
-    const world = this.games.get(gameId);
-    if (world) {
+    const foundGame = this.games.get(gameId);
+    if (foundGame) {
       console.log("Found game in memory");
-      return world;
+      return foundGame;
     }
 
     const dbGame = await this.dbManager.getGame(gameId);
@@ -115,28 +111,27 @@ export class GameService implements IGameService {
       return null;
     }
 
-    const gameData: IGameData = {
-      id: gameId,
-      name: dbGame.name,
-      gameSaver: {
-        save: async (game: ServerGame) => {
-          await this.dbManager.saveGame(game.serialize());
-        },
+    const chunkReader = new RamChunkReader(dbGame);
+    const gameSaver = {
+      save: async (game: Game) => {
+        await this.dbManager.saveGame(game.serialize());
       },
-      chunkReader: new RamChunkReader(dbGame),
-      data: dbGame,
-      config: dbGame.config,
-      multiplayer: true,
-      activePlayers: [],
     };
 
-    // add the world to our local list
-    const serverWorld = await ServerGame.make(gameData, this.socketInterface);
+    const game = await Game.make(dbGame, chunkReader, gameSaver);
+
+    const serverGame = new ServerGame(
+      dbGame.config,
+      this.socketInterface,
+      game
+    );
 
     console.log("Created new game in memory");
 
-    this.games.set(gameId, serverWorld);
-    return serverWorld;
+    // add the world to our local list
+    this.games.set(gameId, serverGame);
+
+    return serverGame;
   }
 
   async getAllWorlds() {
@@ -150,26 +145,35 @@ export class GameService implements IGameService {
 
     const id = String(Math.random());
 
-    const gameData: IGameData = {
-      id,
-      name: options.name,
-      gameSaver: {
-        save: async (game: ServerGame) => {
-          await this.dbManager.saveGame(game.serialize());
-        },
+    const gameSaver = {
+      save: async (game: Game) => {
+        await this.dbManager.saveGame(game.serialize());
       },
-      chunkReader: new RamChunkReader(),
-      config: options.config,
-      multiplayer: true,
-      activePlayers: [],
     };
+    const chunkReader = new RamChunkReader();
 
-    const newWorld = await ServerGame.make(gameData, this.socketInterface);
+    const world = await World.make(chunkReader);
+    const entities = new EntityHolder();
+    const entityControllers = new Map<string, EntityController[]>();
 
-    await newWorld.baseLoad();
+    const game = new Game(
+      id,
+      options.name,
+      options.config,
+      entities,
+      entityControllers,
+      world,
+      gameSaver
+    );
 
-    this.games.set(id, newWorld);
+    const serverUsecase = new ServerGame(
+      options.config,
+      this.socketInterface,
+      game
+    );
 
-    return newWorld;
+    this.games.set(id, serverUsecase);
+
+    return serverUsecase;
   }
 }

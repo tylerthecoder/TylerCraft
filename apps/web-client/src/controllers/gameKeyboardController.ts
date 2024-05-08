@@ -1,4 +1,9 @@
-import { GameAction, GameActionType, GameController } from "@craft/engine";
+import {
+  Game,
+  GameAction,
+  GameActionType,
+  GameController,
+} from "@craft/engine";
 import { ClientGame } from "../clientGame";
 
 function getEleOrError(id: string): HTMLElement {
@@ -18,7 +23,7 @@ export class MouseAndKeyboardGameController extends GameController {
   private eGameNameInput = getEleOrError("gameNameInput") as HTMLInputElement;
   private eSaveButton = getEleOrError("saveButton") as HTMLButtonElement;
 
-  constructor(private clientGame: ClientGame) {
+  constructor(private clientGame: Game) {
     super(clientGame);
 
     this.fullScreenButton.addEventListener("click", () => {

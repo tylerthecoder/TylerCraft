@@ -5,6 +5,7 @@
     "apps/server",
     "apps/terrain-app",
     "apps/web-client",
+    "usecases/parkor",
     "lib/engine",
     "lib/world",
     "lib/terrain-gen",

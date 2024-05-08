@@ -11,6 +11,7 @@ import { IEntityType } from "../entityType.js";
 import { BlockType } from "@craft/rust-world";
 import { Item, ThrowableItem } from "../../item.js";
 import { Projectile } from "../projectile.js";
+import { PlayerAction } from "./playerActions.js";
 
 export interface BeltDto {
   selectedBlock: Item;
@@ -275,6 +276,20 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     const { cube } = lookingData;
     if (!cube) return;
     game.removeBlock(cube);
+  }
+
+  private actionListeners: ((action: PlayerAction) => void)[] = [];
+  addActionListener(listener: (action: PlayerAction) => void) {
+    this.actionListeners.push(listener);
+  }
+
+  // Right now this just send the action, the handling happens in playerAction.ts
+  handleAction(action: PlayerAction) {
+    console.log("Handling actionin palyer", action);
+    for (const listener of this.actionListeners) {
+      console.log("Calling listener");
+      listener(action);
+    }
   }
 
   // Player actions

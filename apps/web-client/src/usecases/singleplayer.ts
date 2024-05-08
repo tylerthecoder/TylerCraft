@@ -10,11 +10,14 @@ import {
   IConfig,
   IChunkReader,
   ICreateGameOptions,
-  IGameData,
   IGameSaver,
+  World,
+  EntityController,
+  EntityHolder,
 } from "@craft/engine";
 import { TerrainGenModule } from "@craft/engine/modules";
 import TerrainWorker from "../workers/terrain.worker?worker";
+import { BasicUsecase, TimerRunner } from "./basic";
 
 const USE_WASM_CHUNK_GETTER = true;
 
@@ -121,6 +124,11 @@ export class ClientDbGameManger implements IGameManager {
 
   private constructor(private db: IDBDatabase) {}
 
+  async startGame(game: Game): Promise<void> {
+    new TimerRunner(game);
+    new BasicUsecase(game);
+  }
+
   private getChunkReader = async (config: IConfig): Promise<IChunkReader> => {
     if (USE_WASM_CHUNK_GETTER) {
       return WasmChunkGetter(config);
@@ -140,14 +148,27 @@ export class ClientDbGameManger implements IGameManager {
     };
   };
 
-  async createGame(createGameOptions: ICreateGameOptions): Promise<IGameData> {
-    return {
-      id: String(Math.random()),
-      chunkReader: await this.getChunkReader(createGameOptions.config),
-      gameSaver: this.getGameSaver(),
-      name: createGameOptions.name,
-      config: createGameOptions.config,
-    };
+  async createGame(createGameOptions: ICreateGameOptions): Promise<Game> {
+    const gameId = String(Math.random());
+    const name = createGameOptions.name;
+    const config = createGameOptions.config;
+    const chunkReader = await this.getChunkReader(createGameOptions.config);
+    const world = await World.make(chunkReader);
+    const entityControllers = new Map<string, EntityController[]>();
+    const entities = new EntityHolder();
+    const gameSaver = this.getGameSaver();
+
+    const game = new Game(
+      gameId,
+      name,
+      config,
+      entities,
+      entityControllers,
+      world,
+      gameSaver
+    );
+
+    return game;
   }
 
   getAllGames(): Promise<IGameMetadata[]> {
@@ -174,8 +195,8 @@ export class ClientDbGameManger implements IGameManager {
     });
   }
 
-  async getGame(gameId: string): Promise<IGameData | null> {
-    const world: ISerializedGame | null = await new Promise((resolve) => {
+  async getGame(gameId: string): Promise<Game | null> {
+    const foundGame: ISerializedGame | null = await new Promise((resolve) => {
       const transaction = this.db.transaction([ClientDbGameManger.WORLDS_OBS]);
       const objectStore = transaction.objectStore(
         ClientDbGameManger.WORLDS_OBS
@@ -193,31 +214,15 @@ export class ClientDbGameManger implements IGameManager {
       };
     });
 
-    if (!world) return null;
+    if (!foundGame) return null;
 
-    // later have an entire object store to keep chunks in.
-    const chunkMap = new Map<string, ISerializedChunk>();
-    for (const chunk of world.world.chunks) {
-      chunkMap.set(chunk.chunkId, chunk);
-    }
+    const chunkReader = await this.getChunkReader(foundGame.config);
 
-    return {
-      data: {
-        gameId: world.gameId,
-        config: world.config,
-        entities: world.entities,
-        world: {
-          chunks: [],
-        },
-        name: world.name,
-      },
-      gameSaver: this.getGameSaver(),
-      config: world.config,
-      chunkReader: await this.getChunkReader(world.config),
-      activePlayers: [],
-      id: gameId,
-      name: world.name,
-    };
+    const game = await Game.make(foundGame, chunkReader, this.getGameSaver());
+
+    new BasicUsecase(game);
+
+    return game;
   }
 
   async saveGame(data: Game) {

@@ -13,7 +13,7 @@ import { Renderer } from "./renderer";
 import { canvas } from "../canvas";
 import { ChunkRenderer } from "./chunkRender";
 import { HudRenderer } from "./hudRender";
-import { ClientGame } from "../clientGame";
+import { CanvasRenderUsecase } from "../clientGame";
 import { SphereRenderer } from "./sphereRender";
 import { PlayerRenderer } from "./playerRender";
 import { BlockType } from "@craft/rust-world";
@@ -24,8 +24,11 @@ export default class WorldRenderer {
   private chunkRenderers: Map<string, ChunkRenderer> = new Map();
   shouldRenderMainPlayer = true;
 
-  constructor(private world: World, game: ClientGame) {
-    const hudCanvas = new HudRenderer(canvas, game);
+  constructor(
+    private world: World,
+    private rendererUsecase: CanvasRenderUsecase
+  ) {
+    const hudCanvas = new HudRenderer(canvas, rendererUsecase);
     this.renderers.push(hudCanvas);
   }
 
@@ -93,8 +96,8 @@ export default class WorldRenderer {
     chunkRenderer.render(camera);
   }
 
-  render(game: ClientGame) {
-    const camera = game.camera;
+  render() {
+    const camera = this.rendererUsecase.camera;
 
     const filter = this.getFilter(camera);
     if (filter) {
@@ -111,7 +114,7 @@ export default class WorldRenderer {
       // Skip rendering the player if we aren't supposed to
       if (
         entityRenderer instanceof PlayerRenderer &&
-        entityRenderer.player === game.mainPlayer &&
+        entityRenderer.player === this.rendererUsecase.mainPlayer &&
         !this.shouldRenderMainPlayer
       ) {
         continue;

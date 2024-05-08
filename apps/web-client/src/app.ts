@@ -10,18 +10,18 @@ import {
   IGameManager,
   IGameMetadata,
 } from "@craft/engine";
-import { NetworkGameManager } from "./worldModels/serverSaver";
-import { ClientGame } from "./clientGame";
 import { SocketHandler } from "./socket";
-import { ClientDbGameManger } from "./worldModels/clientdb";
 import { renderWorldPicker } from "./world-picker";
 import { createRoot } from "react-dom/client";
+import { ClientDbGameManger } from "./usecases/singleplayer";
+import { NetworkGameManager } from "./usecases/multiplayer";
 
 export interface IExtendedWindow extends Window {
-  clientDb?: ClientDbGameManger;
   game?: Game;
-  clientGame?: ClientGame;
 }
+
+// Loading the engine
+await Engine.WorldModule.load();
 
 export const IS_MOBILE = /Mobi/.test(window.navigator.userAgent);
 console.log("Is Mobile: ", IS_MOBILE);
@@ -115,7 +115,6 @@ if (location.hash === "#local") {
 
 export async function getLocalWorldModel() {
   const clientDb = await ClientDbGameManger.factory();
-  (window as IExtendedWindow).clientDb = clientDb;
   return clientDb;
 }
 
@@ -142,7 +141,7 @@ async function loadGameFromUrl() {
   const findAndStartGame = async (gameManager: IGameManager) => {
     const gameData = await gameManager.getGame(gameId);
     if (gameData) {
-      await startGame(gameData);
+      await startGame(gameManager, gameData);
       return true;
     }
     return false;
@@ -223,7 +222,7 @@ async function showWorldPicker(
       throw new Error("World wasn't found. Db must be effed up");
     }
 
-    await startGame(gameData);
+    await startGame(gameManager, gameData);
   };
 
   const onNewGame = () => {
@@ -361,44 +360,45 @@ function showWorldOptionsScreen(gameManager: IGameManager, onBack: () => void) {
 
     const name = formData.get("name") as string;
 
-    await createGame(gameManager, CONFIG, name);
+    await createGame(gameManager, { config: CONFIG, name });
   });
 }
 
 async function createGame(
   gameManager: IGameManager,
-  config: typeof CONFIG,
-  name: string
+  createGameOptions: Engine.ICreateGameOptions
 ) {
   hideElement(eWorldOptionsScreen);
   hideElement(eStartMenu);
-  console.log("Creating Game | name=", name, "config=", config);
-  LoadingScreen.show("Booting up");
-  const gameData = await gameManager.createGame({
-    config,
-    name,
-  });
-  await startGame(gameData);
-}
-
-async function startGame(gameData: Engine.IGameData) {
-  hideElement(eWorldOptionsScreen);
-  hideElement(eStartMenu);
-  console.log("Starting Game", gameData);
-  LoadingScreen.show("Gathering Materials");
-  await Engine.WorldModule.load();
 
   LoadingScreen.show("Painting the Sky");
-  console.log("Loading game");
-  const game = await ClientGame.make(gameData);
+  await Engine.WorldModule.load();
+
+  console.log("Creating Game | options=", createGameOptions);
+
+  LoadingScreen.show("Forming clouds");
+  const game = await gameManager.createGame(createGameOptions);
+
+  await startGame(gameManager, game);
+}
+
+async function startGame(gameManager: IGameManager, game: Engine.Game) {
+  hideElement(eWorldOptionsScreen);
+  hideElement(eStartMenu);
+  console.log("Starting Game", game);
+
+  LoadingScreen.show("Painting the Sky");
+
   console.log("Game Loaded, Starting game", game);
 
   (window as IExtendedWindow).game = game;
   history.pushState("Game", "", `?worldId=${game.gameId}`);
 
   LoadingScreen.show("Building Mountains");
-  await game.baseLoad();
-  console.log("Game Loaded");
+
+  await gameManager.startGame(game);
+
+  console.log("Game Started");
 
   LoadingScreen.fade();
   ePickWorldScreen.classList.add("fade");

@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import { Renderer } from "./renderer";
-import { Camera, PlayerItem, Vector2D } from "@craft/engine";
+import { Camera, Game, Player, Vector2D } from "@craft/engine";
 import { CanvasProgram } from "../canvas";
-import { ClientGame } from "../clientGame";
 import TextureMapper from "../textureMapper";
 import { IS_MOBILE } from "../app";
 import { Quest2Controller } from "../controllers/playerControllers/quest2Controller";
+import { CanvasRenderUsecase } from "../clientGame";
 
 function hide(e: HTMLElement) {
   e.style.display = "none";
@@ -24,7 +24,10 @@ export class HudRenderer extends Renderer {
   private eForwardButton = document.getElementById("forwardButton")!;
   private eJumpButton = document.getElementById("jumpButton")!;
 
-  constructor(public canvas: CanvasProgram, public game: ClientGame) {
+  constructor(
+    public canvas: CanvasProgram,
+    private rendererUsecase: CanvasRenderUsecase
+  ) {
     super();
     this.textureImg = document.createElement("img");
     this.textureImg.src = "./img/texture_map.png";
@@ -79,12 +82,12 @@ export class HudRenderer extends Renderer {
   drawStats(camera: Camera) {
     const cameraPos = camera.pos.data.map(Math.floor).join(",");
 
-    const numChunks = this.game.world.getChunks().length;
+    const numChunks = this.rendererUsecase.game.world.getChunks().length;
 
     const statsElement = document.getElementById("stats")!;
     const statsString = `
       playerPos: ${cameraPos} <br />
-      fps: ${this.game.frameRate.toFixed(0)} <br />
+      fps: ${this.rendererUsecase.frameRate.toFixed(0)} <br />
       numChunks: ${numChunks}
     `;
     if (this.lastStats !== statsString) {
@@ -92,7 +95,7 @@ export class HudRenderer extends Renderer {
       this.lastStats = statsString;
     }
 
-    if (this.game.controller instanceof Quest2Controller) {
+    if (this.rendererUsecase.game.gameController instanceof Quest2Controller) {
       const rotVec = new Vector2D([camera.rot.get(0), camera.rot.get(1)]);
       rotVec.data = rotVec.data.map((n) => Math.floor(n * 100) / 100);
       this.drawText(rotVec.toIndex(), 0, 70);
@@ -101,7 +104,7 @@ export class HudRenderer extends Renderer {
 
   drawBelt() {
     this.eToolbeltItems.forEach((item, index) => {
-      if (index === this.game.mainPlayer?.belt.selectedIndex) {
+      if (index === this.rendererUsecase.mainPlayer.belt.selectedIndex) {
         item.classList.add("selected");
       } else {
         item.classList.remove("selected");
@@ -110,7 +113,7 @@ export class HudRenderer extends Renderer {
 
     const itemDim = this.eToolbeltItems[0].clientHeight;
 
-    const belt = this.game.mainPlayer?.belt;
+    const belt = this.rendererUsecase.mainPlayer.belt;
 
     if (!belt) {
       return;
@@ -154,8 +157,8 @@ export class HudRenderer extends Renderer {
   }
 
   drawHealthBar() {
-    if (!this.game.mainPlayer) return;
-    const { current, max } = this.game.mainPlayer.health;
+    if (!this.rendererUsecase.mainPlayer) return;
+    const { current, max } = this.rendererUsecase.mainPlayer.health;
     const healthPercent = current / max;
     this.eHealthBar.style.width = `${healthPercent * 100}%`;
   }
@@ -174,9 +177,11 @@ export class HudRenderer extends Renderer {
 
     this.drawStats(camera);
 
-    if (this.lastSelected !== this.game.mainPlayer.belt.selectedIndex) {
+    if (
+      this.lastSelected !== this.rendererUsecase.mainPlayer.belt.selectedIndex
+    ) {
       this.drawBelt();
-      this.lastSelected = this.game.mainPlayer.belt.selectedIndex;
+      this.lastSelected = this.rendererUsecase.mainPlayer.belt.selectedIndex;
     }
 
     // draw selected items

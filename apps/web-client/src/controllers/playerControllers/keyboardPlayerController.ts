@@ -6,21 +6,16 @@ import {
   Player,
   PlayerAction,
   PlayerActionType,
-  handlePlayerAction,
 } from "@craft/engine";
 import { canvas } from "../../canvas";
-import { ClientGame } from "../../clientGame";
-
-function getEleOrError(id: string): HTMLElement {
-  const ele = document.getElementById(id);
-  if (!ele) throw new Error(`Could not find element with id ${id}`);
-  return ele;
-}
+import { CanvasRenderUsecase } from "../../usecases/canvas-usecase";
 
 export class KeyboardPlayerEntityController extends EntityController {
   cleanup(): void {
     throw new Error("Method not implemented.");
   }
+
+  private id = Math.random();
 
   private keys = new Set();
   private keysPressed = new Set();
@@ -31,9 +26,9 @@ export class KeyboardPlayerEntityController extends EntityController {
   private numOfUpdates = 0;
 
   constructor(
-    private actionListener: (action: PlayerAction) => void,
     private player: Player,
-    private clientGame: ClientGame
+    private sendAction: (action: PlayerAction) => void,
+    private rendererUsecase: CanvasRenderUsecase
   ) {
     super();
 
@@ -69,7 +64,7 @@ export class KeyboardPlayerEntityController extends EntityController {
         const moveX = e.movementX * CONFIG.player.mouseRotSpeed;
         const moveY = e.movementY * CONFIG.player.mouseRotSpeed;
 
-        this.clientGame.camera.rotateBy(moveX, moveY);
+        this.rendererUsecase.camera.rotateBy(moveX, moveY);
 
         this.hasMouseMoved = true;
       }
@@ -122,7 +117,6 @@ export class KeyboardPlayerEntityController extends EntityController {
 
   handleKeyDown(key: string) {
     this.keys.add(key.toLowerCase());
-    console.log("Key down", key);
     switch (key) {
       case "w":
         this.currentMoveDirections.add(Direction.Forwards);
@@ -204,8 +198,8 @@ export class KeyboardPlayerEntityController extends EntityController {
     if (this.hasMouseMoved) {
       this.handleAction(
         PlayerAction.make(PlayerActionType.Rotate, {
-          playerRot: this.clientGame.mainPlayer.rot.data as IDim,
-          playerUid: this.clientGame.mainPlayer.uid,
+          playerRot: this.player.rot.data as IDim,
+          playerUid: this.player.uid,
         })
       );
       this.hasMouseMoved = false;
@@ -227,12 +221,12 @@ export class KeyboardPlayerEntityController extends EntityController {
     }
 
     if (areDifferent) {
-      console.log("ARe different", this.currentMoveDirections);
+      console.log("Are different", this.currentMoveDirections);
       this.handleAction(
         PlayerAction.make(PlayerActionType.Move, {
           directions: Array.from(this.currentMoveDirections.values()),
-          playerUid: this.clientGame.mainPlayer.uid,
-          playerRot: this.clientGame.mainPlayer.rot.data as IDim,
+          playerUid: this.player.uid,
+          playerRot: this.player.rot.data as IDim,
         })
       );
 
@@ -252,16 +246,15 @@ export class KeyboardPlayerEntityController extends EntityController {
   }
 
   handleAction(action: PlayerAction) {
-    console.log("Keyboard controller hanling action", action);
-    handlePlayerAction(this.clientGame, this.player, action);
-    this.actionListener(action);
+    console.log("Keyboard controller hanling action", action, this.id);
+    this.sendAction(action);
   }
 
   sendPos() {
     this.handleAction(
       PlayerAction.make(PlayerActionType.SetPos, {
-        playerUid: this.clientGame.mainPlayer.uid,
-        pos: this.clientGame.mainPlayer.pos.data as IDim,
+        playerUid: this.player.uid,
+        pos: this.player.pos.data as IDim,
       })
     );
   }
@@ -269,7 +262,7 @@ export class KeyboardPlayerEntityController extends EntityController {
   placeBlock() {
     this.handleAction(
       PlayerAction.make(PlayerActionType.PlaceBlock, {
-        cameraData: this.clientGame.camera.getRay(),
+        cameraData: this.rendererUsecase.camera.getRay(),
         playerUid: this.player.uid,
       })
     );
@@ -278,7 +271,7 @@ export class KeyboardPlayerEntityController extends EntityController {
   removeBlock() {
     this.handleAction(
       PlayerAction.make(PlayerActionType.RemoveBlock, {
-        cameraData: this.clientGame.camera.getRay(),
+        cameraData: this.rendererUsecase.camera.getRay(),
         playerUid: this.player.uid,
       })
     );

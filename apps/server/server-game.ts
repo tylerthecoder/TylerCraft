@@ -1,63 +1,33 @@
 import Players from "./players.js";
 import WebSocket from "ws";
 import {
-  EmptyController,
   Game,
   GameAction,
   GameStateDiff,
   ISocketMessageType,
   MapArray,
   Vector2D,
-  GameController,
-  EntityHolder,
-  World,
   SocketMessage,
-  IGameData,
   setConfig,
   IConfig,
 } from "@craft/engine";
 import SocketServer from "./socket.js";
 
-export class ServerGame extends Game {
+export class ServerGame {
   public clients: Players;
   public actionMap: MapArray<WebSocket, GameAction> = new MapArray();
 
-  public controller: GameController = new EmptyController(this);
-
-  static async make(
-    gameData: IGameData,
-    socketInterface: SocketServer
-  ): Promise<ServerGame> {
-    console.log("Making server game", gameData);
-    const entityHolder = new EntityHolder(gameData.data?.entities);
-
-    // Remove all players since none are connected yet
-    entityHolder.removeAllPlayers();
-
-    const world = await World.make(gameData.chunkReader, gameData.data?.world);
-
-    setConfig(gameData.config);
-    const game = new ServerGame(
-      gameData.config,
-      entityHolder,
-      world,
-      gameData,
-      socketInterface
-    );
-
-    return game;
-  }
-
   constructor(
     private config: IConfig,
-    entities: EntityHolder,
-    world: World,
-    gameData: IGameData,
-    private socketInterface: SocketServer
+    private socketInterface: SocketServer,
+    public game: Game
   ) {
-    super(entities, world, gameData);
+    // Remove all players since none are connected yet
+    game.entities.removeAllPlayers();
 
-    this.clients = new Players(this, socketInterface);
+    setConfig(config);
+
+    this.clients = new Players(game, socketInterface);
   }
 
   onGameAction(_action: GameAction): void {
@@ -65,19 +35,21 @@ export class ServerGame extends Game {
   }
 
   update(_delta: number): void {
+    const stateDiff = this.game.stateDiff;
+
     // Set the config for the game (This is a hack since the config is global)
     setConfig(this.config);
 
     // Send the initial state diff to all clients
     // This state diff has no client sent actions so it should
     // only be passive things (An entity spawning)
-    if (this.stateDiff.hasData()) {
+    if (stateDiff.hasData()) {
       this.clients.sendMessageToAll(
-        new SocketMessage(ISocketMessageType.gameDiff, this.stateDiff.get())
+        new SocketMessage(ISocketMessageType.gameDiff, stateDiff.get())
       );
     }
 
-    this.stateDiff.clear();
+    stateDiff.clear();
 
     // Run through each client's actions and save the combined state diff
     // from the other client's actions. Combining them lets us send all client
@@ -86,7 +58,7 @@ export class ServerGame extends Game {
     // Set the initial state diff for each client
     const clientDiffs = new Map<WebSocket, GameStateDiff>();
     for (const ws of this.clients.getSockets()) {
-      clientDiffs.set(ws, this.stateDiff.copy());
+      clientDiffs.set(ws, stateDiff.copy());
     }
 
     if (this.actionMap.size > 0) {
@@ -96,22 +68,22 @@ export class ServerGame extends Game {
     }
 
     for (const [ws, actions] of this.actionMap.entries()) {
-      this.stateDiff.clear();
+      stateDiff.clear();
 
       // Handle all the actions. The new diff should only have updates
       // for the player who made them and chunk they might have affected
       for (const action of actions) {
-        this.handleAction(action);
+        this.game.handleAction(action);
       }
 
-      console.log("Diff after actions", this.stateDiff.get());
+      console.log("Diff after actions", stateDiff.get());
 
       // Append the diff to all clients but the one that sent the actions
       this.clients
         .getSockets()
         .filter((s) => s !== ws)
         .forEach((s) => {
-          clientDiffs.get(s)?.append(this.stateDiff);
+          clientDiffs.get(s)?.append(stateDiff);
         });
     }
 
@@ -133,12 +105,13 @@ export class ServerGame extends Game {
   private async sendChunkTo(chunkPosString: string, ws: WebSocket) {
     // Set the config for the game (This is a hack since the config is global)
     setConfig(this.config);
+    const world = this.game.world;
     console.log("ServerGame: Sending chunk to player: ", chunkPosString);
     const chunkPos = Vector2D.fromIndex(chunkPosString);
-    let chunk = this.world.getChunkFromPos(chunkPos);
+    let chunk = world.getChunkFromPos(chunkPos);
     if (!chunk) {
-      await this.world.chunks.immediateLoadChunk(chunkPos);
-      chunk = this.world.getChunkFromPos(chunkPos);
+      await world.chunks.immediateLoadChunk(chunkPos);
+      chunk = world.getChunkFromPos(chunkPos);
     }
     if (!chunk) throw new Error("Chunk wasn't found");
     const serializedData = chunk.serialize();

@@ -1,15 +1,9 @@
-import {
-  MetaAction,
-  Vector3D,
-  GameController,
-  EntityController,
-} from "@craft/engine";
+import { MetaAction, Vector3D, EntityController, Player } from "@craft/engine";
 import { quat } from "gl-matrix";
 import { canvas } from "../../canvas";
-import { ClientGame } from "../../clientGame";
 
 export class Quest2Controller extends EntityController {
-  constructor(protected clientGame: ClientGame) {
+  constructor(private player: Player) {
     super();
   }
 
@@ -19,8 +13,6 @@ export class Quest2Controller extends EntityController {
     if (!webXrSession || !currentXRFrame || !xrRefSpace) {
       return;
     }
-
-    const mainPlayer = this.clientGame.mainPlayer;
 
     const viewerPose = currentXRFrame.getViewerPose(xrRefSpace);
 
@@ -43,7 +35,7 @@ export class Quest2Controller extends EntityController {
       const angles = v2.getSphereAngles();
 
       angles.set(0, angles.get(0) + Math.PI / 2);
-      mainPlayer.rot = new Vector3D([1, angles.get(0), angles.get(1)]);
+      this.player.rot = new Vector3D([1, angles.get(0), angles.get(1)]);
     }
 
     const rightController = webXrSession.inputSources[0];
@@ -53,7 +45,7 @@ export class Quest2Controller extends EntityController {
     );
 
     if (rightHandPose && viewerPose) {
-      this.clientGame.mainPlayer.rightHandPosition = new Vector3D([
+      this.player.rightHandPosition = new Vector3D([
         rightHandPose.transform.position.x,
         rightHandPose.transform.position.y,
         rightHandPose.transform.position.z,
@@ -67,7 +59,7 @@ export class Quest2Controller extends EntityController {
     );
 
     if (leftHandPose && viewerPose) {
-      this.clientGame.mainPlayer.leftHandPosition = new Vector3D([
+      this.player.leftHandPosition = new Vector3D([
         leftHandPose.transform.position.x,
         leftHandPose.transform.position.y,
         leftHandPose.transform.position.z,
@@ -82,27 +74,27 @@ export class Quest2Controller extends EntityController {
       }
 
       if (gamepad.axes[2] > 0.5) {
-        mainPlayer.metaActions.add(MetaAction.forward);
+        this.player.metaActions.add(MetaAction.forward);
       } else if (gamepad.axes[2] < -0.5) {
-        mainPlayer.metaActions.add(MetaAction.backward);
+        this.player.metaActions.add(MetaAction.backward);
       } else {
-        mainPlayer.metaActions.delete(MetaAction.forward);
-        mainPlayer.metaActions.delete(MetaAction.backward);
+        this.player.metaActions.delete(MetaAction.forward);
+        this.player.metaActions.delete(MetaAction.backward);
       }
 
       if (gamepad.axes[3] > 0.5) {
-        mainPlayer.metaActions.add(MetaAction.right);
+        this.player.metaActions.add(MetaAction.right);
       } else if (gamepad.axes[3] < -0.5) {
-        mainPlayer.metaActions.add(MetaAction.left);
+        this.player.metaActions.add(MetaAction.left);
       } else {
-        mainPlayer.metaActions.delete(MetaAction.left);
-        mainPlayer.metaActions.delete(MetaAction.right);
+        this.player.metaActions.delete(MetaAction.left);
+        this.player.metaActions.delete(MetaAction.right);
       }
 
       if (gamepad.buttons[4].pressed) {
-        this.clientGame.mainPlayer.metaActions.add(MetaAction.jump);
+        this.player.metaActions.add(MetaAction.jump);
       } else {
-        this.clientGame.mainPlayer.metaActions.delete(MetaAction.jump);
+        this.player.metaActions.delete(MetaAction.jump);
       }
     }
   }

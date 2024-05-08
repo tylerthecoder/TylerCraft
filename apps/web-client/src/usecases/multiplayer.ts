@@ -1,22 +1,30 @@
 import {
-  CONFIG,
   IGameMetadata,
-  Game,
   Chunk,
-  ISocketMessageType,
   ISocketWelcomePayload,
   IChunkReader,
   WorldModule,
-  SocketMessage,
   IGameManager,
   ICreateGameOptions,
-  IGameData,
+  Game,
+  GameAction,
+  ISocketMessageType,
+  PlayerAction,
+  SocketMessage,
+  World,
+  EntityHolder,
+  EntityController,
 } from "@craft/engine";
-import { getMyUid, SocketInterface } from "../app";
+import { BasicUsecase, TimerRunner } from "./basic";
 import { SocketListener } from "../socket";
+import { SocketInterface, getMyUid } from "../app";
 import { ApiService } from "../services/api-service";
 
 export class NetworkGameManager implements IGameManager {
+  async startGame(game: Game): Promise<void> {
+    new TimerRunner(game);
+  }
+
   private async waitForWelcomeMessage() {
     let listener: SocketListener | null = null;
     const welcomeMessage: ISocketWelcomePayload | null = await new Promise(
@@ -36,34 +44,33 @@ export class NetworkGameManager implements IGameManager {
     return welcomeMessage;
   }
 
-  private makeGameReader(welcomeMessage: ISocketWelcomePayload): IGameData {
-    return {
-      data: {
-        // send this over socket soon
-        config: CONFIG,
-        gameId: welcomeMessage.worldId,
-        entities: welcomeMessage.entities,
-        name: "Something",
-        // just an empty world (the chunk reader should fill it)
-        world: {
-          chunks: [],
-        },
+  private async makeGame(welcomeMessage: ISocketWelcomePayload): Promise<Game> {
+    const world = await World.make(new ServerChunkReader());
+    const entityControllers = new Map<string, EntityController[]>();
+    const entities = new EntityHolder(welcomeMessage.entities);
+    const gameSaver = {
+      save: async (game: Game) => {
+        this.saveGame(game);
       },
-      chunkReader: new ServerChunkReader(),
-      activePlayers: welcomeMessage.activePlayers,
-      id: welcomeMessage.worldId,
-      gameSaver: {
-        save: async (game: Game) => {
-          this.saveGame(game);
-        },
-      },
-      config: welcomeMessage.config,
-      name: welcomeMessage.name,
-      multiplayer: true,
     };
+
+    const game = new Game(
+      welcomeMessage.worldId,
+      "Something",
+      welcomeMessage.config,
+      entities,
+      entityControllers,
+      world,
+      gameSaver
+    );
+
+    const basicUsecase = new BasicUsecase(game);
+    new MultiplayerGameScript(basicUsecase);
+
+    return game;
   }
 
-  public async createGame(options: ICreateGameOptions): Promise<IGameData> {
+  public async createGame(options: ICreateGameOptions): Promise<Game> {
     SocketInterface.send(
       SocketMessage.make(ISocketMessageType.newWorld, {
         myUid: getMyUid(),
@@ -81,10 +88,10 @@ export class NetworkGameManager implements IGameManager {
 
     console.log("Welcome Message", welcomeMessage);
 
-    return this.makeGameReader(welcomeMessage);
+    return this.makeGame(welcomeMessage);
   }
 
-  public async getGame(gameId: string): Promise<IGameData | null> {
+  public async getGame(gameId: string): Promise<Game | null> {
     SocketInterface.send(
       SocketMessage.make(ISocketMessageType.joinWorld, {
         worldId: gameId,
@@ -98,7 +105,7 @@ export class NetworkGameManager implements IGameManager {
       return null;
     }
 
-    return this.makeGameReader(welcomeMessage);
+    return this.makeGame(welcomeMessage);
   }
 
   public async getAllGames(): Promise<IGameMetadata[]> {
@@ -148,5 +155,54 @@ class ServerChunkReader implements IChunkReader {
     }
 
     return chunk;
+  }
+}
+export class MultiplayerGameScript {
+  debug = true;
+
+  constructor(private basicUsecase: BasicUsecase) {
+    basicUsecase.game.addGameActionListener(this.onGameAction.bind(this));
+    basicUsecase.playerActionService.addActionListener(
+      basicUsecase.mainPlayer.uid,
+      this.onPlayerAction.bind(this)
+    );
+    SocketInterface.addListener(this.onSocketMessage.bind(this));
+  }
+
+  onGameAction(action: GameAction) {
+    if (this.debug) {
+      console.log("Sending game action", action);
+    }
+    SocketInterface.send(
+      SocketMessage.make(ISocketMessageType.actions, action.getDto())
+    );
+  }
+
+  onPlayerAction(action: PlayerAction) {
+    if (this.debug) {
+      console.log("Sending player action", action);
+    }
+    SocketInterface.send(
+      SocketMessage.make(ISocketMessageType.playerActions, action.getDto())
+    );
+  }
+
+  onSocketMessage(message: SocketMessage) {
+    if (message.isType(ISocketMessageType.gameDiff)) {
+      this.basicUsecase.game.handleStateDiff(message.data);
+    } else if (message.isType(ISocketMessageType.playerActions)) {
+      if (message.data.data.playerUid === this.basicUsecase.mainPlayer.uid)
+        return;
+
+      const playerAction = new PlayerAction(
+        message.data.type,
+        message.data.data
+      );
+
+      this.basicUsecase.playerActionService.performAction(
+        message.data.data.playerUid,
+        playerAction
+      );
+    }
   }
 }

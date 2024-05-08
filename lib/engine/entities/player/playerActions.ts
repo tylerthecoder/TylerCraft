@@ -1,3 +1,6 @@
+// Player actions are an API that lets you controll a player
+// The player should know nothing about these.
+
 import { BlockType } from "@craft/rust-world";
 import { CameraRay, Direction, Game, IDim, Vector3D } from "../../index.js";
 import { MessageDto, MessageHolder } from "../../messageHelpers.js";
@@ -74,7 +77,51 @@ export class PlayerAction extends MessageHolder<
   }
 }
 
-export const handlePlayerAction = (
+export class PlayerActionService {
+  constructor(private game: Game) {}
+
+  private playerActions = new Map<
+    string,
+    Array<(action: PlayerAction) => void>
+  >();
+
+  addActionListener(
+    playerId: string,
+    listener: (action: PlayerAction) => void
+  ) {
+    this.playerActions.set(playerId, [
+      ...(this.playerActions.get(playerId) || []),
+      listener,
+    ]);
+  }
+
+  performAction(playerId: string, action: PlayerAction) {
+    const player = this.game.entities.tryGet(playerId);
+
+    if (!player) {
+      console.log("Player not found", playerId);
+      return;
+    }
+
+    if (!(player instanceof Player)) {
+      console.log("Entity is not a player", player);
+      return;
+    }
+
+    handlePlayerAction(this.game, player, action);
+
+    const listeners = this.playerActions.get(playerId);
+    if (!listeners) {
+      return;
+    }
+
+    for (const listener of listeners) {
+      listener(action);
+    }
+  }
+}
+
+const handlePlayerAction = (
   game: Game,
   player: Player,
   action: PlayerAction

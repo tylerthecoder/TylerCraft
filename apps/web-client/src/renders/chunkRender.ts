@@ -9,9 +9,9 @@ import {
   Vector2D,
 } from "@craft/engine";
 import TextureMapper from "../textureMapper";
-import ShapeBuilder from "../services/shapeBuilder";
 import { canvas } from "../canvas";
 import { BlockShape, BlockType } from "@craft/rust-world";
+import ShapeBuilder from "../services/shape-builder";
 
 // TODO:
 // instead of passing a chunk, pass a way to get the visible faces
