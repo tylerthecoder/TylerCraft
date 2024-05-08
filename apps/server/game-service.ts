@@ -1,14 +1,16 @@
 import {
   Chunk,
+  EntityController,
+  EntityHolder,
   Game,
   IChunkReader,
   ICreateGameOptions,
-  IGameData,
   ISerializedGame,
   ISocketMessageType,
   SocketMessage,
   TerrainGenerator,
   Vector2D,
+  World,
   WorldModule,
   setConfig,
 } from "@craft/engine";
@@ -97,10 +99,10 @@ export class GameService {
   async getWorld(gameId: string): Promise<ServerGame | null> {
     console.log("Getting game", gameId);
 
-    const world = this.games.get(gameId);
-    if (world) {
+    const foundGame = this.games.get(gameId);
+    if (foundGame) {
       console.log("Found game in memory");
-      return world;
+      return foundGame;
     }
 
     const dbGame = await this.dbManager.getGame(gameId);
@@ -109,21 +111,14 @@ export class GameService {
       return null;
     }
 
-    const gameData: IGameData = {
-      id: gameId,
-      name: dbGame.name,
-      gameSaver: {
-        save: async (game: Game) => {
-          await this.dbManager.saveGame(game.serialize());
-        },
+    const chunkReader = new RamChunkReader(dbGame);
+    const gameSaver = {
+      save: async (game: Game) => {
+        await this.dbManager.saveGame(game.serialize());
       },
-      chunkReader: new RamChunkReader(dbGame),
-      data: dbGame,
-      config: dbGame.config,
-      activePlayers: [],
     };
 
-    const game = await Game.make(gameData);
+    const game = await Game.make(dbGame, chunkReader, gameSaver);
 
     const serverGame = new ServerGame(
       dbGame.config,
@@ -150,20 +145,26 @@ export class GameService {
 
     const id = String(Math.random());
 
-    const gameData: IGameData = {
-      id,
-      name: options.name,
-      gameSaver: {
-        save: async (game: Game) => {
-          await this.dbManager.saveGame(game.serialize());
-        },
+    const gameSaver = {
+      save: async (game: Game) => {
+        await this.dbManager.saveGame(game.serialize());
       },
-      chunkReader: new RamChunkReader(),
-      config: options.config,
-      activePlayers: [],
     };
+    const chunkReader = new RamChunkReader();
 
-    const game = await Game.make(gameData);
+    const world = await World.make(chunkReader);
+    const entities = new EntityHolder();
+    const entityControllers = new Map<string, EntityController[]>();
+
+    const game = new Game(
+      id,
+      options.name,
+      options.config,
+      entities,
+      entityControllers,
+      world,
+      gameSaver
+    );
 
     const serverUsecase = new ServerGame(
       options.config,

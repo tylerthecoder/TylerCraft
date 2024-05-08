@@ -357,39 +357,35 @@ function showWorldOptionsScreen(gameManager: IGameManager, onBack: () => void) {
 
     const name = formData.get("name") as string;
 
-    await createGame(gameManager, CONFIG, name);
+    await createGame(gameManager, { config: CONFIG, name });
   });
 }
 
 async function createGame(
   gameManager: IGameManager,
-  config: typeof CONFIG,
-  name: string
+  createGameOptions: Engine.ICreateGameOptions
 ) {
   hideElement(eWorldOptionsScreen);
   hideElement(eStartMenu);
-  console.log("Creating Game | name=", name, "config=", config);
-  LoadingScreen.show("Booting up");
-  const gameData = await gameManager.createGame({
-    config,
-    name,
-  });
-  await startGame(gameManager, gameData);
-}
-
-async function startGame(
-  gameManager: IGameManager,
-  gameData: Engine.IGameData
-) {
-  hideElement(eWorldOptionsScreen);
-  hideElement(eStartMenu);
-  console.log("Starting Game", gameData);
-  LoadingScreen.show("Gathering Materials");
-  await Engine.WorldModule.load();
 
   LoadingScreen.show("Painting the Sky");
-  console.log("Loading game");
-  const game = await Game.make(gameData);
+  await Engine.WorldModule.load();
+
+  console.log("Creating Game | options=", createGameOptions);
+
+  LoadingScreen.show("Forming clouds");
+  const game = await gameManager.createGame(createGameOptions);
+
+  await startGame(gameManager, game);
+}
+
+async function startGame(gameManager: IGameManager, game: Engine.Game) {
+  hideElement(eWorldOptionsScreen);
+  hideElement(eStartMenu);
+  console.log("Starting Game", game);
+
+  LoadingScreen.show("Painting the Sky");
+  await Engine.WorldModule.load();
 
   console.log("Game Loaded, Starting game", game);
 
@@ -400,7 +396,7 @@ async function startGame(
 
   await gameManager.startGame(game);
 
-  console.log("Game Loaded");
+  console.log("Game Started");
 
   LoadingScreen.fade();
   ePickWorldScreen.classList.add("fade");

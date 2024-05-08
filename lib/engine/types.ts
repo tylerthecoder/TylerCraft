@@ -65,19 +65,22 @@ export interface IGameSaver {
   save(game: Game): Promise<void>;
 }
 
-export interface IGameData {
-  chunkReader: IChunkReader;
-  gameSaver: IGameSaver;
-  id: string;
-  name: string;
-  config: IConfig;
-  activePlayers?: string[];
-  data?: ISerializedGame;
-}
+// export interface IGameData {
+//   chunkReader: IChunkReader;
+//   gameSaver: IGameSaver;
+//   id: string;
+//   name: string;
+//   config: IConfig;
+//   activePlayers?: string[];
+//   data?: ISerializedGame;
+// }
+//
+
+export type IGameConfig = IConfig;
 
 export interface IGameManager {
-  createGame(createGameOptions: ICreateGameOptions): Promise<IGameData>;
-  getGame(gameId: string): Promise<IGameData | null>;
+  createGame(createGameOptions: ICreateGameOptions): Promise<Game>;
+  getGame(gameId: string): Promise<Game | null>;
   getAllGames(): Promise<IGameMetadata[]>;
   saveGame(game: Game): Promise<void>;
   deleteGame(gameId: string): Promise<void>;

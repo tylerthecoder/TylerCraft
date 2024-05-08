@@ -1,6 +1,6 @@
 import { Player } from "./entities/player/player.js";
 import { ISerializedWorld, World } from "./world/world.js";
-import { IGameData, IGameSaver } from "./types.js";
+import { IChunkReader, IGameConfig, IGameSaver } from "./types.js";
 import { CONFIG, IConfig, setConfig } from "./config.js";
 import { EntityHolder, ISerializedEntities } from "./entities/entityHolder.js";
 import { Random } from "./utils/random.js";
@@ -24,48 +24,55 @@ export interface IGameMetadata {
   name: string;
 }
 
+export type IGameData = IGameMetadata & {
+  config: IGameConfig;
+};
+
 // Receives client actions from somewhere.
 // Generate dirty entities and dirty chunks.
 
 export class Game {
-  public gameId: string;
-  public name: string;
   public stateDiff: GameStateDiff;
   private gameActionHandler: GameActionHandler;
   public gameController: GameController | null = null;
-  private gameSaver: IGameSaver;
 
-  static async make(gameData: IGameData): Promise<Game> {
-    const entities = new EntityHolder(gameData.data?.entities);
-    const world = await World.make(gameData.chunkReader, gameData.data?.world);
+  static async make(
+    dto: ISerializedGame,
+    chunkReader: IChunkReader,
+    gameSaver: IGameSaver
+  ) {
+    const world = await World.make(chunkReader);
     const entityControllers = new Map<string, EntityController[]>();
+    const entities = new EntityHolder();
 
-    const game = new Game(entities, entityControllers, world, gameData);
-
-    return game;
+    return new Game(
+      dto.gameId,
+      dto.name,
+      dto.config,
+      entities,
+      entityControllers,
+      world,
+      gameSaver
+    );
   }
 
   constructor(
+    public gameId: string,
+    public name: string,
+    public config: IGameConfig,
     public entities: EntityHolder,
     public entityControllers: Map<string, EntityController[]>,
     public world: World,
-    gameData: IGameData
+    private gameSaver: IGameSaver
   ) {
-    Random.setSeed(gameData.config.seed);
-
-    this.gameSaver = gameData.gameSaver;
+    Random.setSeed(this.config.seed);
     this.stateDiff = new GameStateDiff(this);
     this.gameActionHandler = new GameActionHandler(this);
 
-    this.gameId = gameData.id;
-    this.name = gameData.name;
-
-    if (gameData.config) {
-      setConfig({
-        ...CONFIG,
-        ...gameData.config,
-      });
-    }
+    setConfig({
+      ...CONFIG,
+      ...this.config,
+    });
   }
 
   public serialize(): ISerializedGame {

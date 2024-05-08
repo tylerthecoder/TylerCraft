@@ -1,5 +1,4 @@
 import {
-  CONFIG,
   IGameMetadata,
   Chunk,
   ISocketWelcomePayload,
@@ -7,12 +6,14 @@ import {
   WorldModule,
   IGameManager,
   ICreateGameOptions,
-  IGameData,
   Game,
   GameAction,
   ISocketMessageType,
   PlayerAction,
   SocketMessage,
+  World,
+  EntityHolder,
+  EntityController,
 } from "@craft/engine";
 import { BasicUsecase, TimerRunner } from "./basic";
 import { SocketListener } from "../socket";
@@ -22,8 +23,6 @@ import { ApiService } from "../services/api-service";
 export class NetworkGameManager implements IGameManager {
   async startGame(game: Game): Promise<void> {
     new TimerRunner(game);
-    const basicUsecase = new BasicUsecase(game);
-    new MultiplayerGameScript(basicUsecase);
   }
 
   private async waitForWelcomeMessage() {
@@ -45,33 +44,33 @@ export class NetworkGameManager implements IGameManager {
     return welcomeMessage;
   }
 
-  private makeGameReader(welcomeMessage: ISocketWelcomePayload): IGameData {
-    return {
-      data: {
-        // send this over socket soon
-        config: CONFIG,
-        gameId: welcomeMessage.worldId,
-        entities: welcomeMessage.entities,
-        name: "Something",
-        // just an empty world (the chunk reader should fill it)
-        world: {
-          chunks: [],
-        },
+  private async makeGame(welcomeMessage: ISocketWelcomePayload): Promise<Game> {
+    const world = await World.make(new ServerChunkReader());
+    const entityControllers = new Map<string, EntityController[]>();
+    const entities = new EntityHolder(welcomeMessage.entities);
+    const gameSaver = {
+      save: async (game: Game) => {
+        this.saveGame(game);
       },
-      chunkReader: new ServerChunkReader(),
-      activePlayers: welcomeMessage.activePlayers,
-      id: welcomeMessage.worldId,
-      gameSaver: {
-        save: async (game: Game) => {
-          this.saveGame(game);
-        },
-      },
-      config: welcomeMessage.config,
-      name: welcomeMessage.name,
     };
+
+    const game = new Game(
+      welcomeMessage.worldId,
+      "Something",
+      welcomeMessage.config,
+      entities,
+      entityControllers,
+      world,
+      gameSaver
+    );
+
+    const basicUsecase = new BasicUsecase(game);
+    new MultiplayerGameScript(basicUsecase);
+
+    return game;
   }
 
-  public async createGame(options: ICreateGameOptions): Promise<IGameData> {
+  public async createGame(options: ICreateGameOptions): Promise<Game> {
     SocketInterface.send(
       SocketMessage.make(ISocketMessageType.newWorld, {
         myUid: getMyUid(),
@@ -89,10 +88,10 @@ export class NetworkGameManager implements IGameManager {
 
     console.log("Welcome Message", welcomeMessage);
 
-    return this.makeGameReader(welcomeMessage);
+    return this.makeGame(welcomeMessage);
   }
 
-  public async getGame(gameId: string): Promise<IGameData | null> {
+  public async getGame(gameId: string): Promise<Game | null> {
     SocketInterface.send(
       SocketMessage.make(ISocketMessageType.joinWorld, {
         worldId: gameId,
@@ -106,7 +105,7 @@ export class NetworkGameManager implements IGameManager {
       return null;
     }
 
-    return this.makeGameReader(welcomeMessage);
+    return this.makeGame(welcomeMessage);
   }
 
   public async getAllGames(): Promise<IGameMetadata[]> {
