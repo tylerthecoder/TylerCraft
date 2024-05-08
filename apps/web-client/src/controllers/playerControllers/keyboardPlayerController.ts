@@ -15,6 +15,8 @@ export class KeyboardPlayerEntityController extends EntityController {
     throw new Error("Method not implemented.");
   }
 
+  private id = Math.random();
+
   private keys = new Set();
   private keysPressed = new Set();
   private hasMouseMoved = false;
@@ -244,7 +246,7 @@ export class KeyboardPlayerEntityController extends EntityController {
   }
 
   handleAction(action: PlayerAction) {
-    console.log("Keyboard controller hanling action", action);
+    console.log("Keyboard controller hanling action", action, this.id);
     this.sendAction(action);
   }
 

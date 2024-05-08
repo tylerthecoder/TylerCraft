@@ -168,8 +168,6 @@ export class ClientDbGameManger implements IGameManager {
       gameSaver
     );
 
-    new BasicUsecase(game);
-
     return game;
   }
 

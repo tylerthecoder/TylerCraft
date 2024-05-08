@@ -20,6 +20,9 @@ export interface IExtendedWindow extends Window {
   game?: Game;
 }
 
+// Loading the engine
+await Engine.WorldModule.load();
+
 export const IS_MOBILE = /Mobi/.test(window.navigator.userAgent);
 console.log("Is Mobile: ", IS_MOBILE);
 
@@ -385,7 +388,6 @@ async function startGame(gameManager: IGameManager, game: Engine.Game) {
   console.log("Starting Game", game);
 
   LoadingScreen.show("Painting the Sky");
-  await Engine.WorldModule.load();
 
   console.log("Game Loaded, Starting game", game);
 
