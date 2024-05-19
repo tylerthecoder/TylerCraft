@@ -2,7 +2,6 @@ import {
   Game,
   IGameMetadata,
   ISerializedGame,
-  IGameManager,
   Chunk,
   ISerializedChunk,
   Vector2D,
@@ -11,13 +10,10 @@ import {
   IChunkReader,
   ICreateGameOptions,
   IGameSaver,
-  World,
-  EntityController,
-  EntityHolder,
+  IGamesService,
 } from "@craft/engine";
 import { TerrainGenModule } from "@craft/engine/modules";
 import TerrainWorker from "../workers/terrain.worker?worker";
-import { BasicUsecase, TimerRunner } from "./basic";
 
 const USE_WASM_CHUNK_GETTER = true;
 
@@ -86,7 +82,7 @@ const WorkerChunkGetter = (config: IConfig): IChunkReader => {
   };
 };
 
-export class ClientDbGameManger implements IGameManager {
+export class ClientDbGamesService implements IGamesService {
   private static WORLDS_OBS = "worlds";
 
   static async factory() {
@@ -119,15 +115,10 @@ export class ClientDbGameManger implements IGameManager {
       };
     });
 
-    return new ClientDbGameManger(db);
+    return new ClientDbGamesService(db);
   }
 
   private constructor(private db: IDBDatabase) {}
-
-  async startGame(game: Game): Promise<void> {
-    new TimerRunner(game);
-    new BasicUsecase(game);
-  }
 
   private getChunkReader = async (config: IConfig): Promise<IChunkReader> => {
     if (USE_WASM_CHUNK_GETTER) {
@@ -140,42 +131,27 @@ export class ClientDbGameManger implements IGameManager {
     }
   };
 
-  private getGameSaver = (): IGameSaver => {
+  private getGameSaver(): IGameSaver {
     return {
       save: async (game: Game) => {
         this.saveGame(game);
       },
     };
-  };
+  }
 
   async createGame(createGameOptions: ICreateGameOptions): Promise<Game> {
-    const gameId = String(Math.random());
-    const name = createGameOptions.name;
-    const config = createGameOptions.config;
     const chunkReader = await this.getChunkReader(createGameOptions.config);
-    const world = await World.make(chunkReader);
-    const entityControllers = new Map<string, EntityController[]>();
-    const entities = new EntityHolder();
     const gameSaver = this.getGameSaver();
-
-    const game = new Game(
-      gameId,
-      name,
-      config,
-      entities,
-      entityControllers,
-      world,
-      gameSaver
-    );
-
-    return game;
+    return Game.make(createGameOptions, chunkReader, gameSaver);
   }
 
   getAllGames(): Promise<IGameMetadata[]> {
     return new Promise((resolve) => {
-      const transaction = this.db.transaction([ClientDbGameManger.WORLDS_OBS]);
+      const transaction = this.db.transaction([
+        ClientDbGamesService.WORLDS_OBS,
+      ]);
       const objectStore = transaction.objectStore(
-        ClientDbGameManger.WORLDS_OBS
+        ClientDbGamesService.WORLDS_OBS
       );
 
       const getAllRequest = objectStore.getAll();
@@ -197,9 +173,11 @@ export class ClientDbGameManger implements IGameManager {
 
   async getGame(gameId: string): Promise<Game | null> {
     const foundGame: ISerializedGame | null = await new Promise((resolve) => {
-      const transaction = this.db.transaction([ClientDbGameManger.WORLDS_OBS]);
+      const transaction = this.db.transaction([
+        ClientDbGamesService.WORLDS_OBS,
+      ]);
       const objectStore = transaction.objectStore(
-        ClientDbGameManger.WORLDS_OBS
+        ClientDbGamesService.WORLDS_OBS
       );
 
       const request = objectStore.get(gameId);
@@ -218,16 +196,12 @@ export class ClientDbGameManger implements IGameManager {
 
     const chunkReader = await this.getChunkReader(foundGame.config);
 
-    const game = await Game.make(foundGame, chunkReader, this.getGameSaver());
-
-    new BasicUsecase(game);
-
-    return game;
+    return Game.make(foundGame, chunkReader, this.getGameSaver());
   }
 
   async saveGame(data: Game) {
     const transaction = this.db.transaction(
-      [ClientDbGameManger.WORLDS_OBS],
+      [ClientDbGamesService.WORLDS_OBS],
       "readwrite"
     );
 
@@ -246,7 +220,7 @@ export class ClientDbGameManger implements IGameManager {
 
   async deleteGame(gameId: string) {
     const transaction = this.db.transaction(
-      [ClientDbGameManger.WORLDS_OBS],
+      [ClientDbGamesService.WORLDS_OBS],
       "readwrite"
     );
 

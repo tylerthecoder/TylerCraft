@@ -180,6 +180,11 @@ body {
     Start Menu
 =========================*/
 
+#GamePickers {
+    display: flex;
+    flex-direction: column;
+}
+
 #gameMenu {
   display: none;
   background-color: white;

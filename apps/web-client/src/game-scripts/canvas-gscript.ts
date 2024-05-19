@@ -3,9 +3,11 @@ import WorldRenderer from "../renders/worldRender";
 import { XrCamera } from "../cameras/xrCamera";
 import { canvas } from "../canvas";
 import { EntityCamera } from "../cameras/entityCamera";
+import { IGameScript } from "@craft/engine/game-script";
+import { BasicUsecase } from "../usecases/sandbox";
 
 // This class should only read game and not write.
-export class CanvasRenderUsecase {
+export class CanvasGameScript implements IGameScript {
   worldRenderer: WorldRenderer;
   isSpectating = false;
   camera: Camera;
@@ -13,11 +15,15 @@ export class CanvasRenderUsecase {
   totTime = 0;
   pastDeltas: number[] = [];
 
-  constructor(public game: Game, public mainPlayer: Player) {
+  mainPlayer: Player;
+
+  constructor(public game: Game) {
     console.log("Canvas Render Usecase", this);
 
     this.worldRenderer = new WorldRenderer(game.world, this);
     this.worldRenderer.shouldRenderMainPlayer = false;
+
+    this.mainPlayer = game.getGameScript(BasicUsecase).mainPlayer;
 
     // Create renderers for initial entities
     for (const entity of game.entities.iterable()) {
@@ -36,7 +42,6 @@ export class CanvasRenderUsecase {
       : new EntityCamera(this.mainPlayer);
 
     canvas.loop(this.renderLoop.bind(this));
-    game.addUpdateListener(this.update.bind(this));
   }
 
   get frameRate() {

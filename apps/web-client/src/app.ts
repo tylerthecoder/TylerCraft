@@ -7,14 +7,14 @@ import {
   camelCaseToNormalCase,
   CONFIG,
   Game,
-  IGameManager,
   IGameMetadata,
 } from "@craft/engine";
 import { SocketHandler } from "./socket";
 import { renderWorldPicker } from "./world-picker";
 import { createRoot } from "react-dom/client";
-import { ClientDbGameManger } from "./usecases/singleplayer";
-import { NetworkGameManager } from "./usecases/multiplayer";
+import { ClientDbGamesService } from "./services/sp-games-service";
+import { NetworkGamesService } from "./services/mp-games-service";
+import { SandboxUseCase } from "./usecases/sandbox";
 
 export interface IExtendedWindow extends Window {
   game?: Game;
@@ -113,13 +113,13 @@ if (location.hash === "#local") {
   showLocalNewWorldScreen();
 }
 
-export async function getLocalWorldModel() {
-  const clientDb = await ClientDbGameManger.factory();
+export async function getLocalGamesService() {
+  const clientDb = await ClientDbGamesService.factory();
   return clientDb;
 }
 
-async function getOnlineWorldModel() {
-  const serverWorldModel = new NetworkGameManager();
+async function getOnlineGamesService() {
+  const serverWorldModel = new NetworkGamesService();
   await SocketInterface.connect(() => {
     console.error("Failed to connect to server");
   });
@@ -138,10 +138,10 @@ async function loadGameFromUrl() {
   hideElement(eStartMenu);
   LoadingScreen.show("Pinpointing Location");
 
-  const findAndStartGame = async (gameManager: IGameManager) => {
-    const gameData = await gameManager.getGame(gameId);
-    if (gameData) {
-      await startGame(gameManager, gameData);
+  const findAndStartGame = async (gamesService: Engine.IGamesService) => {
+    const game = await gamesService.getGame(gameId);
+    if (game) {
+      await startGame(game);
       return true;
     }
     return false;
@@ -149,14 +149,14 @@ async function loadGameFromUrl() {
 
   console.log("Loading game", gameId);
 
-  const clientWorldModel = await getLocalWorldModel();
+  const clientWorldModel = await getLocalGamesService();
   if (await findAndStartGame(clientWorldModel)) {
     return;
   }
 
   LoadingScreen.show("Searching the Cloud");
 
-  const serverWorldModel = await getOnlineWorldModel();
+  const serverWorldModel = await getOnlineGamesService();
   if (await findAndStartGame(serverWorldModel)) {
     return;
   }
@@ -180,12 +180,12 @@ await loadGameFromUrl();
 
 // Display Screen Functions
 async function showLocalWorldPicker() {
-  const clientDb = await getLocalWorldModel();
+  const clientDb = await getLocalGamesService();
   showWorldPicker(clientDb, "local", "local-new", () => showLocalWorldPicker());
 }
 
 async function showOnlineWorldPicker() {
-  const serverWorldModel = await getOnlineWorldModel();
+  const serverWorldModel = await getOnlineGamesService();
   showWorldPicker(serverWorldModel, "online", "online-new", () =>
     showOnlineWorldPicker()
   );
@@ -193,18 +193,18 @@ async function showOnlineWorldPicker() {
 
 async function showLocalNewWorldScreen() {
   hideElement(eGameTypeScreen);
-  const clientDb = await getLocalWorldModel();
+  const clientDb = await getLocalGamesService();
   showWorldOptionsScreen(clientDb, () => showLocalWorldPicker());
 }
 
 async function showOnlineNewWorldScreen() {
   hideElement(eGameTypeScreen);
-  const clientDb = await getLocalWorldModel();
+  const clientDb = await getLocalGamesService();
   showWorldOptionsScreen(clientDb, () => showOnlineWorldPicker());
 }
 
 async function showWorldPicker(
-  gameManager: IGameManager,
+  gameManager: Engine.IGamesService,
   currentHash: string,
   nextHash: string,
   onBack: () => void
@@ -215,14 +215,14 @@ async function showWorldPicker(
   // get all the saved worlds
   const games = await gameManager.getAllGames();
 
-  const onGameSelect = async (game: IGameMetadata) => {
+  const onGameSelect = async (gameMetaData: IGameMetadata) => {
     location.hash = nextHash;
-    const gameData = await gameManager.getGame(game.gameId);
-    if (!gameData) {
+    const game = await gameManager.getGame(gameMetaData.gameId);
+    if (!game) {
       throw new Error("World wasn't found. Db must be effed up");
     }
 
-    await startGame(gameManager, gameData);
+    await startGame(game);
   };
 
   const onNewGame = () => {
@@ -304,7 +304,10 @@ function createConfigHtml(
   return "";
 }
 
-function showWorldOptionsScreen(gameManager: IGameManager, onBack: () => void) {
+function showWorldOptionsScreen(
+  gameManager: Engine.IGamesService,
+  onBack: () => void
+) {
   showElement(eWorldOptionsScreen);
   showElement(eBackButton);
   hideElement(ePickWorldScreen);
@@ -365,7 +368,7 @@ function showWorldOptionsScreen(gameManager: IGameManager, onBack: () => void) {
 }
 
 async function createGame(
-  gameManager: IGameManager,
+  gameManager: Engine.IGamesService,
   createGameOptions: Engine.ICreateGameOptions
 ) {
   hideElement(eWorldOptionsScreen);
@@ -379,10 +382,10 @@ async function createGame(
   LoadingScreen.show("Forming clouds");
   const game = await gameManager.createGame(createGameOptions);
 
-  await startGame(gameManager, game);
+  await startGame(game);
 }
 
-async function startGame(gameManager: IGameManager, game: Engine.Game) {
+async function startGame(game: Engine.Game) {
   hideElement(eWorldOptionsScreen);
   hideElement(eStartMenu);
   console.log("Starting Game", game);
@@ -396,7 +399,8 @@ async function startGame(gameManager: IGameManager, game: Engine.Game) {
 
   LoadingScreen.show("Building Mountains");
 
-  await gameManager.startGame(game);
+  // Assume the sandbox usecase for now
+  SandboxUseCase(game);
 
   console.log("Game Started");
 

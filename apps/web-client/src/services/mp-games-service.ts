@@ -4,27 +4,23 @@ import {
   ISocketWelcomePayload,
   IChunkReader,
   WorldModule,
-  IGameManager,
   ICreateGameOptions,
   Game,
   GameAction,
   ISocketMessageType,
   PlayerAction,
   SocketMessage,
-  World,
-  EntityHolder,
-  EntityController,
+  IGamesService,
+  Player,
+  PlayerActionService,
 } from "@craft/engine";
-import { BasicUsecase, TimerRunner } from "./basic";
 import { SocketListener } from "../socket";
 import { SocketInterface, getMyUid } from "../app";
 import { ApiService } from "../services/api-service";
+import { IGameScript } from "@craft/engine/game-script";
+import { BasicUsecase } from "../usecases/sandbox";
 
-export class NetworkGameManager implements IGameManager {
-  async startGame(game: Game): Promise<void> {
-    new TimerRunner(game);
-  }
-
+export class NetworkGamesService implements IGamesService {
   private async waitForWelcomeMessage() {
     let listener: SocketListener | null = null;
     const welcomeMessage: ISocketWelcomePayload | null = await new Promise(
@@ -45,27 +41,17 @@ export class NetworkGameManager implements IGameManager {
   }
 
   private async makeGame(welcomeMessage: ISocketWelcomePayload): Promise<Game> {
-    const world = await World.make(new ServerChunkReader());
-    const entityControllers = new Map<string, EntityController[]>();
-    const entities = new EntityHolder(welcomeMessage.entities);
     const gameSaver = {
       save: async (game: Game) => {
         this.saveGame(game);
       },
     };
 
-    const game = new Game(
-      welcomeMessage.worldId,
-      "Something",
-      welcomeMessage.config,
-      entities,
-      entityControllers,
-      world,
+    const game = Game.make(
+      welcomeMessage.game,
+      new ServerChunkReader(),
       gameSaver
     );
-
-    const basicUsecase = new BasicUsecase(game);
-    new MultiplayerGameScript(basicUsecase);
 
     return game;
   }
@@ -157,15 +143,21 @@ class ServerChunkReader implements IChunkReader {
     return chunk;
   }
 }
-export class MultiplayerGameScript {
+export class MultiplayerGameScript implements IGameScript {
   debug = true;
+  private mainPlayer: Player;
+  private playerActionService: PlayerActionService;
 
-  constructor(private basicUsecase: BasicUsecase) {
-    basicUsecase.game.addGameActionListener(this.onGameAction.bind(this));
-    basicUsecase.playerActionService.addActionListener(
-      basicUsecase.mainPlayer.uid,
+  constructor(private game: Game) {
+    this.mainPlayer = game.getGameScript(BasicUsecase).mainPlayer;
+    this.playerActionService =
+      game.getGameScript(BasicUsecase).playerActionService;
+
+    this.playerActionService.addActionListener(
+      this.mainPlayer.uid,
       this.onPlayerAction.bind(this)
     );
+
     SocketInterface.addListener(this.onSocketMessage.bind(this));
   }
 
@@ -189,17 +181,16 @@ export class MultiplayerGameScript {
 
   onSocketMessage(message: SocketMessage) {
     if (message.isType(ISocketMessageType.gameDiff)) {
-      this.basicUsecase.game.handleStateDiff(message.data);
+      this.game.handleStateDiff(message.data);
     } else if (message.isType(ISocketMessageType.playerActions)) {
-      if (message.data.data.playerUid === this.basicUsecase.mainPlayer.uid)
-        return;
+      if (message.data.data.playerUid === this.mainPlayer.uid) return;
 
       const playerAction = new PlayerAction(
         message.data.type,
         message.data.data
       );
 
-      this.basicUsecase.playerActionService.performAction(
+      this.playerActionService.performAction(
         message.data.data.playerUid,
         playerAction
       );

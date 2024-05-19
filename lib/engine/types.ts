@@ -1,6 +1,5 @@
 import { IConfig } from "./config.js";
 import { EntityDto } from "./entities/entity.js";
-import { ISerializedEntities } from "./entities/entityHolder.js";
 import { PlayerActionDto } from "./entities/player/playerActions.js";
 import { Game, IGameMetadata, ISerializedGame } from "./game.js";
 import { GameActionDto } from "./gameActions.js";
@@ -48,43 +47,22 @@ export type StateUpdate =
   | IEntityRemoveStateUpdate
   | IChunkUpdateStateUpdate;
 
-export interface ICreateGameOptions {
-  name: string;
-  config: IConfig;
-}
+export type ICreateGameOptions = Pick<ISerializedGame, "config" | "name">;
 
 export interface IChunkReader {
   getChunk(chunkPos: string): Promise<Chunk>;
-}
-
-export interface INullableChunkReader {
-  getChunk(chunkPos: string): Promise<Chunk | null>;
 }
 
 export interface IGameSaver {
   save(game: Game): Promise<void>;
 }
 
-// export interface IGameData {
-//   chunkReader: IChunkReader;
-//   gameSaver: IGameSaver;
-//   id: string;
-//   name: string;
-//   config: IConfig;
-//   activePlayers?: string[];
-//   data?: ISerializedGame;
-// }
-//
-
-export type IGameConfig = IConfig;
-
-export interface IGameManager {
-  createGame(createGameOptions: ICreateGameOptions): Promise<Game>;
+export interface IGamesService {
+  createGame(options: ICreateGameOptions): Promise<Game>;
   getGame(gameId: string): Promise<Game | null>;
   getAllGames(): Promise<IGameMetadata[]>;
   saveGame(game: Game): Promise<void>;
   deleteGame(gameId: string): Promise<void>;
-  startGame(game: Game): Promise<void>;
 }
 
 export enum ISocketMessageType {
@@ -141,11 +119,7 @@ export interface SocketMessageData extends Record<ISocketMessageType, unknown> {
 
 export interface ISocketWelcomePayload {
   uid: string;
-  worldId: string;
-  entities: ISerializedEntities;
-  activePlayers: string[];
-  config: IConfig;
-  name: string;
+  game: ISerializedGame;
 }
 
 export type SocketMessageDto = MessageDto<

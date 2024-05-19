@@ -4,7 +4,6 @@ import {
   GameActionType,
   GameController,
 } from "@craft/engine";
-import { ClientGame } from "../clientGame";
 
 function getEleOrError(id: string): HTMLElement {
   const ele = document.getElementById(id);

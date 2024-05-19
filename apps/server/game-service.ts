@@ -1,7 +1,5 @@
 import {
   Chunk,
-  EntityController,
-  EntityHolder,
   Game,
   IChunkReader,
   ICreateGameOptions,
@@ -10,7 +8,6 @@ import {
   SocketMessage,
   TerrainGenerator,
   Vector2D,
-  World,
   WorldModule,
   setConfig,
 } from "@craft/engine";
@@ -29,7 +26,7 @@ export class RamChunkReader implements IChunkReader {
       (chunkPos) => this.chunkMap.get(chunkPos.toIndex())
     );
     if (!serializedGame) return;
-    for (const chunkData of serializedGame.world.chunks) {
+    for (const chunkData of serializedGame.world?.chunks ?? []) {
       const chunk = WorldModule.createChunkFromSerialized(chunkData);
       this.chunkMap.set(chunk.uid, chunk);
     }
@@ -152,19 +149,7 @@ export class GameService {
     };
     const chunkReader = new RamChunkReader();
 
-    const world = await World.make(chunkReader);
-    const entities = new EntityHolder();
-    const entityControllers = new Map<string, EntityController[]>();
-
-    const game = new Game(
-      id,
-      options.name,
-      options.config,
-      entities,
-      entityControllers,
-      world,
-      gameSaver
-    );
+    const game = await Game.make(options, chunkReader, gameSaver);
 
     const serverUsecase = new ServerGame(
       options.config,

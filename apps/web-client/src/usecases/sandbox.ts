@@ -12,7 +12,8 @@ import { Quest2Controller } from "../controllers/playerControllers/quest2Control
 import { KeyboardPlayerEntityController } from "../controllers/playerControllers/keyboardPlayerController";
 import { canvas } from "../canvas";
 import { MouseAndKeyboardGameController } from "../controllers/gameKeyboardController";
-import { CanvasRenderUsecase } from "./canvas-usecase";
+import { IGameScript } from "@craft/engine/game-script";
+import { CanvasGameScript } from "../game-scripts/canvas-gscript";
 
 export class TimerRunner {
   private lastTime = Date.now();
@@ -36,11 +37,14 @@ export class TimerRunner {
   }
 }
 
-export class BasicUsecase {
+export class BasicUsecase implements IGameScript {
   public mainPlayer: Player;
-  private renderUsecase: CanvasRenderUsecase;
+  private gameController: MouseAndKeyboardGameController;
+  private entityControllers: Map<string, EntityController> = new Map();
 
-  private makePlayerController(): EntityController {
+  private makePlayerController(
+    canvasGameScript: CanvasGameScript
+  ): EntityController {
     const onPlayerAction = (action: PlayerAction) => {
       this.playerActionService.performAction(this.mainPlayer.uid, action);
     };
@@ -49,7 +53,7 @@ export class BasicUsecase {
       return new MobileController(
         this.mainPlayer,
         onPlayerAction,
-        this.renderUsecase
+        canvasGameScript
       );
     } else if (canvas.isXr) {
       return new Quest2Controller(this.mainPlayer);
@@ -57,7 +61,7 @@ export class BasicUsecase {
       return new KeyboardPlayerEntityController(
         this.mainPlayer,
         onPlayerAction,
-        this.renderUsecase
+        canvasGameScript
       );
     }
   }
@@ -67,23 +71,40 @@ export class BasicUsecase {
   constructor(public game: Game) {
     console.log("Starting basic usecase");
     console.log("My UID", getMyUid());
-    game.addUpdateListener(this.update.bind(this));
+
     this.mainPlayer = game.addPlayer(getMyUid());
+
     console.log("Main player", this.mainPlayer);
 
-    this.renderUsecase = new CanvasRenderUsecase(game, this.mainPlayer);
-
-    game.gameController = new MouseAndKeyboardGameController(game);
-
+    this.gameController = new MouseAndKeyboardGameController(game);
     this.playerActionService = new PlayerActionService(game);
-    const playerController = this.makePlayerController();
-    game.entityControllers.set(this.mainPlayer.uid, [playerController]);
   }
 
-  update() {
+  setup() {
+    const canvasGameScript = this.game.addGameScript(CanvasGameScript);
+    const playerController = this.makePlayerController(canvasGameScript);
+    this.entityControllers.set(this.mainPlayer.uid, playerController);
+  }
+
+  update(delta: number) {
     // Load chunks around the player
     if (CONFIG.terrain.infiniteGen) {
       this.game.world.loadChunksAroundPoint(this.mainPlayer.pos);
     }
+
+    this.gameController.update(delta);
+
+    for (const entityController of this.entityControllers.values()) {
+      entityController.update();
+    }
   }
 }
+
+export const SandboxUseCase = (game: Game) => {
+  console.log("Starting sandbox usecase", game);
+
+  const basic = game.addGameScript(BasicUsecase);
+  basic.setup();
+
+  new TimerRunner(game);
+};

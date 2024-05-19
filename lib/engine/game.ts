@@ -1,22 +1,22 @@
 import { Player } from "./entities/player/player.js";
 import { ISerializedWorld, World } from "./world/world.js";
-import { IChunkReader, IGameConfig, IGameSaver } from "./types.js";
+import { IChunkReader, IGameSaver } from "./types.js";
 import { CONFIG, IConfig, setConfig } from "./config.js";
 import { EntityHolder, ISerializedEntities } from "./entities/entityHolder.js";
 import { Random } from "./utils/random.js";
 import { GameActionHandler, GameAction } from "./gameActions.js";
 import { GameStateDiff, GameDiffDto } from "./gameStateDiff.js";
 import { Vector2D } from "./utils/vector.js";
-import { GameController } from "./controllers/controller.js";
 import CubeHelpers, { Cube } from "./entities/cube.js";
-import { Entity, EntityController } from "./index.js";
+import { Entity } from "./index.js";
+import { IGameScript, IGameScriptConstuctor } from "./game-script.js";
 
 export interface ISerializedGame {
-  config: IConfig;
-  entities: ISerializedEntities;
-  world: ISerializedWorld;
-  gameId: string;
   name: string;
+  config: IConfig;
+  gameId: string;
+  entities?: ISerializedEntities;
+  world?: ISerializedWorld;
 }
 
 export interface IGameMetadata {
@@ -24,44 +24,31 @@ export interface IGameMetadata {
   name: string;
 }
 
-export type IGameData = IGameMetadata & {
-  config: IGameConfig;
-};
-
 // Receives client actions from somewhere.
 // Generate dirty entities and dirty chunks.
-
 export class Game {
   public stateDiff: GameStateDiff;
   private gameActionHandler: GameActionHandler;
-  public gameController: GameController | null = null;
+  private gameScripts: IGameScript[] = [];
 
   static async make(
-    dto: ISerializedGame,
+    dto: Omit<ISerializedGame, "gameId"> & { gameId?: string },
     chunkReader: IChunkReader,
     gameSaver: IGameSaver
   ) {
-    const world = await World.make(chunkReader);
-    const entityControllers = new Map<string, EntityController[]>();
-    const entities = new EntityHolder();
+    const world = await World.make(chunkReader, dto.world);
+    const entities = new EntityHolder(dto.entities);
 
-    return new Game(
-      dto.gameId,
-      dto.name,
-      dto.config,
-      entities,
-      entityControllers,
-      world,
-      gameSaver
-    );
+    const gameId = dto.gameId || Math.random().toString().slice(2, 10);
+
+    return new Game(gameId, dto.name, dto.config, entities, world, gameSaver);
   }
 
   constructor(
     public gameId: string,
     public name: string,
-    public config: IGameConfig,
+    public config: IConfig,
     public entities: EntityHolder,
-    public entityControllers: Map<string, EntityController[]>,
     public world: World,
     private gameSaver: IGameSaver
   ) {
@@ -85,39 +72,41 @@ export class Game {
     };
   }
 
-  private updateListeners: ((delta: number) => void)[] = [];
-  addUpdateListener(listener: (delta: number) => void) {
-    this.updateListeners.push(listener);
+  public addGameScript<T extends IGameScriptConstuctor>(
+    script: T
+  ): InstanceType<T> {
+    const s = new script(this);
+    this.gameScripts.push(s);
+    return s as InstanceType<T>;
   }
 
-  public update(delta: number) {
-    this.gameController?.update(delta);
-
-    for (const entityController of this.entityControllers.values()) {
-      for (const controller of entityController) {
-        controller.update();
+  public getGameScript<T extends IGameScriptConstuctor>(
+    script: T
+  ): InstanceType<T> {
+    for (const s of this.gameScripts) {
+      if (s instanceof script) {
+        return s as InstanceType<T>;
       }
     }
 
+    throw new Error("Script not found");
+  }
+
+  public update(delta: number) {
     this.entities.update(this, this.world, delta);
 
-    // Tell everyone else
-    for (const listener of this.updateListeners) {
-      listener(delta);
+    for (const script of this.gameScripts) {
+      script.update?.(delta);
     }
 
     this.stateDiff.clear();
   }
 
-  private gameActionListeners: ((action: GameAction) => void)[] = [];
-  addGameActionListener(listener: (action: GameAction) => void) {
-    this.gameActionListeners.push(listener);
-  }
   /** This happens on a fast loop. Mark things that change as dirty */
   public handleAction(action: GameAction) {
     this.gameActionHandler.handle(action);
-    for (const listener of this.gameActionListeners) {
-      listener(action);
+    for (const script of this.gameScripts) {
+      script.onGameAction?.(action);
     }
   }
 
@@ -158,17 +147,6 @@ export class Game {
       for (const removeId of removes) {
         console.log("Removing entity", removeId);
         this.entities.remove(removeId);
-        // remove the controller for the entity
-        const controllers = this.entityControllers.get(removeId);
-
-        if (controllers) {
-          for (const controller of controllers) {
-            controller.cleanup();
-            this.entityControllers.delete(removeId);
-          }
-        }
-
-        console.log("EntityControllers", this.entityControllers);
       }
     }
   }
@@ -198,11 +176,19 @@ export class Game {
   addEntity(entity: Entity) {
     console.log("Adding entity", entity);
     this.entities.add(this.stateDiff, entity);
+
+    for (const script of this.gameScripts) {
+      script.onNewEntity?.(entity);
+    }
   }
 
   removeEntity(entity: Entity) {
     console.log("Removing entity", entity);
     this.entities.remove(entity.uid);
+
+    for (const script of this.gameScripts) {
+      script.onRemovedEntity?.(entity);
+    }
   }
 
   async save() {

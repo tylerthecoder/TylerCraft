@@ -11,7 +11,9 @@ export const renderWorldPicker = (props: Props) => {
   return (
     <div id="GamePickers">
       {props.games.map((game) => (
-        <button onClick={() => props.onGameSelect(game)}>{game.name}</button>
+        <button key={game.gameId} onClick={() => props.onGameSelect(game)}>
+          {game.name}
+        </button>
       ))}
       <button onClick={props.onNewGame}>New Game</button>
     </div>
