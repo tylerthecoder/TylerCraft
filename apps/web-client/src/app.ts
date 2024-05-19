@@ -22,6 +22,7 @@ export interface IExtendedWindow extends Window {
 
 // Loading the engine
 await Engine.WorldModule.load();
+await Engine.TerrainGenModule.load();
 
 export const IS_MOBILE = /Mobi/.test(window.navigator.userAgent);
 console.log("Is Mobile: ", IS_MOBILE);

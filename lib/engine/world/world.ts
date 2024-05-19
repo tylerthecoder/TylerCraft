@@ -27,7 +27,7 @@ export class ChunkHolder {
 
   constructor(
     private wasmWorld: WorldModuleTypes.World,
-    private chunkReader: IChunkReader,
+    public chunkReader: IChunkReader,
     data?: ISerializedChunkHolder
   ) {
     if (data) {
@@ -226,8 +226,8 @@ export class World {
   // load the starting chunks
   // called before the world is passed on to the game
   private async load() {
-    this.loadChunksAroundPoint(new Vector3D([0, 0, 0]));
-    await this.chunks.loadAll();
+    // this.loadChunksAroundPoint(new Vector3D([0, 0, 0]));
+    // await this.chunks.loadAll();
   }
 
   loadChunksAroundPoint(pos: Vector3D): void {

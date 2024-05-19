@@ -1,45 +1,16 @@
 import {
-  Chunk,
   Game,
-  IChunkReader,
+  IContructGameOptions,
   ICreateGameOptions,
-  ISerializedGame,
   ISocketMessageType,
   SocketMessage,
-  TerrainGenerator,
-  Vector2D,
-  WorldModule,
+  TerrainGen1,
   setConfig,
 } from "@craft/engine";
 import { ServerGame } from "./server-game.js";
 import Websocket from "ws";
 import { IDbManager } from "./db.js";
 import SocketServer from "./socket.js";
-
-export class RamChunkReader implements IChunkReader {
-  private chunkMap = new Map<string, Chunk>();
-  private terrainGenerator: TerrainGenerator;
-
-  constructor(serializedGame?: ISerializedGame) {
-    this.terrainGenerator = new TerrainGenerator(
-      (chunkPos) => this.chunkMap.has(chunkPos.toIndex()),
-      (chunkPos) => this.chunkMap.get(chunkPos.toIndex())
-    );
-    if (!serializedGame) return;
-    for (const chunkData of serializedGame.world?.chunks ?? []) {
-      const chunk = WorldModule.createChunkFromSerialized(chunkData);
-      this.chunkMap.set(chunk.uid, chunk);
-    }
-  }
-
-  async getChunk(chunkPos: string) {
-    let chunk = this.chunkMap.get(chunkPos);
-    if (!chunk) {
-      chunk = this.terrainGenerator.generateChunk(Vector2D.fromIndex(chunkPos));
-    }
-    return chunk;
-  }
-}
 
 export class GameService {
   private games: Map<string, ServerGame> = new Map();
@@ -108,7 +79,7 @@ export class GameService {
       return null;
     }
 
-    const chunkReader = new RamChunkReader(dbGame);
+    const chunkReader = new TerrainGen1(dbGame);
     const gameSaver = {
       save: async (game: Game) => {
         await this.dbManager.saveGame(game.serialize());
@@ -147,9 +118,8 @@ export class GameService {
         await this.dbManager.saveGame(game.serialize());
       },
     };
-    const chunkReader = new RamChunkReader();
 
-    const game = await Game.make(options, chunkReader, gameSaver);
+    const game = await Game.make(options, new TerrainGen1(), gameSaver);
 
     const serverUsecase = new ServerGame(
       options.config,

@@ -5,6 +5,7 @@ import {
   Player,
   PlayerAction,
   PlayerActionService,
+  TerrainGen2,
 } from "@craft/engine";
 import { IS_MOBILE, getMyUid } from "../app";
 import { MobileController } from "../controllers/playerControllers/mobileController";
@@ -14,6 +15,54 @@ import { canvas } from "../canvas";
 import { MouseAndKeyboardGameController } from "../controllers/gameKeyboardController";
 import { IGameScript } from "@craft/engine/game-script";
 import { CanvasGameScript } from "../game-scripts/canvas-gscript";
+import { ServerSideGameScript } from "../services/mp-games-service";
+
+// const WorkerChunkGetter = (config: IConfig): IChunkReader => {
+//   const worker = new TerrainWorker();
+//   console.log("The worker", worker);
+//   worker.postMessage({
+//     type: "setConfig",
+//     config,
+//   });
+//   worker.onerror = (e) => {
+//     console.error("Error from worker", e);
+//   };
+//   worker.onmessageerror = (e) => {
+//     console.error("Message error from worker", e);
+//   };
+//   const chunkPromises: { [chunkPos: string]: Promise<Chunk> } = {};
+//   return {
+//     getChunk: async (chunkPos: string) => {
+//       console.log("WorkerChunkGetter", chunkPos);
+//
+//       let chunkPromise = chunkPromises[chunkPos];
+//       if (chunkPromise) return chunkPromise;
+//
+//       const terrainVector = Vector2D.fromIndex(chunkPos);
+//       worker.postMessage({
+//         type: "getChunk",
+//         x: terrainVector.data[0],
+//         y: terrainVector.data[1],
+//       });
+//
+//       chunkPromise = new Promise<Chunk>((resolve) => {
+//         const onTerrainMessage = (data: { data: ISerializedChunk }) => {
+//           if (data.data.chunkId !== chunkPos) return;
+//
+//           const chunk = WorldModule.createChunkFromSerialized(data.data);
+//
+//           resolve(chunk);
+//           worker.removeEventListener("message", onTerrainMessage);
+//         };
+//
+//         worker.addEventListener("message", onTerrainMessage);
+//       });
+//       chunkPromises[chunkPos] = chunkPromise;
+//
+//       return chunkPromise;
+//     },
+//   };
+// };
 
 export class TimerRunner {
   private lastTime = Date.now();
@@ -80,11 +129,15 @@ export class BasicUsecase implements IGameScript {
     this.playerActionService = new PlayerActionService(game);
   }
 
-  setup() {
+  async setup() {
     console.log("Setting up basic game script");
     const canvasGameScript = this.game.addGameScript(CanvasGameScript);
     const playerController = this.makePlayerController(canvasGameScript);
     this.entityControllers.set(this.mainPlayer.uid, playerController);
+
+    if (!this.game.hasScript(ServerSideGameScript)) {
+      this.game.world.chunks.chunkReader = new TerrainGen2(this.game.config);
+    }
   }
 
   update(delta: number) {
@@ -101,12 +154,12 @@ export class BasicUsecase implements IGameScript {
   }
 }
 
-export const SandboxUseCase = (game: Game) => {
+export const SandboxUseCase = async (game: Game) => {
   console.log("Starting sandbox usecase", game);
 
   game.addGameScript(BasicUsecase);
 
-  game.setupScripts();
+  await game.setupScripts();
 
   new TimerRunner(game);
 };

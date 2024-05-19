@@ -93,6 +93,10 @@ export class Game {
     return s as InstanceType<T>;
   }
 
+  public hasScript<T extends IGameScriptConstuctor>(script: T) {
+    return this.gameScripts.some((s) => s instanceof script);
+  }
+
   public getGameScript<T extends IGameScriptConstuctor>(
     script: T
   ): InstanceType<T> {
@@ -105,9 +109,9 @@ export class Game {
     throw new Error("Script not found");
   }
 
-  public setupScripts() {
+  public async setupScripts() {
     for (const script of this.gameScripts) {
-      script.setup?.();
+      await script.setup?.();
     }
   }
 

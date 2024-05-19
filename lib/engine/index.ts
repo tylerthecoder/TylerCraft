@@ -23,4 +23,5 @@ export * from "./entities/player/player.js";
 export * from "./entities/player/playerActions.js";
 export * from "./entities/projectile.js";
 export * from "./entities/spectator.js";
+export * from "./game-script.js";
 export { WorldModule, TerrainGenModule } from "./modules.js";

@@ -1,0 +1,17 @@
+{
+  "name": "spleef",
+  "packageManager": "yarn@3.2.1",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -b",
+    "dev": "tsc -b -w --preserveWatchOutput",
+    "lint": "eslint . --ext .ts",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@craft/engine": "workspace:^"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}

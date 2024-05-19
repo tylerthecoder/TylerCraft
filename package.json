@@ -9,6 +9,7 @@
     "lib/engine",
     "lib/world",
     "lib/terrain-gen",
+    "lib/spleef",
     "lib/eslint"
   ],
   "license": "MIT",

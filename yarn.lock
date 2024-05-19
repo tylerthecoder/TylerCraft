@@ -1161,7 +1161,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@craft/engine@1.0.0, @craft/engine@workspace:lib/engine":
+"@craft/engine@1.0.0, @craft/engine@workspace:^, @craft/engine@workspace:lib/engine":
   version: 0.0.0-use.local
   resolution: "@craft/engine@workspace:lib/engine"
   dependencies:
@@ -6957,6 +6957,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"spleef@workspace:lib/spleef":
+  version: 0.0.0-use.local
+  resolution: "spleef@workspace:lib/spleef"
+  dependencies:
+    "@craft/engine": "workspace:^"
+    typescript: ^5.4.5
+  languageName: unknown
+  linkType: soft
+
 "split-string@npm:^3.0.1, split-string@npm:^3.0.2":
   version: 3.1.0
   resolution: "split-string@npm:3.1.0"
@@ -7424,6 +7433,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"typescript@npm:^5.4.5":
+  version: 5.4.5
+  resolution: "typescript@npm:5.4.5"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 53c879c6fa1e3bcb194b274d4501ba1985894b2c2692fa079db03c5a5a7140587a1e04e1ba03184605d35f439b40192d9e138eb3279ca8eee313c081c8bcd9b0
+  languageName: node
+  linkType: hard
+
 "typescript@patch:typescript@^5.4.2#~builtin<compat/typescript>":
   version: 5.4.2
   resolution: "typescript@patch:typescript@npm%3A5.4.2#~builtin<compat/typescript>::version=5.4.2&hash=7ad353"
@@ -7431,6 +7450,16 @@ __metadata:
     tsc: bin/tsc
     tsserver: bin/tsserver
   checksum: c1b669146bca5529873aae60870e243fa8140c85f57ca32c42f898f586d73ce4a6b4f6bb02ae312729e214d7f5859a0c70da3e527a116fdf5ad00c9fc733ecc6
+  languageName: node
+  linkType: hard
+
+"typescript@patch:typescript@^5.4.5#~builtin<compat/typescript>":
+  version: 5.4.5
+  resolution: "typescript@patch:typescript@npm%3A5.4.5#~builtin<compat/typescript>::version=5.4.5&hash=7ad353"
+  bin:
+    tsc: bin/tsc
+    tsserver: bin/tsserver
+  checksum: 2373c693f3b328f3b2387c3efafe6d257b057a142f9a79291854b14ff4d5367d3d730810aee981726b677ae0fd8329b23309da3b6aaab8263dbdccf1da07a3ba
   languageName: node
   linkType: hard
 
