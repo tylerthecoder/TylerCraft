@@ -81,6 +81,7 @@ export class BasicUsecase implements IGameScript {
   }
 
   setup() {
+    console.log("Setting up basic game script");
     const canvasGameScript = this.game.addGameScript(CanvasGameScript);
     const playerController = this.makePlayerController(canvasGameScript);
     this.entityControllers.set(this.mainPlayer.uid, playerController);
@@ -103,8 +104,9 @@ export class BasicUsecase implements IGameScript {
 export const SandboxUseCase = (game: Game) => {
   console.log("Starting sandbox usecase", game);
 
-  const basic = game.addGameScript(BasicUsecase);
-  basic.setup();
+  game.addGameScript(BasicUsecase);
+
+  game.setupScripts();
 
   new TimerRunner(game);
 };

@@ -1,7 +1,12 @@
 import { IConfig } from "./config.js";
 import { EntityDto } from "./entities/entity.js";
 import { PlayerActionDto } from "./entities/player/playerActions.js";
-import { Game, IGameMetadata, ISerializedGame } from "./game.js";
+import {
+  Game,
+  IContructGameOptions,
+  IGameMetadata,
+  ISerializedGame,
+} from "./game.js";
 import { GameActionDto } from "./gameActions.js";
 import { GameDiffDto } from "./gameStateDiff.js";
 import { MessageDto, MessageHolder } from "./messageHelpers.js";
@@ -47,18 +52,8 @@ export type StateUpdate =
   | IEntityRemoveStateUpdate
   | IChunkUpdateStateUpdate;
 
-export type ICreateGameOptions = Pick<ISerializedGame, "config" | "name">;
-
-export interface IChunkReader {
-  getChunk(chunkPos: string): Promise<Chunk>;
-}
-
-export interface IGameSaver {
-  save(game: Game): Promise<void>;
-}
-
 export interface IGamesService {
-  createGame(options: ICreateGameOptions): Promise<Game>;
+  createGame(options: IContructGameOptions): Promise<Game>;
   getGame(gameId: string): Promise<Game | null>;
   getAllGames(): Promise<IGameMetadata[]>;
   saveGame(game: Game): Promise<void>;

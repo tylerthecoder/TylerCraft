@@ -1,6 +1,5 @@
 import { Player } from "./entities/player/player.js";
 import { ISerializedWorld, World } from "./world/world.js";
-import { IChunkReader, IGameSaver } from "./types.js";
 import { CONFIG, IConfig, setConfig } from "./config.js";
 import { EntityHolder, ISerializedEntities } from "./entities/entityHolder.js";
 import { Random } from "./utils/random.js";
@@ -8,7 +7,7 @@ import { GameActionHandler, GameAction } from "./gameActions.js";
 import { GameStateDiff, GameDiffDto } from "./gameStateDiff.js";
 import { Vector2D } from "./utils/vector.js";
 import CubeHelpers, { Cube } from "./entities/cube.js";
-import { Entity } from "./index.js";
+import { Chunk, Entity } from "./index.js";
 import { IGameScript, IGameScriptConstuctor } from "./game-script.js";
 
 export interface ISerializedGame {
@@ -24,6 +23,20 @@ export interface IGameMetadata {
   name: string;
 }
 
+export type ICreateGameOptions = Pick<ISerializedGame, "config" | "name">;
+
+export type IContructGameOptions = Omit<ISerializedGame, "gameId"> & {
+  gameId?: string;
+};
+
+export interface IChunkReader {
+  getChunk(chunkPos: string): Promise<Chunk>;
+}
+
+export interface IGameSaver {
+  save(game: Game): Promise<void>;
+}
+
 // Receives client actions from somewhere.
 // Generate dirty entities and dirty chunks.
 export class Game {
@@ -32,7 +45,7 @@ export class Game {
   private gameScripts: IGameScript[] = [];
 
   static async make(
-    dto: Omit<ISerializedGame, "gameId"> & { gameId?: string },
+    dto: IContructGameOptions,
     chunkReader: IChunkReader,
     gameSaver: IGameSaver
   ) {
@@ -90,6 +103,12 @@ export class Game {
     }
 
     throw new Error("Script not found");
+  }
+
+  public setupScripts() {
+    for (const script of this.gameScripts) {
+      script.setup?.();
+    }
   }
 
   public update(delta: number) {

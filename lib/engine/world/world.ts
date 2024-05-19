@@ -6,7 +6,6 @@ import CubeHelpers, {
 } from "../entities/cube.js";
 import { Chunk, ILookingAtData, ISerializedChunk } from "./chunk.js";
 import { Entity } from "../entities/entity.js";
-import { IChunkReader } from "../types.js";
 import { CONFIG } from "../config.js";
 import {
   Vector3D,
@@ -17,7 +16,7 @@ import {
 import { WorldModule, WorldModuleTypes } from "../modules.js";
 import { GameStateDiff } from "../gameStateDiff.js";
 import { ChunkMesh } from "./chunkMesh.js";
-import { CameraRay, Game, getBlockData } from "../index.js";
+import { CameraRay, Game, getBlockData, IChunkReader } from "../index.js";
 
 type ISerializedChunkHolder = ISerializedChunk[];
 

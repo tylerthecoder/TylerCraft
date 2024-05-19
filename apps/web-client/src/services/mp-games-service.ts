@@ -11,8 +11,7 @@ import {
   PlayerAction,
   SocketMessage,
   IGamesService,
-  Player,
-  PlayerActionService,
+  IContructGameOptions,
 } from "@craft/engine";
 import { SocketListener } from "../socket";
 import { SocketInterface, getMyUid } from "../app";
@@ -40,18 +39,20 @@ export class NetworkGamesService implements IGamesService {
     return welcomeMessage;
   }
 
-  private async makeGame(welcomeMessage: ISocketWelcomePayload): Promise<Game> {
+  private async buildGame(constructGame: IContructGameOptions) {
     const gameSaver = {
       save: async (game: Game) => {
         this.saveGame(game);
       },
     };
 
-    const game = Game.make(
-      welcomeMessage.game,
+    const game = await Game.make(
+      constructGame,
       new ServerChunkReader(),
       gameSaver
     );
+
+    game.addGameScript(ServerSideGameScript);
 
     return game;
   }
@@ -74,7 +75,7 @@ export class NetworkGamesService implements IGamesService {
 
     console.log("Welcome Message", welcomeMessage);
 
-    return this.makeGame(welcomeMessage);
+    return this.buildGame(welcomeMessage.game);
   }
 
   public async getGame(gameId: string): Promise<Game | null> {
@@ -91,7 +92,7 @@ export class NetworkGamesService implements IGamesService {
       return null;
     }
 
-    return this.makeGame(welcomeMessage);
+    return this.buildGame(welcomeMessage.game);
   }
 
   public async getAllGames(): Promise<IGameMetadata[]> {
@@ -143,22 +144,20 @@ class ServerChunkReader implements IChunkReader {
     return chunk;
   }
 }
-export class MultiplayerGameScript implements IGameScript {
+export class ServerSideGameScript implements IGameScript {
   debug = true;
-  private mainPlayer: Player;
-  private playerActionService: PlayerActionService;
+  constructor(private game: Game) {}
 
-  constructor(private game: Game) {
-    this.mainPlayer = game.getGameScript(BasicUsecase).mainPlayer;
-    this.playerActionService =
-      game.getGameScript(BasicUsecase).playerActionService;
-
-    this.playerActionService.addActionListener(
-      this.mainPlayer.uid,
-      this.onPlayerAction.bind(this)
-    );
-
+  setup() {
+    console.log("Setting up ServerSideGameScript");
     SocketInterface.addListener(this.onSocketMessage.bind(this));
+
+    this.game
+      .getGameScript(BasicUsecase)
+      .playerActionService.addActionListener(
+        this.game.getGameScript(BasicUsecase).mainPlayer.uid,
+        this.onPlayerAction.bind(this)
+      );
   }
 
   onGameAction(action: GameAction) {
@@ -179,18 +178,22 @@ export class MultiplayerGameScript implements IGameScript {
     );
   }
 
-  onSocketMessage(message: SocketMessage) {
+  private onSocketMessage(message: SocketMessage) {
+    const mainPlayer = this.game.getGameScript(BasicUsecase).mainPlayer;
+    const playerActionService =
+      this.game.getGameScript(BasicUsecase).playerActionService;
+
     if (message.isType(ISocketMessageType.gameDiff)) {
       this.game.handleStateDiff(message.data);
     } else if (message.isType(ISocketMessageType.playerActions)) {
-      if (message.data.data.playerUid === this.mainPlayer.uid) return;
+      if (message.data.data.playerUid === mainPlayer.uid) return;
 
       const playerAction = new PlayerAction(
         message.data.type,
         message.data.data
       );
 
-      this.playerActionService.performAction(
+      playerActionService.performAction(
         message.data.data.playerUid,
         playerAction
       );

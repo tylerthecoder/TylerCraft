@@ -7,6 +7,8 @@ export interface IGameScriptConstuctor {
 }
 
 export interface IGameScript {
+  setup?(): void;
+
   // Called for every game loop
   update?(delta: number): void;
 

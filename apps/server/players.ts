@@ -38,11 +38,7 @@ export default class Players {
     // send a welcoming message to the new player
     const welcomeMessage = new SocketMessage(ISocketMessageType.welcome, {
       uid,
-      worldId: this.game.gameId,
-      entities: this.game.entities.serialize(),
-      activePlayers: Array.from(this.players.values()).map((p) => p.uid),
-      config: CONFIG,
-      name: this.game.name,
+      game: this.game.serialize(),
     });
     this.socketInterface.send(ws, welcomeMessage);
 
