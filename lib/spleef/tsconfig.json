@@ -4,9 +4,15 @@
     "outDir": "./dist",
     "composite": true,
     "skipLibCheck": true,
-    "module": "NodeNext"
+    "module": "NodeNext",
+    "rootDir": "./src",
   },
   "exclude": ["dist/**"],
-  "include": ["./**/*.ts"]
+  "include": ["./**/*.ts"],
+  "references": [
+    {
+      "path": "../engine"
+    },
+  ]
 }
 

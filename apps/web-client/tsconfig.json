@@ -15,6 +15,9 @@
   "references": [
     {
       "path": "../../lib/engine"
+    },
+    {
+      "path": "../../lib/spleef"
     }
   ]
 }

@@ -179,8 +179,6 @@ const handlePlayerAction = (
   if (action.isType(PlayerActionType.PlaceDebugBlock)) {
     const pos = player.pos.floor();
     const cube = CubeHelpers.createCube(BlockType.Gold, pos);
-    game.world.addBlock(game.stateDiff, cube, {
-      loadChunkIfNotLoaded: true,
-    });
+    game.world.addBlock(game.stateDiff, cube);
   }
 };

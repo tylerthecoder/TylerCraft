@@ -13,10 +13,10 @@ import { Renderer } from "./renderer";
 import { canvas } from "../canvas";
 import { ChunkRenderer } from "./chunkRender";
 import { HudRenderer } from "./hudRender";
-import { CanvasRenderUsecase } from "../clientGame";
 import { SphereRenderer } from "./sphereRender";
 import { PlayerRenderer } from "./playerRender";
 import { BlockType } from "@craft/rust-world";
+import { CanvasGameScript } from "../game-scripts/canvas-gscript";
 
 export default class WorldRenderer {
   private renderers: Renderer[] = [];
@@ -24,10 +24,7 @@ export default class WorldRenderer {
   private chunkRenderers: Map<string, ChunkRenderer> = new Map();
   shouldRenderMainPlayer = true;
 
-  constructor(
-    private world: World,
-    private rendererUsecase: CanvasRenderUsecase
-  ) {
+  constructor(private world: World, private rendererUsecase: CanvasGameScript) {
     const hudCanvas = new HudRenderer(canvas, rendererUsecase);
     this.renderers.push(hudCanvas);
   }

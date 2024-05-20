@@ -17,6 +17,9 @@ import { WorldModule, WorldModuleTypes } from "../modules.js";
 import { GameStateDiff } from "../gameStateDiff.js";
 import { ChunkMesh } from "./chunkMesh.js";
 import { CameraRay, Game, getBlockData, IChunkReader } from "../index.js";
+import { Logger } from "../logger.js";
+
+const logger = new Logger("World");
 
 type ISerializedChunkHolder = ISerializedChunk[];
 
@@ -89,6 +92,9 @@ export class ChunkHolder {
   }
 
   async immediateLoadChunk(pos: Vector2D): Promise<Chunk> {
+    if (this.has(pos)) {
+      return this.get(pos) as Chunk;
+    }
     const chunkId = pos.toIndex();
     const chunk = await this.chunkReader.getChunk(chunkId);
     this.chunksToSend.push(chunk);
@@ -114,7 +120,7 @@ export class World {
   ): Promise<World> {
     const world = WorldModule.createWorld(chunkReader, data);
     await world.load();
-    console.log("World loaded");
+    logger.info("World loaded");
     return world;
   }
 
@@ -306,21 +312,20 @@ export class World {
     }
   }
 
-  async addBlock(
-    stateDiff: GameStateDiff,
-    cube: Cube,
-    options?: { loadChunkIfNotLoaded: boolean }
-  ) {
-    console.log("World: Adding block", cube);
-    let chunk = this.getChunkFromWorldPoint(cube.pos);
+  async loadPoint(pos: Vector3D) {
+    const chunk = this.getChunkFromWorldPoint(pos);
+    if (chunk) {
+      return chunk;
+    }
+    const chunkPos = World.worldPosToChunkPos(pos);
+    await this.chunks.immediateLoadChunk(chunkPos);
+  }
+
+  addBlock(stateDiff: GameStateDiff, cube: Cube) {
+    logger.info("World: Adding block", cube);
+    const chunk = this.getChunkFromWorldPoint(cube.pos);
     if (!chunk) {
-      if (options?.loadChunkIfNotLoaded) {
-        chunk = await this.chunks.immediateLoadChunk(
-          World.worldPosToChunkPos(cube.pos)
-        );
-      } else {
-        throw new Error("Trying to place block in unloaded chunk");
-      }
+      throw new Error("Trying to place block in unloaded chunk");
     }
     const diff: { chunk_ids: string[] } = this.wasmWorld.add_block_wasm({
       block_type: cube.type,
@@ -335,13 +340,11 @@ export class World {
     // Very important to update the chunk too
     chunk.addBlock(cube);
 
-    console.log("Chunks to updated after adding block: ", diff);
-
     diff.chunk_ids.forEach((id) => stateDiff.updateChunk(id));
   }
 
   removeBlock(stateDiff: GameStateDiff, cubePos: Vector3D) {
-    console.log("Removing block", cubePos);
+    logger.info("Removing block", cubePos);
     const chunk = this.getChunkFromWorldPoint(cubePos);
     if (!chunk) return;
     const diff: { chunk_ids: string[] } = this.wasmWorld.remove_block_wasm(
@@ -352,7 +355,7 @@ export class World {
 
     chunk.removeBlock(cubePos);
 
-    console.log("Diff from removing block", diff);
+    logger.debug("Diff from removing block", diff);
     diff.chunk_ids.forEach((id) => stateDiff.updateChunk(id));
   }
 
@@ -363,7 +366,7 @@ export class World {
       distance: number;
     } | null = this.wasmWorld.get_pointed_at_block_wasm(camera);
 
-    console.log("Cam looking at ", lookingData, camera);
+    logger.debug("Looking at", lookingData);
 
     if (!lookingData) return null;
 

@@ -59,6 +59,9 @@ export class GameStateDiff {
   }
 
   public updateChunk(chunkId: string) {
+    if (this.updateChunkIds.includes(chunkId)) {
+      return;
+    }
     this.updateChunkIds.push(chunkId);
   }
 

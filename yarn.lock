@@ -1221,6 +1221,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@craft/spleef@1.0.0, @craft/spleef@workspace:lib/spleef":
+  version: 0.0.0-use.local
+  resolution: "@craft/spleef@workspace:lib/spleef"
+  dependencies:
+    "@craft/engine": "workspace:^"
+    typescript: ^5.4.5
+  languageName: unknown
+  linkType: soft
+
 "@craft/terrain-app@workspace:apps/terrain-app":
   version: 0.0.0-use.local
   resolution: "@craft/terrain-app@workspace:apps/terrain-app"
@@ -1249,6 +1258,7 @@ __metadata:
   dependencies:
     "@craft/engine": 1.0.0
     "@craft/eslint-config-tylercraft": ^1.0.0
+    "@craft/spleef": 1.0.0
     "@types/gl-matrix": ^2.4.5
     "@types/react": ^18.2.67
     "@types/react-dom": ^18
@@ -6956,15 +6966,6 @@ __metadata:
   checksum: b1ceea3f87407ec375d1de90f6fc7610d6c845ff5f8db21d4d752b3d4e121df563c78113df7c564daff4e8778ad54b9a9024a7e9ea3779f13a43dd0e9128c08e
   languageName: node
   linkType: hard
-
-"spleef@workspace:lib/spleef":
-  version: 0.0.0-use.local
-  resolution: "spleef@workspace:lib/spleef"
-  dependencies:
-    "@craft/engine": "workspace:^"
-    typescript: ^5.4.5
-  languageName: unknown
-  linkType: soft
 
 "split-string@npm:^3.0.1, split-string@npm:^3.0.2":
   version: 3.1.0

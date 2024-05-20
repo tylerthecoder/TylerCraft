@@ -5,10 +5,13 @@ import { EntityHolder, ISerializedEntities } from "./entities/entityHolder.js";
 import { Random } from "./utils/random.js";
 import { GameActionHandler, GameAction } from "./gameActions.js";
 import { GameStateDiff, GameDiffDto } from "./gameStateDiff.js";
-import { Vector2D } from "./utils/vector.js";
+import { Vector2D, Vector3D } from "./utils/vector.js";
 import CubeHelpers, { Cube } from "./entities/cube.js";
 import { Chunk, Entity } from "./index.js";
 import { IGameScript, IGameScriptConstuctor } from "./game-script.js";
+import { Logger } from "./logger.js";
+
+const logger = new Logger("Game");
 
 export interface ISerializedGame {
   name: string;
@@ -138,7 +141,7 @@ export class Game {
     // Might not have to do this because the updating below will append the updates
     this.stateDiff.appendDto(stateDiff);
 
-    console.log("Handling State Diff", stateDiff);
+    logger.info("Handling State Diff", stateDiff);
     if (stateDiff.chunks.update) {
       const updates = stateDiff.chunks.update;
       for (const update of updates) {
@@ -153,7 +156,7 @@ export class Game {
       const adds = stateDiff.entities.add;
       for (const add of adds) {
         const ent = this.entities.createEntity(add);
-        console.log("Adding entity from stateDiff", add);
+        logger.info("Adding entity from stateDiff", add);
         this.entities.add(this.stateDiff, ent);
       }
     }
@@ -168,18 +171,18 @@ export class Game {
     if (stateDiff.entities.remove) {
       const removes = stateDiff.entities.remove;
       for (const removeId of removes) {
-        console.log("Removing entity", removeId);
+        logger.info("Removing entity", removeId);
         this.entities.remove(removeId);
       }
     }
   }
 
   placeBlock(cube: Cube) {
-    console.log("Game: Adding block", cube);
+    logger.info("Adding block", cube);
     // Check if an entity is in the way
     for (const entity of this.entities.iterable()) {
       if (CubeHelpers.isPointInsideOfCube(cube, entity.pos)) {
-        console.log("Not adding block, entity in the way");
+        logger.info("Not adding block, entity in the way");
         return;
       }
     }
@@ -187,8 +190,12 @@ export class Game {
     this.world.addBlock(this.stateDiff, cube);
   }
 
+  async loadPos(pos: Vector3D) {
+    await this.world.loadPoint(pos);
+  }
+
   removeBlock(cube: Cube) {
-    console.log("Removing block", cube);
+    logger.info("Removing block", cube);
     this.world.removeBlock(this.stateDiff, cube.pos);
   }
 
@@ -197,7 +204,7 @@ export class Game {
   }
 
   addEntity(entity: Entity) {
-    console.log("Adding entity", entity);
+    logger.info("Adding entity", entity);
     this.entities.add(this.stateDiff, entity);
 
     for (const script of this.gameScripts) {
@@ -206,7 +213,7 @@ export class Game {
   }
 
   removeEntity(entity: Entity) {
-    console.log("Removing entity", entity);
+    logger.info("Removing entity", entity);
     this.entities.remove(entity.uid);
 
     for (const script of this.gameScripts) {

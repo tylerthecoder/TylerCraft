@@ -22,6 +22,7 @@ export class TerrainGen1 implements IChunkReader {
   }
 
   async getChunk(chunkPos: string) {
+    console.log("TerrainGen1 getting chunk", chunkPos);
     let chunk = this.chunkMap.get(chunkPos);
     if (!chunk) {
       chunk = this.terrainGenerator.generateChunk(Vector2D.fromIndex(chunkPos));
@@ -43,6 +44,7 @@ export class TerrainGen2 implements IChunkReader {
   }
 
   public async getChunk(chunkPos: string) {
+    console.log("TerrainGen2 getting chunk", chunkPos);
     const terrainVector = Vector2D.fromIndex(chunkPos);
     return this.terrainGenerator.getChunk(terrainVector);
   }

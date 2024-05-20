@@ -1,7 +1,11 @@
 {
-  "name": "spleef",
+  "name": "@craft/spleef",
+  "version": "1.0.0",
   "packageManager": "yarn@3.2.1",
   "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsc -b",
     "dev": "tsc -b -w --preserveWatchOutput",

@@ -5,7 +5,6 @@ import {
   Player,
   PlayerAction,
   PlayerActionService,
-  TerrainGen2,
 } from "@craft/engine";
 import { IS_MOBILE, getMyUid } from "../app";
 import { MobileController } from "../controllers/playerControllers/mobileController";
@@ -15,7 +14,7 @@ import { canvas } from "../canvas";
 import { MouseAndKeyboardGameController } from "../controllers/gameKeyboardController";
 import { IGameScript } from "@craft/engine/game-script";
 import { CanvasGameScript } from "../game-scripts/canvas-gscript";
-import { ServerSideGameScript } from "../services/mp-games-service";
+import { SpleefGameScript } from "@craft/spleef";
 
 // const WorkerChunkGetter = (config: IConfig): IChunkReader => {
 //   const worker = new TerrainWorker();
@@ -135,9 +134,9 @@ export class BasicUsecase implements IGameScript {
     const playerController = this.makePlayerController(canvasGameScript);
     this.entityControllers.set(this.mainPlayer.uid, playerController);
 
-    if (!this.game.hasScript(ServerSideGameScript)) {
-      this.game.world.chunks.chunkReader = new TerrainGen2(this.game.config);
-    }
+    // if (!this.game.hasScript(ServerSideGameScript)) {
+    //   this.game.world.chunks.chunkReader = new TerrainGen2(this.game.config);
+    // }
   }
 
   update(delta: number) {
@@ -156,6 +155,8 @@ export class BasicUsecase implements IGameScript {
 
 export const SandboxUseCase = async (game: Game) => {
   console.log("Starting sandbox usecase", game);
+
+  game.addGameScript(SpleefGameScript);
 
   game.addGameScript(BasicUsecase);
 
