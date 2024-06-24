@@ -1,3 +1,21 @@
+## 06_22_24
+Trying to get the collision detection to be better with the player and the world. 
+
+Current plan:
+- Make a lib funciton that takes a box (pos, dim) and a pos it wants to go to and return the position it can actually go to. If the box would hit something while moving to the new position, then find the shorted distance to make the box not collide with anything. 
+
+Basic form of function:
+- Take all the world points of the block corner and the world points of the new potition. Create a line segment for each of these. Make a function that determines if a line segment is intersecting the world and at which point it intersects. Then find the line segment that minimizes the distance traveled and update all the box positions with that and return the new position and the face that it hit. Only stop applying force to a player if they hit something below them. 
+
+
+
+
+
+
+
+
+## Some other date
+
 Working out how update the chunk's visible faces. I think I will call is mesh now.
 
 Seem to be a disconnect with how rust works and how I am trying to design this program.

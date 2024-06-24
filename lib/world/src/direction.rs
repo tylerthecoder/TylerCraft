@@ -2,9 +2,28 @@ use crate::geometry::rotation::SphericalRotation;
 use serde::{Deserialize, Serialize};
 use std::{
     f32::consts::PI,
+    fmt::Display,
     iter::{FromIterator, IntoIterator},
 };
 use wasm_bindgen::prelude::wasm_bindgen;
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[wasm_bindgen]
+pub enum Axis {
+    X,
+    Y,
+    Z,
+}
+
+impl Display for Axis {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Axis::X => write!(f, "X"),
+            Axis::Y => write!(f, "Y"),
+            Axis::Z => write!(f, "Z"),
+        }
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[wasm_bindgen]
@@ -84,6 +103,10 @@ impl Directions {
         }
     }
 
+    pub fn add(&mut self, direction: Direction) {
+        self.data[direction as usize];
+    }
+
     pub fn remove_direction(&mut self, direction: Direction) {
         self.data[direction as usize] = false;
     }
@@ -125,6 +148,14 @@ impl Direction {
 
     pub fn to_directions(&self) -> Directions {
         Directions::create_for_direction(*self)
+    }
+
+    pub fn to_axis(&self) -> Axis {
+        match self {
+            Direction::North | Direction::South => Axis::Z,
+            Direction::Up | Direction::Down => Axis::Y,
+            Direction::East | Direction::West => Axis::X,
+        }
     }
 
     pub fn flatten(&self) -> FlatDirection {

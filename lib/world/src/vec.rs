@@ -1,9 +1,9 @@
-use crate::direction::{Direction, Directions, FlatDirection, EVERY_FLAT_DIRECTION};
-use num::{traits::real::Real, One, Zero};
+use crate::direction::{Axis, Direction, Directions, FlatDirection, EVERY_FLAT_DIRECTION};
+use num::{traits::real::Real, Num, One, Zero};
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::Display,
-    ops::{Add, AddAssign, Mul, Neg, Sub, SubAssign},
+    ops::{Add, AddAssign, Div, Mul, Neg, Sub, SubAssign},
 };
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
@@ -11,7 +11,6 @@ pub struct Vec2<T> {
     pub x: T,
     pub y: T,
 }
-
 
 impl<T> Vec2<T> {
     pub fn new(x: T, y: T) -> Vec2<T> {
@@ -94,6 +93,20 @@ pub struct Vec3<T> {
     pub z: T,
 }
 
+impl<T, U> Add<Vec3<U>> for Vec3<T>
+where
+    T: Add<U, Output = T> + Copy,
+{
+    type Output = Vec3<T>;
+    fn add(self, rhs: Vec3<U>) -> Self::Output {
+        Vec3 {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
+            z: self.z + rhs.z,
+        }
+    }
+}
+
 impl<T, U> Sub<Vec3<U>> for Vec3<T>
 where
     T: Sub<U, Output = T> + Copy,
@@ -112,6 +125,7 @@ where
 impl<T, U> Mul<Vec3<U>> for Vec3<T>
 where
     T: Mul<U, Output = T> + Copy,
+    U: Copy,
 {
     type Output = Vec3<T>;
 
@@ -120,6 +134,22 @@ where
             x: self.x * rhs.x,
             y: self.y * rhs.y,
             z: self.z * rhs.z,
+        }
+    }
+}
+
+impl<T, U> Mul<U> for Vec3<T>
+where
+    T: Mul<U, Output = T> + Copy,
+    U: Copy + Num,
+{
+    type Output = Vec3<T>;
+
+    fn mul(self, val: U) -> Self::Output {
+        Vec3 {
+            x: self.x * val,
+            y: self.y * val,
+            z: self.z * val,
         }
     }
 }
@@ -137,6 +167,16 @@ impl<
 {
     pub fn new(x: T, y: T, z: T) -> Vec3<T> {
         Vec3 { x, y, z }
+    }
+
+    pub fn get_mag(&self) -> f32
+    where
+        T: Into<f32>,
+    {
+        let x_f32: f32 = self.x.into();
+        let y_f32: f32 = self.y.into();
+        let z_f32: f32 = self.z.into();
+        (x_f32 * x_f32 + y_f32 * y_f32 + z_f32 * z_f32).sqrt()
     }
 
     pub fn get_component_from_direction(&self, direction: Direction) -> T {
@@ -161,6 +201,14 @@ impl<
         }
     }
 
+    pub fn get_component_from_axis(&self, axis: Axis) -> T {
+        match axis {
+            Axis::X => self.x,
+            Axis::Y => self.y,
+            Axis::Z => self.z,
+        }
+    }
+
     pub fn to_index(&self) -> String {
         format!("{},{},{}", self.x, self.y, self.z)
             .as_str()
@@ -182,6 +230,15 @@ impl<
 
     pub fn sum(&self) -> T {
         self.x + self.y + self.z
+    }
+
+    pub fn set_mag(&self, mag: T) -> Vec3<T>
+    where
+        T: Into<f32> + From<f32> + Div<f32, Output = T>,
+    {
+        let current_mag = self.get_mag();
+        let scale: T = mag / current_mag;
+        self.scalar_mult(scale)
     }
 
     pub fn scalar_mult(&self, val: T) -> Vec3<T> {
