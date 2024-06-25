@@ -85,15 +85,21 @@ impl World {
         &self,
         line_segment: LineSegment,
     ) -> Option<LineSegmentIntersectionInfo> {
-        for n in 0..line_segment.length() as i32 {
+        for n in 0..(line_segment.length() + 1.0) as i32 {
             let slope = (line_segment.end_pos - line_segment.start_pos).set_mag(1.0);
             let marched_pos = line_segment.start_pos + slope * n as f32;
+
+            let scaled_slope = slope * n as f32;
 
             let pointed_at = marched_pos
                 .get_cube_vecs()
                 .iter()
                 .filter_map(|pos| {
                     self.get_mesh_at_pos(pos.to_world_pos())
+                        // insert log
+                        .inspect(|mesh| {
+                            println!("MESH: {:?}", mesh);
+                        })
                         .ok()
                         .map(|mesh| line_segment.find_intersection_with_block_mesh(&mesh))
                         .flatten()
@@ -103,6 +109,8 @@ impl World {
                         .partial_cmp(&b.distance)
                         .unwrap_or(std::cmp::Ordering::Equal)
                 });
+
+            println!("pointed_at: {:?}", pointed_at);
 
             if pointed_at.is_some() {
                 return pointed_at;
@@ -239,5 +247,32 @@ pub mod tests {
         };
 
         run_test(line_segment, block_mesh, Some(expect_intersection_info));
+
+        run_test(
+            LineSegment {
+                start_pos: FineWorldPos {
+                    x: 0.0,
+                    y: 2.0,
+                    z: 0.0,
+                },
+                end_pos: FineWorldPos {
+                    x: 0.0,
+                    y: 1.0,
+                    z: 0.0,
+                },
+            },
+            BlockMesh {
+                world_pos: WorldPos::new(0, 0, 0),
+                directions: [Direction::Up, Direction::Down].iter().cloned().collect(),
+            },
+            Some(LineSegmentIntersectionInfo {
+                world_plane: WorldPlane {
+                    world_pos: WorldPos::new(0, 0, 0),
+                    direction: Direction::Up,
+                },
+                distance: 1.0,
+                intersection_point: FineWorldPos::new(0.0, 1.0, 0.0),
+            }),
+        )
     }
 }
