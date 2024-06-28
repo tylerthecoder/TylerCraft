@@ -1,4 +1,4 @@
-import { Game } from "../index.js";
+import { Game, World } from "../index.js";
 import { IDim } from "../types.js";
 import { Vector3D } from "../utils/vector.js";
 import CubeHelpers, { Cube, CUBE_DIM } from "./cube.js";
@@ -95,7 +95,7 @@ export abstract class Entity<
     }
   }
 
-  abstract update(delta: number): void;
+  abstract update(world: World, delta: number): void;
   abstract hit(game: Game, entity: Entity | Cube, where: FaceLocater): void;
 
   setUid(uid: string) {

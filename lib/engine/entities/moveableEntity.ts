@@ -4,6 +4,7 @@ import { bindValue } from "../utils.js";
 import { Vector3D } from "../utils/vector.js";
 import { Entity, EntityDto, MetaAction } from "./entity.js";
 import { Game } from "../game.js";
+import { World } from "../world/index.js";
 
 export interface MovableEntityDto extends EntityDto {
   vel: IDim;
@@ -20,7 +21,6 @@ export abstract class MovableEntity<
   rotCart: Vector3D = this.rot.toCartesianCoords();
 
   onGround = false;
-  gravitable = true;
   jumpCount = 0;
 
   metaActions = new Set<MetaAction>();
@@ -39,24 +39,32 @@ export abstract class MovableEntity<
     }
   }
 
-  baseUpdate(delta: number) {
-    if (this.gravitable && !this.onGround) this.gravity();
-
-    const scaleFactor = delta / 16;
-    const scaledVel = this.vel.scalarMultiply(scaleFactor);
-
-    this.pos = this.pos.add(scaledVel);
+  baseUpdate(world: World, delta: number) {
+    // if (this.gravitable) this.gravity();
+    //
+    // // if we leave the tab for a long time delta gets very big.
+    // // idk if this is the best solution but I'm going to make them stop moving
+    // const scaleFactor = delta > 100 ? 0 : delta / 16;
+    // const scaledVel = this.vel.scalarMultiply(scaleFactor);
+    // const yBefore = this.pos.get(1);
+    // const newPos = world.tryMove(this, scaledVel);
+    // const yAfter = newPos.get(1);
+    //
+    // this.onGround = false;
+    // if (yBefore === yAfter) {
+    //   this.onGround = true;
+    //   console.log("onGround");
+    //   this.vel.set(1, 0);
+    //   this.jumpCount = 0;
+    // }
+    //
+    //
+    // this.pos = newPos;
   }
 
   baseHit(game: Game, entity: Entity) {
     const where = this.pushOut(game, entity);
     this.hit(game, entity, where);
-  }
-
-  private static gravityVector = new Vector3D([0, CONFIG.gravity, 0]);
-  gravity() {
-    if (this.vel.magnitude() > 0.9) return; // set a terminal velocity
-    this.vel = this.vel.add(MovableEntity.gravityVector);
   }
 
   rotate(r: Vector3D) {

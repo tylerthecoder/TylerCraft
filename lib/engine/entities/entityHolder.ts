@@ -96,7 +96,7 @@ export class EntityHolder {
 
   update(game: Game, world: World, delta: number) {
     const entityArray = Array.from(this.entities.values());
-    entityArray.forEach((entity) => entity.update(delta));
+    entityArray.forEach((entity) => entity.update(world, delta));
     world.update(game, entityArray);
   }
 

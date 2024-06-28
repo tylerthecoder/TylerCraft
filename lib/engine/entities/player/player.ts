@@ -12,6 +12,7 @@ import { BlockType } from "@craft/rust-world";
 import { Item, ThrowableItem } from "../../item.js";
 import { Projectile } from "../projectile.js";
 import { PlayerAction } from "./playerActions.js";
+import { World } from "../../world/index.js";
 
 export interface BeltDto {
   selectedBlock: Item;
@@ -197,18 +198,18 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
       }
     };
 
-    let newVel = Vector3D.zero;
+    let moveForce = Vector3D.zero;
     for (const dir of this.moveDirections) {
       const vel = moveDirection(dir);
-      newVel = newVel.add(vel);
+      moveForce = moveForce.add(vel);
     }
 
     // If we don't have a y comp then use the current one
-    if (newVel.get(1) === 0) {
-      newVel.set(1, this.vel.get(1));
+    if (moveForce.get(1) === 0) {
+      moveForce.set(1, this.vel.get(1));
     }
 
-    this.vel = newVel;
+    this.vel = moveForce;
   }
 
   tryJump() {
@@ -220,17 +221,75 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
   setCreative(val: boolean) {
     console.log("Setting creative to", val);
     this.creative = val;
-    this.gravitable = !val;
   }
 
   hurt(amount: number) {
     this.health.current -= amount;
   }
 
-  update(delta: number) {
-    this.moveInDirections();
+  groundDelta = 0.01;
+  gravityForce = 0;
+  gravity(world: World, delta: number) {
+    console.log("gravity");
 
     this.onGround = false;
+    if (this.gravityForce > 0.9) return; // set a terminal velocity
+    this.gravityForce += CONFIG.gravity;
+
+    // Try to move the player with the current gravity force
+    const realForce = (this.gravityForce * delta) / 16;
+    const forceVec = new Vector3D([0, realForce, 0]);
+
+    const yBefore = this.pos.get(1);
+    const newPos = world.tryMove(this, forceVec);
+    console.log(
+      "Gravity trying move",
+      "Pos before: ",
+      this.pos.data,
+      "Force: ",
+      forceVec.data,
+      "Pos after: ",
+      newPos.data
+    );
+    const yAfter = newPos.get(1);
+
+    if (Math.abs(yBefore - yAfter) > 0.01) {
+      // apply gravity
+      this.pos = newPos;
+      return;
+    }
+
+    // We only need to run this after we move.
+    console.log("Hit ground", yBefore, yAfter);
+    this.onGround = true;
+    this.gravityForce = 0;
+    this.pos.set(1, yAfter + 0.01);
+    this.jumpCount = 0;
+  }
+
+  update(world: World, delta: number) {
+    if (!this.creative) {
+      // Apply gravity
+      this.gravity(world, delta);
+    }
+    const scaleFactor = delta > 100 ? 0 : delta / 16;
+    const scaledVel = this.vel.scalarMultiply(scaleFactor);
+
+    const posAfterGrav = world.tryMove(this, scaledVel);
+    console.log(
+      "Trying move 2",
+      "Pos before: ",
+      this.pos.data,
+      "Pos after: ",
+      posAfterGrav.data,
+      "Vel: ",
+      scaledVel.data
+    );
+    this.pos = posAfterGrav;
+
+    this.moveInDirections();
+
+    // this.onGround = false;
     if (this.fire.count > 0 && !this.fire.holding) this.fire.count--;
 
     const moveDist = Math.abs(this.vel.get(0)) + Math.abs(this.vel.get(2));
@@ -241,7 +300,7 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
       this.distanceMoved = 0;
     }
 
-    this.baseUpdate(delta);
+    this.baseUpdate(world, delta);
 
     if (this.pos.get(1) < -10) {
       this.pos.set(1, 30);

@@ -37,6 +37,10 @@ impl LineSegment {
             return None;
         }
 
+        if start > plane_pos && end > plane_pos {
+            return None;
+        }
+
         // t is the ratio of the distance from the start to the intersection point
         let t = (plane_pos - start) / (end - start);
         let slope = self.end_pos - self.start_pos;
@@ -85,21 +89,24 @@ impl World {
         &self,
         line_segment: LineSegment,
     ) -> Option<LineSegmentIntersectionInfo> {
+        println!(
+            "\nFinding intersection with line segment: {:?}",
+            line_segment
+        );
+
         for n in 0..(line_segment.length() + 1.0) as i32 {
             let slope = (line_segment.end_pos - line_segment.start_pos).set_mag(1.0);
             let marched_pos = line_segment.start_pos + slope * n as f32;
 
-            let scaled_slope = slope * n as f32;
-
-            let pointed_at = marched_pos
+            let intersection_info = marched_pos
                 .get_cube_vecs()
                 .iter()
                 .filter_map(|pos| {
                     self.get_mesh_at_pos(pos.to_world_pos())
                         // insert log
-                        .inspect(|mesh| {
-                            println!("MESH: {:?}", mesh);
-                        })
+                        // .inspect(|mesh| {
+                        //     println!("MESH: {:?}", mesh);
+                        // })
                         .ok()
                         .map(|mesh| line_segment.find_intersection_with_block_mesh(&mesh))
                         .flatten()
@@ -110,10 +117,10 @@ impl World {
                         .unwrap_or(std::cmp::Ordering::Equal)
                 });
 
-            println!("pointed_at: {:?}", pointed_at);
+            println!("segment intersection info : {:?}", intersection_info);
 
-            if pointed_at.is_some() {
-                return pointed_at;
+            if intersection_info.is_some() {
+                return intersection_info;
             }
         }
         None
@@ -202,17 +209,17 @@ pub mod tests {
         run_test(plane, line_segment, Some(expect_intersection))
     }
 
+    fn run_blockmesh_test(
+        line_segment: LineSegment,
+        block_mesh: BlockMesh,
+        expect_intersection: Option<LineSegmentIntersectionInfo>,
+    ) {
+        let actual_intersection = line_segment.find_intersection_with_block_mesh(&block_mesh);
+        assert_eq!(actual_intersection, expect_intersection);
+    }
+
     #[test]
     fn test_find_intersection_with_blockmesh() {
-        fn run_test(
-            line_segment: LineSegment,
-            block_mesh: BlockMesh,
-            expect_intersection: Option<LineSegmentIntersectionInfo>,
-        ) {
-            let actual_intersection = line_segment.find_intersection_with_block_mesh(&block_mesh);
-            assert_eq!(actual_intersection, expect_intersection);
-        }
-
         let line_segment = LineSegment {
             start_pos: Vec3::new(0.5, 0.0, 0.5),
             end_pos: Vec3::new(0.5, 1.5, 0.5),
@@ -225,7 +232,7 @@ pub mod tests {
 
         let expect_intersection_info = None;
 
-        run_test(line_segment, block_mesh, expect_intersection_info);
+        run_blockmesh_test(line_segment, block_mesh, expect_intersection_info);
 
         let line_segment = LineSegment {
             start_pos: Vec3::new(0.5, 2.0, 0.5),
@@ -246,9 +253,9 @@ pub mod tests {
             intersection_point: FineWorldPos::new(0.5, 1.0, 0.5),
         };
 
-        run_test(line_segment, block_mesh, Some(expect_intersection_info));
+        run_blockmesh_test(line_segment, block_mesh, Some(expect_intersection_info));
 
-        run_test(
+        run_blockmesh_test(
             LineSegment {
                 start_pos: FineWorldPos {
                     x: 0.0,
@@ -273,6 +280,29 @@ pub mod tests {
                 distance: 1.0,
                 intersection_point: FineWorldPos::new(0.0, 1.0, 0.0),
             }),
+        )
+    }
+
+    #[test]
+    fn test_segment_above_mesh() {
+        run_blockmesh_test(
+            LineSegment {
+                start_pos: FineWorldPos {
+                    x: 0.0,
+                    y: 1.1,
+                    z: 0.0,
+                },
+                end_pos: FineWorldPos {
+                    x: 0.3,
+                    y: 2.0,
+                    z: -0.3,
+                },
+            },
+            BlockMesh {
+                world_pos: WorldPos::new(0, 0, 0),
+                directions: [Direction::Up, Direction::Down].iter().cloned().collect(),
+            },
+            None,
         )
     }
 }

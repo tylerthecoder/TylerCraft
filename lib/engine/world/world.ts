@@ -264,6 +264,30 @@ export class World {
     }
   }
 
+  tryMove(entity: Entity, vel: Vector3D): Vector3D {
+    const endPos = {
+      x: entity.pos.get(0) + vel.get(0),
+      y: entity.pos.get(1) + vel.get(1),
+      z: entity.pos.get(2) + vel.get(2),
+    };
+    const newPos = this.wasmWorld.move_rect3_wasm(
+      {
+        pos: {
+          x: entity.pos.get(0),
+          y: entity.pos.get(1),
+          z: entity.pos.get(2),
+        },
+        dim: {
+          x: entity.dim[0],
+          y: entity.dim[1],
+          z: entity.dim[2],
+        },
+      },
+      endPos
+    );
+    return new Vector3D([newPos.x, newPos.y, newPos.z]);
+  }
+
   pushOut(game: Game, ent: Entity) {
     const entDim = ent instanceof Entity ? ent.dim : CUBE_DIM;
 

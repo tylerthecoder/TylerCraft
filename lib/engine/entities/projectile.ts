@@ -1,5 +1,6 @@
 import { Cube, Game, IDim, Player } from "../index.js";
 import { Vector3D } from "../utils/vector.js";
+import { World } from "../world/index.js";
 import { Entity, FaceLocater, IEntity } from "./entity.js";
 import { IEntityType } from "./entityType.js";
 import { MovableEntity, MovableEntityDto } from "./moveableEntity.js";
@@ -31,8 +32,8 @@ export class Projectile
     this.baseSet(data);
   }
 
-  update(delta: number) {
-    this.baseUpdate(delta);
+  update(world: World, delta: number) {
+    // this.baseUpdate(delta);
     this.soil();
   }
 
