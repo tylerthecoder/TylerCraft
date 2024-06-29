@@ -99,7 +99,6 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
   // Player Member Variables
   thirdPerson = false;
   onGround = false;
-  jumpCount = 0;
   distanceMoved = 0; // used for animating the arms and legs. Reset to zero when not moving
 
   belt = new Belt();
@@ -154,8 +153,31 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     }
   }
 
-  moveInDirections(world: World, delta: number) {
-    const baseSpeed = CONFIG.player.speed;
+  isJumping = false;
+  haveDoubleJump = false;
+  jumpCount = 0;
+  tryJump() {
+    if (this.onGround) {
+      this.isJumping = true;
+      return;
+    }
+    if (!this.haveDoubleJump) {
+      this.isJumping = true;
+      this.haveDoubleJump = true;
+    }
+  }
+
+  setCreative(val: boolean) {
+    console.log("Setting creative to", val);
+    this.creative = val;
+  }
+
+  hurt(amount: number) {
+    this.health.current -= amount;
+  }
+
+  godForce(delta: number): Vector3D | null {
+    const baseSpeed = (CONFIG.player.speed * delta) / 16;
 
     const moveDirection = (direction: Direction) => {
       switch (direction) {
@@ -198,108 +220,75 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
       }
     };
 
-    if (this.moveDirections.length === 0) {
-      return;
-    }
-
-    let moveForce = Vector3D.zero;
+    let desiredVel = Vector3D.zero;
+    // Don't change the y comp unless we have to
+    desiredVel.set(1, this.vel.get(1));
     for (const dir of this.moveDirections) {
       const vel = moveDirection(dir);
-      moveForce = moveForce.add(vel);
+      console.log("Move dir", dir, vel.data);
+      desiredVel = desiredVel.add(vel);
     }
+    const currentVel = this.vel;
 
-    // If we don't have a y comp then use the current one
-    if (moveForce.get(1) === 0) {
-      moveForce.set(1, this.vel.get(1));
+    const force = desiredVel.sub(currentVel);
+
+    return force;
+  }
+
+  jumpForce(): Vector3D | null {
+    if (!this.isJumping) {
+      return null;
     }
-
-    const scaleFactor = delta > 100 ? 0 : delta / 16;
-    moveForce = moveForce.scalarMultiply(scaleFactor);
-
-    const newPos = world.tryMove(this, moveForce);
-    console.log(
-      "Move due to God",
-      "Pos before: ",
-      this.pos.data,
-      "Pos after: ",
-      newPos.data,
-      "Move Vel: ",
-      moveForce.data
-    );
-    this.pos = newPos;
-
-    this.vel = moveForce;
+    this.isJumping = false;
+    const jumpForce = new Vector3D([0, CONFIG.player.jumpSpeed, 0]);
+    return jumpForce;
   }
 
-  jumpForce = 0;
-  tryJump() {
-    if (this.onGround) {
-      this.jumpForce = CONFIG.player.jumpSpeed;
-    }
-  }
-
-  setCreative(val: boolean) {
-    console.log("Setting creative to", val);
-    this.creative = val;
-  }
-
-  hurt(amount: number) {
-    this.health.current -= amount;
-  }
-
-  groundDelta = 0.03;
-  gravityForce = 0;
-  gravity(world: World, delta: number) {
+  gravityForce(delta: number): Vector3D | null {
     if (this.creative) {
-      return;
+      return null;
     }
     if (this.onGround) {
-      return;
+      return null;
     }
 
-    console.log("gravity");
-
-    if (this.gravityForce > 0.9) return; // set a terminal velocity
-    this.gravityForce += CONFIG.gravity;
-
-    // Try to move the player with the current gravity force
-    const realForce = (this.gravityForce * delta) / 16;
-    const forceVec = new Vector3D([0, realForce, 0]);
-
-    const yBefore = this.pos.get(1);
-    const newPos = world.tryMove(this, forceVec);
-    console.log(
-      "Gravity trying move",
-      "Pos before: ",
-      this.pos.data,
-      "Force: ",
-      forceVec.data,
-      "Pos after: ",
-      newPos.data
-    );
-    const yAfter = newPos.get(1);
-
-    if (Math.abs(yBefore - yAfter) > 0.01) {
-      // apply gravity
-      this.pos = newPos;
-      return;
-    }
-
-    // We only need to run this after we move.
-    console.log("Hit ground", yBefore, yAfter);
-    this.gravityForce = 0;
-    this.pos.set(1, yAfter + 0.01);
-    this.jumpCount = 0;
+    const realForce = (CONFIG.gravity * delta) / 16;
+    return new Vector3D([0, realForce, 0]);
   }
 
   update(world: World, delta: number) {
-    this.gravity(world, delta);
-    this.moveInDirections(world, delta);
+    const jumpForce = this.jumpForce();
+    const gravityForce = this.gravityForce(delta);
+    const godForce = this.godForce(delta);
+    if (godForce && godForce.magnitude() > 0) {
+      console.log("God Force", godForce.data);
+    }
+    if (jumpForce) {
+      console.log("Jump Force", jumpForce.data);
+    }
+    if (gravityForce) {
+      console.log("Gravity Force", gravityForce.data);
+    }
+
+    const totalForce = (
+      [godForce, jumpForce, gravityForce].filter((f) => f) as Vector3D[]
+    ).reduce((acc: Vector3D, f: Vector3D) => acc.add(f), Vector3D.zero);
+
+    this.vel = this.vel.add(totalForce);
+
+    if (this.vel.magnitude() > 0) {
+      const newPos = world.tryMove(this, this.vel);
+      this.pos = newPos;
+    }
+
+    // set terminal velocity
+    // if (this.vel.get(1) < -0.9) {
+    //   this.vel.set(1, -0.9);
+    // }
 
     if (this.fire.count > 0 && !this.fire.holding) this.fire.count--;
 
     const moveDist = Math.abs(this.vel.get(0)) + Math.abs(this.vel.get(2));
-
     if (moveDist > 0) {
       this.distanceMoved += moveDist;
     } else {
@@ -314,19 +303,28 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     }
 
     // Am I on the ground? (Only need to check if I have moved)
-    const belowPos = this.pos.add(new Vector3D([0, -0.5, 0]));
+    const belowPos = this.pos.add(new Vector3D([0, -0.1, 0]));
     const intersectingPoss = world.getIntersectingBlocksWithEntity(
       belowPos,
       new Vector3D(this.dim)
     );
+
     if (intersectingPoss.length > 0) {
+      // for (const pos of intersectingPoss) {
+      // console.log("Intersecting pos", pos.data);
+      // const block = world.getBlockFromWorldPoint(pos);
+      // console.log("Block", block);
+      // }
+
       // find the tallest pos and add one to it to find where I shoudl be
       const max = Math.max(...intersectingPoss.map((p) => p.get(1)));
       const smallDelta = 0.03;
       const newHeight = max + 1 + smallDelta;
       this.pos.set(1, newHeight);
+      this.vel.set(1, 0);
       this.onGround = true;
-      this.jumpCount = 0;
+      this.isJumping = false;
+      this.haveDoubleJump = false;
     } else {
       this.onGround = false;
     }
@@ -334,10 +332,10 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
 
   hit(_game: Game, _entity: Entity, where: FaceLocater) {
     this.vel.set(where.side, 0);
-    if (where.side === 1 && where.dir === 0) {
-      this.onGround = true;
-      this.jumpCount = 0;
-    }
+    // if (where.side === 1 && where.dir === 0) {
+    //   this.onGround = true;
+    //   this.jumpCount = 0;
+    // }
   }
 
   // TODO get camera data from the player's rot
