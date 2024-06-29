@@ -225,7 +225,6 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     desiredVel.set(1, this.vel.get(1));
     for (const dir of this.moveDirections) {
       const vel = moveDirection(dir);
-      console.log("Move dir", dir, vel.data);
       desiredVel = desiredVel.add(vel);
     }
     const currentVel = this.vel;
@@ -277,7 +276,11 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     this.vel = this.vel.add(totalForce);
 
     if (this.vel.magnitude() > 0) {
+      console.log("Total Force", totalForce.data);
+      console.log("Vel", this.vel.data);
+      console.log("Old Pos", this.pos.data);
       const newPos = world.tryMove(this, this.vel);
+      console.log("New Pos", newPos.data);
       this.pos = newPos;
     }
 
@@ -310,17 +313,6 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     );
 
     if (intersectingPoss.length > 0) {
-      // for (const pos of intersectingPoss) {
-      // console.log("Intersecting pos", pos.data);
-      // const block = world.getBlockFromWorldPoint(pos);
-      // console.log("Block", block);
-      // }
-
-      // find the tallest pos and add one to it to find where I shoudl be
-      const max = Math.max(...intersectingPoss.map((p) => p.get(1)));
-      const smallDelta = 0.03;
-      const newHeight = max + 1 + smallDelta;
-      this.pos.set(1, newHeight);
       this.vel.set(1, 0);
       this.onGround = true;
       this.isJumping = false;

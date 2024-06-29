@@ -209,6 +209,14 @@ impl<
         }
     }
 
+    pub fn set_component_from_axis(&mut self, axis: Axis, val: T) {
+        match axis {
+            Axis::X => self.x = val,
+            Axis::Y => self.y = val,
+            Axis::Z => self.z = val,
+        }
+    }
+
     pub fn to_index(&self) -> String {
         format!("{},{},{}", self.x, self.y, self.z)
             .as_str()

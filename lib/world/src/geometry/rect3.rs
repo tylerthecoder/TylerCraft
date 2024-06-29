@@ -13,6 +13,8 @@ pub struct Rect3 {
     pub dim: Vec3<f32>,
 }
 
+static DISTANCE_EPSILON: f32 = 0.03;
+
 impl Rect3 {
     pub fn get_all_points(&self) -> [FineWorldPos; 8] {
         let x = self.pos.x;
@@ -120,7 +122,18 @@ impl World {
         println!("intersection: {:?}", intersection);
 
         let vel = match intersection {
-            Some(info) => info.intersection_point - rect.pos,
+            Some(info) => {
+                let outward = info.world_plane.direction.is_outward();
+                let eplison_diff = if outward {
+                    DISTANCE_EPSILON
+                } else {
+                    -DISTANCE_EPSILON
+                };
+                let mut epsilon_vec = FineWorldPos::new(0.0, 0.0, 0.0);
+                epsilon_vec
+                    .set_component_from_axis(info.world_plane.direction.to_axis(), eplison_diff);
+                info.intersection_point - rect.pos + epsilon_vec
+            }
             None => diff,
         };
 
@@ -178,6 +191,8 @@ pub mod tests {
         vec::Vec3,
         world::{world_block::WorldBlock, World},
     };
+
+    use super::DISTANCE_EPSILON;
 
     fn test_try_moving_block(
         block: WorldBlock,
@@ -247,7 +262,7 @@ pub mod tests {
             },
             FineWorldPos {
                 x: 0.5,
-                y: 1.0,
+                y: 1.0 + DISTANCE_EPSILON,
                 z: 0.5,
             },
         );

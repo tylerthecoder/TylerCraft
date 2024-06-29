@@ -63,8 +63,10 @@ export abstract class MovableEntity<
   }
 
   baseHit(game: Game, entity: Entity) {
-    const where = this.pushOut(game, entity);
-    this.hit(game, entity, where);
+    // const where = this.pushOut(game, entity);
+    // this.hit(game, entity, where);
+    // const where = this.pushOut(entity);
+    // this.hit(entity, where);
   }
 
   rotate(r: Vector3D) {
