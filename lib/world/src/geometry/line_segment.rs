@@ -85,7 +85,7 @@ impl LineSegment {
 }
 
 impl World {
-    pub fn get_intersecting_blocks(
+    pub fn get_line_segment_intersection_info(
         &self,
         line_segment: LineSegment,
     ) -> Option<LineSegmentIntersectionInfo> {

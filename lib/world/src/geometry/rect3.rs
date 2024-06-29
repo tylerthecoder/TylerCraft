@@ -1,12 +1,11 @@
+use super::line_segment::LineSegment;
+use crate::positions::WorldPos;
+use crate::{positions::FineWorldPos, vec::Vec3, world::World};
 use serde::{Deserialize, Serialize};
 use serde_wasm_bindgen::{from_value, to_value};
 use std::cmp::Ordering;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsValue;
-
-use crate::{positions::FineWorldPos, vec::Vec3, world::World};
-
-use super::line_segment::LineSegment;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Copy)]
 pub struct Rect3 {
@@ -33,10 +32,69 @@ impl Rect3 {
             FineWorldPos::new(x + dx, y + dy, z + dz),
         ]
     }
+
+    pub fn get_all_line_segments(&self) -> [LineSegment; 12] {
+        let x = self.pos.x;
+        let y = self.pos.y;
+        let z = self.pos.z;
+        let dx = self.dim.x;
+        let dy = self.dim.y;
+        let dz = self.dim.z;
+        [
+            LineSegment {
+                start_pos: FineWorldPos::new(x, y, z),
+                end_pos: FineWorldPos::new(x + dx, y, z),
+            },
+            LineSegment {
+                start_pos: FineWorldPos::new(x, y, z),
+                end_pos: FineWorldPos::new(x, y + dy, z),
+            },
+            LineSegment {
+                start_pos: FineWorldPos::new(x, y, z),
+                end_pos: FineWorldPos::new(x, y, z + dz),
+            },
+            LineSegment {
+                start_pos: FineWorldPos::new(x + dx, y, z),
+                end_pos: FineWorldPos::new(x + dx, y + dy, z),
+            },
+            LineSegment {
+                start_pos: FineWorldPos::new(x + dx, y, z),
+                end_pos: FineWorldPos::new(x + dx, y, z + dz),
+            },
+            LineSegment {
+                start_pos: FineWorldPos::new(x, y + dy, z),
+                end_pos: FineWorldPos::new(x + dx, y + dy, z),
+            },
+            LineSegment {
+                start_pos: FineWorldPos::new(x, y + dy, z),
+                end_pos: FineWorldPos::new(x, y + dy, z + dz),
+            },
+            LineSegment {
+                start_pos: FineWorldPos::new(x, y, z + dz),
+                end_pos: FineWorldPos::new(x + dx, y, z + dz),
+            },
+            LineSegment {
+                start_pos: FineWorldPos::new(x, y, z + dz),
+                end_pos: FineWorldPos::new(x, y + dy, z + dz),
+            },
+            LineSegment {
+                start_pos: FineWorldPos::new(x + dx, y + dy, z),
+                end_pos: FineWorldPos::new(x + dx, y + dy, z + dz),
+            },
+            LineSegment {
+                start_pos: FineWorldPos::new(x, y + dy, z + dz),
+                end_pos: FineWorldPos::new(x + dx, y + dy, z + dz),
+            },
+            LineSegment {
+                start_pos: FineWorldPos::new(x + dx, y, z + dz),
+                end_pos: FineWorldPos::new(x + dx, y + dy, z + dz),
+            },
+        ]
+    }
 }
 
 impl World {
-    pub fn move_rect3(&mut self, rect: &Rect3, end_pos: FineWorldPos) -> FineWorldPos {
+    pub fn move_rect3(&self, rect: &Rect3, end_pos: FineWorldPos) -> FineWorldPos {
         let diff = end_pos - rect.pos;
 
         println!("diff: {:?}", diff);
@@ -52,7 +110,7 @@ impl World {
 
         let intersection = line_segments
             .iter()
-            .filter_map(|seg| self.get_intersecting_blocks(*seg))
+            .filter_map(|seg| self.get_line_segment_intersection_info(*seg))
             .min_by(|a, b| {
                 a.distance
                     .partial_cmp(&b.distance)
@@ -68,6 +126,23 @@ impl World {
 
         rect.pos + vel
     }
+
+    pub fn get_rect3_intersecting_blocks(&self, rect: &Rect3) -> Vec<WorldPos> {
+        let res = rect
+            .get_all_line_segments()
+            .iter()
+            .filter_map(|seg| self.get_line_segment_intersection_info(*seg))
+            .map(|info| info.world_plane.world_pos)
+            // remove duplicates
+            .fold(Vec::new(), |mut acc, pos| {
+                if !acc.contains(&pos) {
+                    acc.push(pos);
+                }
+                acc
+            });
+
+        res
+    }
 }
 
 #[wasm_bindgen]
@@ -79,6 +154,15 @@ impl World {
                     let new_pos = self.move_rect3(&rect, end_pos);
                     to_value(&new_pos)
                 })
+            })
+            .unwrap_or(JsValue::NULL)
+    }
+
+    pub fn get_rect3_intersecting_blocks_wasm(&self, rect: JsValue) -> JsValue {
+        from_value(rect)
+            .and_then(|rect: Rect3| {
+                let blocks = self.get_rect3_intersecting_blocks(&rect);
+                to_value(&blocks)
             })
             .unwrap_or(JsValue::NULL)
     }
@@ -224,6 +308,59 @@ pub mod tests {
                 y: 2.0,
                 z: -0.3,
             },
+        );
+    }
+
+    fn test_get_rect3_intersecting_blocks(
+        block: WorldBlock,
+        rect: Rect3,
+        expected_blocks: Vec<WorldPos>,
+    ) -> () {
+        let mut world = World::default();
+        let chunk = Chunk::new(rect.pos.to_world_pos().to_chunk_pos());
+        world.insert_chunk(chunk);
+        world.add_block(&block).unwrap();
+        let actual_blocks = world.get_rect3_intersecting_blocks(&rect);
+        assert_eq!(actual_blocks, expected_blocks);
+    }
+
+    #[test]
+    fn test_get_rect3_intersecting_blocks_no_intersection() {
+        test_get_rect3_intersecting_blocks(
+            WorldBlock {
+                block_type: BlockType::Leaf,
+                extra_data: BlockData::None,
+                world_pos: WorldPos::new(0, 0, 0),
+            },
+            Rect3 {
+                pos: FineWorldPos {
+                    x: 0.5,
+                    y: 2.3,
+                    z: 0.5,
+                },
+                dim: Vec3::new(1.0, 1.0, 1.0),
+            },
+            vec![],
+        );
+    }
+
+    #[test]
+    fn test_get_rect3_intersecting_blocks_intersection() {
+        test_get_rect3_intersecting_blocks(
+            WorldBlock {
+                block_type: BlockType::Leaf,
+                extra_data: BlockData::None,
+                world_pos: WorldPos::new(0, 0, 0),
+            },
+            Rect3 {
+                pos: FineWorldPos {
+                    x: 0.0,
+                    y: 0.5,
+                    z: 0.0,
+                },
+                dim: Vec3::new(1.0, 1.0, 1.0),
+            },
+            vec![WorldPos::new(0, 0, 0)],
         );
     }
 }

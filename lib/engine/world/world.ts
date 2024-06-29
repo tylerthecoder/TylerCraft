@@ -288,6 +288,27 @@ export class World {
     return new Vector3D([newPos.x, newPos.y, newPos.z]);
   }
 
+  getIntersectingBlocksWithEntity(pos: Vector3D, dim: Vector3D): Vector3D[] {
+    const worldPosList = this.wasmWorld.get_rect3_intersecting_blocks_wasm({
+      pos: {
+        x: pos.get(0),
+        y: pos.get(1),
+        z: pos.get(2),
+      },
+      dim: {
+        x: dim.get(0),
+        y: dim.get(1),
+        z: dim.get(2),
+      },
+    });
+
+    const vecs: Vector3D[] = worldPosList.map(
+      (pos: { x: number; y: number; z: number }) =>
+        new Vector3D([pos.x, pos.y, pos.z])
+    );
+    return vecs;
+  }
+
   pushOut(game: Game, ent: Entity) {
     const entDim = ent instanceof Entity ? ent.dim : CUBE_DIM;
 

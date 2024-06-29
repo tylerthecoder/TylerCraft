@@ -154,7 +154,7 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     }
   }
 
-  moveInDirections() {
+  moveInDirections(world: World, delta: number) {
     const baseSpeed = CONFIG.player.speed;
 
     const moveDirection = (direction: Direction) => {
@@ -198,6 +198,10 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
       }
     };
 
+    if (this.moveDirections.length === 0) {
+      return;
+    }
+
     let moveForce = Vector3D.zero;
     for (const dir of this.moveDirections) {
       const vel = moveDirection(dir);
@@ -209,6 +213,21 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
       moveForce.set(1, this.vel.get(1));
     }
 
+    const scaleFactor = delta > 100 ? 0 : delta / 16;
+    moveForce = moveForce.scalarMultiply(scaleFactor);
+
+    const newPos = world.tryMove(this, moveForce);
+    console.log(
+      "Move due to God",
+      "Pos before: ",
+      this.pos.data,
+      "Pos after: ",
+      newPos.data,
+      "Move Vel: ",
+      moveForce.data
+    );
+    this.pos = newPos;
+
     this.vel = moveForce;
   }
 
@@ -218,7 +237,6 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
       this.jumpForce = CONFIG.player.jumpSpeed;
     }
   }
-  applyJump() {}
 
   setCreative(val: boolean) {
     console.log("Setting creative to", val);
@@ -232,9 +250,15 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
   groundDelta = 0.03;
   gravityForce = 0;
   gravity(world: World, delta: number) {
+    if (this.creative) {
+      return;
+    }
+    if (this.onGround) {
+      return;
+    }
+
     console.log("gravity");
 
-    this.onGround = false;
     if (this.gravityForce > 0.9) return; // set a terminal velocity
     this.gravityForce += CONFIG.gravity;
 
@@ -263,35 +287,15 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
 
     // We only need to run this after we move.
     console.log("Hit ground", yBefore, yAfter);
-    this.onGround = true;
     this.gravityForce = 0;
     this.pos.set(1, yAfter + 0.01);
     this.jumpCount = 0;
   }
 
   update(world: World, delta: number) {
-    if (!this.creative) {
-      // Apply gravity
-      this.gravity(world, delta);
-    }
-    const scaleFactor = delta > 100 ? 0 : delta / 16;
-    const scaledVel = this.vel.scalarMultiply(scaleFactor);
+    this.gravity(world, delta);
+    this.moveInDirections(world, delta);
 
-    const posAfterGrav = world.tryMove(this, scaledVel);
-    console.log(
-      "Trying move 2",
-      "Pos before: ",
-      this.pos.data,
-      "Pos after: ",
-      posAfterGrav.data,
-      "Vel: ",
-      scaledVel.data
-    );
-    this.pos = posAfterGrav;
-
-    this.moveInDirections();
-
-    // this.onGround = false;
     if (this.fire.count > 0 && !this.fire.holding) this.fire.count--;
 
     const moveDist = Math.abs(this.vel.get(0)) + Math.abs(this.vel.get(2));
@@ -307,6 +311,24 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     if (this.pos.get(1) < -10) {
       this.pos.set(1, 30);
       this.vel.set(1, -0.1);
+    }
+
+    // Am I on the ground? (Only need to check if I have moved)
+    const belowPos = this.pos.add(new Vector3D([0, -0.5, 0]));
+    const intersectingPoss = world.getIntersectingBlocksWithEntity(
+      belowPos,
+      new Vector3D(this.dim)
+    );
+    if (intersectingPoss.length > 0) {
+      // find the tallest pos and add one to it to find where I shoudl be
+      const max = Math.max(...intersectingPoss.map((p) => p.get(1)));
+      const smallDelta = 0.03;
+      const newHeight = max + 1 + smallDelta;
+      this.pos.set(1, newHeight);
+      this.onGround = true;
+      this.jumpCount = 0;
+    } else {
+      this.onGround = false;
     }
   }
 

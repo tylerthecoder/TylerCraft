@@ -93,7 +93,7 @@ impl World {
             end_pos: ray.move_forward(13.0).pos,
         };
 
-        self.get_intersecting_blocks(line_segment)
+        self.get_line_segment_intersection_info(line_segment)
             .map(|info| LookingAt {
                 block: self.get_block(&info.world_plane.world_pos),
                 face: info.world_plane.direction,
