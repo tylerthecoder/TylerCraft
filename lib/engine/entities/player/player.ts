@@ -212,11 +212,13 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     this.vel = moveForce;
   }
 
+  jumpForce = 0;
   tryJump() {
     if (this.onGround) {
-      this.vel.set(1, CONFIG.player.jumpSpeed);
+      this.jumpForce = CONFIG.player.jumpSpeed;
     }
   }
+  applyJump() {}
 
   setCreative(val: boolean) {
     console.log("Setting creative to", val);
@@ -227,7 +229,7 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     this.health.current -= amount;
   }
 
-  groundDelta = 0.01;
+  groundDelta = 0.03;
   gravityForce = 0;
   gravity(world: World, delta: number) {
     console.log("gravity");

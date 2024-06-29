@@ -1,7 +1,4 @@
-use super::{
-    line_segment::{self, LineSegment},
-    rotation::SphericalRotation,
-};
+use super::{line_segment::LineSegment, rotation::SphericalRotation};
 use crate::{
     chunk::chunk_mesh::BlockMesh,
     direction::Direction,

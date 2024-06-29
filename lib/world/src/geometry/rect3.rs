@@ -183,15 +183,15 @@ pub mod tests {
                     y: 1.1,
                     z: 0.5,
                 },
-                dim: Vec3::new(1.0, 1.0, 1.0),
+                dim: Vec3::new(1.0, 2.0, 1.0),
             },
             FineWorldPos {
-                x: 0.3,
+                x: -0.3,
                 y: 1.1,
                 z: -0.3,
             },
             FineWorldPos {
-                x: 0.3,
+                x: -0.3,
                 y: 1.1,
                 z: -0.3,
             },
