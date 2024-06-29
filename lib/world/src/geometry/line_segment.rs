@@ -43,9 +43,14 @@ impl LineSegment {
 
         // t is the ratio of the distance from the start to the intersection point
         let t = (plane_pos - start) / (end - start);
+
+        println!("t: {}", t);
+
         let slope = self.end_pos - self.start_pos;
         let scaled_slope = slope * t;
         let intersection_point = self.start_pos + scaled_slope;
+
+        println!("Intersection Point: {:?}", intersection_point);
 
         if plane.contains(intersection_point) {
             Some(intersection_point)

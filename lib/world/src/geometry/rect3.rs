@@ -269,7 +269,36 @@ pub mod tests {
     }
 
     #[test]
-    fn test_moving_ontop_of_blocks() {
+    fn try_move_into_side_block() {
+        test_try_moving_block(
+            WorldBlock {
+                block_type: BlockType::Leaf,
+                extra_data: BlockData::None,
+                world_pos: WorldPos::new(1, 1, 0),
+            },
+            Rect3 {
+                pos: FineWorldPos {
+                    x: 0.5,
+                    y: 1.5,
+                    z: 0.5,
+                },
+                dim: Vec3::new(1.0, 1.0, 1.0),
+            },
+            FineWorldPos {
+                x: 1.2,
+                y: 1.5,
+                z: -0.1,
+            },
+            FineWorldPos {
+                x: 1.0 - DISTANCE_EPSILON,
+                y: 1.5,
+                z: 0.07142857,
+            },
+        );
+    }
+
+    #[test]
+    fn moving_ontop_of_blocks() {
         test_try_moving_block(
             WorldBlock {
                 block_type: BlockType::Leaf,
@@ -298,7 +327,7 @@ pub mod tests {
     }
 
     #[test]
-    fn test_jumping_off_block() {
+    fn jumping_off_block() {
         test_try_moving_block(
             WorldBlock {
                 block_type: BlockType::Leaf,
@@ -340,7 +369,7 @@ pub mod tests {
     }
 
     #[test]
-    fn test_get_rect3_intersecting_blocks_no_intersection() {
+    fn get_rect3_intersecting_blocks_no_intersection() {
         test_get_rect3_intersecting_blocks(
             WorldBlock {
                 block_type: BlockType::Leaf,
@@ -360,7 +389,7 @@ pub mod tests {
     }
 
     #[test]
-    fn test_get_rect3_intersecting_blocks_intersection() {
+    fn get_rect3_intersecting_blocks_intersection() {
         test_get_rect3_intersecting_blocks(
             WorldBlock {
                 block_type: BlockType::Leaf,
