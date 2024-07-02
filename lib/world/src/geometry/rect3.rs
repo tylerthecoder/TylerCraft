@@ -1,4 +1,4 @@
-use super::line_segment::LineSegment;
+use super::line_segment::{LineSegment, LineSegmentIntersectionInfo};
 use crate::positions::WorldPos;
 use crate::{positions::FineWorldPos, vec::Vec3, world::World};
 use serde::{Deserialize, Serialize};
@@ -96,7 +96,11 @@ impl Rect3 {
 }
 
 impl World {
-    pub fn move_rect3(&self, rect: &Rect3, end_pos: FineWorldPos) -> FineWorldPos {
+    fn get_moving_rect3_intersection_info(
+        &self,
+        rect: &Rect3,
+        end_pos: FineWorldPos,
+    ) -> Option<LineSegmentIntersectionInfo> {
         let diff = end_pos - rect.pos;
 
         println!("diff: {:?}", diff);
@@ -118,26 +122,53 @@ impl World {
                     .partial_cmp(&b.distance)
                     .unwrap_or(Ordering::Equal)
             });
+        intersection
+    }
 
-        println!("intersection: {:?}", intersection);
+    pub fn move_rect3(&self, rect: &Rect3, end_pos: FineWorldPos) -> FineWorldPos {
+        let intersection = self.get_moving_rect3_intersection_info(rect, end_pos);
 
-        let vel = match intersection {
-            Some(info) => {
-                let outward = info.world_plane.direction.is_outward();
-                let eplison_diff = if outward {
-                    DISTANCE_EPSILON
-                } else {
-                    -DISTANCE_EPSILON
-                };
-                let mut epsilon_vec = FineWorldPos::new(0.0, 0.0, 0.0);
-                epsilon_vec
-                    .set_component_from_axis(info.world_plane.direction.to_axis(), eplison_diff);
-                info.intersection_point - rect.pos + epsilon_vec
-            }
-            None => diff,
+        let new_pos_from_info = |info: LineSegmentIntersectionInfo| {
+            let hit_axis = info.world_plane.direction.to_axis();
+            let mut new_pos = end_pos.clone();
+            let outward = info.world_plane.direction.is_outward();
+            let eplison_diff = if outward {
+                DISTANCE_EPSILON
+            } else {
+                -DISTANCE_EPSILON
+            };
+
+            let hit_plane_pos = info.world_plane.get_relative_y() as f32;
+
+            let new_axis_pos = eplison_diff + hit_plane_pos;
+            new_pos.set_component_from_axis(hit_axis, new_axis_pos);
+            new_pos
         };
 
-        rect.pos + vel
+        if let Some(info) = intersection {
+            unsafe { web_sys::console::log_2(&"intersection".into(), &to_value(&info).unwrap()) }
+
+            println!("intersection: {:?}", info);
+            // okay so we hit something, but we might not hit something if we zero out the wall we
+            // hit and try again
+            let new_pos = new_pos_from_info(info);
+            println!("new_pos: {:?}", new_pos);
+
+            let new_rect = Rect3 {
+                pos: new_pos,
+                dim: rect.dim,
+            };
+            let new_intersection = self.get_moving_rect3_intersection_info(&new_rect, end_pos);
+
+            if let Some(new_info) = new_intersection {
+                println!("new intersection: {:?}", new_info);
+                return new_pos_from_info(new_info);
+            }
+
+            return new_pos;
+        };
+
+        end_pos
     }
 
     pub fn get_rect3_intersecting_blocks(&self, rect: &Rect3) -> Vec<WorldPos> {
@@ -197,17 +228,24 @@ pub mod tests {
     fn test_try_moving_block(
         block: WorldBlock,
         rect: Rect3,
-        end_pos: Vec3<f32>,
+        end_pos: FineWorldPos,
         expected_end_pos: FineWorldPos,
     ) -> () {
         let mut world = World::default();
         let chunk = Chunk::new(rect.pos.to_world_pos().to_chunk_pos());
         world.insert_chunk(chunk);
+        let chunk = Chunk::new(expected_end_pos.to_world_pos().to_chunk_pos());
+        world.insert_chunk(chunk);
+        let chunk = Chunk::new(block.world_pos.to_chunk_pos());
+        world.insert_chunk(chunk);
+
         world.add_block(&block).unwrap();
 
         let actual_pos = world.move_rect3(&rect, end_pos);
-
-        assert_eq!(actual_pos, expected_end_pos);
+        let equal = actual_pos.equal(&expected_end_pos);
+        println!("actual_pos: {:?}", actual_pos);
+        println!("expected_end_pos: {:?}", expected_end_pos);
+        assert!(equal);
     }
 
     #[test]
@@ -240,7 +278,7 @@ pub mod tests {
     }
 
     #[test]
-    fn test_moving_into_block() {
+    fn try_move_into_south_block() {
         test_try_moving_block(
             WorldBlock {
                 block_type: BlockType::Leaf,
@@ -269,7 +307,7 @@ pub mod tests {
     }
 
     #[test]
-    fn try_move_into_side_block() {
+    fn try_move_into_east_block() {
         test_try_moving_block(
             WorldBlock {
                 block_type: BlockType::Leaf,
@@ -292,7 +330,91 @@ pub mod tests {
             FineWorldPos {
                 x: 1.0 - DISTANCE_EPSILON,
                 y: 1.5,
-                z: 0.07142857,
+                z: -0.1,
+            },
+        );
+        test_try_moving_block(
+            WorldBlock {
+                block_type: BlockType::Leaf,
+                extra_data: BlockData::None,
+                world_pos: WorldPos::new(5, 1, 0),
+            },
+            Rect3 {
+                pos: FineWorldPos {
+                    x: 4.65,
+                    y: 1.03,
+                    z: 0.023,
+                },
+                dim: Vec3::new(1.0, 1.0, 1.0),
+            },
+            FineWorldPos {
+                x: 5.007,
+                y: 1.03,
+                z: 0.019,
+            },
+            FineWorldPos {
+                x: 5.0 - DISTANCE_EPSILON,
+                y: 1.03,
+                z: 0.019,
+            },
+        );
+    }
+
+    #[test]
+    fn try_move_into_west_block() {
+        test_try_moving_block(
+            WorldBlock {
+                block_type: BlockType::Leaf,
+                extra_data: BlockData::None,
+                world_pos: WorldPos::new(-1, 1, 0),
+            },
+            Rect3 {
+                pos: FineWorldPos {
+                    x: 0.5,
+                    y: 1.5,
+                    z: 0.5,
+                },
+                dim: Vec3::new(1.0, 1.0, 1.0),
+            },
+            FineWorldPos {
+                x: -0.9,
+                y: 1.5,
+                z: 0.5,
+            },
+            FineWorldPos {
+                x: 0.0 + DISTANCE_EPSILON,
+                y: 1.5,
+                z: 0.5,
+            },
+        );
+    }
+
+    #[test]
+    fn try_move_into_north_block() {
+        test_try_moving_block(
+            WorldBlock {
+                block_type: BlockType::Leaf,
+                extra_data: BlockData::None,
+                world_pos: WorldPos::new(1, 1, 1),
+            },
+            Rect3 {
+                pos: FineWorldPos {
+                    x: 1.5,
+                    y: 1.3,
+                    z: 0.5,
+                },
+                dim: Vec3::new(1.0, 1.0, 1.0),
+            },
+            FineWorldPos {
+                x: 1.5,
+                y: 1.3,
+                // move all the way through it
+                z: 2.1,
+            },
+            FineWorldPos {
+                x: 1.5,
+                y: 1.3,
+                z: 1.0 - DISTANCE_EPSILON,
             },
         );
     }

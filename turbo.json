@@ -4,7 +4,8 @@
     "build": {
       "outputs": [
         "dist/**",
-        "pkg/**"
+        "pkg/**",
+        "target/**"
       ],
       "dependsOn": [
         "^build"

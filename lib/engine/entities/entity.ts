@@ -109,6 +109,7 @@ export abstract class Entity<
   // push me (this) out of the supplied entity (ent)
   pushOut(game: Game, ent: Entity | Cube): FaceLocater {
     console.log("pushing out", ent);
+
     let min = [Infinity];
 
     // 0 -> 1, 1 -> 0

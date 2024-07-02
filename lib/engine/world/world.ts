@@ -252,13 +252,13 @@ export class World {
     for (const entity of entities) {
       // if ((entity as Spectator).intangible) return;
 
-      this.pushOut(game, entity);
+      // this.pushOut(entity);
 
       for (const e of entities) {
         if (e === entity) continue;
         const isCollide = e.isCollide(entity);
         if (isCollide) {
-          entity.pushOut(game, e);
+          // entity.pushOut(e);
         }
       }
     }
@@ -270,21 +270,21 @@ export class World {
       y: entity.pos.get(1) + vel.get(1),
       z: entity.pos.get(2) + vel.get(2),
     };
-    const newPos = this.wasmWorld.move_rect3_wasm(
-      {
-        pos: {
-          x: entity.pos.get(0),
-          y: entity.pos.get(1),
-          z: entity.pos.get(2),
-        },
-        dim: {
-          x: entity.dim[0],
-          y: entity.dim[1],
-          z: entity.dim[2],
-        },
+    const ent = {
+      pos: {
+        x: entity.pos.get(0),
+        y: entity.pos.get(1),
+        z: entity.pos.get(2),
       },
-      endPos
-    );
+      dim: {
+        x: entity.dim[0],
+        y: entity.dim[1],
+        z: entity.dim[2],
+      },
+    };
+    console.log("Trying to move", ent, endPos);
+    const newPos = this.wasmWorld.move_rect3_wasm(ent, endPos);
+    console.log("New pos", newPos);
     return new Vector3D([newPos.x, newPos.y, newPos.z]);
   }
 
@@ -310,6 +310,7 @@ export class World {
   }
 
   pushOut(game: Game, ent: Entity) {
+    console.log("pushing out", ent);
     const entDim = ent instanceof Entity ? ent.dim : CUBE_DIM;
 
     const ifCubeExistThenPushOut = (pos: Vector3D) => {

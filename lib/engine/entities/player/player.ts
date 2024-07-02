@@ -277,10 +277,11 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
 
     if (this.vel.magnitude() > 0) {
       console.log("Total Force", totalForce.data);
-      console.log("Vel", this.vel.data);
-      console.log("Old Pos", this.pos.data);
+      // console.log("Vel", this.vel.data);
+      // console.log("Old Pos", this.pos.data);
+      // console.log("Exp Pos", this.pos.add(this.vel).data);
       const newPos = world.tryMove(this, this.vel);
-      console.log("New Pos", newPos.data);
+      // console.log("New Pos", newPos.data);
       this.pos = newPos;
     }
 

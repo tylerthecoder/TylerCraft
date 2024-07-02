@@ -12,7 +12,7 @@ pub struct ChunkMesh {
     chunk_pos: ChunkPos,
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Serialize, Deserialize)]
 pub struct BlockMesh {
     pub world_pos: WorldPos,
     pub directions: Directions,

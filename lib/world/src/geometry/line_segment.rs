@@ -1,5 +1,8 @@
 use std::cmp::Ordering;
 
+use serde::{Deserialize, Serialize};
+use serde_wasm_bindgen::to_value;
+
 use crate::{
     chunk::chunk_mesh::BlockMesh, plane::WorldPlane, positions::FineWorldPos, world::World,
 };
@@ -10,7 +13,7 @@ pub struct LineSegment {
     pub end_pos: FineWorldPos,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct LineSegmentIntersectionInfo {
     pub intersection_point: FineWorldPos,
     pub world_plane: WorldPlane,
@@ -28,10 +31,10 @@ impl LineSegment {
         let end = self.end_pos.get_component_from_axis(axis);
         let plane_pos = plane.get_relative_y() as f32;
 
-        println!(
-            "Axis: {}, start: {}, end: {}, plane_pos: {}",
-            axis, start, end, plane_pos,
-        );
+        // println!(
+        //     "Axis: {}, start: {}, end: {}, plane_pos: {}",
+        //     axis, start, end, plane_pos,
+        // );
 
         if start < plane_pos && end < plane_pos {
             return None;
@@ -44,13 +47,13 @@ impl LineSegment {
         // t is the ratio of the distance from the start to the intersection point
         let t = (plane_pos - start) / (end - start);
 
-        println!("t: {}", t);
+        // println!("t: {}", t);
 
         let slope = self.end_pos - self.start_pos;
         let scaled_slope = slope * t;
         let intersection_point = self.start_pos + scaled_slope;
 
-        println!("Intersection Point: {:?}", intersection_point);
+        // println!("Intersection Point: {:?}", intersection_point);
 
         if plane.contains(intersection_point) {
             Some(intersection_point)
@@ -65,7 +68,7 @@ impl LineSegment {
     ) -> Option<LineSegmentIntersectionInfo> {
         mesh.into_iter()
             .filter_map(|world_plane| {
-                println!("WORLD PLANE: {:?}", world_plane);
+                // println!("WORLD PLANE: {:?}", world_plane);
                 self.find_intersection(&world_plane)
                     .map(|intersection_point| LineSegmentIntersectionInfo {
                         intersection_point,
@@ -74,12 +77,12 @@ impl LineSegment {
                     })
             })
             // log the values
-            .inspect(|info| {
-                println!(
-                    "Intersection Point: {:?}, World Plane: {:?}, Distance: {}",
-                    info.intersection_point, info.world_plane, info.distance
-                );
-            })
+            // .inspect(|info| {
+            // println!(
+            //     "Intersection Point: {:?}, World Plane: {:?}, Distance: {}",
+            //     info.intersection_point, info.world_plane, info.distance
+            // );
+            // })
             // Find the world plane that is closest
             .min_by(|a, b| {
                 a.distance
@@ -94,10 +97,10 @@ impl World {
         &self,
         line_segment: LineSegment,
     ) -> Option<LineSegmentIntersectionInfo> {
-        println!(
-            "\nFinding intersection with line segment: {:?}",
-            line_segment
-        );
+        // println!(
+        //     "\nFinding intersection with line segment: {:?}",
+        //     line_segment
+        // );
 
         for n in 0..(line_segment.length() + 1.0) as i32 {
             let slope = (line_segment.end_pos - line_segment.start_pos).set_mag(1.0);
@@ -113,6 +116,13 @@ impl World {
                         //     println!("MESH: {:?}", mesh);
                         // })
                         .ok()
+                        // Log the mesh
+                        // .inspect(|mesh| unsafe {
+                        //     web_sys::console::log_2(
+                        //         &"Checking mesh".into(),
+                        //         &to_value(&mesh).unwrap(),
+                        //     )
+                        // })
                         .map(|mesh| line_segment.find_intersection_with_block_mesh(&mesh))
                         .flatten()
                 })
@@ -122,7 +132,7 @@ impl World {
                         .unwrap_or(std::cmp::Ordering::Equal)
                 });
 
-            println!("segment intersection info : {:?}", intersection_info);
+            // println!("segment intersection info : {:?}", intersection_info);
 
             if intersection_info.is_some() {
                 return intersection_info;

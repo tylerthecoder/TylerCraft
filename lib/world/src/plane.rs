@@ -1,9 +1,11 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{
     direction::Direction,
     positions::{FineWorldPos, WorldPos},
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Copy)]
 pub struct WorldPlane {
     pub world_pos: WorldPos,
     pub direction: Direction,
