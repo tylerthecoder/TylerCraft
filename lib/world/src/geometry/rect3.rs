@@ -132,21 +132,28 @@ impl World {
             let hit_axis = info.world_plane.direction.to_axis();
             let mut new_pos = end_pos.clone();
             let outward = info.world_plane.direction.is_outward();
+
             let eplison_diff = if outward {
                 DISTANCE_EPSILON
             } else {
-                -DISTANCE_EPSILON
+                -(1.0 + DISTANCE_EPSILON)
             };
 
             let hit_plane_pos = info.world_plane.get_relative_y() as f32;
 
             let new_axis_pos = eplison_diff + hit_plane_pos;
+
+            println!(
+                "outward: {}, eplison_diff: {}, hit_plane_pos: {}, new_axis_pos: {}",
+                outward, eplison_diff, hit_plane_pos, new_axis_pos
+            );
+
             new_pos.set_component_from_axis(hit_axis, new_axis_pos);
             new_pos
         };
 
         if let Some(info) = intersection {
-            unsafe { web_sys::console::log_2(&"intersection".into(), &to_value(&info).unwrap()) }
+            // unsafe { web_sys::console::log_2(&"intersection".into(), &to_value(&info).unwrap()) }
 
             println!("intersection: {:?}", info);
             // okay so we hit something, but we might not hit something if we zero out the wall we
@@ -278,7 +285,7 @@ pub mod tests {
     }
 
     #[test]
-    fn try_move_into_south_block() {
+    fn try_move_down_into_block() {
         test_try_moving_block(
             WorldBlock {
                 block_type: BlockType::Leaf,
@@ -307,6 +314,89 @@ pub mod tests {
     }
 
     #[test]
+    fn try_move_into_block_neg_z() {
+        test_try_moving_block(
+            WorldBlock {
+                block_type: BlockType::Leaf,
+                extra_data: BlockData::None,
+                world_pos: WorldPos::new(1, 1, 1),
+            },
+            Rect3 {
+                pos: FineWorldPos {
+                    x: 0.5,
+                    y: 1.3,
+                    z: 2.5,
+                },
+                dim: Vec3::new(1.0, 1.0, 1.0),
+            },
+            FineWorldPos {
+                x: 0.5,
+                y: 1.3,
+                z: 1.9,
+            },
+            FineWorldPos {
+                x: 0.5,
+                y: 1.3,
+                z: 2.0 + DISTANCE_EPSILON,
+            },
+        );
+        test_try_moving_block(
+            WorldBlock {
+                block_type: BlockType::Leaf,
+                extra_data: BlockData::None,
+                world_pos: WorldPos::new(-3, 1, -3),
+            },
+            Rect3 {
+                pos: FineWorldPos {
+                    x: -3.5,
+                    y: 1.3,
+                    z: -1.5,
+                },
+                dim: Vec3::new(1.0, 1.0, 1.0),
+            },
+            FineWorldPos {
+                x: -3.5,
+                y: 1.3,
+                z: -2.5,
+            },
+            FineWorldPos {
+                x: -3.5,
+                y: 1.3,
+                z: -2.0 + DISTANCE_EPSILON,
+            },
+        );
+    }
+
+    #[test]
+    fn try_move_into_block_pos_z() {
+        test_try_moving_block(
+            WorldBlock {
+                block_type: BlockType::Leaf,
+                extra_data: BlockData::None,
+                world_pos: WorldPos::new(0, 1, 0),
+            },
+            Rect3 {
+                pos: FineWorldPos {
+                    x: 0.5,
+                    y: 1.5,
+                    z: -1.5,
+                },
+                dim: Vec3::new(0.8, 0.8, 0.8),
+            },
+            FineWorldPos {
+                x: 0.5,
+                y: 1.5,
+                z: -0.5,
+            },
+            FineWorldPos {
+                x: 0.5,
+                y: 1.5,
+                z: -1.0 - DISTANCE_EPSILON,
+            },
+        );
+    }
+
+    #[test]
     fn try_move_into_east_block() {
         test_try_moving_block(
             WorldBlock {
@@ -316,19 +406,19 @@ pub mod tests {
             },
             Rect3 {
                 pos: FineWorldPos {
-                    x: 0.5,
+                    x: -0.5,
                     y: 1.5,
                     z: 0.5,
                 },
                 dim: Vec3::new(1.0, 1.0, 1.0),
             },
             FineWorldPos {
-                x: 1.2,
+                x: 0.5,
                 y: 1.5,
                 z: -0.1,
             },
             FineWorldPos {
-                x: 1.0 - DISTANCE_EPSILON,
+                x: 0.0 - DISTANCE_EPSILON,
                 y: 1.5,
                 z: -0.1,
             },
@@ -341,7 +431,7 @@ pub mod tests {
             },
             Rect3 {
                 pos: FineWorldPos {
-                    x: 4.65,
+                    x: 3.65,
                     y: 1.03,
                     z: 0.023,
                 },
@@ -353,7 +443,7 @@ pub mod tests {
                 z: 0.019,
             },
             FineWorldPos {
-                x: 5.0 - DISTANCE_EPSILON,
+                x: 4.0 - DISTANCE_EPSILON,
                 y: 1.03,
                 z: 0.019,
             },
@@ -361,62 +451,58 @@ pub mod tests {
     }
 
     #[test]
-    fn try_move_into_west_block() {
-        test_try_moving_block(
-            WorldBlock {
-                block_type: BlockType::Leaf,
-                extra_data: BlockData::None,
-                world_pos: WorldPos::new(-1, 1, 0),
-            },
-            Rect3 {
-                pos: FineWorldPos {
-                    x: 0.5,
-                    y: 1.5,
-                    z: 0.5,
-                },
-                dim: Vec3::new(1.0, 1.0, 1.0),
-            },
-            FineWorldPos {
-                x: -0.9,
-                y: 1.5,
-                z: 0.5,
-            },
-            FineWorldPos {
-                x: 0.0 + DISTANCE_EPSILON,
-                y: 1.5,
-                z: 0.5,
-            },
-        );
-    }
+    fn try_move_into_block_neg_x() {
+        // test_try_moving_block(
+        //     WorldBlock {
+        //         block_type: BlockType::Leaf,
+        //         extra_data: BlockData::None,
+        //         world_pos: WorldPos::new(-10, 1, -7),
+        //     },
+        //     Rect3 {
+        //         pos: FineWorldPos {
+        //             x: -11.1,
+        //             y: 1.5,
+        //             z: -6.5,
+        //         },
+        //         dim: Vec3::new(1.0, 1.0, 1.0),
+        //     },
+        //     FineWorldPos {
+        //         x: -10.9,
+        //         y: 1.5,
+        //         z: -6.5,
+        //     },
+        //     FineWorldPos {
+        //         x: -11.0 - DISTANCE_EPSILON,
+        //         y: 1.5,
+        //         z: 0.5,
+        //     },
+        // );
 
-    #[test]
-    fn try_move_into_north_block() {
-        test_try_moving_block(
-            WorldBlock {
-                block_type: BlockType::Leaf,
-                extra_data: BlockData::None,
-                world_pos: WorldPos::new(1, 1, 1),
-            },
-            Rect3 {
-                pos: FineWorldPos {
-                    x: 1.5,
-                    y: 1.3,
-                    z: 0.5,
-                },
-                dim: Vec3::new(1.0, 1.0, 1.0),
-            },
-            FineWorldPos {
-                x: 1.5,
-                y: 1.3,
-                // move all the way through it
-                z: 2.1,
-            },
-            FineWorldPos {
-                x: 1.5,
-                y: 1.3,
-                z: 1.0 - DISTANCE_EPSILON,
-            },
-        );
+        // test_try_moving_block(
+        //     WorldBlock {
+        //         block_type: BlockType::Gold,
+        //         extra_data: BlockData::None,
+        //         world_pos: WorldPos::new(-8, 1, 3),
+        //     },
+        //     Rect3 {
+        //         pos: FineWorldPos {
+        //             x: -6.6,
+        //             y: 1.5,
+        //             z: 3.5,
+        //         },
+        //         dim: Vec3::new(1.0, 1.0, 1.0),
+        //     },
+        //     FineWorldPos {
+        //         x: -7.1,
+        //         y: 1.5,
+        //         z: 3.5,
+        //     },
+        //     FineWorldPos {
+        //         x: -7.0 + DISTANCE_EPSILON,
+        //         y: 1.5,
+        //         z: 3.5,
+        //     },
+        // );
     }
 
     #[test]

@@ -80,7 +80,7 @@ export class HudRenderer extends Renderer {
 
   private lastStats = "";
   drawStats(camera: Camera) {
-    const cameraPos = camera.pos.data.map(Math.floor).join(",");
+    const cameraPos = camera.pos.data.map((d) => d.toFixed(2)).join(",");
 
     const numChunks = this.rendererUsecase.game.world.getChunks().length;
 

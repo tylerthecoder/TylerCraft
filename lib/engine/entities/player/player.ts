@@ -259,15 +259,15 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     const jumpForce = this.jumpForce();
     const gravityForce = this.gravityForce(delta);
     const godForce = this.godForce(delta);
-    if (godForce && godForce.magnitude() > 0) {
-      console.log("God Force", godForce.data);
-    }
-    if (jumpForce) {
-      console.log("Jump Force", jumpForce.data);
-    }
-    if (gravityForce) {
-      console.log("Gravity Force", gravityForce.data);
-    }
+    // if (godForce && godForce.magnitude() > 0) {
+    //   console.log("God Force", godForce.data);
+    // }
+    // if (jumpForce) {
+    //   console.log("Jump Force", jumpForce.data);
+    // }
+    // if (gravityForce) {
+    //   console.log("Gravity Force", gravityForce.data);
+    // }
 
     const totalForce = (
       [godForce, jumpForce, gravityForce].filter((f) => f) as Vector3D[]
@@ -276,7 +276,7 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     this.vel = this.vel.add(totalForce);
 
     if (this.vel.magnitude() > 0) {
-      console.log("Total Force", totalForce.data);
+      // console.log("Total Force", totalForce.data);
       // console.log("Vel", this.vel.data);
       // console.log("Old Pos", this.pos.data);
       // console.log("Exp Pos", this.pos.add(this.vel).data);
