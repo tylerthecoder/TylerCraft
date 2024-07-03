@@ -282,9 +282,9 @@ export class World {
         z: entity.dim[2],
       },
     };
-    console.log("Trying to move", ent, endPos);
+    // console.log("Trying to move", ent, endPos);
     const newPos = this.wasmWorld.move_rect3_wasm(ent, endPos);
-    console.log("New pos", newPos);
+    // console.log("New pos", newPos);
     return new Vector3D([newPos.x, newPos.y, newPos.z]);
   }
 

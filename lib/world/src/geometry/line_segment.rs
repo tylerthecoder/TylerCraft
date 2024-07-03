@@ -31,31 +31,33 @@ impl LineSegment {
         let end = self.end_pos.get_component_from_axis(axis);
         let plane_pos = plane.get_relative_y() as f32;
 
+        println!("Finding intersection for plane: {:?}", plane);
+
         println!(
-            "Axis: {}, start: {}, end: {}, plane_pos: {}",
+            "Axis: {}, line_start: {}, line_end: {}, plane_pos: {}",
             axis, start, end, plane_pos,
         );
 
         if start < plane_pos && end < plane_pos {
-            println!("Both are below");
+            // println!("Both are below");
             return None;
         }
 
         if start > plane_pos && end > plane_pos {
-            println!("Both are above");
+            // println!("Both are above");
             return None;
         }
 
         // t is the ratio of the distance from the start to the intersection point
         let t = (plane_pos - start) / (end - start);
 
-        println!("t: {}", t);
+        // println!("t: {}", t);
 
         let slope = self.end_pos - self.start_pos;
         let scaled_slope = slope * t;
         let intersection_point = self.start_pos + scaled_slope;
 
-        println!("Intersection Point: {:?}", intersection_point);
+        // println!("Intersection Point: {:?}", intersection_point);
 
         if plane.contains(intersection_point) {
             Some(intersection_point)
@@ -70,7 +72,7 @@ impl LineSegment {
     ) -> Option<LineSegmentIntersectionInfo> {
         mesh.into_iter()
             .filter_map(|world_plane| {
-                println!("WORLD PLANE: {:?}", world_plane);
+                // println!("WORLD PLANE: {:?}", world_plane);
                 self.find_intersection(&world_plane)
                     .map(|intersection_point| LineSegmentIntersectionInfo {
                         intersection_point,
@@ -103,17 +105,17 @@ impl World {
             "\nFinding intersection with line segment: {:?}",
             line_segment
         );
-        println!("Length: {}", line_segment.length());
-        println!("Length: {}", (line_segment.length() + 1.0) as i32);
+        // println!("Length: {}", line_segment.length());
+        // println!("Length: {}", (line_segment.length() + 1.0) as i32);
 
         for n in 0..(line_segment.length() + 2.0) as i32 {
             let slope = (line_segment.end_pos - line_segment.start_pos).set_mag(1.0);
             let marched_pos = line_segment.start_pos + slope * n as f32;
 
-            println!("Marched Pos: {:?}", marched_pos);
-            println!("Slope: {:?}", slope);
-            println!("N: {}", n);
-            println!("Scaled Slope: {:?}", slope * n as f32);
+            // println!("Marched Pos: {:?}", marched_pos);
+            // println!("Slope: {:?}", slope);
+            // println!("N: {}", n);
+            // println!("Scaled Slope: {:?}", slope * n as f32);
 
             let intersection_info = marched_pos
                 .get_cube_vecs()
@@ -121,9 +123,9 @@ impl World {
                 .filter_map(|pos| {
                     self.get_mesh_at_pos(pos.to_world_pos())
                         // insert log
-                        .inspect(|mesh| {
-                            println!("MESH: {:?}", mesh);
-                        })
+                        // .inspect(|mesh| {
+                        // println!("MESH: {:?}", mesh);
+                        // })
                         .ok()
                         // Log the mesh
                         // .inspect(|mesh| unsafe {

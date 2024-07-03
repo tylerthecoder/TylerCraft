@@ -101,6 +101,11 @@ impl World {
         rect: &Rect3,
         end_pos: FineWorldPos,
     ) -> Option<LineSegmentIntersectionInfo> {
+        println!(
+            "Getting intersection info for moving rect: {:?}, end_pos: {:?}",
+            rect, end_pos
+        );
+
         let diff = end_pos - rect.pos;
 
         println!("diff: {:?}", diff);
@@ -143,10 +148,10 @@ impl World {
 
             let new_axis_pos = eplison_diff + hit_plane_pos;
 
-            println!(
-                "outward: {}, eplison_diff: {}, hit_plane_pos: {}, new_axis_pos: {}",
-                outward, eplison_diff, hit_plane_pos, new_axis_pos
-            );
+            // println!(
+            //     "outward: {}, eplison_diff: {}, hit_plane_pos: {}, new_axis_pos: {}",
+            //     outward, eplison_diff, hit_plane_pos, new_axis_pos
+            // );
 
             new_pos.set_component_from_axis(hit_axis, new_axis_pos);
             new_pos
@@ -161,20 +166,16 @@ impl World {
             let new_pos = new_pos_from_info(info);
             println!("new_pos: {:?}", new_pos);
 
-            let new_rect = Rect3 {
-                pos: new_pos,
-                dim: rect.dim,
-            };
-            let new_intersection = self.get_moving_rect3_intersection_info(&new_rect, end_pos);
+            let new_intersection = self.get_moving_rect3_intersection_info(&rect, new_pos);
 
             if let Some(new_info) = new_intersection {
                 println!("new intersection: {:?}", new_info);
-                return new_pos_from_info(new_info);
+                let new_pos = new_pos_from_info(new_info);
+                println!("new_new_pos: {:?}", new_pos);
+                return new_pos;
             }
-
             return new_pos;
         };
-
         end_pos
     }
 
@@ -247,6 +248,32 @@ pub mod tests {
         world.insert_chunk(chunk);
 
         world.add_block(&block).unwrap();
+
+        let actual_pos = world.move_rect3(&rect, end_pos);
+        let equal = actual_pos.equal(&expected_end_pos);
+        println!("actual_pos: {:?}", actual_pos);
+        println!("expected_end_pos: {:?}", expected_end_pos);
+        assert!(equal);
+    }
+
+    fn test_try_moving_blocks(
+        block: Vec<WorldBlock>,
+        rect: Rect3,
+        end_pos: FineWorldPos,
+        expected_end_pos: FineWorldPos,
+    ) -> () {
+        let mut world = World::default();
+        let chunk = Chunk::new(rect.pos.to_world_pos().to_chunk_pos());
+        world.insert_chunk(chunk);
+        let chunk = Chunk::new(expected_end_pos.to_world_pos().to_chunk_pos());
+        world.insert_chunk(chunk);
+
+        let chunk = Chunk::new(block[0].world_pos.to_chunk_pos());
+        world.insert_chunk(chunk);
+
+        for b in block {
+            world.add_block(&b).unwrap();
+        }
 
         let actual_pos = world.move_rect3(&rect, end_pos);
         let equal = actual_pos.equal(&expected_end_pos);
@@ -532,6 +559,42 @@ pub mod tests {
                 z: -0.3,
             },
         );
+    }
+
+    #[test]
+    fn try_move_caddy_corner_move_neg() {
+        test_try_moving_blocks(
+            vec![
+                WorldBlock {
+                    block_type: BlockType::Leaf,
+                    extra_data: BlockData::None,
+                    world_pos: WorldPos::new(-3, 1, -2),
+                },
+                WorldBlock {
+                    block_type: BlockType::Leaf,
+                    extra_data: BlockData::None,
+                    world_pos: WorldPos::new(-2, 1, -3),
+                },
+            ],
+            Rect3 {
+                pos: FineWorldPos {
+                    x: -1.5,
+                    y: 1.3,
+                    z: -1.5,
+                },
+                dim: Vec3::new(1.0, 1.0, 1.0),
+            },
+            FineWorldPos {
+                x: -2.5,
+                y: 1.3,
+                z: -2.5,
+            },
+            FineWorldPos {
+                x: -1.0 + DISTANCE_EPSILON,
+                y: 1.3,
+                z: -1.0 + DISTANCE_EPSILON,
+            },
+        )
     }
 
     #[test]
