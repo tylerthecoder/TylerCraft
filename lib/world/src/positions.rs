@@ -83,4 +83,20 @@ impl FineWorldPos {
             z: self.z as i32,
         }
     }
+
+    pub fn round(&mut self) {
+        const PRECISION: f32 = 0.001; // Precision to three decimal places
+        self.x = (self.x / PRECISION).round() * PRECISION;
+        self.y = (self.y / PRECISION).round() * PRECISION;
+        self.z = (self.z / PRECISION).round() * PRECISION;
+    }
+
+    pub fn equal(&self, other: &FineWorldPos) -> bool {
+        const PRECISION: f32 = 0.001; // Precision to three decimal places
+
+        // Compare components with the specified precision
+        (self.x - other.x).abs() < PRECISION
+            && (self.y - other.y).abs() < PRECISION
+            && (self.z - other.z).abs() < PRECISION
+    }
 }

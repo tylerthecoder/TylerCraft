@@ -83,45 +83,6 @@ class CubeHelpersClass {
       );
     });
   }
-
-  /** Returns an array of positions and directions that cube1 block would obscure
-   * cube1 is useful for flat blocks
-   */
-  getCubeObscuringPositions(cube: Cube): Vector3D[] {
-    const blockData = getBlockData(cube.type);
-
-    switch (blockData.shape) {
-      case BlockShape.X:
-      case BlockShape.Flat:
-      case BlockShape.Cube: {
-        return Vector3D.unitVectors;
-      }
-    }
-    return [];
-  }
-
-  isCollide(cube1: Box, cube2: Box): boolean {
-    // loop through each dimension. Consider each edge along that dimension a line segmcube2
-    // check to see if my (cube1) line segmcube2 overlaps the cube2ities (cube2) line segmcube2
-    for (let i = 0; i < 3; i++) {
-      if (
-        cube1.pos.get(i) <= cube2.pos.get(i) && // cube2 line is front
-        cube2.pos.get(i) >= cube1.pos.get(i) + (cube1.dim ?? CUBE_DIM)[i] // and cube2 is not contained in my (cube1) line segmcube2
-      ) {
-        // not possible for these to be intersecting since one dimension is too far away
-        return false;
-      }
-
-      if (
-        cube2.pos.get(i) <= cube1.pos.get(i) && // My (cube1) line is front
-        cube1.pos.get(i) >= cube2.pos.get(i) + (cube2.dim ?? CUBE_DIM)[i] // and cube2 is not contained in my (cube1) line segmcube2
-      ) {
-        // not possible for these to be intersecting since one dimension is too far away
-        return false;
-      }
-    }
-    return true;
-  }
 }
 
 const CubeHelpers = new CubeHelpersClass();

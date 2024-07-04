@@ -94,10 +94,9 @@ export class EntityHolder {
   // Update
   //========================
 
-  update(game: Game, world: World, delta: number) {
+  update(_game: Game, world: World, delta: number) {
     const entityArray = Array.from(this.entities.values());
-    entityArray.forEach((entity) => entity.update(delta));
-    world.update(game, entityArray);
+    entityArray.forEach((entity) => entity.update(world, delta));
   }
 
   updateEntity<T extends EntityDto>(entityDto: Partial<T> & { uid: string }) {

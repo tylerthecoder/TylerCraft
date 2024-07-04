@@ -161,7 +161,7 @@ export class Vector<T extends number[] = IDim> {
   }
 
   magnitude(): number {
-    return this.data.reduce((acc, n) => acc + n ** 2);
+    return this.data.reduce((acc, n) => acc + n ** 2, 0);
   }
 
   /*================

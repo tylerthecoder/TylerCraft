@@ -1,9 +1,11 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{
     direction::Direction,
     positions::{FineWorldPos, WorldPos},
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Copy)]
 pub struct WorldPlane {
     pub world_pos: WorldPos,
     pub direction: Direction,
@@ -17,9 +19,6 @@ impl WorldPlane {
         }
     }
 
-    /**
-     *
-     */
     pub fn get_relative_y(&self) -> i32 {
         self.world_pos.get_component_from_direction(self.direction)
             + match self.direction.is_outward() {
@@ -28,31 +27,44 @@ impl WorldPlane {
             }
     }
 
-    // This is wrong, you have to add 1 sometimes for plane.
-    // Up and Down are treated the same here
-    pub fn contains(&self, pos: FineWorldPos) -> bool {
-        // Going to term it in frame of x,y,z. This is a shift so it is easier to read.
+    pub fn get_center(&self) -> FineWorldPos {
         let my_y = self.get_relative_y();
         let (my_x, my_z) = self
             .world_pos
             .get_opposite_components_from_direction(self.direction);
 
+        let x = my_x as f32 + 0.5;
+        let y = my_y as f32 + 0.5;
+        let z = my_z as f32 + 0.5;
+
+        FineWorldPos::new(x, y, z)
+    }
+
+    pub fn contains(&self, pos: FineWorldPos) -> bool {
+        // Going to frame it in terms of x,y,z. This is a shift so it is easier to read.
+        let my_y = self.get_relative_y();
+        let (my_x, my_z) = self
+            .world_pos
+            .get_opposite_components_from_direction(self.direction);
+
+        // println!("My x: {}, My y: {}, My z: {}", my_x, my_y, my_z);
+
         let their_y = pos.get_component_from_direction(self.direction);
         let (their_x, their_z) = pos.get_opposite_components_from_direction(self.direction);
 
-        println!(
-            "{} {} {} {} {} {}",
-            my_y, my_x, my_z, their_y, their_x, their_z
-        );
+        // println!(
+        //     "Their x: {}, Their y: {}, Their z: {}",
+        //     their_x, their_y, their_z
+        // );
 
         let contains_y = (my_y as f32 - their_y).abs() < 0.01;
         let contains_x = (my_x as f32) - 0.01 <= their_x && my_x as f32 + 1.01 >= their_x;
         let contains_z = (my_z as f32) - 0.01 <= their_z && my_z as f32 + 1.01 >= their_z;
 
-        println!(
-            "contains_y: {}, contains_x: {}, contains_z: {}",
-            contains_y, contains_x, contains_z
-        );
+        // println!(
+        //     "Contains x: {}, Contains y: {}, Contains z: {}",
+        //     contains_x, contains_y, contains_z
+        // );
 
         contains_y && contains_x && contains_z
     }
@@ -67,7 +79,7 @@ mod tests {
 
     use super::WorldPlane;
 
-    // #[test]
+    #[test]
     fn test_contains_up() {
         let plane = WorldPlane {
             world_pos: WorldPos::new(0, 0, 0),
@@ -80,7 +92,7 @@ mod tests {
         assert!(!plane.contains(FineWorldPos::new(1.0, 1.0, -1.0)));
     }
 
-    // #[test]
+    #[test]
     fn test_contains_down() {
         let plane = WorldPlane {
             world_pos: WorldPos::new(0, 0, 0),
@@ -92,7 +104,7 @@ mod tests {
         assert!(!plane.contains(FineWorldPos::new(0.0, 1.0, 0.0)));
     }
 
-    // #[test]
+    #[test]
     fn test_contains_east() {
         let plane = WorldPlane {
             world_pos: WorldPos::new(0, 0, 0),

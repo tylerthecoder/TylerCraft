@@ -11,7 +11,6 @@ use wasm_bindgen::prelude::*;
 pub mod world_block;
 mod world_chunk;
 mod world_duct;
-mod world_intersection;
 mod world_mesh;
 
 extern crate web_sys;

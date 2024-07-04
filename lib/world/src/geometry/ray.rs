@@ -1,5 +1,12 @@
-use super::rotation::SphericalRotation;
-use crate::{chunk::chunk_mesh::BlockMesh, plane::WorldPlane, positions::FineWorldPos, vec::Vec3};
+use super::{line_segment::LineSegment, rotation::SphericalRotation};
+use crate::{
+    chunk::chunk_mesh::BlockMesh,
+    direction::Direction,
+    plane::WorldPlane,
+    positions::FineWorldPos,
+    vec::Vec3,
+    world::{world_block::WorldBlock, World},
+};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 
@@ -11,6 +18,22 @@ pub struct Ray {
      * i.e. which way it is t.
      */
     pub rot: SphericalRotation,
+}
+
+#[derive(PartialEq, Debug, Serialize, Deserialize)]
+pub struct LookingAt {
+    /**
+     * The block a camera is pointing at
+    	*/
+    block: WorldBlock,
+    /**
+     * The face of the block that is being looked at
+     */
+    face: Direction,
+    /**
+     * How far the face is away from the camera
+     */
+    distance: f32,
 }
 
 impl Ray {
@@ -63,14 +86,33 @@ impl Ray {
     }
 }
 
+impl World {
+    pub fn get_pointed_at_block(&self, ray: Ray) -> Option<LookingAt> {
+        let line_segment = LineSegment {
+            start_pos: ray.pos,
+            end_pos: ray.move_forward(13.0).pos,
+        };
+
+        self.get_line_segment_intersection_info(line_segment)
+            .map(|info| LookingAt {
+                block: self.get_block(&info.world_plane.world_pos),
+                face: info.world_plane.direction,
+                distance: info.distance,
+            })
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::Ray;
+    use super::{LookingAt, Ray};
     use crate::{
-        chunk::chunk_mesh::BlockMesh,
+        block::{BlockData, BlockType},
+        chunk::{chunk_mesh::BlockMesh, Chunk},
         direction::{Direction, Directions},
+        geometry::rotation::SphericalRotation,
         plane::WorldPlane,
-        positions::{FineWorldPos, WorldPos}, geometry::rotation::SphericalRotation,
+        positions::{FineWorldPos, WorldPos},
+        world::{world_block::WorldBlock, World},
     };
 
     #[test]
@@ -123,17 +165,17 @@ mod tests {
 
         assert_eq!(ray.distance_from_plane(&world_plane), None);
 
-
         let ray = Ray {
             pos: FineWorldPos::new(-3.7103435802557425, 2.8, 11.354942113622975),
-            rot: SphericalRotation { theta: 0.03720367320505069, phi: 0.2720000000000098 }
+            rot: SphericalRotation {
+                theta: 0.03720367320505069,
+                phi: 0.2720000000000098,
+            },
         };
         let world_plane = WorldPlane::new(WorldPos::new(-4, 0, 17), Direction::Up);
         let distance = ray.distance_from_plane(&world_plane);
 
         println!("The Distance: {:?}", distance);
-
-
     }
 
     #[test]
@@ -165,5 +207,56 @@ mod tests {
             },
             2.0,
         );
+    }
+
+    fn finds_block_being_pointed_at(block: &WorldBlock, ray: Ray, expected: LookingAt) -> () {
+        let mut world = World::default();
+        let chunk = Chunk::new(block.world_pos.to_chunk_pos());
+        world.insert_chunk(chunk);
+        world.add_block(&block).unwrap();
+        let actual = world.get_pointed_at_block(ray);
+
+        assert_eq!(actual, Some(expected));
+    }
+
+    #[test]
+    fn test_pointing_at() {
+        let block = WorldBlock {
+            world_pos: WorldPos::new(0, 0, 0),
+            block_type: BlockType::Stone,
+            extra_data: BlockData::None,
+        };
+
+        self::finds_block_being_pointed_at(
+            &block,
+            Ray {
+                pos: FineWorldPos::new(0.5, 1.5, 0.5),
+                rot: Direction::Down.into(),
+            },
+            LookingAt {
+                block,
+                face: Direction::Up,
+                distance: 0.5,
+            },
+        );
+
+        let block = WorldBlock {
+            world_pos: WorldPos::new(2, 0, 0),
+            block_type: BlockType::Stone,
+            extra_data: BlockData::None,
+        };
+
+        self::finds_block_being_pointed_at(
+            &block,
+            Ray {
+                pos: FineWorldPos::new(0.5, 0.5, 0.5),
+                rot: Direction::East.into(),
+            },
+            LookingAt {
+                block,
+                face: Direction::West,
+                distance: 1.5,
+            },
+        )
     }
 }

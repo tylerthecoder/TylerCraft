@@ -248,62 +248,47 @@ export class World {
     }
   }
 
-  update(game: Game, entities: Entity[]) {
-    for (const entity of entities) {
-      // if ((entity as Spectator).intangible) return;
-
-      this.pushOut(game, entity);
-
-      for (const e of entities) {
-        if (e === entity) continue;
-        const isCollide = e.isCollide(entity);
-        if (isCollide) {
-          entity.pushOut(game, e);
-        }
-      }
-    }
+  tryMove(entity: Entity, vel: Vector3D): Vector3D {
+    const endPos = {
+      x: entity.pos.get(0) + vel.get(0),
+      y: entity.pos.get(1) + vel.get(1),
+      z: entity.pos.get(2) + vel.get(2),
+    };
+    const ent = {
+      pos: {
+        x: entity.pos.get(0),
+        y: entity.pos.get(1),
+        z: entity.pos.get(2),
+      },
+      dim: {
+        x: entity.dim[0],
+        y: entity.dim[1],
+        z: entity.dim[2],
+      },
+    };
+    const newPos = this.wasmWorld.move_rect3_wasm(ent, endPos);
+    return new Vector3D([newPos.x, newPos.y, newPos.z]);
   }
 
-  pushOut(game: Game, ent: Entity) {
-    const entDim = ent instanceof Entity ? ent.dim : CUBE_DIM;
+  getIntersectingBlocksWithEntity(pos: Vector3D, dim: Vector3D): Vector3D[] {
+    const worldPosList = this.wasmWorld.get_rect3_intersecting_blocks_wasm({
+      pos: {
+        x: pos.get(0),
+        y: pos.get(1),
+        z: pos.get(2),
+      },
+      dim: {
+        x: dim.get(0),
+        y: dim.get(1),
+        z: dim.get(2),
+      },
+    });
 
-    const ifCubeExistThenPushOut = (pos: Vector3D) => {
-      pos.data = pos.data.map(Math.floor);
-
-      const cube = this.getBlockFromWorldPoint(pos);
-      if (!cube) return;
-
-      const cubeData = getBlockData(cube.type);
-
-      if (!CubeHelpers.isCollide(cube, ent)) return;
-      if (!cubeData) return;
-      if (cubeData.intangible) return;
-
-      if (ent instanceof Entity) {
-        ent.pushOut(game, cube);
-      }
-    };
-
-    // check the edges of the ent to see if it is intersecting the cubes
-    for (let x = 0; x < entDim[0]; x++) {
-      const centerX = x + 0.5;
-      for (let y = 0; y < entDim[1]; y++) {
-        const centerY = y + 0.5;
-        for (let z = 0; z < entDim[2]; z++) {
-          const centerZ = z + 0.5;
-          const center = ent.pos.add(new Vector3D([centerX, centerY, centerZ]));
-          // check the unit vectors first
-          for (const vec of [
-            ...Vector3D.unitVectors,
-            ...Vector3D.edgeVectors,
-            ...Vector3D.cornerVectors,
-          ]) {
-            const checkingPos = center.add(vec);
-            ifCubeExistThenPushOut(checkingPos);
-          }
-        }
-      }
-    }
+    const vecs: Vector3D[] = worldPosList.map(
+      (pos: { x: number; y: number; z: number }) =>
+        new Vector3D([pos.x, pos.y, pos.z])
+    );
+    return vecs;
   }
 
   async addBlock(

@@ -1,5 +1,5 @@
 use crate::{
-    direction::{Direction, Directions},
+    direction::Direction,
     positions::{ChunkPos, InnerChunkPos},
     world::world_block::WorldBlock,
 };
@@ -8,10 +8,6 @@ use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
 use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
-
-trait BlockTrait {
-    fn get_visible_faces() -> Directions;
-}
 
 #[wasm_bindgen]
 #[derive(Eq, Hash, PartialEq, Clone, Copy, Debug, Serialize_repr, Deserialize_repr)]

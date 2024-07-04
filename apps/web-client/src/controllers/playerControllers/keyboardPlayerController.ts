@@ -246,7 +246,7 @@ export class KeyboardPlayerEntityController extends EntityController {
   }
 
   handleAction(action: PlayerAction) {
-    console.log("Keyboard controller hanling action", action, this.id);
+    // console.log("Keyboard controller hanling action", action, this.id);
     this.sendAction(action);
   }
 

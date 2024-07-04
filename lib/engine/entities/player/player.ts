@@ -12,6 +12,7 @@ import { BlockType } from "@craft/rust-world";
 import { Item, ThrowableItem } from "../../item.js";
 import { Projectile } from "../projectile.js";
 import { PlayerAction } from "./playerActions.js";
+import { World } from "../../world/index.js";
 
 export interface BeltDto {
   selectedBlock: Item;
@@ -98,7 +99,6 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
   // Player Member Variables
   thirdPerson = false;
   onGround = false;
-  jumpCount = 0;
   distanceMoved = 0; // used for animating the arms and legs. Reset to zero when not moving
 
   belt = new Belt();
@@ -153,8 +153,31 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     }
   }
 
-  moveInDirections() {
-    const baseSpeed = CONFIG.player.speed;
+  isJumping = false;
+  haveDoubleJump = false;
+  jumpCount = 0;
+  tryJump() {
+    if (this.onGround) {
+      this.isJumping = true;
+      return;
+    }
+    if (!this.haveDoubleJump) {
+      this.isJumping = true;
+      this.haveDoubleJump = true;
+    }
+  }
+
+  setCreative(val: boolean) {
+    console.log("Setting creative to", val);
+    this.creative = val;
+  }
+
+  hurt(amount: number) {
+    this.health.current -= amount;
+  }
+
+  godForce(delta: number): Vector3D | null {
+    const baseSpeed = (CONFIG.player.speed * delta) / 16;
 
     const moveDirection = (direction: Direction) => {
       switch (direction) {
@@ -197,64 +220,115 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
       }
     };
 
-    let newVel = Vector3D.zero;
+    let desiredVel = Vector3D.zero;
+    // Don't change the y comp unless we have to
+    desiredVel.set(1, this.vel.get(1));
     for (const dir of this.moveDirections) {
       const vel = moveDirection(dir);
-      newVel = newVel.add(vel);
+      desiredVel = desiredVel.add(vel);
     }
+    const currentVel = this.vel;
 
-    // If we don't have a y comp then use the current one
-    if (newVel.get(1) === 0) {
-      newVel.set(1, this.vel.get(1));
-    }
+    const force = desiredVel.sub(currentVel);
 
-    this.vel = newVel;
+    return force;
   }
 
-  tryJump() {
+  jumpForce(): Vector3D | null {
+    if (!this.isJumping) {
+      return null;
+    }
+    this.isJumping = false;
+    const jumpForce = new Vector3D([0, CONFIG.player.jumpSpeed, 0]);
+    return jumpForce;
+  }
+
+  gravityForce(delta: number): Vector3D | null {
+    if (this.creative) {
+      return null;
+    }
     if (this.onGround) {
-      this.vel.set(1, CONFIG.player.jumpSpeed);
+      return null;
     }
+
+    const realForce = (CONFIG.gravity * delta) / 16;
+    return new Vector3D([0, realForce, 0]);
   }
 
-  setCreative(val: boolean) {
-    console.log("Setting creative to", val);
-    this.creative = val;
-    this.gravitable = !val;
-  }
+  update(world: World, delta: number) {
+    const jumpForce = this.jumpForce();
+    const gravityForce = this.gravityForce(delta);
+    const godForce = this.godForce(delta);
+    // if (godForce && godForce.magnitude() > 0) {
+    //   console.log("God Force", godForce.data);
+    // }
+    // if (jumpForce) {
+    //   console.log("Jump Force", jumpForce.data);
+    // }
+    // if (gravityForce) {
+    //   console.log("Gravity Force", gravityForce.data);
+    // }
 
-  hurt(amount: number) {
-    this.health.current -= amount;
-  }
+    const totalForce = (
+      [godForce, jumpForce, gravityForce].filter((f) => f) as Vector3D[]
+    ).reduce((acc: Vector3D, f: Vector3D) => acc.add(f), Vector3D.zero);
 
-  update(delta: number) {
-    this.moveInDirections();
+    this.vel = this.vel.add(totalForce);
 
-    this.onGround = false;
+    if (this.vel.magnitude() > 0) {
+      // console.log("Total Force", totalForce.data);
+      // console.log("Vel", this.vel.data);
+      // console.log("Old Pos", this.pos.data);
+      // console.log("Exp Pos", this.pos.add(this.vel).data);
+      const newPos = world.tryMove(this, this.vel);
+      // console.log("New Pos", newPos.data);
+      this.pos = newPos;
+    }
+
+    // set terminal velocity
+    // if (this.vel.get(1) < -0.9) {
+    //   this.vel.set(1, -0.9);
+    // }
+
     if (this.fire.count > 0 && !this.fire.holding) this.fire.count--;
 
     const moveDist = Math.abs(this.vel.get(0)) + Math.abs(this.vel.get(2));
-
     if (moveDist > 0) {
       this.distanceMoved += moveDist;
     } else {
       this.distanceMoved = 0;
     }
 
-    this.baseUpdate(delta);
+    this.baseUpdate(world, delta);
 
     if (this.pos.get(1) < -10) {
       this.pos.set(1, 30);
       this.vel.set(1, -0.1);
     }
+
+    // Am I on the ground? (Only need to check if I have moved)
+    const belowPos = this.pos.add(new Vector3D([0, -0.1, 0]));
+    const intersectingPoss = world.getIntersectingBlocksWithEntity(
+      belowPos,
+      new Vector3D(this.dim)
+    );
+
+    if (intersectingPoss.length > 0) {
+      this.vel.set(1, 0);
+      this.onGround = true;
+      this.isJumping = false;
+      this.haveDoubleJump = false;
+    } else {
+      this.onGround = false;
+    }
   }
 
   hit(_game: Game, _entity: Entity, where: FaceLocater) {
     this.vel.set(where.side, 0);
-    if (where.side === 1 && where.dir === 0) {
-      this.onGround = true;
-      this.jumpCount = 0;
-    }
+    // if (where.side === 1 && where.dir === 0) {
+    //   this.onGround = true;
+    //   this.jumpCount = 0;
+    // }
   }
 
   // TODO get camera data from the player's rot
