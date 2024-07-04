@@ -1,7 +1,7 @@
 import { Game, World } from "../index.js";
 import { IDim } from "../types.js";
 import { Vector3D } from "../utils/vector.js";
-import CubeHelpers, { Cube, CUBE_DIM } from "./cube.js";
+import { Cube } from "./cube.js";
 import { IEntityType } from "./entityType.js";
 
 export enum RenderType {
@@ -100,60 +100,5 @@ export abstract class Entity<
 
   setUid(uid: string) {
     this.uid = uid;
-  }
-
-  isCollide(ent: Entity) {
-    return CubeHelpers.isCollide(this, ent);
-  }
-
-  // push me (this) out of the supplied entity (ent)
-  pushOut(game: Game, ent: Entity | Cube): FaceLocater {
-    console.log("pushing out", ent);
-
-    let min = [Infinity];
-
-    // 0 -> 1, 1 -> 0
-    const switchDir = (dir: number) => (dir + 1) % 2;
-
-    const entDim = ent instanceof Entity ? ent.dim : CUBE_DIM;
-
-    for (let i = 0; i < 3; i++) {
-      for (let dir = 0; dir <= 1; dir++) {
-        // calculate the distance from a face on the player to a face on the ent
-        const p = this.pos.get(i) + this.dim[i] * dir;
-        const c = ent.pos.get(i) + entDim[i] * switchDir(dir);
-        const dist = Math.abs(c - p);
-        // find the shortest distance (that is best one to move)
-        if (dist < min[0]) {
-          min = [dist, i, dir];
-        }
-      }
-    }
-
-    const [, i, dir] = min;
-
-    const newPos =
-      ent.pos.get(i) + entDim[i] * switchDir(dir) - this.dim[i] * dir;
-
-    this.pos.set(i, newPos);
-
-    this.hit(game, ent, {
-      side: i,
-      dir: dir as 0 | 1,
-    });
-
-    if (ent instanceof Entity) {
-      ent.hit(game, this, {
-        side: i,
-        dir: dir as 0 | 1,
-      });
-    }
-
-    this.soil();
-
-    return {
-      side: i,
-      dir: dir as 1 | 0,
-    };
   }
 }
