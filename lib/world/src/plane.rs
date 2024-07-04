@@ -27,6 +27,19 @@ impl WorldPlane {
             }
     }
 
+    pub fn get_center(&self) -> FineWorldPos {
+        let my_y = self.get_relative_y();
+        let (my_x, my_z) = self
+            .world_pos
+            .get_opposite_components_from_direction(self.direction);
+
+        let x = my_x as f32 + 0.5;
+        let y = my_y as f32 + 0.5;
+        let z = my_z as f32 + 0.5;
+
+        FineWorldPos::new(x, y, z)
+    }
+
     pub fn contains(&self, pos: FineWorldPos) -> bool {
         // Going to frame it in terms of x,y,z. This is a shift so it is easier to read.
         let my_y = self.get_relative_y();
@@ -34,24 +47,24 @@ impl WorldPlane {
             .world_pos
             .get_opposite_components_from_direction(self.direction);
 
-        println!("My x: {}, My y: {}, My z: {}", my_x, my_y, my_z);
+        // println!("My x: {}, My y: {}, My z: {}", my_x, my_y, my_z);
 
         let their_y = pos.get_component_from_direction(self.direction);
         let (their_x, their_z) = pos.get_opposite_components_from_direction(self.direction);
 
-        println!(
-            "Their x: {}, Their y: {}, Their z: {}",
-            their_x, their_y, their_z
-        );
+        // println!(
+        //     "Their x: {}, Their y: {}, Their z: {}",
+        //     their_x, their_y, their_z
+        // );
 
         let contains_y = (my_y as f32 - their_y).abs() < 0.01;
         let contains_x = (my_x as f32) - 0.01 <= their_x && my_x as f32 + 1.01 >= their_x;
         let contains_z = (my_z as f32) - 0.01 <= their_z && my_z as f32 + 1.01 >= their_z;
 
-        println!(
-            "Contains x: {}, Contains y: {}, Contains z: {}",
-            contains_x, contains_y, contains_z
-        );
+        // println!(
+        //     "Contains x: {}, Contains y: {}, Contains z: {}",
+        //     contains_x, contains_y, contains_z
+        // );
 
         contains_y && contains_x && contains_z
     }

@@ -31,12 +31,12 @@ impl LineSegment {
         let end = self.end_pos.get_component_from_axis(axis);
         let plane_pos = plane.get_relative_y() as f32;
 
-        println!("Finding intersection for plane: {:?}", plane);
+        // println!("Finding intersection for plane: {:?}", plane);
 
-        println!(
-            "Axis: {}, line_start: {}, line_end: {}, plane_pos: {}",
-            axis, start, end, plane_pos,
-        );
+        // println!(
+        //     "Axis: {}, line_start: {}, line_end: {}, plane_pos: {}",
+        //     axis, start, end, plane_pos,
+        // );
 
         if start < plane_pos && end < plane_pos {
             // println!("Both are below");
@@ -89,9 +89,33 @@ impl LineSegment {
             })
             // Find the world plane that is closest
             .min_by(|a, b| {
-                a.distance
-                    .partial_cmp(&b.distance)
-                    .unwrap_or_else(|| Ordering::Equal)
+                println!("line->block_mesh intersection a: {:?} b: {:?}", a, b);
+
+                let dist_cmp = a.distance.partial_cmp(&b.distance);
+
+                let order = match dist_cmp {
+                    // match greater than or less than but not euqal
+                    Some(Ordering::Greater) | Some(Ordering::Less) => dist_cmp.unwrap(),
+                    Some(Ordering::Equal) | None => {
+                        // handle by comparing plane centers
+                        let plane_center_dist = |info: &LineSegmentIntersectionInfo| {
+                            let dist = info.world_plane.get_center().distance_to(self.start_pos);
+                            println!("line->block_mesh plane dist: {:?}", dist);
+                            dist
+                        };
+
+                        let a_center = plane_center_dist(a);
+                        let b_center = plane_center_dist(b);
+
+                        a_center
+                            .partial_cmp(&b_center)
+                            .unwrap_or(std::cmp::Ordering::Equal)
+                    }
+                };
+
+                println!("Order: {:?}", order);
+
+                order
             })
     }
 }
@@ -138,12 +162,13 @@ impl World {
                         .flatten()
                 })
                 .min_by(|a, b| {
+                    println!("A: {:?}, B: {:?}", a, b);
                     a.distance
                         .partial_cmp(&b.distance)
                         .unwrap_or(std::cmp::Ordering::Equal)
                 });
 
-            // println!("segment intersection info : {:?}", intersection_info);
+            println!("segment intersection info : {:?}", intersection_info);
 
             if intersection_info.is_some() {
                 return intersection_info;
