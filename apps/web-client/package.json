@@ -22,7 +22,7 @@
     "@types/webxr": "^0.2.3",
     "@vitejs/plugin-react": "^4.2.1",
     "eslint": "^8.42.0",
-    "typescript": "^5.4.2",
+    "typescript": "^5.5.3",
     "vite": "^5.1.6",
     "vite-plugin-top-level-await": "^1.4.1",
     "vite-plugin-wasm": "^3.3.0"

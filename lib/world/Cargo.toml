@@ -14,7 +14,7 @@ crate-type = ["cdylib", "rlib"]
 default = ["console_error_panic_hook"]
 
 [dependencies]
-wasm-bindgen = { version = "0.2.63", features = ["serde-serialize"] }
+wasm-bindgen = { version = "0.2.92", features = ["serde-serialize"] }
 lazy_static = "1.4.0"
 num = "0.4"
 js-sys = "0.3.59"

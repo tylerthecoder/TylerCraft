@@ -4,6 +4,7 @@ import {
   GameActionType,
   GameController,
 } from "@craft/engine";
+import { CanvasGameScript } from "../game-scripts/canvas-gscript";
 
 function getEleOrError(id: string): HTMLElement {
   const ele = document.getElementById(id);
@@ -22,8 +23,8 @@ export class MouseAndKeyboardGameController extends GameController {
   private eGameNameInput = getEleOrError("gameNameInput") as HTMLInputElement;
   private eSaveButton = getEleOrError("saveButton") as HTMLButtonElement;
 
-  constructor(private clientGame: Game) {
-    super(clientGame);
+  constructor(game: Game) {
+    super(game);
 
     this.fullScreenButton.addEventListener("click", () => {
       console.log("Toggling full screen");
@@ -42,7 +43,7 @@ export class MouseAndKeyboardGameController extends GameController {
       this.closeMenu();
     });
 
-    this.eGameNameInput.value = this.clientGame.name;
+    this.eGameNameInput.value = this.game.name;
     this.eGameNameInput.addEventListener("change", (e) => {
       if (!e.target) return;
       if (!(e.target instanceof HTMLInputElement)) return;
@@ -86,7 +87,8 @@ export class MouseAndKeyboardGameController extends GameController {
     if (key === "p") {
       this.save();
     } else if (key === "v") {
-      this.clientGame.toggleThirdPerson();
+      const canvasScript = this.game.getGameScript(CanvasGameScript);
+      canvasScript.toggleThirdPerson();
     } else if (key === "m") {
       this.openMenu();
     }

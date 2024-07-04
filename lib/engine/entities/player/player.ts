@@ -229,7 +229,11 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     }
     const currentVel = this.vel;
 
-    const force = desiredVel.sub(currentVel);
+    let force = desiredVel.sub(currentVel);
+
+    if (force.magnitude() > 0.025) {
+      force = force.normalize().scalarMultiply(0.025);
+    }
 
     return force;
   }
@@ -259,15 +263,6 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     const jumpForce = this.jumpForce();
     const gravityForce = this.gravityForce(delta);
     const godForce = this.godForce(delta);
-    // if (godForce && godForce.magnitude() > 0) {
-    //   console.log("God Force", godForce.data);
-    // }
-    // if (jumpForce) {
-    //   console.log("Jump Force", jumpForce.data);
-    // }
-    // if (gravityForce) {
-    //   console.log("Gravity Force", gravityForce.data);
-    // }
 
     const totalForce = (
       [godForce, jumpForce, gravityForce].filter((f) => f) as Vector3D[]
@@ -275,14 +270,20 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
 
     this.vel = this.vel.add(totalForce);
 
+    // We did move
     if (this.vel.magnitude() > 0) {
-      // console.log("Total Force", totalForce.data);
-      // console.log("Vel", this.vel.data);
-      // console.log("Old Pos", this.pos.data);
-      // console.log("Exp Pos", this.pos.add(this.vel).data);
       const newPos = world.tryMove(this, this.vel);
-      // console.log("New Pos", newPos.data);
+      const actualVel = newPos.sub(this.pos);
       this.pos = newPos;
+
+      const moveDist = Math.abs(actualVel.get(0)) + Math.abs(actualVel.get(2));
+      if (moveDist > 0) {
+        this.distanceMoved += moveDist;
+      } else {
+        this.distanceMoved = 0;
+      }
+    } else {
+      this.distanceMoved = 0;
     }
 
     // set terminal velocity
@@ -292,15 +293,7 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
 
     if (this.fire.count > 0 && !this.fire.holding) this.fire.count--;
 
-    const moveDist = Math.abs(this.vel.get(0)) + Math.abs(this.vel.get(2));
-    if (moveDist > 0) {
-      this.distanceMoved += moveDist;
-    } else {
-      this.distanceMoved = 0;
-    }
-
-    this.baseUpdate(world, delta);
-
+    // Prevent from falling out of the world
     if (this.pos.get(1) < -10) {
       this.pos.set(1, 30);
       this.vel.set(1, -0.1);

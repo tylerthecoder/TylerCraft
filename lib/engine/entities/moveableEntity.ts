@@ -39,36 +39,6 @@ export abstract class MovableEntity<
     }
   }
 
-  baseUpdate(world: World, delta: number) {
-    // if (this.gravitable) this.gravity();
-    //
-    // // if we leave the tab for a long time delta gets very big.
-    // // idk if this is the best solution but I'm going to make them stop moving
-    // const scaleFactor = delta > 100 ? 0 : delta / 16;
-    // const scaledVel = this.vel.scalarMultiply(scaleFactor);
-    // const yBefore = this.pos.get(1);
-    // const newPos = world.tryMove(this, scaledVel);
-    // const yAfter = newPos.get(1);
-    //
-    // this.onGround = false;
-    // if (yBefore === yAfter) {
-    //   this.onGround = true;
-    //   console.log("onGround");
-    //   this.vel.set(1, 0);
-    //   this.jumpCount = 0;
-    // }
-    //
-    //
-    // this.pos = newPos;
-  }
-
-  baseHit(game: Game, entity: Entity) {
-    // const where = this.pushOut(game, entity);
-    // this.hit(game, entity, where);
-    // const where = this.pushOut(entity);
-    // this.hit(entity, where);
-  }
-
   rotate(r: Vector3D) {
     this.rot = this.rot.add(r);
 
