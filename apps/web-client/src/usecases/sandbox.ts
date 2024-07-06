@@ -59,9 +59,9 @@ export class BasicUsecase implements IGameScript {
       return new Quest2Controller(this.mainPlayer);
     } else {
       return new KeyboardPlayerEntityController(
+        this.game,
         this.mainPlayer,
-        onPlayerAction,
-        canvasGameScript
+        onPlayerAction
       );
     }
   }

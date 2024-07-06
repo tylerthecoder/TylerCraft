@@ -221,8 +221,11 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     };
 
     let desiredVel = Vector3D.zero;
-    // Don't change the y comp unless we have to
-    desiredVel.set(1, this.vel.get(1));
+    if (this.creative) {
+      desiredVel.set(1, 0);
+    } else {
+      desiredVel.set(1, this.vel.get(1));
+    }
     for (const dir of this.moveDirections) {
       const vel = moveDirection(dir);
       desiredVel = desiredVel.add(vel);
@@ -239,12 +242,16 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
   }
 
   jumpForce(): Vector3D | null {
+    if (this.creative) {
+      return null;
+    }
     if (!this.isJumping) {
       return null;
     }
     this.isJumping = false;
-    const jumpForce = new Vector3D([0, CONFIG.player.jumpSpeed, 0]);
-    return jumpForce;
+
+    const diffYVel = CONFIG.player.jumpSpeed - this.vel.get(1);
+    return new Vector3D([0, diffYVel, 0]);
   }
 
   gravityForce(delta: number): Vector3D | null {

@@ -183,4 +183,8 @@ const handlePlayerAction = (
       loadChunkIfNotLoaded: true,
     });
   }
+
+  if (action.isType(PlayerActionType.ToggleCreative)) {
+    player.setCreative(!player.creative);
+  }
 };
