@@ -281,21 +281,21 @@ export class KeyboardPlayerEntityController extends EntityController {
   }
 
   placeBlock() {
-    const canvas = this.game.getGameScript(CanvasGameScript);
     this.handleAction(
       PlayerAction.make(PlayerActionType.PlaceBlock, {
-        cameraData: canvas.camera.getRay(),
         playerUid: this.player.uid,
+        playerPos: this.player.pos.data as IDim,
+        playerRot: this.player.rot.data as IDim,
       })
     );
   }
 
   removeBlock() {
-    const canvas = this.game.getGameScript(CanvasGameScript);
     this.handleAction(
       PlayerAction.make(PlayerActionType.RemoveBlock, {
-        cameraData: canvas.camera.getRay(),
         playerUid: this.player.uid,
+        playerPos: this.player.pos.data as IDim,
+        playerRot: this.player.rot.data as IDim,
       })
     );
   }

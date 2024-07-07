@@ -19,70 +19,6 @@ import { CameraRay, IChunkReader } from "../index.js";
 
 type ISerializedChunkHolder = ISerializedChunk[];
 
-// export class ChunkHolder {
-//   private loadingChunks = new Map<string, Promise<Chunk>>();
-//
-//   constructor(
-//     private wasmWorld: WorldModuleTypes.World,
-//     private chunkReader: IChunkReader,
-//     data?: ISerializedChunkHolder
-//   ) {
-//     if (data) {
-//       data.forEach((ser) => {
-//         this.addOrUpdate(ser);
-//       });
-//     }
-//   }
-//
-//   has(pos: Vector2D): boolean {
-//     return this.wasmWorld.has_chunk_wasm(pos.toCartIntObj());
-//   }
-//
-//   get(pos: Vector2D): Chunk | null {
-//     return this.chunks.get(pos.toIndex()) ?? null;
-//   }
-//
-//   getAll(): Chunk[] {
-//     return Array.from(this.chunks.values());
-//   }
-//
-//   async loadAll(): Promise<Chunk[]> {
-//     return Promise.all(this.loadingChunks.values());
-//   }
-//
-//   startLoadingChunk(pos: Vector2D): void {
-//     const chunkId = pos.toIndex();
-//
-//     if (this.chunks.has(chunkId)) {
-//       return;
-//     }
-//
-//     if (this.loadingChunks.has(chunkId)) {
-//       return;
-//     }
-//
-//     const chunkPromise = this.chunkReader.getChunk(chunkId);
-//
-//     const wrappedChunkPromise = chunkPromise
-//       .then((chunk) => {
-//         this.chunksToSend.push(chunk);
-//         this.addOrUpdate(chunk);
-//         this.loadingChunks.delete(chunkId);
-//         return chunk;
-//       })
-//       .catch((err) => {
-//         this.loadingChunks.delete(chunkId);
-//         throw err;
-//       });
-//
-//     this.loadingChunks.set(chunkId, wrappedChunkPromise);
-//   }
-//
-//   getNewlyLoadedChunk(): Chunk | null {
-//     return this.chunksToSend.shift() ?? null;
-//   }
-// }
-
 export interface ISerializedWorld {
   chunks: ISerializedChunkHolder;
 }
@@ -151,6 +87,7 @@ export class World {
   // ===================
 
   getChunkFromPos(chunkPos: Vector2D): ISerializedChunk {
+    console.log("Getting chunk from pos", chunkPos);
     const chunk = this.wasmWorld.get_chunk_from_chunk_pos_wasm({
       x: chunkPos.get(0),
       y: chunkPos.get(1),
@@ -192,10 +129,15 @@ export class World {
   }
 
   hasChunk(chunkPos: Vector2D): boolean {
-    return this.wasmWorld.is_chunk_loaded_wasm({
-      x: chunkPos.get(0),
-      y: chunkPos.get(1),
-    });
+    try {
+      return this.wasmWorld.is_chunk_loaded_wasm({
+        x: chunkPos.get(0),
+        y: chunkPos.get(1),
+      });
+    } catch (e) {
+      console.error("Error in hasChunk", chunkPos, e);
+      throw e;
+    }
   }
 
   // load the starting chunks

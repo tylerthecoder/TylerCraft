@@ -1,6 +1,6 @@
-import { Cube, Game, Player, Vector3D } from "../index.js";
+import { Game, Vector3D } from "../index.js";
 import { World } from "../world/index.js";
-import { Entity, FaceLocater, IEntity } from "./entity.js";
+import { IEntity } from "./entity.js";
 import { IEntityType } from "./entityType.js";
 import { MovableEntity, MovableEntityDto } from "./moveableEntity.js";
 
@@ -31,7 +31,15 @@ export class Projectile
     this.baseSet(data);
   }
 
+  private life = 1000;
+
   update(game: Game, world: World, delta: number) {
+    this.life -= delta;
+    if (this.life < 0) {
+      game.removeEntity(this);
+      return;
+    }
+
     const scaledVel = this.vel.scalarMultiply(delta / 16);
     const expectedPos = this.pos.add(scaledVel);
     const newPos = world.tryMove(this, scaledVel);
@@ -41,12 +49,6 @@ export class Projectile
       const intersectingPoss = world.getIntersectingBlocksWithEntity(
         expectedPos,
         new Vector3D(this.dim)
-      );
-      console.log(
-        "Projectile hit block",
-        intersectingPoss,
-        this.pos.data,
-        this.dim
       );
       if (intersectingPoss.length > 0) {
         for (const intersectingPos of intersectingPoss) {

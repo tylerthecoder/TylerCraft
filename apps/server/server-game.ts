@@ -39,7 +39,12 @@ export class ServerGame {
     setInterval(this.update.bind(this), 1000 / 40);
   }
 
-  update(delta: number): void {
+  private lastUpdate = Date.now();
+  update(): void {
+    const now = Date.now();
+    const delta = now - this.lastUpdate;
+    this.lastUpdate = now;
+
     this.game.update(delta);
 
     const stateDiff = this.game.stateDiff;

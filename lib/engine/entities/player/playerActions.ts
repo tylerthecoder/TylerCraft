@@ -55,11 +55,13 @@ export interface PlayerActionData
   };
   [PlayerActionType.PlaceBlock]: {
     playerUid: string;
-    cameraData: CameraRay;
+    playerPos: IDim;
+    playerRot: IDim;
   };
   [PlayerActionType.RemoveBlock]: {
     playerUid: string;
-    cameraData: CameraRay;
+    playerPos: IDim;
+    playerRot: IDim;
   };
   [PlayerActionType.PlaceDebugBlock]: {
     playerUid: string;
@@ -139,14 +141,18 @@ const handlePlayerAction = (
   }
 
   if (action.isType(PlayerActionType.PlaceBlock)) {
-    const { cameraData } = action.data;
-    player.doPrimaryAction(game, cameraData);
+    const { playerPos, playerRot } = action.data;
+    player.pos = new Vector3D(playerPos);
+    player.rot = new Vector3D(playerRot);
+    player.doPrimaryAction(game);
     return;
   }
 
   if (action.isType(PlayerActionType.RemoveBlock)) {
-    const { cameraData } = action.data;
-    player.doSecondaryAction(game, cameraData);
+    const { playerPos, playerRot } = action.data;
+    player.pos = new Vector3D(playerPos);
+    player.rot = new Vector3D(playerRot);
+    player.doSecondaryAction(game);
     return;
   }
 

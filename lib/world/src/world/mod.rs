@@ -21,12 +21,6 @@ pub struct WorldPosWasm {
     pub z: i32,
 }
 
-#[wasm_bindgen]
-pub struct ChunkPosWasm {
-    pub x: i16,
-    pub y: i16,
-}
-
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ChunkNotLoadedError;
 

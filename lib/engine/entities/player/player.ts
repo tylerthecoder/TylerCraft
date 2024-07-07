@@ -1,10 +1,8 @@
-import { Entity, FaceLocater, IEntity } from "../entity.js";
-import { arrayAdd, arrayScalarMul } from "../../utils.js";
+import { IEntity } from "../entity.js";
 import { IDim } from "../../types.js";
 import { MovableEntity, MovableEntityDto } from "../moveableEntity.js";
 import { CONFIG } from "../../config.js";
 import { Direction, Vector3D } from "../../utils/vector.js";
-import { CameraRay } from "../../camera.js";
 import CubeHelpers from "../cube.js";
 import { Game } from "../../game.js";
 import { IEntityType } from "../entityType.js";
@@ -322,8 +320,7 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     }
   }
 
-  // TODO get camera data from the player's rot
-  doPrimaryAction(game: Game, camera: CameraRay) {
+  doPrimaryAction(game: Game) {
     const item = this.belt.selectedItem;
 
     console.log("Doing primary action", item);
@@ -331,12 +328,13 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     if (item === ThrowableItem.Fireball) {
       this.fireball(game);
     } else {
-      this.placeBlock(game, camera, item);
+      this.placeBlock(game, item);
     }
   }
 
-  doSecondaryAction(game: Game, camera: CameraRay) {
-    const lookingData = game.world.lookingAt(camera);
+  doSecondaryAction(game: Game) {
+    const ray = this.getRay();
+    const lookingData = game.world.lookingAt(ray);
     if (!lookingData) return;
     const { cube } = lookingData;
     if (!cube) return;
@@ -358,8 +356,9 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
   }
 
   // Player actions
-  placeBlock(game: Game, camera: CameraRay, blockType: BlockType) {
-    const lookingData = game.world.lookingAt(camera);
+  placeBlock(game: Game, blockType: BlockType) {
+    const ray = this.getRay();
+    const lookingData = game.world.lookingAt(ray);
     if (!lookingData) return;
     console.log("Looking at data", lookingData);
     const { cube } = lookingData;
@@ -379,19 +378,21 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
   fireball(game: Game) {
     if (this.fire.count > 0) return;
 
-    const vel = this.rotCart.scalarMultiply(-0.4).data as IDim;
-    vel[1] = -vel[1];
+    const vel = this.rot.toCartesianCoords().scalarMultiply(-0.4);
+    vel.set(1, -vel.get(1));
 
-    const pos = arrayAdd(
-      arrayAdd(this.pos.data, arrayScalarMul(vel, 4)),
-      [0.5, 2, 0.5]
-    ) as IDim;
+    const pos = this.pos
+      .add(vel.scalarMultiply(2))
+      .add(new Vector3D(this.dim).scalarMultiply(0.5));
+
+    console.log("Firing fireball", this, pos, vel);
+
     const ball = new Projectile({
       uid: "fireball-" + Math.random().toString().slice(2),
-      pos,
-      vel,
+      pos: pos.data as IDim,
+      vel: vel.data as IDim,
     });
-    ball.vel = new Vector3D(vel);
+    ball.vel = vel;
 
     game.addEntity(ball);
 

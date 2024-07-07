@@ -106,6 +106,7 @@ export class GameService {
       },
     };
 
+    console.log("Creating game in memory");
     const game = await Game.make(dbGame, chunkReader, gameSaver);
 
     const serverGame = new ServerGame(
