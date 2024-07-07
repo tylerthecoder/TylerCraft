@@ -177,6 +177,7 @@ export class ServerSideGameScript implements IGameScript {
   }
 
   private onSocketMessage(message: SocketMessage) {
+    console.log("MP: Got message", message);
     const mainPlayer = this.game.getGameScript(BasicUsecase).mainPlayer;
     const playerActionService =
       this.game.getGameScript(BasicUsecase).playerActionService;

@@ -10,6 +10,7 @@ import {
   SocketMessage,
   setConfig,
   IConfig,
+  ISerializedChunk,
 } from "@craft/engine";
 import SocketServer from "./socket.js";
 
@@ -34,7 +35,13 @@ export class ServerGame {
     // NO-OP
   }
 
-  update(_delta: number): void {
+  start() {
+    setInterval(this.update.bind(this), 1000 / 40);
+  }
+
+  update(delta: number): void {
+    this.game.update(delta);
+
     const stateDiff = this.game.stateDiff;
 
     // Set the config for the game (This is a hack since the config is global)
@@ -108,10 +115,11 @@ export class ServerGame {
     const world = this.game.world;
     console.log("ServerGame: Sending chunk to player: ", chunkPosString);
     const chunkPos = Vector2D.fromIndex(chunkPosString);
-    let chunk = world.getChunkFromPos(chunkPos);
-    if (!chunk) {
-      await world.loadChunk(chunkPos);
+    let chunk: ISerializedChunk | null;
+    if (world.hasChunk(chunkPos)) {
       chunk = world.getChunkFromPos(chunkPos);
+    } else {
+      chunk = await world.loadChunk(chunkPos);
     }
     if (!chunk) throw new Error("Chunk wasn't found");
     this.socketInterface.send(

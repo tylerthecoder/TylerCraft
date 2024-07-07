@@ -114,6 +114,8 @@ export class GameService {
       game
     );
 
+    serverGame.start();
+
     console.log("Created new game in memory");
 
     // add the world to our local list
@@ -147,6 +149,8 @@ export class GameService {
       this.socketInterface,
       game
     );
+
+    serverUsecase.start();
 
     this.games.set(id, serverUsecase);
 

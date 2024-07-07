@@ -1,5 +1,4 @@
 import {
-  CONFIG,
   EntityController,
   Game,
   Player,
@@ -82,17 +81,6 @@ export class BasicUsecase implements IGameScript {
   }
 
   update(delta: number) {
-    // Load chunks around the player
-    if (CONFIG.terrain.infiniteGen) {
-      const chunkIds = this.game.world.getChunkPosAroundPoint(
-        this.mainPlayer.pos
-      );
-      for (const chunkId of chunkIds) {
-        // Don't await it
-        this.game.world.loadChunk(chunkId);
-      }
-    }
-
     this.gameController.update(delta);
 
     for (const entityController of this.entityControllers.values()) {

@@ -114,6 +114,16 @@ export class Game {
   public update(delta: number) {
     this.entities.update(this, this.world, delta);
 
+    if (CONFIG.terrain.infiniteGen) {
+      for (const entity of this.entities.iterable()) {
+        const chunkIds = this.world.getChunkPosAroundPoint(entity.pos);
+        for (const chunkId of chunkIds) {
+          // Don't await it
+          this.world.loadChunk(chunkId);
+        }
+      }
+    }
+
     for (const script of this.gameScripts) {
       script.update?.(delta);
     }

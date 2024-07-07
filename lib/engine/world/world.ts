@@ -106,6 +106,7 @@ export class World {
     data?: ISerializedWorld
   ) {
     if (data) {
+      console.log("World: Loading world from data", data);
       data.chunks.forEach((ser) => {
         this.updateChunk(ser);
       });
@@ -113,7 +114,13 @@ export class World {
   }
 
   serialize(): ISerializedWorld {
-    return this.wasmWorld.serialize_wasm();
+    const ser = this.wasmWorld.serialize_wasm() as {
+      chunks: Map<string, ISerializedChunk>;
+    };
+    console.log("Serializing world", ser);
+    return {
+      chunks: Array.from(ser.chunks.values()),
+    };
   }
 
   // Helper static methods
@@ -206,7 +213,7 @@ export class World {
     if (this.hasChunk(pos)) {
       return null;
     }
-
+    console.log("World: Loading chunk", pos.toIndex());
     const chunkId = pos.toIndex();
     const chunk = await this.chunkReader.getChunk(chunkId);
     this.updateChunk(chunk);
