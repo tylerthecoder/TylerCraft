@@ -1,10 +1,8 @@
-import { Entity, FaceLocater, IEntity } from "../entity.js";
-import { arrayAdd, arrayScalarMul } from "../../utils.js";
+import { IEntity } from "../entity.js";
 import { IDim } from "../../types.js";
 import { MovableEntity, MovableEntityDto } from "../moveableEntity.js";
 import { CONFIG } from "../../config.js";
 import { Direction, Vector3D } from "../../utils/vector.js";
-import { CameraRay } from "../../camera.js";
 import CubeHelpers from "../cube.js";
 import { Game } from "../../game.js";
 import { IEntityType } from "../entityType.js";
@@ -176,8 +174,8 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     this.health.current -= amount;
   }
 
-  godForce(delta: number): Vector3D | null {
-    const baseSpeed = (CONFIG.player.speed * delta) / 16;
+  godForce(): Vector3D | null {
+    const baseSpeed = CONFIG.player.speed;
 
     const moveDirection = (direction: Direction) => {
       switch (direction) {
@@ -221,53 +219,53 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     };
 
     let desiredVel = Vector3D.zero;
-    // Don't change the y comp unless we have to
-    desiredVel.set(1, this.vel.get(1));
+    if (this.creative) {
+      desiredVel.set(1, 0);
+    } else {
+      desiredVel.set(1, this.vel.get(1));
+    }
     for (const dir of this.moveDirections) {
       const vel = moveDirection(dir);
       desiredVel = desiredVel.add(vel);
     }
     const currentVel = this.vel;
 
-    const force = desiredVel.sub(currentVel);
+    let force = desiredVel.sub(currentVel);
+
+    if (force.magnitude() > 0.025) {
+      force = force.normalize().scalarMultiply(0.025);
+    }
 
     return force;
   }
 
   jumpForce(): Vector3D | null {
+    if (this.creative) {
+      return null;
+    }
     if (!this.isJumping) {
       return null;
     }
     this.isJumping = false;
-    const jumpForce = new Vector3D([0, CONFIG.player.jumpSpeed, 0]);
-    return jumpForce;
+
+    const diffYVel = CONFIG.player.jumpSpeed - this.vel.get(1);
+    return new Vector3D([0, diffYVel, 0]);
   }
 
-  gravityForce(delta: number): Vector3D | null {
+  gravityForce(): Vector3D | null {
     if (this.creative) {
       return null;
     }
     if (this.onGround) {
       return null;
     }
-
-    const realForce = (CONFIG.gravity * delta) / 16;
-    return new Vector3D([0, realForce, 0]);
+    return new Vector3D([0, CONFIG.gravity, 0]);
   }
 
-  update(world: World, delta: number) {
+  update(_game: Game, world: World, delta: number) {
     const jumpForce = this.jumpForce();
-    const gravityForce = this.gravityForce(delta);
-    const godForce = this.godForce(delta);
-    // if (godForce && godForce.magnitude() > 0) {
-    //   console.log("God Force", godForce.data);
-    // }
-    // if (jumpForce) {
-    //   console.log("Jump Force", jumpForce.data);
-    // }
-    // if (gravityForce) {
-    //   console.log("Gravity Force", gravityForce.data);
-    // }
+    const gravityForce = this.gravityForce();
+    const godForce = this.godForce();
 
     const totalForce = (
       [godForce, jumpForce, gravityForce].filter((f) => f) as Vector3D[]
@@ -275,14 +273,21 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
 
     this.vel = this.vel.add(totalForce);
 
+    // We did move
     if (this.vel.magnitude() > 0) {
-      // console.log("Total Force", totalForce.data);
-      // console.log("Vel", this.vel.data);
-      // console.log("Old Pos", this.pos.data);
-      // console.log("Exp Pos", this.pos.add(this.vel).data);
-      const newPos = world.tryMove(this, this.vel);
-      // console.log("New Pos", newPos.data);
+      const scaledVel = this.vel.scalarMultiply(delta / 16);
+      const newPos = world.tryMove(this, scaledVel);
+      const actualVel = newPos.sub(this.pos);
       this.pos = newPos;
+
+      const moveDist = Math.abs(actualVel.get(0)) + Math.abs(actualVel.get(2));
+      if (moveDist > 0) {
+        this.distanceMoved += moveDist;
+      } else {
+        this.distanceMoved = 0;
+      }
+    } else {
+      this.distanceMoved = 0;
     }
 
     // set terminal velocity
@@ -292,15 +297,7 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
 
     if (this.fire.count > 0 && !this.fire.holding) this.fire.count--;
 
-    const moveDist = Math.abs(this.vel.get(0)) + Math.abs(this.vel.get(2));
-    if (moveDist > 0) {
-      this.distanceMoved += moveDist;
-    } else {
-      this.distanceMoved = 0;
-    }
-
-    this.baseUpdate(world, delta);
-
+    // Prevent from falling out of the world
     if (this.pos.get(1) < -10) {
       this.pos.set(1, 30);
       this.vel.set(1, -0.1);
@@ -323,16 +320,7 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     }
   }
 
-  hit(_game: Game, _entity: Entity, where: FaceLocater) {
-    this.vel.set(where.side, 0);
-    // if (where.side === 1 && where.dir === 0) {
-    //   this.onGround = true;
-    //   this.jumpCount = 0;
-    // }
-  }
-
-  // TODO get camera data from the player's rot
-  doPrimaryAction(game: Game, camera: CameraRay) {
+  doPrimaryAction(game: Game) {
     const item = this.belt.selectedItem;
 
     console.log("Doing primary action", item);
@@ -340,12 +328,13 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     if (item === ThrowableItem.Fireball) {
       this.fireball(game);
     } else {
-      this.placeBlock(game, camera, item);
+      this.placeBlock(game, item);
     }
   }
 
-  doSecondaryAction(game: Game, camera: CameraRay) {
-    const lookingData = game.world.lookingAt(camera);
+  doSecondaryAction(game: Game) {
+    const ray = this.getRay();
+    const lookingData = game.world.lookingAt(ray);
     if (!lookingData) return;
     const { cube } = lookingData;
     if (!cube) return;
@@ -367,8 +356,9 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
   }
 
   // Player actions
-  placeBlock(game: Game, camera: CameraRay, blockType: BlockType) {
-    const lookingData = game.world.lookingAt(camera);
+  placeBlock(game: Game, blockType: BlockType) {
+    const ray = this.getRay();
+    const lookingData = game.world.lookingAt(ray);
     if (!lookingData) return;
     console.log("Looking at data", lookingData);
     const { cube } = lookingData;
@@ -388,19 +378,21 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
   fireball(game: Game) {
     if (this.fire.count > 0) return;
 
-    const vel = this.rotCart.scalarMultiply(-0.4).data as IDim;
-    vel[1] = -vel[1];
+    const vel = this.rot.toCartesianCoords().scalarMultiply(-0.4);
+    vel.set(1, -vel.get(1));
 
-    const pos = arrayAdd(
-      arrayAdd(this.pos.data, arrayScalarMul(vel, 4)),
-      [0.5, 2, 0.5]
-    ) as IDim;
+    const pos = this.pos
+      .add(vel.scalarMultiply(2))
+      .add(new Vector3D(this.dim).scalarMultiply(0.5));
+
+    console.log("Firing fireball", this, pos, vel);
+
     const ball = new Projectile({
       uid: "fireball-" + Math.random().toString().slice(2),
-      pos,
-      vel,
+      pos: pos.data as IDim,
+      vel: vel.data as IDim,
     });
-    ball.vel = new Vector3D(vel);
+    ball.vel = vel;
 
     game.addEntity(ball);
 

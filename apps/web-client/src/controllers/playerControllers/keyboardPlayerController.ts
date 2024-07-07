@@ -2,20 +2,19 @@ import {
   CONFIG,
   Direction,
   EntityController,
+  Game,
   IDim,
   Player,
   PlayerAction,
   PlayerActionType,
 } from "@craft/engine";
 import { canvas } from "../../canvas";
-import { CanvasRenderUsecase } from "../../usecases/canvas-usecase";
+import { CanvasGameScript } from "../../game-scripts/canvas-gscript";
 
 export class KeyboardPlayerEntityController extends EntityController {
   cleanup(): void {
     throw new Error("Method not implemented.");
   }
-
-  private id = Math.random();
 
   private keys = new Set();
   private keysPressed = new Set();
@@ -25,10 +24,12 @@ export class KeyboardPlayerEntityController extends EntityController {
 
   private numOfUpdates = 0;
 
+  private hasJumped = false;
+
   constructor(
+    private game: Game,
     private player: Player,
-    private sendAction: (action: PlayerAction) => void,
-    private rendererUsecase: CanvasRenderUsecase
+    private sendAction: (action: PlayerAction) => void
   ) {
     super();
 
@@ -64,7 +65,8 @@ export class KeyboardPlayerEntityController extends EntityController {
         const moveX = e.movementX * CONFIG.player.mouseRotSpeed;
         const moveY = e.movementY * CONFIG.player.mouseRotSpeed;
 
-        this.rendererUsecase.camera.rotateBy(moveX, moveY);
+        const canvas = this.game.getGameScript(CanvasGameScript);
+        canvas.camera.rotateBy(moveX, moveY);
 
         this.hasMouseMoved = true;
       }
@@ -130,8 +132,18 @@ export class KeyboardPlayerEntityController extends EntityController {
       case "d":
         this.currentMoveDirections.add(Direction.Right);
         break;
+      case "e":
+        this.currentMoveDirections.add(Direction.Up);
+        break;
+      case "q":
+        this.currentMoveDirections.add(Direction.Down);
+        break;
       case "c":
-        this.player.creative = true;
+        this.handleAction(
+          PlayerAction.make(PlayerActionType.ToggleCreative, {
+            playerUid: this.player.uid,
+          })
+        );
         break;
       case "j":
         this.handleAction(
@@ -141,6 +153,10 @@ export class KeyboardPlayerEntityController extends EntityController {
         );
         break;
       case " ":
+        if (this.hasJumped) {
+          break;
+        }
+        this.hasJumped = true;
         this.handleAction(
           PlayerAction.make(PlayerActionType.Jump, {
             playerUid: this.player.uid,
@@ -191,6 +207,12 @@ export class KeyboardPlayerEntityController extends EntityController {
       this.currentMoveDirections.delete(Direction.Left);
     } else if (key === "d") {
       this.currentMoveDirections.delete(Direction.Right);
+    } else if (key === "e") {
+      this.currentMoveDirections.delete(Direction.Up);
+    } else if (key === "q") {
+      this.currentMoveDirections.delete(Direction.Down);
+    } else if (key === " ") {
+      this.hasJumped = false;
     }
   }
 
@@ -221,7 +243,6 @@ export class KeyboardPlayerEntityController extends EntityController {
     }
 
     if (areDifferent) {
-      console.log("Are different", this.currentMoveDirections);
       this.handleAction(
         PlayerAction.make(PlayerActionType.Move, {
           directions: Array.from(this.currentMoveDirections.values()),
@@ -262,8 +283,9 @@ export class KeyboardPlayerEntityController extends EntityController {
   placeBlock() {
     this.handleAction(
       PlayerAction.make(PlayerActionType.PlaceBlock, {
-        cameraData: this.rendererUsecase.camera.getRay(),
         playerUid: this.player.uid,
+        playerPos: this.player.pos.data as IDim,
+        playerRot: this.player.rot.data as IDim,
       })
     );
   }
@@ -271,8 +293,9 @@ export class KeyboardPlayerEntityController extends EntityController {
   removeBlock() {
     this.handleAction(
       PlayerAction.make(PlayerActionType.RemoveBlock, {
-        cameraData: this.rendererUsecase.camera.getRay(),
         playerUid: this.player.uid,
+        playerPos: this.player.pos.data as IDim,
+        playerRot: this.player.rot.data as IDim,
       })
     );
   }

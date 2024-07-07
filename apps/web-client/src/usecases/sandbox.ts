@@ -1,5 +1,4 @@
 import {
-  CONFIG,
   EntityController,
   Game,
   Player,
@@ -42,26 +41,20 @@ export class BasicUsecase implements IGameScript {
   private gameController: MouseAndKeyboardGameController;
   private entityControllers: Map<string, EntityController> = new Map();
 
-  private makePlayerController(
-    canvasGameScript: CanvasGameScript
-  ): EntityController {
+  private makePlayerController(): EntityController {
     const onPlayerAction = (action: PlayerAction) => {
       this.playerActionService.performAction(this.mainPlayer.uid, action);
     };
 
     if (IS_MOBILE) {
-      return new MobileController(
-        this.mainPlayer,
-        onPlayerAction,
-        canvasGameScript
-      );
+      return new MobileController(this.game, this.mainPlayer, onPlayerAction);
     } else if (canvas.isXr) {
       return new Quest2Controller(this.mainPlayer);
     } else {
       return new KeyboardPlayerEntityController(
+        this.game,
         this.mainPlayer,
-        onPlayerAction,
-        canvasGameScript
+        onPlayerAction
       );
     }
   }
@@ -82,17 +75,12 @@ export class BasicUsecase implements IGameScript {
 
   setup() {
     console.log("Setting up basic game script");
-    const canvasGameScript = this.game.addGameScript(CanvasGameScript);
-    const playerController = this.makePlayerController(canvasGameScript);
+    this.game.addGameScript(CanvasGameScript);
+    const playerController = this.makePlayerController();
     this.entityControllers.set(this.mainPlayer.uid, playerController);
   }
 
   update(delta: number) {
-    // Load chunks around the player
-    if (CONFIG.terrain.infiniteGen) {
-      this.game.world.loadChunksAroundPoint(this.mainPlayer.pos);
-    }
-
     this.gameController.update(delta);
 
     for (const entityController of this.entityControllers.values()) {

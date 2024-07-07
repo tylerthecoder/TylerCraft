@@ -20,7 +20,7 @@ export class CanvasGameScript implements IGameScript {
   constructor(public game: Game) {
     console.log("Canvas Render Usecase", this);
 
-    this.worldRenderer = new WorldRenderer(game.world, this);
+    this.worldRenderer = new WorldRenderer(game, game.world);
     this.worldRenderer.shouldRenderMainPlayer = false;
 
     this.mainPlayer = game.getGameScript(BasicUsecase).mainPlayer;
@@ -32,8 +32,8 @@ export class CanvasGameScript implements IGameScript {
     }
 
     // Create renderers for initial chunks
-    for (const chunk of game.world.getChunks()) {
-      this.worldRenderer.addChunk(chunk);
+    for (const chunkId of game.world.getLoadedChunkIds()) {
+      this.worldRenderer.blockUpdate(chunkId);
     }
 
     this.isSpectating = false;
@@ -73,9 +73,10 @@ export class CanvasGameScript implements IGameScript {
       this.worldRenderer.removeEntity(entityId);
     }
 
-    const loadedChunk = this.game.world.chunks.getNewlyLoadedChunk();
-    if (loadedChunk) {
-      this.worldRenderer.addChunk(loadedChunk);
+    const newChunk = this.game.world.getNewlyLoadedChunkId();
+    if (newChunk) {
+      console.log("New chunk loaded", newChunk);
+      this.worldRenderer.blockUpdate(newChunk);
     }
   }
 

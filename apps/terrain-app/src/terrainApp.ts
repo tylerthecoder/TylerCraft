@@ -1,31 +1,31 @@
 import {
   BIOME_SIZE,
-  Chunk,
   CONFIG,
+  ISerializedChunk,
   Random,
-  TerrainGenerator,
+  TerrainGenModule,
   Vector2D,
   Vector3D,
   World,
   WorldModule,
 } from "@craft/engine";
 import { BlockType } from "@craft/rust-world";
-import * as TerrainGen from "@craft/terrain-gen";
 
 const LOAD_DIST = 5;
 const SCALE_FACTOR = 8;
 
 export class TerrainApp {
-  private terrainGenerator = new TerrainGenerator(
-    this.hasChunk.bind(this),
-    this.getChunk.bind(this)
+  private terrainGenerator = TerrainGenModule.getTerrainGenerator(
+    Number(CONFIG.seed),
+    CONFIG.terrain.flatWorld
   );
+
   private eCanvas = document.getElementById(
     "terrainCanvas"
   ) as HTMLCanvasElement;
 
   private ctx = this.eCanvas.getContext("2d") as CanvasRenderingContext2D;
-  private chunks: Map<string, Chunk> = new Map();
+  private chunks: Map<string, ISerializedChunk> = new Map();
 
   private offsetX = 50;
   private offsetY = 50;
@@ -55,7 +55,7 @@ export class TerrainApp {
       for (let j = -LOAD_DIST; j < LOAD_DIST; j++) {
         const chunkPos = new Vector2D([i, j]);
 
-        const genChunk = new Chunk(TerrainGen.get_chunk_wasm(i, j), chunkPos);
+        const genChunk = this.terrainGenerator.getChunk(chunkPos);
 
         // const chunk = this.terrainGenerator.generateChunk(chunkPos);
         //
@@ -66,10 +66,6 @@ export class TerrainApp {
 
   private hasChunk(chunkPos: Vector2D): boolean {
     return this.chunks.has(chunkPos.toIndex());
-  }
-
-  private getChunk(chunkPos: Vector2D): Chunk | undefined {
-    return this.chunks.get(chunkPos.toIndex());
   }
 
   private drawRect(x: number, y: number, w: number, h: number, color: string) {
@@ -159,7 +155,9 @@ export class TerrainApp {
     this.ctx.clearRect(0, 0, this.eCanvas.width, this.eCanvas.height);
 
     for (const [, chunk] of this.chunks.entries()) {
-      const worldPos = World.chunkPosToWorldPos(chunk.pos);
+      const worldPos = World.chunkPosToWorldPos(
+        Vector2D.fromIndex(chunk.chunkId)
+      );
 
       const xPos = (worldPos.data[0] + this.offsetX) * SCALE_FACTOR;
       const yPos = (worldPos.data[2] + this.offsetY) * SCALE_FACTOR;
@@ -167,11 +165,12 @@ export class TerrainApp {
 
       this.drawRectOutline(xPos, yPos, size, size, "black");
 
+      let cube: any;
       for (let i = 0; i < CONFIG.terrain.chunkSize; i++) {
         for (let j = 0; j < CONFIG.terrain.chunkSize; j++) {
           const blockPos = worldPos.add(new Vector3D([i, this.yLvl, j]));
 
-          let cube = chunk.getBlockFromWorldPos(blockPos);
+          // let cube = chunk.getBlockFromWorldPos(blockPos);
 
           if (!cube) {
             // clear cube so we can see the background
@@ -182,7 +181,7 @@ export class TerrainApp {
           // loop down until we find a block
           for (let k = this.yLvl - 1; k >= 0; k--) {
             if (cube.block_type !== BlockType.Void) break;
-            cube = chunk.getBlockFromWorldPos(new Vector3D([i, k, j]));
+            // cube = chunk.getBlockFromWorldPos(new Vector3D([i, k, j]));
           }
 
           let color = "red";
@@ -204,24 +203,24 @@ export class TerrainApp {
     }
 
     // Color the biomes
-    Array.from(this.terrainGenerator.biomeGenerator.biomeGrid.values()).forEach(
-      (biomeSection) => {
-        if (!biomeSection.hasBiome) return;
-
-        this.drawWorldPosRect(biomeSection.biomeWorldPos, "blue");
-      }
-    );
+    // Array.from(this.terrainGenerator.biomeGenerator.biomeGrid.values()).forEach(
+    //   (biomeSection) => {
+    //     if (!biomeSection.hasBiome) return;
+    //
+    //     this.drawWorldPosRect(biomeSection.biomeWorldPos, "blue");
+    //   }
+    // );
 
     // Draw the biome sections
-    this.terrainGenerator.biomeGenerator.biomeGrid.forEach((section) => {
-      const xPos =
-        (section.sectionPos.data[0] * BIOME_SIZE + this.offsetX) * SCALE_FACTOR;
-      const yPos =
-        (section.sectionPos.data[1] * BIOME_SIZE + this.offsetY) * SCALE_FACTOR;
-      const size = SCALE_FACTOR * BIOME_SIZE;
-
-      this.drawRectOutline(xPos, yPos, size, size, "white");
-    });
+    // this.terrainGenerator.biomeGenerator.biomeGrid.forEach((section) => {
+    //   const xPos =
+    //     (section.sectionPos.data[0] * BIOME_SIZE + this.offsetX) * SCALE_FACTOR;
+    //   const yPos =
+    //     (section.sectionPos.data[1] * BIOME_SIZE + this.offsetY) * SCALE_FACTOR;
+    //   const size = SCALE_FACTOR * BIOME_SIZE;
+    //
+    //   this.drawRectOutline(xPos, yPos, size, size, "white");
+    // });
 
     // this.terrainGenerator.biomeGenerator.fringeBlocks.forEach(blockPos => {
     //   const posVec = Vector2D.fromIndex(blockPos);

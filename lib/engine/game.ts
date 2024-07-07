@@ -5,9 +5,8 @@ import { EntityHolder, ISerializedEntities } from "./entities/entityHolder.js";
 import { Random } from "./utils/random.js";
 import { GameActionHandler, GameAction } from "./gameActions.js";
 import { GameStateDiff, GameDiffDto } from "./gameStateDiff.js";
-import { Vector2D } from "./utils/vector.js";
 import CubeHelpers, { Cube } from "./entities/cube.js";
-import { Chunk, Entity } from "./index.js";
+import { Entity, ISerializedChunk } from "./index.js";
 import { IGameScript, IGameScriptConstuctor } from "./game-script.js";
 
 export interface ISerializedGame {
@@ -30,7 +29,7 @@ export type IContructGameOptions = Omit<ISerializedGame, "gameId"> & {
 };
 
 export interface IChunkReader {
-  getChunk(chunkPos: string): Promise<Chunk>;
+  getChunk(chunkPos: string): Promise<ISerializedChunk>;
 }
 
 export interface IGameSaver {
@@ -114,6 +113,16 @@ export class Game {
   public update(delta: number) {
     this.entities.update(this, this.world, delta);
 
+    if (CONFIG.terrain.infiniteGen) {
+      for (const entity of this.entities.iterable()) {
+        const chunkIds = this.world.getChunkPosAroundPoint(entity.pos);
+        for (const chunkId of chunkIds) {
+          // Don't await it
+          this.world.loadChunk(chunkId);
+        }
+      }
+    }
+
     for (const script of this.gameScripts) {
       script.update?.(delta);
     }
@@ -138,10 +147,7 @@ export class Game {
     if (stateDiff.chunks.update) {
       const updates = stateDiff.chunks.update;
       for (const update of updates) {
-        this.world.updateChunk(
-          new Vector2D([update.position.x, update.position.y]),
-          update
-        );
+        this.world.updateChunk(update);
       }
     }
 
@@ -195,6 +201,7 @@ export class Game {
   addEntity(entity: Entity) {
     console.log("Adding entity", entity);
     this.entities.add(this.stateDiff, entity);
+    this.stateDiff.addEntity(entity.uid);
 
     for (const script of this.gameScripts) {
       script.onNewEntity?.(entity);
@@ -204,6 +211,7 @@ export class Game {
   removeEntity(entity: Entity) {
     console.log("Removing entity", entity);
     this.entities.remove(entity.uid);
+    this.stateDiff.removeEntity(entity.uid);
 
     for (const script of this.gameScripts) {
       script.onRemovedEntity?.(entity);

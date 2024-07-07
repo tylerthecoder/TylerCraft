@@ -1,27 +1,27 @@
 {
-	"name": "@craft/engine",
-	"type": "module",
-	"version": "1.0.0",
-	"main": "./dist/index.js",
-	"module": "./dist/index.js",
-	"types": "./dist/index.d.ts",
-	"scripts": {
-		"build": "tsc -b",
-		"dev": "tsc -b -w --preserveWatchOutput",
-		"lint": "eslint . --ext .ts",
-		"clean": "rm -rf dist"
-	},
-	"dependencies": {
-		"@craft/rust-world": "1.0.0",
-		"@craft/terrain-gen": "1.0.0",
-		"random": "^4.1.0",
-		"seedrandom": "^3.0.5",
-		"simplex-noise": "^2.4.0"
-	},
-	"devDependencies": {
-		"@craft/eslint-config-tylercraft": "^1.0.0",
-		"@types/seedrandom": "^3.0.4",
-		"eslint": "^8.42.0",
-		"typescript": "^5.4.2"
-	}
+  "name": "@craft/engine",
+  "type": "module",
+  "version": "1.0.0",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "dev": "tsc -b -w --preserveWatchOutput",
+    "lint": "eslint . --ext .ts",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@craft/rust-world": "1.0.0",
+    "@craft/terrain-gen": "1.0.0",
+    "random": "^4.1.0",
+    "seedrandom": "^3.0.5",
+    "simplex-noise": "^2.4.0"
+  },
+  "devDependencies": {
+    "@craft/eslint-config-tylercraft": "^1.0.0",
+    "@types/seedrandom": "^3.0.4",
+    "eslint": "^8.42.0",
+    "typescript": "^5.5.3"
+  }
 }

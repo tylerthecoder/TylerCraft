@@ -1,5 +1,4 @@
 import {
-  CONFIG,
   Game,
   GameStateDiff,
   ISocketMessageType,

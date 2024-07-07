@@ -1,8 +1,12 @@
 import * as WorldWasm from "@craft/rust-world";
 import * as TerrainGenWasm from "@craft/terrain-gen";
 import { Vector2D } from "./utils/vector.js";
-import { Chunk, ISerializedChunk } from "./world/index.js";
-import { IChunkReader, ISerializedWorld, World } from "./index.js";
+import {
+  IChunkReader,
+  ISerializedChunk,
+  ISerializedWorld,
+  World,
+} from "./index.js";
 export * as WorldModuleTypes from "@craft/rust-world";
 
 async function loadWasmModule(module: any, name = "") {
@@ -34,21 +38,6 @@ class WorldModuleClass {
     const world = new World(wasmWorld, chunkReader, data);
     return world;
   }
-
-  public createChunk(chunkPos: Vector2D): Chunk {
-    const wasmChunk = this.module.Chunk.make_wasm(
-      chunkPos.get(0),
-      chunkPos.get(1)
-    );
-    return new Chunk(wasmChunk, chunkPos);
-  }
-
-  public createChunkFromSerialized(data: ISerializedChunk): Chunk {
-    console.log("Creating Chunk", data);
-    const wasmChunk = this.module.Chunk.deserialize(data);
-    const chunkPos = new Vector2D([data.position.x, data.position.y]);
-    return new Chunk(wasmChunk, chunkPos);
-  }
 }
 
 export const WorldModule = new WorldModuleClass();
@@ -73,12 +62,11 @@ class TerrainGenModuleClass {
 
     return {
       getChunk: (chunkPos: Vector2D) => {
-        console.log("Getting chunk", chunkPos);
-        const chunk = terrainGenerator.get_chunk(
-          chunkPos.get(0),
-          chunkPos.get(1)
-        );
-        return new Chunk(chunk as any, chunkPos);
+        console.log("Generating Chunk", chunkPos);
+        const chunk = terrainGenerator
+          .get_chunk(chunkPos.get(0), chunkPos.get(1))
+          .serialize();
+        return chunk as unknown as ISerializedChunk;
       },
     };
   }

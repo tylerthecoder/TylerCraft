@@ -1,12 +1,8 @@
 import {
   IConfig,
   Vector2D,
-  ISerializedChunk,
-  TerrainGenerator,
-  Random,
-  Chunk,
-  setConfig,
   WorldModule,
+  TerrainGenModule,
 } from "@craft/engine";
 
 interface IGetChunkMessage {
@@ -29,28 +25,18 @@ const ctx: Worker = self as any;
 
 console.log("Log from worker");
 
+let terrainGenerator: ReturnType<typeof TerrainGenModule.getTerrainGenerator>;
+
 ctx.onmessage = async function (e: IWorkerMessage) {
   await WorldModule.load();
   if (e.data.type === "getChunk") {
-    const chunk = getChunk2(e.data.x, e.data.y);
-    postMessage(chunk);
+    const pos = new Vector2D([e.data.x, e.data.y]);
+    const chunk = terrainGenerator.getChunk(pos);
+    return chunk;
   } else if (e.data.type === "setConfig") {
-    setConfig(e.data.config);
+    terrainGenerator = TerrainGenModule.getTerrainGenerator(
+      Number(e.data.config.seed),
+      e.data.config.terrain.flatWorld
+    );
   }
-};
-
-const chunks = new Map<string, Chunk>();
-
-const terrainGenerator = new TerrainGenerator(
-  (pos) => chunks.has(pos.toIndex()),
-  (pos) => chunks.get(pos.toIndex())
-);
-
-Random.setSeed("bungus");
-
-const getChunk2 = (x: number, y: number): ISerializedChunk => {
-  const pos = new Vector2D([x, y]);
-  const chunk = terrainGenerator.generateChunk(pos);
-  chunks.set(chunk.uid, chunk);
-  return chunk.serialize();
 };

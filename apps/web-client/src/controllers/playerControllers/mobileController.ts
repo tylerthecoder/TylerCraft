@@ -5,8 +5,9 @@ import {
   Player,
   PlayerAction,
   PlayerActionType,
+  Game,
 } from "@craft/engine";
-import { CanvasRenderUsecase } from "../../usecases/canvas-usecase";
+import { CanvasGameScript } from "../../game-scripts/canvas-gscript";
 
 export class MobileController extends EntityController {
   private eForwardButton = document.getElementById("forwardButton")!;
@@ -18,12 +19,12 @@ export class MobileController extends EntityController {
   private eUseItemButton2 = document.getElementById("useItemButton2")!;
 
   constructor(
+    private game: Game,
     private player: Player,
-    private sendAction: (action: PlayerAction) => void,
-    private rendererUsecase: CanvasRenderUsecase
+    private sendAction: (action: PlayerAction) => void
   ) {
     super();
-    super();
+    const canvasGScript = this.game.getGameScript(CanvasGameScript);
 
     let lastWindowTouch: Touch;
     const lastTouchStartPos = new Vector2D([0, 0]);
@@ -58,7 +59,7 @@ export class MobileController extends EntityController {
 
         lastTouchStartPos.data = [touch.clientX, touch.clientY];
 
-        this.rendererUsecase.camera.rotateBy(-dx, -dy);
+        canvasGScript.camera.rotateBy(-dx, -dy);
       },
       { passive: false }
     );
@@ -180,7 +181,7 @@ export class MobileController extends EntityController {
       this.handleAction(
         PlayerAction.make(PlayerActionType.PlaceBlock, {
           playerUid: this.player.uid,
-          cameraData: this.rendererUsecase.camera.getRay(),
+          cameraData: canvasGScript.camera.getRay(),
         })
       );
     });
@@ -202,7 +203,7 @@ export class MobileController extends EntityController {
       this.handleAction(
         PlayerAction.make(PlayerActionType.RemoveBlock, {
           playerUid: this.player.uid,
-          cameraData: this.rendererUsecase.camera.getRay(),
+          cameraData: canvasGScript.camera.getRay(),
         })
       );
     });

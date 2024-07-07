@@ -1,5 +1,6 @@
 import { EntityDto } from "./entities/entity.js";
 import { Game } from "./game.js";
+import { Vector2D } from "./utils/vector.js";
 import { ISerializedChunk } from "./world/chunk.js";
 
 export interface GameDiffDto {
@@ -109,7 +110,7 @@ export class GameStateDiff {
 
     if (this.updateChunkIds.length > 0) {
       diff.chunks.update = this.updateChunkIds.map((id) =>
-        this.game.world.getChunkById(id).serialize()
+        this.game.world.getChunkFromPos(Vector2D.fromIndex(id))
       );
     }
 

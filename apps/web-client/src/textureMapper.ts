@@ -108,12 +108,12 @@ class Textures {
       const bottom = this.getRect(1.5, 3.5, 2, 4);
 
       return [
-        ...this.rotateRect(side, 2),
-        ...front,
+        ...this.rotateRect(side, 1),
+        ...this.rotateRect(side, 1),
         ...top,
         ...bottom,
-        ...this.rotateRect(side, 1),
-        ...this.rotateRect(side, 1),
+        ...this.rotateRect(side, 2),
+        ...front,
       ];
     };
 
@@ -133,12 +133,12 @@ class Textures {
       const bottom = this.getRect(1.75, 3.25, 2, 3.5);
 
       return [
-        ...this.rotateRect(front, 2),
-        ...this.rotateRect(front, 2),
+        ...this.rotateRect(front, 1),
+        ...this.rotateRect(front, 1),
         ...top,
         ...bottom,
-        ...this.rotateRect(front, 1),
-        ...this.rotateRect(front, 1),
+        ...this.rotateRect(front, 2),
+        ...this.rotateRect(front, 2),
       ];
     };
 
@@ -148,12 +148,12 @@ class Textures {
       const bottom = this.getRect(0.75, 3.75, 1, 4);
 
       return [
-        ...this.rotateRect(front, 2),
-        ...this.rotateRect(front, 2),
+        ...this.rotateRect(front, 1),
+        ...this.rotateRect(front, 1),
         ...top,
         ...bottom,
-        ...this.rotateRect(front, 1),
-        ...this.rotateRect(front, 1),
+        ...this.rotateRect(front, 2),
+        ...this.rotateRect(front, 2),
       ];
     };
 

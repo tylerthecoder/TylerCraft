@@ -355,14 +355,14 @@ impl<
 pub mod tests {
     use crate::vec::Vec3;
 
-    // #[test]
-    // fn test_distance_to() {
-    //     let vec1 = Vec3::new(0 as i16, 0 as i16, 0 as i16);
-    //     let vec2 = Vec3::new(1, 1, 1);
-    //     assert_eq!(vec1.distance_to(vec2), 1.7320508);
+    #[test]
+    fn test_distance_to() {
+        let vec1 = Vec3::new(0 as i16, 0 as i16, 0 as i16);
+        let vec2 = Vec3::new(1, 1, 1);
+        assert_eq!(vec1.distance_to(vec2), 1.7320508);
 
-    //     let vec1 = Vec3::new(0 as i16, 0 as i16, 0 as i16);
-    //     let vec2 = Vec3::new(1, 0, 0);
-    //     assert_eq!(vec1.distance_to(vec2), 1.0);
-    // }
+        let vec1 = Vec3::new(0 as i16, 0 as i16, 0 as i16);
+        let vec2 = Vec3::new(1, 0, 0);
+        assert_eq!(vec1.distance_to(vec2), 1.0);
+    }
 }
