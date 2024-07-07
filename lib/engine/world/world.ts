@@ -43,9 +43,9 @@ export class World {
   ) {
     if (data) {
       console.log("World: Loading world from data", data);
-      data.chunks.forEach((ser) => {
-        this.updateChunk(ser);
-      });
+      for (const chunkData of data.chunks) {
+        this.updateChunk(chunkData);
+      }
     }
   }
 
@@ -122,10 +122,9 @@ export class World {
 
   updateChunk(chunkData: ISerializedChunk) {
     const time = performance.now();
-    console.log("Inserting chunk", chunkData);
     this.wasmWorld.insert_chunk_wasm(chunkData);
     const time2 = performance.now();
-    console.log("Chunk inserted in", time2 - time, "ms");
+    console.log("Upserting chunk", chunkData, `(${time2 - time}ms)`);
   }
 
   hasChunk(chunkPos: Vector2D): boolean {
