@@ -95,8 +95,7 @@ export abstract class Entity<
     }
   }
 
-  abstract update(world: World, delta: number): void;
-  abstract hit(game: Game, entity: Entity | Cube, where: FaceLocater): void;
+  abstract update(game: Game, world: World, delta: number): void;
 
   setUid(uid: string) {
     this.uid = uid;

@@ -176,8 +176,8 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     this.health.current -= amount;
   }
 
-  godForce(delta: number): Vector3D | null {
-    const baseSpeed = (CONFIG.player.speed * delta) / 16;
+  godForce(): Vector3D | null {
+    const baseSpeed = CONFIG.player.speed;
 
     const moveDirection = (direction: Direction) => {
       switch (direction) {
@@ -254,22 +254,20 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     return new Vector3D([0, diffYVel, 0]);
   }
 
-  gravityForce(delta: number): Vector3D | null {
+  gravityForce(): Vector3D | null {
     if (this.creative) {
       return null;
     }
     if (this.onGround) {
       return null;
     }
-
-    const realForce = (CONFIG.gravity * delta) / 16;
-    return new Vector3D([0, realForce, 0]);
+    return new Vector3D([0, CONFIG.gravity, 0]);
   }
 
-  update(world: World, delta: number) {
+  update(_game: Game, world: World, delta: number) {
     const jumpForce = this.jumpForce();
-    const gravityForce = this.gravityForce(delta);
-    const godForce = this.godForce(delta);
+    const gravityForce = this.gravityForce();
+    const godForce = this.godForce();
 
     const totalForce = (
       [godForce, jumpForce, gravityForce].filter((f) => f) as Vector3D[]
@@ -279,7 +277,8 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
 
     // We did move
     if (this.vel.magnitude() > 0) {
-      const newPos = world.tryMove(this, this.vel);
+      const scaledVel = this.vel.scalarMultiply(delta / 16);
+      const newPos = world.tryMove(this, scaledVel);
       const actualVel = newPos.sub(this.pos);
       this.pos = newPos;
 
@@ -321,14 +320,6 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     } else {
       this.onGround = false;
     }
-  }
-
-  hit(_game: Game, _entity: Entity, where: FaceLocater) {
-    this.vel.set(where.side, 0);
-    // if (where.side === 1 && where.dir === 0) {
-    //   this.onGround = true;
-    //   this.jumpCount = 0;
-    // }
   }
 
   // TODO get camera data from the player's rot

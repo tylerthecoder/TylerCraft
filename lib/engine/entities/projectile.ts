@@ -1,5 +1,4 @@
-import { Cube, Game, IDim, Player } from "../index.js";
-import { Vector3D } from "../utils/vector.js";
+import { Cube, Game, Player, Vector3D } from "../index.js";
 import { World } from "../world/index.js";
 import { Entity, FaceLocater, IEntity } from "./entity.js";
 import { IEntityType } from "./entityType.js";
@@ -32,21 +31,32 @@ export class Projectile
     this.baseSet(data);
   }
 
-  update(world: World, delta: number) {
-    // this.baseUpdate(delta);
-    this.soil();
-  }
+  update(game: Game, world: World, delta: number) {
+    const scaledVel = this.vel.scalarMultiply(delta / 16);
+    const expectedPos = this.pos.add(scaledVel);
+    const newPos = world.tryMove(this, scaledVel);
+    this.pos = newPos;
 
-  hit(game: Game, ent: Entity | Cube, _where: FaceLocater) {
-    console.log("HIT", ent);
-    if (ent instanceof Entity) {
-      if (ent instanceof Player) {
-        ent.hurt(5);
+    if (!newPos.equals(expectedPos)) {
+      const intersectingPoss = world.getIntersectingBlocksWithEntity(
+        expectedPos,
+        new Vector3D(this.dim)
+      );
+      console.log(
+        "Projectile hit block",
+        intersectingPoss,
+        this.pos.data,
+        this.dim
+      );
+      if (intersectingPoss.length > 0) {
+        for (const intersectingPos of intersectingPoss) {
+          const block = world.getBlockFromWorldPoint(intersectingPos);
+          if (block) {
+            game.removeBlock(block);
+          }
+        }
+        game.removeEntity(this);
       }
-
-      game.removeEntity(this);
-    } else {
-      game.removeBlock(ent);
     }
   }
 }

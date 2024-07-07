@@ -209,13 +209,20 @@ export class World {
     await Promise.all(chunkPromises);
   }
 
+  private loadingChunkPromises: Map<string, Promise<ISerializedChunk>> =
+    new Map();
   async loadChunk(pos: Vector2D): Promise<ISerializedChunk | null> {
     if (this.hasChunk(pos)) {
       return null;
     }
     console.log("World: Loading chunk", pos.toIndex());
     const chunkId = pos.toIndex();
-    const chunk = await this.chunkReader.getChunk(chunkId);
+    if (this.loadingChunkPromises.has(chunkId)) {
+      return this.loadingChunkPromises.get(chunkId)!;
+    }
+    const chunkPromise = this.chunkReader.getChunk(chunkId);
+    this.loadingChunkPromises.set(chunkId, chunkPromise);
+    const chunk = await chunkPromise;
     this.updateChunk(chunk);
     this.newlyLoadedChunks.push(chunkId);
     return chunk;

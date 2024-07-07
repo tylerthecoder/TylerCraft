@@ -1,10 +1,7 @@
 import { IDim } from "../types.js";
-import { CONFIG } from "../config.js";
 import { bindValue } from "../utils.js";
 import { Vector3D } from "../utils/vector.js";
 import { Entity, EntityDto, MetaAction } from "./entity.js";
-import { Game } from "../game.js";
-import { World } from "../world/index.js";
 
 export interface MovableEntityDto extends EntityDto {
   vel: IDim;
@@ -49,12 +46,5 @@ export abstract class MovableEntity<
 
     // idk where this equation comes from. Need to look into why this is
     this.rotCart = this.rot.toCartesianCoords();
-  }
-
-  getJumpVel(): Vector3D {
-    if (this.metaActions.has(MetaAction.jump)) {
-      return new Vector3D([0, CONFIG.player.jumpSpeed, 0]);
-    }
-    return Vector3D.zero;
   }
 }

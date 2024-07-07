@@ -5,7 +5,6 @@ import { EntityHolder, ISerializedEntities } from "./entities/entityHolder.js";
 import { Random } from "./utils/random.js";
 import { GameActionHandler, GameAction } from "./gameActions.js";
 import { GameStateDiff, GameDiffDto } from "./gameStateDiff.js";
-import { Vector2D } from "./utils/vector.js";
 import CubeHelpers, { Cube } from "./entities/cube.js";
 import { Entity, ISerializedChunk } from "./index.js";
 import { IGameScript, IGameScriptConstuctor } from "./game-script.js";
@@ -202,6 +201,7 @@ export class Game {
   addEntity(entity: Entity) {
     console.log("Adding entity", entity);
     this.entities.add(this.stateDiff, entity);
+    this.stateDiff.addEntity(entity.uid);
 
     for (const script of this.gameScripts) {
       script.onNewEntity?.(entity);
@@ -211,6 +211,7 @@ export class Game {
   removeEntity(entity: Entity) {
     console.log("Removing entity", entity);
     this.entities.remove(entity.uid);
+    this.stateDiff.removeEntity(entity.uid);
 
     for (const script of this.gameScripts) {
       script.onRemovedEntity?.(entity);

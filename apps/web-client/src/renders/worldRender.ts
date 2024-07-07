@@ -64,6 +64,7 @@ export default class WorldRenderer {
   }
 
   removeEntity(uid: string) {
+    console.log("Removing entity renderer", uid);
     this.entityRenderers.delete(uid);
   }
 
