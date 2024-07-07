@@ -1,11 +1,8 @@
-use std::cmp::Ordering;
-
-use serde::{Deserialize, Serialize};
-use serde_wasm_bindgen::to_value;
-
 use crate::{
     chunk::chunk_mesh::BlockMesh, plane::WorldPlane, positions::FineWorldPos, world::World,
 };
+use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub struct LineSegment {

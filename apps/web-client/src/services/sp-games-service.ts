@@ -2,7 +2,6 @@ import {
   Game,
   IGameMetadata,
   ISerializedGame,
-  Chunk,
   ISerializedChunk,
   Vector2D,
   WorldModule,
@@ -48,7 +47,7 @@ const WorkerChunkGetter = (config: IConfig): IChunkReader => {
   worker.onmessageerror = (e) => {
     console.error("Message error from worker", e);
   };
-  const chunkPromises: { [chunkPos: string]: Promise<Chunk> } = {};
+  const chunkPromises: { [chunkPos: string]: Promise<ISerializedChunk> } = {};
   return {
     getChunk: async (chunkPos: string) => {
       console.log("WorkerChunkGetter", chunkPos);
@@ -63,13 +62,10 @@ const WorkerChunkGetter = (config: IConfig): IChunkReader => {
         y: terrainVector.data[1],
       });
 
-      chunkPromise = new Promise<Chunk>((resolve) => {
+      chunkPromise = new Promise((resolve) => {
         const onTerrainMessage = (data: { data: ISerializedChunk }) => {
           if (data.data.chunkId !== chunkPos) return;
-
-          const chunk = WorldModule.createChunkFromSerialized(data.data);
-
-          resolve(chunk);
+          resolve(data.data);
           worker.removeEventListener("message", onTerrainMessage);
         };
 

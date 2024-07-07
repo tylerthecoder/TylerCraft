@@ -12,7 +12,6 @@ pub mod world_block;
 mod world_chunk;
 mod world_duct;
 mod world_mesh;
-
 extern crate web_sys;
 
 #[wasm_bindgen]
@@ -56,10 +55,11 @@ pub struct WorldStateDiff {
     pub chunk_ids: HashSet<String>,
 }
 
+#[derive(Default, Serialize, Deserialize)]
 #[wasm_bindgen]
-#[derive(Default)]
 pub struct World {
     chunks: HashMap<i32, Chunk>,
+    #[serde(skip)]
     chunk_meshes: HashMap<i32, ChunkMesh>,
 }
 

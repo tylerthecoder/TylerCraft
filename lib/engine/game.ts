@@ -7,7 +7,7 @@ import { GameActionHandler, GameAction } from "./gameActions.js";
 import { GameStateDiff, GameDiffDto } from "./gameStateDiff.js";
 import { Vector2D } from "./utils/vector.js";
 import CubeHelpers, { Cube } from "./entities/cube.js";
-import { Chunk, Entity } from "./index.js";
+import { Entity, ISerializedChunk } from "./index.js";
 import { IGameScript, IGameScriptConstuctor } from "./game-script.js";
 
 export interface ISerializedGame {
@@ -30,7 +30,7 @@ export type IContructGameOptions = Omit<ISerializedGame, "gameId"> & {
 };
 
 export interface IChunkReader {
-  getChunk(chunkPos: string): Promise<Chunk>;
+  getChunk(chunkPos: string): Promise<ISerializedChunk>;
 }
 
 export interface IGameSaver {
@@ -138,10 +138,7 @@ export class Game {
     if (stateDiff.chunks.update) {
       const updates = stateDiff.chunks.update;
       for (const update of updates) {
-        this.world.updateChunk(
-          new Vector2D([update.position.x, update.position.y]),
-          update
-        );
+        this.world.updateChunk(update);
       }
     }
 

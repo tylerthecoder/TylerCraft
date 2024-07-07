@@ -1,10 +1,9 @@
 import CubeHelpers, {
   Cube,
-  CUBE_DIM,
   ISerializedCube,
   WasmCube,
 } from "../entities/cube.js";
-import { Chunk, ILookingAtData, ISerializedChunk } from "./chunk.js";
+import { ILookingAtData, ISerializedChunk } from "./chunk.js";
 import { Entity } from "../entities/entity.js";
 import { CONFIG } from "../config.js";
 import {
@@ -16,98 +15,79 @@ import {
 import { WorldModule, WorldModuleTypes } from "../modules.js";
 import { GameStateDiff } from "../gameStateDiff.js";
 import { ChunkMesh } from "./chunkMesh.js";
-import { CameraRay, Game, getBlockData, IChunkReader } from "../index.js";
+import { CameraRay, IChunkReader } from "../index.js";
 
 type ISerializedChunkHolder = ISerializedChunk[];
 
-export class ChunkHolder {
-  private chunks = new Map<string, Chunk>();
-  private loadingChunks = new Map<string, Promise<Chunk>>();
-  private chunksToSend: Chunk[] = [];
-
-  constructor(
-    private wasmWorld: WorldModuleTypes.World,
-    private chunkReader: IChunkReader,
-    data?: ISerializedChunkHolder
-  ) {
-    if (data) {
-      data.forEach((ser) => {
-        const chunk = WorldModule.createChunkFromSerialized(ser);
-        this.addOrUpdate(chunk);
-      });
-    }
-  }
-
-  addOrUpdate(chunk: Chunk): void {
-    this.chunks.set(chunk.pos.toIndex(), chunk);
-    const serialized = chunk.serialize();
-    this.wasmWorld.insert_chunk_wasm(serialized);
-  }
-
-  has(pos: Vector2D): boolean {
-    return this.wasmWorld.has_chunk_wasm(pos.toCartIntObj());
-  }
-
-  get(pos: Vector2D): Chunk | null {
-    return this.chunks.get(pos.toIndex()) ?? null;
-  }
-
-  getAll(): Chunk[] {
-    return Array.from(this.chunks.values());
-  }
-
-  async loadAll(): Promise<Chunk[]> {
-    return Promise.all(this.loadingChunks.values());
-  }
-
-  startLoadingChunk(pos: Vector2D): void {
-    const chunkId = pos.toIndex();
-
-    if (this.chunks.has(chunkId)) {
-      return;
-    }
-
-    if (this.loadingChunks.has(chunkId)) {
-      return;
-    }
-
-    const chunkPromise = this.chunkReader.getChunk(chunkId);
-
-    const wrappedChunkPromise = chunkPromise
-      .then((chunk) => {
-        this.chunksToSend.push(chunk);
-        this.addOrUpdate(chunk);
-        this.loadingChunks.delete(chunkId);
-        return chunk;
-      })
-      .catch((err) => {
-        this.loadingChunks.delete(chunkId);
-        throw err;
-      });
-
-    this.loadingChunks.set(chunkId, wrappedChunkPromise);
-  }
-
-  async immediateLoadChunk(pos: Vector2D): Promise<Chunk> {
-    const chunkId = pos.toIndex();
-    const chunk = await this.chunkReader.getChunk(chunkId);
-    this.chunksToSend.push(chunk);
-    this.addOrUpdate(chunk);
-    return chunk;
-  }
-
-  getNewlyLoadedChunk(): Chunk | null {
-    return this.chunksToSend.shift() ?? null;
-  }
-}
+// export class ChunkHolder {
+//   private loadingChunks = new Map<string, Promise<Chunk>>();
+//
+//   constructor(
+//     private wasmWorld: WorldModuleTypes.World,
+//     private chunkReader: IChunkReader,
+//     data?: ISerializedChunkHolder
+//   ) {
+//     if (data) {
+//       data.forEach((ser) => {
+//         this.addOrUpdate(ser);
+//       });
+//     }
+//   }
+//
+//   has(pos: Vector2D): boolean {
+//     return this.wasmWorld.has_chunk_wasm(pos.toCartIntObj());
+//   }
+//
+//   get(pos: Vector2D): Chunk | null {
+//     return this.chunks.get(pos.toIndex()) ?? null;
+//   }
+//
+//   getAll(): Chunk[] {
+//     return Array.from(this.chunks.values());
+//   }
+//
+//   async loadAll(): Promise<Chunk[]> {
+//     return Promise.all(this.loadingChunks.values());
+//   }
+//
+//   startLoadingChunk(pos: Vector2D): void {
+//     const chunkId = pos.toIndex();
+//
+//     if (this.chunks.has(chunkId)) {
+//       return;
+//     }
+//
+//     if (this.loadingChunks.has(chunkId)) {
+//       return;
+//     }
+//
+//     const chunkPromise = this.chunkReader.getChunk(chunkId);
+//
+//     const wrappedChunkPromise = chunkPromise
+//       .then((chunk) => {
+//         this.chunksToSend.push(chunk);
+//         this.addOrUpdate(chunk);
+//         this.loadingChunks.delete(chunkId);
+//         return chunk;
+//       })
+//       .catch((err) => {
+//         this.loadingChunks.delete(chunkId);
+//         throw err;
+//       });
+//
+//     this.loadingChunks.set(chunkId, wrappedChunkPromise);
+//   }
+//
+//   getNewlyLoadedChunk(): Chunk | null {
+//     return this.chunksToSend.shift() ?? null;
+//   }
+// }
 
 export interface ISerializedWorld {
   chunks: ISerializedChunkHolder;
 }
 
 export class World {
-  public chunks: ChunkHolder;
-
   static async make(
     chunkReader: IChunkReader,
     data?: ISerializedWorld
@@ -118,21 +98,22 @@ export class World {
     return world;
   }
 
+  private newlyLoadedChunks: string[] = [];
+
   constructor(
     public wasmWorld: WorldModuleTypes.World,
-    chunkReader: IChunkReader,
+    private chunkReader: IChunkReader,
     data?: ISerializedWorld
   ) {
-    this.chunks = new ChunkHolder(wasmWorld, chunkReader, data?.chunks);
+    if (data) {
+      data.chunks.forEach((ser) => {
+        this.updateChunk(ser);
+      });
+    }
   }
 
   serialize(): ISerializedWorld {
-    const serializedChunks = this.chunks
-      .getAll()
-      .map((chunk) => chunk.serialize());
-    return {
-      chunks: serializedChunks,
-    };
+    return this.wasmWorld.serialize_wasm();
   }
 
   // Helper static methods
@@ -162,26 +143,12 @@ export class World {
   //    Getters
   // ===================
 
-  // TODO make this a lookup instead of an array search
-  getChunkById(chunkId: string) {
-    for (const chunk of this.getChunks()) {
-      if (chunk.uid === chunkId) return chunk;
-    }
-    throw new Error("Chunk with id " + chunkId + " not found");
-  }
-
-  getChunkFromPos(chunkPos: Vector2D) {
-    const chunk = this.chunks.get(chunkPos);
+  getChunkFromPos(chunkPos: Vector2D): ISerializedChunk {
+    const chunk = this.wasmWorld.get_chunk_from_chunk_pos_wasm({
+      x: chunkPos.get(0),
+      y: chunkPos.get(1),
+    });
     return chunk;
-  }
-
-  getChunks(): Chunk[] {
-    return this.chunks.getAll();
-  }
-
-  getChunkFromWorldPoint(pos: Vector3D) {
-    const chunkPos = World.worldPosToChunkPos(pos);
-    return this.getChunkFromPos(chunkPos);
   }
 
   getChunkMesh(chunkPos: Vector2D): ChunkMesh {
@@ -209,33 +176,65 @@ export class World {
     return CubeHelpers.fromWasmCube(wasmBlock);
   }
 
-  updateChunk(chunkPos: Vector2D, chunkData: ISerializedChunk) {
-    const chunk = this.getChunkFromPos(chunkPos);
-    if (!chunk) return;
-    chunk.set(chunkData);
-  }
-
-  addOrUpdateChunk(chunk: Chunk) {
-    this.chunks.addOrUpdate(chunk);
+  updateChunk(chunkData: ISerializedChunk) {
+    const time = performance.now();
+    console.log("Inserting chunk", chunkData);
+    this.wasmWorld.insert_chunk_wasm(chunkData);
+    const time2 = performance.now();
+    console.log("Chunk inserted in", time2 - time, "ms");
   }
 
   hasChunk(chunkPos: Vector2D): boolean {
-    return this.chunks.has(chunkPos);
+    return this.wasmWorld.is_chunk_loaded_wasm({
+      x: chunkPos.get(0),
+      y: chunkPos.get(1),
+    });
   }
 
   // load the starting chunks
   // called before the world is passed on to the game
   private async load() {
-    this.loadChunksAroundPoint(new Vector3D([0, 0, 0]));
-    await this.chunks.loadAll();
-  }
-
-  loadChunksAroundPoint(pos: Vector3D): void {
-    const centerChunkPos = World.worldPosToChunkPos(pos);
-
     if (!CONFIG.terrain.generateChunks) {
       return;
     }
+    const chunkIds = this.getChunkPosAroundPoint(new Vector3D([0, 0, 0]));
+    const chunkPromises = chunkIds.map((c) => this.loadChunk(c));
+    await Promise.all(chunkPromises);
+  }
+
+  async loadChunk(pos: Vector2D): Promise<ISerializedChunk | null> {
+    if (this.hasChunk(pos)) {
+      return null;
+    }
+
+    const chunkId = pos.toIndex();
+    const chunk = await this.chunkReader.getChunk(chunkId);
+    this.updateChunk(chunk);
+    this.newlyLoadedChunks.push(chunkId);
+    return chunk;
+  }
+
+  getNewlyLoadedChunkId(): string | null {
+    return this.newlyLoadedChunks.shift() ?? null;
+  }
+
+  getLoadedChunkIds(): string[] {
+    const loaded_pos = this.wasmWorld.get_loaded_chunk_pos() as {
+      x: number;
+      y: number;
+    }[];
+
+    return loaded_pos
+      .map((p: { x: number; y: number }) => {
+        return new Vector2D([p.x, p.y]);
+      })
+      .map((p) => p.toIndex());
+  }
+
+  getChunkPosAroundPoint(pos: Vector3D): Vector2D[] {
+    const centerChunkPos = World.worldPosToChunkPos(pos);
+
+    const chunkIds = [];
 
     for (let i = -CONFIG.loadDistance; i < CONFIG.loadDistance; i++) {
       for (let j = -CONFIG.loadDistance; j < CONFIG.loadDistance; j++) {
@@ -243,9 +242,11 @@ export class World {
           centerChunkPos.get(0) + i,
           centerChunkPos.get(1) + j,
         ]);
-        this.chunks.startLoadingChunk(chunkPos);
+        chunkIds.push(chunkPos);
       }
     }
+
+    return chunkIds;
   }
 
   tryMove(entity: Entity, vel: Vector3D): Vector3D {
@@ -297,12 +298,10 @@ export class World {
     options?: { loadChunkIfNotLoaded: boolean }
   ) {
     console.log("World: Adding block", cube);
-    let chunk = this.getChunkFromWorldPoint(cube.pos);
-    if (!chunk) {
+    const hasChunk = this.hasChunk(World.worldPosToChunkPos(cube.pos));
+    if (!hasChunk) {
       if (options?.loadChunkIfNotLoaded) {
-        chunk = await this.chunks.immediateLoadChunk(
-          World.worldPosToChunkPos(cube.pos)
-        );
+        await this.loadChunk(World.worldPosToChunkPos(cube.pos));
       } else {
         throw new Error("Trying to place block in unloaded chunk");
       }
@@ -318,7 +317,7 @@ export class World {
     });
 
     // Very important to update the chunk too
-    chunk.addBlock(cube);
+    // chunk.addBlock(cube);
 
     console.log("Chunks to updated after adding block: ", diff);
 
@@ -327,15 +326,14 @@ export class World {
 
   removeBlock(stateDiff: GameStateDiff, cubePos: Vector3D) {
     console.log("Removing block", cubePos);
-    const chunk = this.getChunkFromWorldPoint(cubePos);
-    if (!chunk) return;
+
     const diff: { chunk_ids: string[] } = this.wasmWorld.remove_block_wasm(
       cubePos.get(0),
       cubePos.get(1),
       cubePos.get(2)
     );
 
-    chunk.removeBlock(cubePos);
+    // chunk.removeBlock(cubePos);
 
     console.log("Diff from removing block", diff);
     diff.chunk_ids.forEach((id) => stateDiff.updateChunk(id));

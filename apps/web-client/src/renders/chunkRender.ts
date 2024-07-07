@@ -13,9 +13,6 @@ import { canvas } from "../canvas";
 import { BlockShape, BlockType } from "@craft/rust-world";
 import ShapeBuilder from "../services/shape-builder";
 
-// TODO:
-// instead of passing a chunk, pass a way to get the visible faces
-
 export class ChunkRenderer extends Renderer {
   private otherRenders: Renderer[] = [];
 

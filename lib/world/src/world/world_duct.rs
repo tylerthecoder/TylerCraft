@@ -21,9 +21,34 @@ impl World {
         World::default()
     }
 
+    pub fn serialize_wasm(&self) -> Result<JsValue, Error> {
+        to_value(&self)
+    }
+
     pub fn add_block_wasm(&mut self, val: JsValue) -> Result<JsValue, Error> {
         from_value(val).and_then(|block: WorldBlock| {
             self.add_block(&block)
+                .map_err(Self::convert_error)
+                .and_then(|diff| to_value(&diff))
+        })
+    }
+
+    pub fn get_loaded_chunk_pos(&self) -> Result<JsValue, Error> {
+        let keys = self
+            .chunks
+            .values()
+            .map(|c| c.position)
+            .collect::<Vec<ChunkPos>>();
+        return to_value(&keys);
+    }
+
+    pub fn is_chunk_loaded_wasm(&self, val: JsValue) -> Result<bool, Error> {
+        from_value(val).map(|pos: ChunkPos| self.get_chunk(&pos).is_ok())
+    }
+
+    pub fn get_chunk_from_chunk_pos_wasm(&self, val: JsValue) -> Result<JsValue, Error> {
+        from_value(val).and_then(|pos: ChunkPos| {
+            self.get_chunk(&pos)
                 .map_err(Self::convert_error)
                 .and_then(|diff| to_value(&diff))
         })

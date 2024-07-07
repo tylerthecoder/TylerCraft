@@ -1,9 +1,7 @@
 import {
   IGameMetadata,
-  Chunk,
   ISocketWelcomePayload,
   IChunkReader,
-  WorldModule,
   ICreateGameOptions,
   Game,
   GameAction,
@@ -12,6 +10,7 @@ import {
   SocketMessage,
   IGamesService,
   IContructGameOptions,
+  ISerializedChunk,
 } from "@craft/engine";
 import { SocketListener } from "../socket";
 import { SocketInterface, getMyUid } from "../app";
@@ -126,13 +125,12 @@ class ServerChunkReader implements IChunkReader {
     );
 
     let listener: SocketListener | null = null;
-    const chunk: Chunk = await new Promise((resolve) => {
+    const chunk: ISerializedChunk = await new Promise((resolve) => {
       listener = (message) => {
         if (message.isType(ISocketMessageType.setChunk)) {
           const { pos, data } = message.data;
           if (pos !== chunkPos) return;
-          const chunk = WorldModule.createChunkFromSerialized(data);
-          resolve(chunk);
+          resolve(data);
         }
       };
       SocketInterface.addListener(listener);

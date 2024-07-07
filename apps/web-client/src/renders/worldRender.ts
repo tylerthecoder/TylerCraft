@@ -7,16 +7,17 @@ import {
   Projectile,
   Vector2D,
   Vector3D,
-  Chunk,
+  Game,
 } from "@craft/engine";
 import { Renderer } from "./renderer";
 import { canvas } from "../canvas";
 import { ChunkRenderer } from "./chunkRender";
 import { HudRenderer } from "./hudRender";
-import { CanvasRenderUsecase } from "../clientGame";
 import { SphereRenderer } from "./sphereRender";
 import { PlayerRenderer } from "./playerRender";
 import { BlockType } from "@craft/rust-world";
+import { CanvasGameScript } from "../game-scripts/canvas-gscript";
+import { BasicUsecase } from "../usecases/sandbox";
 
 export default class WorldRenderer {
   private renderers: Renderer[] = [];
@@ -24,16 +25,12 @@ export default class WorldRenderer {
   private chunkRenderers: Map<string, ChunkRenderer> = new Map();
   shouldRenderMainPlayer = true;
 
-  constructor(
-    private world: World,
-    private rendererUsecase: CanvasRenderUsecase
-  ) {
-    const hudCanvas = new HudRenderer(canvas, rendererUsecase);
+  constructor(private game: Game, private world: World) {
+    const hudCanvas = new HudRenderer(game, canvas);
     this.renderers.push(hudCanvas);
   }
 
   blockUpdate(chunkId: string) {
-    console.log("Rerendering chunk", chunkId);
     const chunkPos = World.chunkIdToChunkPos(chunkId);
     const chunkMesh = this.world.getChunkMesh(chunkPos);
     const chunkRenderer = new ChunkRenderer(chunkMesh, chunkPos);
@@ -66,10 +63,6 @@ export default class WorldRenderer {
     }
   }
 
-  addChunk(chunk: Chunk) {
-    this.blockUpdate(chunk.pos.toIndex());
-  }
-
   removeEntity(uid: string) {
     this.entityRenderers.delete(uid);
   }
@@ -79,11 +72,11 @@ export default class WorldRenderer {
     camera: Camera,
     renderedSet: Set<ChunkRenderer>
   ) {
-    const chunk = this.world.getChunkFromPos(chunkPos);
-
-    if (!chunk) {
-      return;
-    }
+    // const chunk = this.world.getChunkFromPos(chunkPos);
+    //
+    // if (!chunk) {
+    //   return;
+    // }
 
     const chunkRenderer = this.chunkRenderers.get(chunkPos.toIndex());
 
@@ -97,7 +90,9 @@ export default class WorldRenderer {
   }
 
   render() {
-    const camera = this.rendererUsecase.camera;
+    const canvasGScript = this.game.getGameScript(CanvasGameScript);
+    const sandbox = this.game.getGameScript(BasicUsecase);
+    const camera = canvasGScript.camera;
 
     const filter = this.getFilter(camera);
     if (filter) {
@@ -114,7 +109,7 @@ export default class WorldRenderer {
       // Skip rendering the player if we aren't supposed to
       if (
         entityRenderer instanceof PlayerRenderer &&
-        entityRenderer.player === this.rendererUsecase.mainPlayer &&
+        entityRenderer.player === sandbox.mainPlayer &&
         !this.shouldRenderMainPlayer
       ) {
         continue;

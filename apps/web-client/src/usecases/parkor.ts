@@ -1,4 +1,4 @@
-import { Chunk, Game, IChunkReader, ISerializedGame } from "@craft/engine";
+import { Game, IChunkReader, ISerializedGame } from "@craft/engine";
 
 const ParkorUsecase = (game: Game) => {
   console.log("ParkorUsecase", game);

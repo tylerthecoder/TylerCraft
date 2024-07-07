@@ -110,16 +110,15 @@ export class ServerGame {
     const chunkPos = Vector2D.fromIndex(chunkPosString);
     let chunk = world.getChunkFromPos(chunkPos);
     if (!chunk) {
-      await world.chunks.immediateLoadChunk(chunkPos);
+      await world.loadChunk(chunkPos);
       chunk = world.getChunkFromPos(chunkPos);
     }
     if (!chunk) throw new Error("Chunk wasn't found");
-    const serializedData = chunk.serialize();
     this.socketInterface.send(
       ws,
       new SocketMessage(ISocketMessageType.setChunk, {
         pos: chunkPosString,
-        data: serializedData,
+        data: chunk,
       })
     );
   }

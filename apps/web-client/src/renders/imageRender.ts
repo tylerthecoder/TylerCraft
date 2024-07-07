@@ -1,7 +1,7 @@
 import { Vector3D, Camera, IDim } from "@craft/engine";
 import { canvas } from "../canvas";
-import ShapeBuilder from "../services/shapeBuilder";
 import { RenderData, Renderer } from "./renderer";
+import ShapeBuilder from "../services/shape-builder";
 
 // Draws an image at a certain location
 export class ImageRenderer extends Renderer {

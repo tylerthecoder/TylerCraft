@@ -1,8 +1,8 @@
 import { RenderData, Renderer } from "./renderer";
 import { Camera, Entity, IDim } from "@craft/engine";
 import TextureMapper from "../textureMapper";
-import ShapeBuilder from "../services/shapeBuilder";
 import { canvas } from "../canvas";
+import ShapeBuilder from "../services/shape-builder";
 
 export class CubeRenderer extends Renderer {
   constructor(public entity: Entity) {

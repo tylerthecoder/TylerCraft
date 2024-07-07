@@ -10,7 +10,7 @@ import {
 import { GameActionDto } from "./gameActions.js";
 import { GameDiffDto } from "./gameStateDiff.js";
 import { MessageDto, MessageHolder } from "./messageHelpers.js";
-import { Chunk, ISerializedChunk } from "./world/chunk.js";
+import { ISerializedChunk } from "./world/chunk.js";
 
 export type IDim = [number, number, number];
 
