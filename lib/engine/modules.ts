@@ -32,10 +32,10 @@ class WorldModuleClass {
     this._module = await loadWasmModule(WorldWasm, "World");
   }
 
-  public createWorld(chunkReader: IChunkReader, data?: ISerializedWorld) {
+  public createWorld(data?: ISerializedWorld) {
     console.log("Creating wasm world");
     const wasmWorld = WorldModule.module.World.new_wasm();
-    const world = new World(wasmWorld, chunkReader, data);
+    const world = new World(wasmWorld, data);
     return world;
   }
 }

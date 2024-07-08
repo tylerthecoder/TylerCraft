@@ -6,7 +6,7 @@ import { Random } from "./utils/random.js";
 import { GameActionHandler, GameAction } from "./gameActions.js";
 import { GameStateDiff, GameDiffDto } from "./gameStateDiff.js";
 import CubeHelpers, { Cube } from "./entities/cube.js";
-import { Entity, ISerializedChunk } from "./index.js";
+import { Entity, EntityDto, getChunkId, ISerializedChunk } from "./index.js";
 import { IGameScript, IGameScriptConstuctor } from "./game-script.js";
 
 export interface ISerializedGame {
@@ -43,16 +43,10 @@ export class Game {
   private gameActionHandler: GameActionHandler;
   private gameScripts: IGameScript[] = [];
 
-  static async make(
-    dto: IContructGameOptions,
-    chunkReader: IChunkReader,
-    gameSaver: IGameSaver
-  ) {
-    const world = await World.make(chunkReader, dto.world);
+  static make(dto: IContructGameOptions, gameSaver: IGameSaver) {
+    const world = World.make(dto.world);
     const entities = new EntityHolder(dto.entities);
-
     const gameId = dto.gameId || Math.random().toString().slice(2, 10);
-
     return new Game(gameId, dto.name, dto.config, entities, world, gameSaver);
   }
 
@@ -85,10 +79,12 @@ export class Game {
   }
 
   public addGameScript<T extends IGameScriptConstuctor>(
-    script: T
+    script: T,
+    ...args: ConstructorParameters<T> extends [Game, ...infer R] ? R : never
   ): InstanceType<T> {
-    const s = new script(this);
+    const s = new script(this, ...args);
     this.gameScripts.push(s);
+
     return s as InstanceType<T>;
   }
 
@@ -104,27 +100,21 @@ export class Game {
     throw new Error("Script not found");
   }
 
-  public setupScripts() {
+  public async setupScripts() {
     for (const script of this.gameScripts) {
-      script.setup?.();
+      await script.setup?.();
     }
   }
 
   public update(delta: number) {
     this.entities.update(this, this.world, delta);
 
-    if (CONFIG.terrain.infiniteGen) {
-      for (const entity of this.entities.iterable()) {
-        const chunkIds = this.world.getChunkPosAroundPoint(entity.pos);
-        for (const chunkId of chunkIds) {
-          // Don't await it
-          this.world.loadChunk(chunkId);
-        }
-      }
+    for (const script of this.gameScripts) {
+      script.update?.(delta);
     }
 
     for (const script of this.gameScripts) {
-      script.update?.(delta);
+      script.onGameStateDiff?.(this.stateDiff);
     }
 
     this.stateDiff.clear();
@@ -147,7 +137,7 @@ export class Game {
     if (stateDiff.chunks.update) {
       const updates = stateDiff.chunks.update;
       for (const update of updates) {
-        this.world.updateChunk(update);
+        this.upsertChunk(update, { updateState: false });
       }
     }
 
@@ -155,30 +145,51 @@ export class Game {
       const adds = stateDiff.entities.add;
       for (const add of adds) {
         const ent = this.entities.createEntity(add);
-        console.log("Adding entity from stateDiff", add);
-        this.entities.add(this.stateDiff, ent);
+        this.addEntity(ent, { updateState: false });
       }
     }
 
     if (stateDiff.entities.update) {
       const updates = stateDiff.entities.update;
       for (const update of updates) {
-        this.entities.updateEntity(update);
+        this.updateEntity(update, { updateState: false });
       }
     }
 
     if (stateDiff.entities.remove) {
       const removes = stateDiff.entities.remove;
       for (const removeId of removes) {
-        console.log("Removing entity", removeId);
-        this.entities.remove(removeId);
+        this.removeEntity(this.entities.get(removeId), { updateState: false });
       }
     }
   }
 
-  placeBlock(cube: Cube) {
+  upsertChunk(
+    chunk: ISerializedChunk,
+    opts: { updateState: boolean } = { updateState: true }
+  ) {
+    console.log("Game: Upserting chunk", chunk, opts);
+
+    const chunkId = getChunkId(chunk);
+
+    this.world.updateChunk(chunk);
+    if (opts.updateState) {
+      this.stateDiff.updateChunk(chunkId);
+    }
+
+    for (const script of this.gameScripts) {
+      script.onChunkUpdate?.(chunkId);
+    }
+  }
+
+  placeBlock(
+    cube: Cube,
+    opts: { updateState: boolean } = { updateState: true }
+  ) {
     console.log("Game: Adding block", cube);
+
     // Check if an entity is in the way
+    // Soon we will move this to rust
     for (const entity of this.entities.iterable()) {
       if (CubeHelpers.isPointInsideOfCube(cube, entity.pos)) {
         console.log("Not adding block, entity in the way");
@@ -186,32 +197,83 @@ export class Game {
       }
     }
 
-    this.world.addBlock(this.stateDiff, cube);
+    const updatedChunks = this.world.addBlock(cube);
+    if (opts.updateState) {
+      for (const chunkId of updatedChunks) {
+        this.stateDiff.updateChunk(chunkId);
+        for (const script of this.gameScripts) {
+          script.onChunkUpdate?.(chunkId);
+        }
+      }
+    }
   }
 
-  removeBlock(cube: Cube) {
-    console.log("Removing block", cube);
-    this.world.removeBlock(this.stateDiff, cube.pos);
+  removeBlock(
+    cube: Cube,
+    opts: { updateState: boolean } = { updateState: true }
+  ) {
+    console.log("Game: Removing block", cube);
+    const updatedChunks = this.world.removeBlock(cube.pos);
+    if (opts.updateState) {
+      for (const chunkId of updatedChunks) {
+        this.stateDiff.updateChunk(chunkId);
+        for (const script of this.gameScripts) {
+          script.onChunkUpdate?.(chunkId);
+        }
+      }
+    }
   }
 
-  addPlayer(uid: string): Player {
-    return this.entities.createOrGetPlayer(this.stateDiff, uid);
+  addPlayer(
+    uid: string,
+    opts: { updateState: boolean } = { updateState: true }
+  ): Player {
+    console.log("Game: Adding player", uid);
+
+    const player = this.entities.createOrGetPlayer(uid);
+    if (opts.updateState) {
+      this.stateDiff.updateEntity(player.uid);
+    }
+    return player;
   }
 
-  addEntity(entity: Entity) {
-    console.log("Adding entity", entity);
-    this.entities.add(this.stateDiff, entity);
-    this.stateDiff.addEntity(entity.uid);
+  addEntity(
+    entity: Entity,
+    opts: { updateState: boolean } = { updateState: true }
+  ) {
+    console.log("Game: Adding entity", entity);
+    this.entities.add(entity);
+
+    if (opts.updateState) {
+      this.stateDiff.updateEntity(entity.uid);
+    }
 
     for (const script of this.gameScripts) {
       script.onNewEntity?.(entity);
     }
   }
 
-  removeEntity(entity: Entity) {
-    console.log("Removing entity", entity);
+  updateEntity(
+    entity: EntityDto,
+    opts: { updateState: boolean } = { updateState: true }
+  ) {
+    console.log("Game: Updating entity", entity);
+    this.entities.updateEntity(entity);
+    if (opts.updateState) {
+      this.stateDiff.updateEntity(entity.uid);
+    }
+  }
+
+  removeEntity(
+    entity: Entity,
+    opts: { updateState: boolean } = { updateState: true }
+  ) {
+    console.log("Game: Removing entity", entity);
     this.entities.remove(entity.uid);
-    this.stateDiff.removeEntity(entity.uid);
+
+    if (opts.updateState) {
+      this.stateDiff.removeEntity(entity.uid);
+    }
 
     for (const script of this.gameScripts) {
       script.onRemovedEntity?.(entity);

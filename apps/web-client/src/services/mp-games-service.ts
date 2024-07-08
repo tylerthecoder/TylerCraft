@@ -45,11 +45,7 @@ export class NetworkGamesService implements IGamesService {
       },
     };
 
-    const game = await Game.make(
-      constructGame,
-      new ServerChunkReader(),
-      gameSaver
-    );
+    const game = Game.make(constructGame, gameSaver);
 
     game.addGameScript(ServerSideGameScript);
 

@@ -1,4 +1,4 @@
-import { Camera, Game, Player } from "@craft/engine";
+import { Camera, Entity, Game, Player } from "@craft/engine";
 import WorldRenderer from "../renders/worldRender";
 import { XrCamera } from "../cameras/xrCamera";
 import { canvas } from "../canvas";
@@ -27,13 +27,12 @@ export class CanvasGameScript implements IGameScript {
 
     // Create renderers for initial entities
     for (const entity of game.entities.iterable()) {
-      console.log("Adding entity in game", entity);
-      this.worldRenderer.addEntity(entity);
+      this.onNewEntity(entity);
     }
 
     // Create renderers for initial chunks
     for (const chunkId of game.world.getLoadedChunkIds()) {
-      this.worldRenderer.blockUpdate(chunkId);
+      this.onChunkUpdate(chunkId);
     }
 
     this.isSpectating = false;
@@ -52,34 +51,6 @@ export class CanvasGameScript implements IGameScript {
     return fps;
   }
 
-  update(_delta: number) {
-    const stateDiff = this.game.stateDiff;
-
-    for (const dirtyChunkId of stateDiff.getDirtyChunks()) {
-      console.log("Dirty chunk, rerendering", dirtyChunkId);
-      this.worldRenderer.blockUpdate(dirtyChunkId);
-    }
-
-    for (const entityId of stateDiff.getNewEntities()) {
-      const entity = this.game.entities.tryGet(entityId);
-      if (!entity) {
-        console.warn("Entity not found", entityId);
-        continue;
-      }
-      this.worldRenderer.addEntity(entity);
-    }
-
-    for (const entityId of stateDiff.getRemovedEntities()) {
-      this.worldRenderer.removeEntity(entityId);
-    }
-
-    const newChunk = this.game.world.getNewlyLoadedChunkId();
-    if (newChunk) {
-      console.log("New chunk loaded", newChunk);
-      this.worldRenderer.blockUpdate(newChunk);
-    }
-  }
-
   renderLoop(time: number) {
     const delta = time - this.totTime;
     this.worldRenderer.render();
@@ -92,5 +63,20 @@ export class CanvasGameScript implements IGameScript {
       this.worldRenderer.shouldRenderMainPlayer =
         this.camera.togglePerspective();
     }
+  }
+
+  onNewEntity(entity: Entity): void {
+    console.log("CanvasGameScript: Adding entity", entity);
+    this.worldRenderer.addEntity(entity);
+  }
+
+  onRemovedEntity(entity: Entity): void {
+    console.log("CanvasGameScript: Removing entity", entity);
+    this.worldRenderer.removeEntity(entity.uid);
+  }
+
+  onChunkUpdate(chunkId: string): void {
+    console.log("CanvasGameScript: Chunk update", chunkId);
+    this.worldRenderer.blockUpdate(chunkId);
   }
 }

@@ -89,12 +89,12 @@ export class BasicUsecase implements IGameScript {
   }
 }
 
-export const SandboxUseCase = (game: Game) => {
+export const SandboxUseCase = async (game: Game) => {
   console.log("Starting sandbox usecase", game);
 
   game.addGameScript(BasicUsecase);
 
-  game.setupScripts();
+  await game.setupScripts();
 
   new TimerRunner(game);
 };

@@ -7,6 +7,9 @@ description = "Logic for a world"
 repository = "https://www.github.com"
 license = "GPL2"
 
+[build]
+target-dir = "./cargo-target"
+
 [lib]
 crate-type = ["cdylib", "rlib"]
 
