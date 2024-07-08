@@ -12,24 +12,6 @@ import Websocket from "ws";
 import { IDbManager } from "./db.js";
 import SocketServer from "./socket.js";
 
-// const WasmChunkGetter = async (config: IConfig): Promise<IChunkReader> => {
-//   console.log("WasmChunkGetter", config);
-//
-//   await TerrainGenModule.load();
-//
-//   const terrainGenerator = TerrainGenModule.getTerrainGenerator(
-//     Number(config.seed),
-//     config.terrain.flatWorld
-//   );
-//
-//   return {
-//     getChunk: async (chunkPos: string) => {
-//       const terrainVector = Vector2D.fromIndex(chunkPos);
-//       return terrainGenerator.getChunk(terrainVector);
-//     },
-//   };
-// };
-//
 export class TimerRunner {
   private lastTime = Date.now();
 

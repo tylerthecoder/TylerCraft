@@ -32,6 +32,7 @@
     "web": "yarn workspace @craft/web-client",
     "server": "yarn workspace @craft/server",
     "world": "yarn workspace @craft/rust-world",
+    "terrain-gen": "yarn workspace @craft/terrain-gen",
     "terrain-app": "yarn workspace @craft/terrain-app"
   },
   "devDependencies": {

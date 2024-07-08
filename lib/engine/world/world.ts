@@ -49,7 +49,6 @@ export class World {
     };
   }
 
-  // Helper static methods
   static worldPosToChunkPos(pos: Vector3D): Vector2D {
     return new Vector2D([
       Math.floor(pos.get(0) / CONFIG.terrain.chunkSize),
@@ -71,10 +70,6 @@ export class World {
     const [x, y] = chunkId.split(",").map((s) => parseInt(s));
     return new Vector2D([x, y]);
   }
-
-  // ===================
-  //    Getters
-  // ===================
 
   getChunkFromPos(chunkPos: Vector2D): ISerializedChunk {
     console.log("Getting chunk from pos", chunkPos);
@@ -129,40 +124,6 @@ export class World {
     }
   }
 
-  // load the starting chunks
-  // called before the world is passed on to the game
-  // private async load() {
-  //   if (!CONFIG.terrain.generateChunks) {
-  //     return;
-  //   }
-  //   const chunkIds = this.getChunkPosAroundPoint(new Vector3D([0, 0, 0]));
-  //   const chunkPromises = chunkIds.map((c) => this.loadChunk(c));
-  //   await Promise.all(chunkPromises);
-  // }
-
-  // private loadingChunkPromises: Map<string, Promise<ISerializedChunk>> =
-  //   new Map();
-  // async loadChunk(pos: Vector2D): Promise<ISerializedChunk | null> {
-  //   if (this.hasChunk(pos)) {
-  //     return null;
-  //   }
-  //   console.log("World: Loading chunk", pos.toIndex());
-  //   const chunkId = pos.toIndex();
-  //   if (this.loadingChunkPromises.has(chunkId)) {
-  //     return this.loadingChunkPromises.get(chunkId)!;
-  //   }
-  //   const chunkPromise = this.chunkReader.getChunk(chunkId);
-  //   this.loadingChunkPromises.set(chunkId, chunkPromise);
-  //   const chunk = await chunkPromise;
-  //   this.updateChunk(chunk);
-  //   this.newlyLoadedChunks.push(chunkId);
-  //   return chunk;
-  // }
-
-  // getNewlyLoadedChunkId(): string | null {
-  //   return this.newlyLoadedChunks.shift() ?? null;
-  // }
-
   getLoadedChunkIds(): string[] {
     const loaded_pos = this.wasmWorld.get_loaded_chunk_pos() as {
       x: number;
@@ -174,24 +135,6 @@ export class World {
         return new Vector2D([p.x, p.y]);
       })
       .map((p) => p.toIndex());
-  }
-
-  getChunkPosAroundPoint(pos: Vector3D): Vector2D[] {
-    const centerChunkPos = World.worldPosToChunkPos(pos);
-
-    const chunkIds = [];
-
-    for (let i = -CONFIG.loadDistance; i < CONFIG.loadDistance; i++) {
-      for (let j = -CONFIG.loadDistance; j < CONFIG.loadDistance; j++) {
-        const chunkPos = new Vector2D([
-          centerChunkPos.get(0) + i,
-          centerChunkPos.get(1) + j,
-        ]);
-        chunkIds.push(chunkPos);
-      }
-    }
-
-    return chunkIds;
   }
 
   tryMove(entity: Entity, vel: Vector3D): Vector3D {
