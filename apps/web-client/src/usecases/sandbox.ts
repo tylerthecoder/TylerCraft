@@ -59,6 +59,8 @@ export class BasicUsecase implements IGameScript {
     }
   }
 
+  private makeAiAgent() {}
+
   playerActionService: PlayerActionService;
 
   constructor(public game: Game) {

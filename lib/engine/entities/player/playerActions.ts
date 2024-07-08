@@ -97,7 +97,8 @@ export class PlayerActionService {
     ]);
   }
 
-  performAction(playerId: string, action: PlayerAction) {
+  performAction(action: PlayerAction) {
+    const playerId = action.data.playerUid;
     const player = this.game.entities.tryGet(playerId);
 
     if (!player) {
@@ -120,6 +121,66 @@ export class PlayerActionService {
     for (const listener of listeners) {
       listener(action);
     }
+  }
+}
+
+export abstract class PlayerController {
+  constructor(
+    private playerActionService: PlayerActionService,
+    private game: Game,
+    private player: Player
+  ) {}
+
+  jump() {
+    const jumpAction = PlayerAction.make(PlayerActionType.Jump, {
+      playerUid: this.player.uid,
+    });
+
+    this.playerActionService.performAction(jumpAction);
+  }
+
+  move(directions: Direction[]) {
+    const action = PlayerAction.make(PlayerActionType.Move, {
+      directions: Array.from(directions),
+      playerUid: this.player.uid,
+      playerRot: this.player.rot.data as IDim,
+    });
+
+    this.playerActionService.performAction(action);
+  }
+
+  primaryAction() {
+    const action = PlayerAction.make(PlayerActionType.PlaceBlock, {
+      playerUid: this.player.uid,
+      playerPos: this.player.pos.data as IDim,
+      playerRot: this.player.rot.data as IDim,
+    });
+
+    this.playerActionService.performAction(action);
+  }
+
+  secondaryAction() {
+    const action = PlayerAction.make(PlayerActionType.RemoveBlock, {
+      playerUid: this.player.uid,
+      playerPos: this.player.pos.data as IDim,
+      playerRot: this.player.rot.data as IDim,
+    });
+    this.playerActionService.performAction(action);
+  }
+
+  selectBelt(pos: number) {
+    const action = PlayerAction.make(PlayerActionType.SetBeltIndex, {
+      playerUid: this.player.uid,
+      index: pos,
+    });
+    this.playerActionService.performAction(action);
+  }
+
+  toggleCreative() {
+    const action = PlayerAction.make(PlayerActionType.ToggleCreative, {
+      playerUid: this.player.uid,
+    });
+    this.playerActionService.performAction(action);
   }
 }
 

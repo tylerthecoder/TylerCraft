@@ -6,12 +6,14 @@ import {
   IDim,
   Player,
   PlayerAction,
+  PlayerActionService,
   PlayerActionType,
+  PlayerController,
 } from "@craft/engine";
 import { canvas } from "../../canvas";
 import { CanvasGameScript } from "../../game-scripts/canvas-gscript";
 
-export class KeyboardPlayerEntityController extends EntityController {
+export class KeyboardPlayerEntityController extends PlayerController {
   cleanup(): void {
     throw new Error("Method not implemented.");
   }
@@ -27,11 +29,11 @@ export class KeyboardPlayerEntityController extends EntityController {
   private hasJumped = false;
 
   constructor(
+    private playerActionService: PlayerActionService,
     private game: Game,
-    private player: Player,
-    private sendAction: (action: PlayerAction) => void
+    private player: Player
   ) {
-    super();
+    super(playerActionService, game, player);
 
     // Pointer lock to the canvas
     canvas.eHud.addEventListener("mousedown", (e: MouseEvent) => {
@@ -52,10 +54,10 @@ export class KeyboardPlayerEntityController extends EntityController {
 
       if (e.button === 2) {
         // right click
-        this.placeBlock();
+        this.primaryAction();
       } else if (e.button === 0) {
         // left click
-        this.removeBlock();
+        this.secondaryAction();
       }
       e.preventDefault();
     });
@@ -139,11 +141,7 @@ export class KeyboardPlayerEntityController extends EntityController {
         this.currentMoveDirections.add(Direction.Down);
         break;
       case "c":
-        this.handleAction(
-          PlayerAction.make(PlayerActionType.ToggleCreative, {
-            playerUid: this.player.uid,
-          })
-        );
+        this.toggleCreative();
         break;
       case "j":
         this.handleAction(
@@ -157,11 +155,7 @@ export class KeyboardPlayerEntityController extends EntityController {
           break;
         }
         this.hasJumped = true;
-        this.handleAction(
-          PlayerAction.make(PlayerActionType.Jump, {
-            playerUid: this.player.uid,
-          })
-        );
+        this.jump();
         break;
       case "1":
         this.selectBelt(0);
@@ -243,13 +237,7 @@ export class KeyboardPlayerEntityController extends EntityController {
     }
 
     if (areDifferent) {
-      this.handleAction(
-        PlayerAction.make(PlayerActionType.Move, {
-          directions: Array.from(this.currentMoveDirections.values()),
-          playerUid: this.player.uid,
-          playerRot: this.player.rot.data as IDim,
-        })
-      );
+      this.move(Array.from(this.currentMoveDirections.values()));
 
       // Copy prev to current
       this.prevMoveDirections = new Set(this.currentMoveDirections);
@@ -268,7 +256,7 @@ export class KeyboardPlayerEntityController extends EntityController {
 
   handleAction(action: PlayerAction) {
     // console.log("Keyboard controller hanling action", action, this.id);
-    this.sendAction(action);
+    this.playerActionService.performAction(action);
   }
 
   sendPos() {
@@ -276,35 +264,6 @@ export class KeyboardPlayerEntityController extends EntityController {
       PlayerAction.make(PlayerActionType.SetPos, {
         playerUid: this.player.uid,
         pos: this.player.pos.data as IDim,
-      })
-    );
-  }
-
-  placeBlock() {
-    this.handleAction(
-      PlayerAction.make(PlayerActionType.PlaceBlock, {
-        playerUid: this.player.uid,
-        playerPos: this.player.pos.data as IDim,
-        playerRot: this.player.rot.data as IDim,
-      })
-    );
-  }
-
-  removeBlock() {
-    this.handleAction(
-      PlayerAction.make(PlayerActionType.RemoveBlock, {
-        playerUid: this.player.uid,
-        playerPos: this.player.pos.data as IDim,
-        playerRot: this.player.rot.data as IDim,
-      })
-    );
-  }
-
-  selectBelt(pos: number) {
-    this.handleAction(
-      PlayerAction.make(PlayerActionType.SetBeltIndex, {
-        playerUid: this.player.uid,
-        index: pos,
       })
     );
   }
