@@ -117,37 +117,34 @@ export class EntityHolder {
     };
   }
 
-  add(stateDiff: GameStateDiff, entity: Entity) {
+  add(entity: Entity) {
     console.log("Adding entity: ", entity.uid);
     if (this.entities.has(entity.uid)) {
       throw new Error(`Entity ${entity.uid} already exists`);
     }
     if (!entity.uid) throw new Error("Must have uid");
     this.entities.set(entity.uid, entity);
-    stateDiff.addEntity(entity.uid);
   }
 
-  createPlayer(stateDiff: GameStateDiff, uid: string) {
+  createPlayer(uid: string) {
     console.log("Creating player: ", uid);
     if (this.players.has(uid)) {
       throw new Error(`Player ${uid} already exists`);
     }
     const player = Player.create(uid);
     this.players.set(player.uid, player);
-    this.add(stateDiff, player);
+    this.add(player);
     return player;
   }
 
-  createOrGetPlayer(stateDiff: GameStateDiff, uid: string): Player {
+  createOrGetPlayer(uid: string): Player {
     // looking to see if we have already loaded this player, if so then return it
     const player = this.players.get(uid);
     if (player) {
-      // send an event to the game
-      stateDiff.addEntity(player.uid);
       return player;
     }
 
-    return this.createPlayer(stateDiff, uid);
+    return this.createPlayer(uid);
   }
 
   remove(uid: string) {

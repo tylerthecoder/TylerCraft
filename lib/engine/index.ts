@@ -7,6 +7,7 @@ export * from "./camera.js";
 export * from "./config.js";
 export * from "./game.js";
 export * from "./gameActions.js";
+export * from "./game-scripts/sandbox-gscript.js";
 export * from "./types.js";
 export * from "./world/index.js";
 export * from "./utils/vector.js";

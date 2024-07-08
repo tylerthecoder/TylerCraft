@@ -2,81 +2,11 @@ import {
   Game,
   IGameMetadata,
   ISerializedGame,
-  ISerializedChunk,
-  Vector2D,
-  WorldModule,
-  IConfig,
-  IChunkReader,
   ICreateGameOptions,
   IGameSaver,
   IGamesService,
+  SandboxGScript,
 } from "@craft/engine";
-import { TerrainGenModule } from "@craft/engine/modules";
-import TerrainWorker from "../workers/terrain.worker?worker";
-
-const USE_WASM_CHUNK_GETTER = true;
-
-const WasmChunkGetter = async (config: IConfig): Promise<IChunkReader> => {
-  console.log("WasmChunkGetter", config);
-
-  await TerrainGenModule.load();
-
-  const terrainGenerator = TerrainGenModule.getTerrainGenerator(
-    Number(config.seed),
-    config.terrain.flatWorld
-  );
-
-  return {
-    getChunk: async (chunkPos: string) => {
-      const terrainVector = Vector2D.fromIndex(chunkPos);
-      return terrainGenerator.getChunk(terrainVector);
-    },
-  };
-};
-
-const WorkerChunkGetter = (config: IConfig): IChunkReader => {
-  const worker = new TerrainWorker();
-  console.log("The worker", worker);
-  worker.postMessage({
-    type: "setConfig",
-    config,
-  });
-  worker.onerror = (e) => {
-    console.error("Error from worker", e);
-  };
-  worker.onmessageerror = (e) => {
-    console.error("Message error from worker", e);
-  };
-  const chunkPromises: { [chunkPos: string]: Promise<ISerializedChunk> } = {};
-  return {
-    getChunk: async (chunkPos: string) => {
-      console.log("WorkerChunkGetter", chunkPos);
-
-      let chunkPromise = chunkPromises[chunkPos];
-      if (chunkPromise) return chunkPromise;
-
-      const terrainVector = Vector2D.fromIndex(chunkPos);
-      worker.postMessage({
-        type: "getChunk",
-        x: terrainVector.data[0],
-        y: terrainVector.data[1],
-      });
-
-      chunkPromise = new Promise((resolve) => {
-        const onTerrainMessage = (data: { data: ISerializedChunk }) => {
-          if (data.data.chunkId !== chunkPos) return;
-          resolve(data.data);
-          worker.removeEventListener("message", onTerrainMessage);
-        };
-
-        worker.addEventListener("message", onTerrainMessage);
-      });
-      chunkPromises[chunkPos] = chunkPromise;
-
-      return chunkPromise;
-    },
-  };
-};
 
 export class ClientDbGamesService implements IGamesService {
   private static WORLDS_OBS = "worlds";
@@ -116,16 +46,14 @@ export class ClientDbGamesService implements IGamesService {
 
   private constructor(private db: IDBDatabase) {}
 
-  private getChunkReader = async (config: IConfig): Promise<IChunkReader> => {
-    if (USE_WASM_CHUNK_GETTER) {
-      return WasmChunkGetter(config);
-    } else {
-      const chunkGetter = WorkerChunkGetter(config);
-      // wait for worker to load, need sto be a way to listen for this
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      return chunkGetter;
-    }
-  };
+  async createGame(
+    createGameOptions: ICreateGameOptions | ISerializedGame
+  ): Promise<Game> {
+    const gameSaver = this.getGameSaver();
+    const game = Game.make(createGameOptions, gameSaver);
+    game.addGameScript(SandboxGScript);
+    return game;
+  }
 
   private getGameSaver(): IGameSaver {
     return {
@@ -133,12 +61,6 @@ export class ClientDbGamesService implements IGamesService {
         this.saveGame(game);
       },
     };
-  }
-
-  async createGame(createGameOptions: ICreateGameOptions): Promise<Game> {
-    const chunkReader = await this.getChunkReader(createGameOptions.config);
-    const gameSaver = this.getGameSaver();
-    return Game.make(createGameOptions, chunkReader, gameSaver);
   }
 
   getAllGames(): Promise<IGameMetadata[]> {
@@ -190,9 +112,7 @@ export class ClientDbGamesService implements IGamesService {
 
     if (!foundGame) return null;
 
-    const chunkReader = await this.getChunkReader(foundGame.config);
-
-    return Game.make(foundGame, chunkReader, this.getGameSaver());
+    return this.createGame(foundGame);
   }
 
   async saveGame(data: Game) {

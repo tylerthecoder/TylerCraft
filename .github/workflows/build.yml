@@ -1,0 +1,41 @@
+name: Build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '20'
+
+    - name: Install wasm-pack
+      run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+    - name: Install wasm bindgen
+      run: cargo install wasm-bindgen-cli
+
+    - name: Install dependencies
+      run: yarn
+
+    - name: Build World
+      run: yarn world build
+
+    - name: Build Terrain Gen
+      run: yarn terrain-gen build
+
+    - name: Build Engine
+      run: yarn engine build
+
+    - name: Build Web
+      run: yarn web build
+

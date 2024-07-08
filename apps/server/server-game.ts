@@ -9,53 +9,35 @@ import {
   Vector2D,
   SocketMessage,
   setConfig,
-  IConfig,
   ISerializedChunk,
 } from "@craft/engine";
 import SocketServer from "./socket.js";
+import { IGameScript } from "@craft/engine/game-script.js";
 
-export class ServerGame {
+export class ServerGameScript implements IGameScript {
   public clients: Players;
   public actionMap: MapArray<WebSocket, GameAction> = new MapArray();
 
-  constructor(
-    private config: IConfig,
-    private socketInterface: SocketServer,
-    public game: Game
-  ) {
+  constructor(private game: Game, private socketInterface: SocketServer) {
     // Remove all players since none are connected yet
     game.entities.removeAllPlayers();
 
-    setConfig(config);
+    setConfig(game.config);
 
     this.clients = new Players(game, socketInterface);
   }
 
-  onGameAction(_action: GameAction): void {
-    // NO-OP
-  }
-
-  start() {
-    setInterval(this.update.bind(this), 1000 / 40);
-  }
-
-  private lastUpdate = Date.now();
-  update(): void {
-    const now = Date.now();
-    const delta = now - this.lastUpdate;
-    this.lastUpdate = now;
-
-    this.game.update(delta);
-
-    const stateDiff = this.game.stateDiff;
+  onGameStateDiff(diff: GameStateDiff): void {
+    const stateDiff = diff.copy();
 
     // Set the config for the game (This is a hack since the config is global)
-    setConfig(this.config);
+    setConfig(this.game.config);
 
     // Send the initial state diff to all clients
     // This state diff has no client sent actions so it should
     // only be passive things (An entity spawning)
     if (stateDiff.hasData()) {
+      console.log("Sending initial diff");
       this.clients.sendMessageToAll(
         new SocketMessage(ISocketMessageType.gameDiff, stateDiff.get())
       );
@@ -116,15 +98,15 @@ export class ServerGame {
 
   private async sendChunkTo(chunkPosString: string, ws: WebSocket) {
     // Set the config for the game (This is a hack since the config is global)
-    setConfig(this.config);
+    setConfig(this.game.config);
     const world = this.game.world;
     console.log("ServerGame: Sending chunk to player: ", chunkPosString);
     const chunkPos = Vector2D.fromIndex(chunkPosString);
-    let chunk: ISerializedChunk | null;
+    let chunk: ISerializedChunk | null = null;
     if (world.hasChunk(chunkPos)) {
       chunk = world.getChunkFromPos(chunkPos);
     } else {
-      chunk = await world.loadChunk(chunkPos);
+      // chunk = await world.loadChunk(chunkPos);
     }
     if (!chunk) throw new Error("Chunk wasn't found");
     this.socketInterface.send(

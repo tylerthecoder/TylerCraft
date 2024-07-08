@@ -6,6 +6,7 @@ import {
   PlayerAction,
   PlayerActionType,
   Game,
+  IDim,
 } from "@craft/engine";
 import { CanvasGameScript } from "../../game-scripts/canvas-gscript";
 
@@ -181,7 +182,8 @@ export class MobileController extends EntityController {
       this.handleAction(
         PlayerAction.make(PlayerActionType.PlaceBlock, {
           playerUid: this.player.uid,
-          cameraData: canvasGScript.camera.getRay(),
+          playerPos: this.player.pos.data as IDim,
+          playerRot: this.player.rot.data as IDim,
         })
       );
     });
@@ -203,7 +205,8 @@ export class MobileController extends EntityController {
       this.handleAction(
         PlayerAction.make(PlayerActionType.RemoveBlock, {
           playerUid: this.player.uid,
-          cameraData: canvasGScript.camera.getRay(),
+          playerPos: this.player.pos.data as IDim,
+          playerRot: this.player.rot.data as IDim,
         })
       );
     });

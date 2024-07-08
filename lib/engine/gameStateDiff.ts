@@ -1,7 +1,7 @@
 import { EntityDto } from "./entities/entity.js";
 import { Game } from "./game.js";
 import { Vector2D } from "./utils/vector.js";
-import { ISerializedChunk } from "./world/chunk.js";
+import { getChunkId, ISerializedChunk } from "./world/chunk.js";
 
 export interface GameDiffDto {
   entities: {
@@ -144,7 +144,7 @@ export class GameStateDiff {
   public appendDto(dto: GameDiffDto) {
     this.addEntitiesIds.push(...(dto.entities.add?.map((e) => e.uid) || []));
     this.updateChunkIds.push(
-      ...(dto.chunks.update?.map((c) => c.chunkId) || [])
+      ...(dto.chunks.update?.map((c) => getChunkId(c)) || [])
     );
     this.removeEntitiesIds.push(...(dto.entities.remove || []));
     this.updateEntitiesIds.push(

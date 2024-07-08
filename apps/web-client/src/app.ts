@@ -400,7 +400,7 @@ async function startGame(game: Engine.Game) {
   LoadingScreen.show("Building Mountains");
 
   // Assume the sandbox usecase for now
-  SandboxUseCase(game);
+  await SandboxUseCase(game);
 
   console.log("Game Started");
 
