@@ -1,7 +1,6 @@
 import {
   IGameMetadata,
   ISocketWelcomePayload,
-  IChunkReader,
   ICreateGameOptions,
   Game,
   GameAction,
@@ -10,7 +9,6 @@ import {
   SocketMessage,
   IGamesService,
   IContructGameOptions,
-  ISerializedChunk,
 } from "@craft/engine";
 import { SocketListener } from "../socket";
 import { SocketInterface, getMyUid } from "../app";
@@ -109,35 +107,6 @@ export class NetworkGamesService implements IGamesService {
   }
 }
 
-class ServerChunkReader implements IChunkReader {
-  // send a socket message asking for the chunk then wait for the reply
-  // this could also be a rest endpoint but that isn't as fun :) Plus the socket already has some identity to it
-  async getChunk(chunkPos: string) {
-    // send the socket message
-    SocketInterface.send(
-      SocketMessage.make(ISocketMessageType.getChunk, {
-        pos: chunkPos,
-      })
-    );
-
-    let listener: SocketListener | null = null;
-    const chunk: ISerializedChunk = await new Promise((resolve) => {
-      listener = (message) => {
-        if (message.isType(ISocketMessageType.setChunk)) {
-          const { pos, data } = message.data;
-          if (pos !== chunkPos) return;
-          resolve(data);
-        }
-      };
-      SocketInterface.addListener(listener);
-    });
-    if (listener) {
-      SocketInterface.removeListener(listener);
-    }
-
-    return chunk;
-  }
-}
 export class ServerSideGameScript implements IGameScript {
   debug = true;
   constructor(private game: Game) {}
