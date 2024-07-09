@@ -29,9 +29,9 @@ export class KeyboardPlayerEntityController extends PlayerController {
   private hasJumped = false;
 
   constructor(
-    private playerActionService: PlayerActionService,
-    private game: Game,
-    private player: Player
+    playerActionService: PlayerActionService,
+    game: Game,
+    player: Player
   ) {
     super(playerActionService, game, player);
 

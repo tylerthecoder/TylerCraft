@@ -1,22 +1,11 @@
-import { Direction, Game, Player, PlayerController } from "@craft/engine";
-import { IGameScript } from "@craft/engine/game-script";
+import { Direction, PlayerController } from "@craft/engine";
 
 export class AiAgentController extends PlayerController {
   update(): void {
-    this.move([Direction.Backwards]);
+    this.move([Direction.Forwards]);
   }
 
   cleanup(): void {
     throw new Error("Method not implemented.");
   }
-}
-
-export class AiAgentGameScript implements IGameScript {
-  private agent: Player;
-
-  constructor(public game: Game) {
-    this.agent = game.addPlayer("agent");
-  }
-
-  update() {}
 }

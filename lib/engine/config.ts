@@ -1,12 +1,12 @@
 export const BASE_CONFIG = {
   seed: "bungi",
 
-  renderDistance: 3,
+  renderDistance: 2,
 
   /**
    * How many chunks to load in each direction starting at the player
    */
-  loadDistance: 3,
+  loadDistance: 2,
 
   transparency: true,
 

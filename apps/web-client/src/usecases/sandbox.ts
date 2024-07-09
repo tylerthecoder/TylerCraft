@@ -2,7 +2,6 @@ import {
   EntityController,
   Game,
   Player,
-  PlayerAction,
   PlayerActionService,
 } from "@craft/engine";
 import { IS_MOBILE, getMyUid } from "../app";
@@ -13,28 +12,7 @@ import { canvas } from "../canvas";
 import { MouseAndKeyboardGameController } from "../controllers/gameKeyboardController";
 import { IGameScript } from "@craft/engine/game-script";
 import { CanvasGameScript } from "../game-scripts/canvas-gscript";
-
-export class TimerRunner {
-  private lastTime = Date.now();
-
-  constructor(private game: Game) {
-    setInterval(this.update.bind(this), 1000 / 40);
-  }
-
-  update() {
-    const now = Date.now();
-    const diff = now - this.lastTime;
-    // if we leave the tab for a long time delta gets very big, and the play falls out of the world.
-    // I'm just going to make them not move for now, but I need to remove make the system more tollerant of large deltas
-    if (diff > 100) {
-      console.log("Skipping update, time diff is too large", diff);
-      this.lastTime = now;
-      return;
-    }
-    this.game.update(diff);
-    this.lastTime = now;
-  }
-}
+import { AiAgentController } from "./ai-agent";
 
 export class BasicUsecase implements IGameScript {
   public mainPlayer: Player;
@@ -42,24 +20,35 @@ export class BasicUsecase implements IGameScript {
   private entityControllers: Map<string, EntityController> = new Map();
 
   private makePlayerController(): EntityController {
-    const onPlayerAction = (action: PlayerAction) => {
-      this.playerActionService.performAction(this.mainPlayer.uid, action);
-    };
-
     if (IS_MOBILE) {
-      return new MobileController(this.game, this.mainPlayer, onPlayerAction);
+      return new MobileController(
+        this.playerActionService,
+        this.game,
+        this.mainPlayer
+      );
     } else if (canvas.isXr) {
       return new Quest2Controller(this.mainPlayer);
     } else {
       return new KeyboardPlayerEntityController(
+        this.playerActionService,
         this.game,
-        this.mainPlayer,
-        onPlayerAction
+        this.mainPlayer
       );
     }
   }
 
-  private makeAiAgent() {}
+  actions? = {
+    "make-ai-agent": () => this.makeAiAgent(),
+  };
+
+  private makeAiAgent() {
+    const player = this.game.addPlayer("ai");
+
+    this.entityControllers.set(
+      player.uid,
+      new AiAgentController(this.playerActionService, this.game, player)
+    );
+  }
 
   playerActionService: PlayerActionService;
 
@@ -93,10 +82,7 @@ export class BasicUsecase implements IGameScript {
 
 export const SandboxUseCase = async (game: Game) => {
   console.log("Starting sandbox usecase", game);
-
   game.addGameScript(BasicUsecase);
-
   await game.setupScripts();
-
-  new TimerRunner(game);
+  game.startTimer();
 };

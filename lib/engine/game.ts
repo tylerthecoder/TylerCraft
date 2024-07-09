@@ -100,10 +100,39 @@ export class Game {
     throw new Error("Script not found");
   }
 
+  public getScriptActions(): IGameScript[] {
+    const scriptsWithActions = [];
+    for (const s of this.gameScripts) {
+      if (s.actions || s.config) {
+        scriptsWithActions.push(s);
+      }
+    }
+    return scriptsWithActions;
+  }
+
   public async setupScripts() {
     for (const script of this.gameScripts) {
       await script.setup?.();
     }
+  }
+
+  // This could maybe be a game script
+  public startTimer() {
+    let lastTime = 0;
+    const update = () => {
+      const now = Date.now();
+      const diff = now - lastTime;
+      lastTime = now;
+
+      // Idk if this is still needed
+      if (diff > 100) {
+        console.log("Skipping update, time diff is too large", diff);
+        return;
+      }
+      this.update(diff);
+    };
+
+    setInterval(update, 1000 / 40);
   }
 
   public update(delta: number) {
@@ -233,6 +262,9 @@ export class Game {
     const player = this.entities.createOrGetPlayer(uid);
     if (opts.updateState) {
       this.stateDiff.updateEntity(player.uid);
+    }
+    for (const script of this.gameScripts) {
+      script.onNewEntity?.(player);
     }
     return player;
   }

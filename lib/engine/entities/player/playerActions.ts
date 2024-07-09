@@ -2,7 +2,7 @@
 // The player should know nothing about these.
 
 import { BlockType } from "@craft/rust-world";
-import { CameraRay, Direction, Game, IDim, Vector3D } from "../../index.js";
+import { Direction, Game, IDim, Vector3D } from "../../index.js";
 import { MessageDto, MessageHolder } from "../../messageHelpers.js";
 import CubeHelpers from "../cube.js";
 import { Player } from "./player.js";
@@ -126,9 +126,9 @@ export class PlayerActionService {
 
 export abstract class PlayerController {
   constructor(
-    private playerActionService: PlayerActionService,
-    private game: Game,
-    private player: Player
+    protected playerActionService: PlayerActionService,
+    protected game: Game,
+    protected player: Player
   ) {}
 
   jump() {

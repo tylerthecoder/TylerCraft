@@ -6,7 +6,14 @@ export interface IGameScriptConstuctor {
   new (game: Game, ...args: any[]): IGameScript;
 }
 
-export interface IGameScript {
+export interface IGameScript<
+  Config extends Record<string, any> = Record<string, any>
+> {
+  actions?: { [key: string]: () => void };
+
+  config?: Config;
+  setConfig?(config: Config): void;
+
   setup?(): void | Promise<void>;
 
   // Called for every game loop

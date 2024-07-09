@@ -1,10 +1,8 @@
-/* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 import { Renderer } from "./renderer";
-import { Camera, Game, Vector2D } from "@craft/engine";
+import { Camera, Game } from "@craft/engine";
 import { CanvasProgram } from "../canvas";
 import TextureMapper from "../textureMapper";
 import { IS_MOBILE } from "../app";
-import { Quest2Controller } from "../controllers/playerControllers/quest2Controller";
 import { CanvasGameScript } from "../game-scripts/canvas-gscript";
 import { BasicUsecase } from "../usecases/sandbox";
 
@@ -136,7 +134,10 @@ export class HudRenderer extends Renderer {
       const croppedImg = document.createElement("canvas");
       croppedImg.width = itemDim;
       croppedImg.height = itemDim;
-      const ctx = croppedImg.getContext("2d")!;
+      const ctx = croppedImg.getContext("2d");
+      if (!ctx) {
+        throw new Error("Could not get 2d context");
+      }
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(
         img,
