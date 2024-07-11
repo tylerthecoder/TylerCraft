@@ -1,7 +1,6 @@
 import {
   CONFIG,
   Direction,
-  EntityController,
   Game,
   IDim,
   Player,
@@ -10,8 +9,9 @@ import {
   PlayerActionType,
   PlayerController,
 } from "@craft/engine";
-import { canvas } from "../../canvas";
 import { CanvasGameScript } from "../../game-scripts/canvas-gscript";
+import { WebGlGScript } from "../../game-scripts/webgl-gscript";
+import { HudGScript } from "../../game-scripts/hudRender";
 
 export class KeyboardPlayerEntityController extends PlayerController {
   cleanup(): void {
@@ -35,20 +35,22 @@ export class KeyboardPlayerEntityController extends PlayerController {
   ) {
     super(playerActionService, game, player);
 
+    const hudEle = game.getGameScript(HudGScript).eHud;
+    const webGlCanvas = game.getGameScript(WebGlGScript).eCanvas;
+
     // Pointer lock to the canvas
-    canvas.eHud.addEventListener("mousedown", (e: MouseEvent) => {
-      // make sure just the hud is clicked
-      if (e.target !== canvas.eHud) {
+    hudEle.addEventListener("mousedown", (e: MouseEvent) => {
+      if (e.target !== hudEle) {
         return;
       }
 
-      if (document.pointerLockElement !== canvas.eCanvas) {
-        canvas.eCanvas.requestPointerLock();
+      if (document.pointerLockElement !== webGlCanvas) {
+        webGlCanvas.requestPointerLock();
       }
     });
 
     window.addEventListener("mousedown", (e: MouseEvent) => {
-      if (document.pointerLockElement !== canvas.eCanvas) {
+      if (document.pointerLockElement !== webGlCanvas) {
         return;
       }
 
@@ -63,7 +65,7 @@ export class KeyboardPlayerEntityController extends PlayerController {
     });
 
     window.addEventListener("mousemove", (e: MouseEvent) => {
-      if (document.pointerLockElement === canvas.eCanvas) {
+      if (document.pointerLockElement === webGlCanvas) {
         const moveX = e.movementX * CONFIG.player.mouseRotSpeed;
         const moveY = e.movementY * CONFIG.player.mouseRotSpeed;
 

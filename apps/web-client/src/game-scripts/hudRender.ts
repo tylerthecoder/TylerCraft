@@ -1,36 +1,62 @@
-import { Renderer } from "./renderer";
 import { Camera, Game } from "@craft/engine";
-import { CanvasProgram } from "../canvas";
 import TextureMapper from "../textureMapper";
 import { IS_MOBILE } from "../app";
 import { CanvasGameScript } from "../game-scripts/canvas-gscript";
-import { BasicUsecase } from "../usecases/sandbox";
+import { getEleOrError, hideElement } from "../utils";
+import { GameScript } from "@craft/engine/game-script";
+import { BasicGScript } from "./basic-gscript";
+import { GameMenu } from "../renders/gameMenuRender";
+import React from "react";
+import ReactDOM from "react-dom";
 
-function hide(e: HTMLElement) {
-  e.style.display = "none";
-}
-export class HudRenderer extends Renderer {
+export class HudGScript extends GameScript {
+  name = "hud";
+
   textureImg: HTMLImageElement;
-
-  private eToolbelt = document.getElementById("toolbelt") as HTMLDivElement;
-  private eHealthBar = document.getElementById("healthBar") as HTMLDivElement;
+  private eHealthBar = getEleOrError<HTMLDivElement>("healthBar");
   private eToolbeltItems = Array.from(
     document.querySelectorAll(".toolbelt-item")
   ) as HTMLElement[];
-  private eStats = document.getElementById("eStats") as HTMLDivElement;
   private eUseItemButton = document.getElementById("useItemButton")!;
   private eUseItemButton2 = document.getElementById("useItemButton2")!;
   private eForwardButton = document.getElementById("forwardButton")!;
   private eJumpButton = document.getElementById("jumpButton")!;
+  public eHud = getEleOrError<HTMLDivElement>("hud");
+  public eMenuContainer = getEleOrError<HTMLDivElement>("menuContainer");
 
-  constructor(private game: Game, public canvas: CanvasProgram) {
-    super();
+  public eHudCanvas = getEleOrError<HTMLCanvasElement>("hudCanvas");
+  public hudCxt: CanvasRenderingContext2D;
+
+  constructor(
+    game: Game,
+    private basicGScript: BasicGScript,
+    private canvasGScript: CanvasGameScript
+  ) {
+    super(game);
+
+    // Show the things!
+    ReactDOM.render(
+      React.createElement(GameMenu, { game: game }),
+      this.eMenuContainer
+    );
+
+    this.eHud.style.visibility = "visible";
+
     this.textureImg = document.createElement("img");
     this.textureImg.src = "./img/texture_map.png";
     document.body.appendChild(this.textureImg);
 
-    const hudElement = document.getElementById("hud")!;
-    hudElement.style.visibility = "visible";
+    const getCanvasDimensions = () => {
+      this.eHudCanvas.height = window.innerHeight;
+      this.eHudCanvas.width = window.innerWidth;
+    };
+    window.addEventListener("resize", getCanvasDimensions);
+
+    const hudContext = this.eHudCanvas.getContext("2d");
+    if (!hudContext) {
+      throw new Error("Could not get hud 2d context");
+    }
+    this.hudCxt = hudContext;
 
     if (!IS_MOBILE) {
       this.hideControls();
@@ -47,36 +73,24 @@ export class HudRenderer extends Renderer {
 
   clearScreen() {
     const [sw, sh] = this.getScreenDim();
-    this.canvas.hudCxt.clearRect(0, 0, sw, sh);
+    this.hudCxt.clearRect(0, 0, sw, sh);
   }
 
   drawRect(x: number, y: number, w: number, h: number) {
-    this.canvas.hudCxt.fillRect(x, y, w, h);
+    this.hudCxt.fillRect(x, y, w, h);
   }
 
   strokeRect(x: number, y: number, w: number, h: number) {
-    this.canvas.hudCxt.strokeRect(x, y, w, h);
+    this.hudCxt.strokeRect(x, y, w, h);
   }
 
   drawText(str: string, x: number, y: number) {
-    this.canvas.hudCxt.font = "40px sanserif";
-    this.canvas.hudCxt.fillText(str, x, y);
+    this.hudCxt.font = "40px sanserif";
+    this.hudCxt.fillText(str, x, y);
   }
-
-  // drawImg(x: number, y: number, w: number, h: number, type: BLOCKS) {
-  //   if (type > 6) return;
-
-  //   const imgCords = TextureMapper.getBlockPreviewCords(type, this.textureImg.width, this.textureImg.height);
-
-  //   this.canvas.hudCxt.drawImage(this.textureImg,
-  //     imgCords.x, imgCords.y, imgCords.w, imgCords.h,
-  //     x, y, w, h,
-  //   );
-  // }
 
   private lastStats = "";
   drawStats(camera: Camera) {
-    const canvas = this.game.getGameScript(CanvasGameScript);
     const cameraPos = camera.pos.data.map((d) => d.toFixed(2)).join(",");
 
     const numChunks = this.game.world.getLoadedChunkIds().length;
@@ -84,7 +98,7 @@ export class HudRenderer extends Renderer {
     const statsElement = document.getElementById("stats")!;
     const statsString = `
       playerPos: ${cameraPos} <br />
-      fps: ${canvas.frameRate.toFixed(0)} <br />
+      fps: ${this.canvasGScript.frameRate.toFixed(0)} <br />
       numChunks: ${numChunks}
     `;
     if (this.lastStats !== statsString) {
@@ -100,9 +114,8 @@ export class HudRenderer extends Renderer {
   }
 
   drawBelt() {
-    const basic = this.game.getGameScript(BasicUsecase);
     this.eToolbeltItems.forEach((item, index) => {
-      if (index === basic.mainPlayer.belt.selectedIndex) {
+      if (index === this.basicGScript.mainPlayer.belt.selectedIndex) {
         item.classList.add("selected");
       } else {
         item.classList.remove("selected");
@@ -111,7 +124,7 @@ export class HudRenderer extends Renderer {
 
     const itemDim = this.eToolbeltItems[0].clientHeight;
 
-    const belt = basic.mainPlayer.belt;
+    const belt = this.basicGScript.mainPlayer.belt;
 
     if (!belt) {
       return;
@@ -158,31 +171,29 @@ export class HudRenderer extends Renderer {
   }
 
   drawHealthBar() {
-    const basic = this.game.getGameScript(BasicUsecase);
-    if (!basic.mainPlayer) return;
-    const { current, max } = basic.mainPlayer.health;
+    if (!this.basicGScript.mainPlayer) return;
+    const { current, max } = this.basicGScript.mainPlayer.health;
     const healthPercent = current / max;
     this.eHealthBar.style.width = `${healthPercent * 100}%`;
   }
 
   hideControls() {
-    hide(this.eForwardButton);
-    hide(this.eJumpButton);
-    hide(this.eUseItemButton);
-    hide(this.eUseItemButton2);
+    hideElement(this.eForwardButton);
+    hideElement(this.eJumpButton);
+    hideElement(this.eUseItemButton);
+    hideElement(this.eUseItemButton2);
   }
 
   private lastSelected = -1;
 
   render(camera: Camera) {
     this.clearScreen();
-    const basic = this.game.getGameScript(BasicUsecase);
 
     this.drawStats(camera);
 
-    if (this.lastSelected !== basic.mainPlayer.belt.selectedIndex) {
+    if (this.lastSelected !== this.basicGScript.mainPlayer.belt.selectedIndex) {
       this.drawBelt();
-      this.lastSelected = basic.mainPlayer.belt.selectedIndex;
+      this.lastSelected = this.basicGScript.mainPlayer.belt.selectedIndex;
     }
 
     // draw selected items

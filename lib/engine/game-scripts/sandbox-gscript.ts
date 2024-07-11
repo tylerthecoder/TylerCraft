@@ -1,5 +1,4 @@
-import { IGameScript } from "../game-script.js";
-import { Game } from "../game.js";
+import { GameScript } from "../game-script.js";
 import { TerrainGenModule } from "../modules.js";
 import { Vector2D, Vector3D } from "../utils/vector.js";
 import { World } from "../world/world.js";
@@ -12,7 +11,9 @@ interface Config {
 }
 
 // init the terrian gen module and load all chunks around palyer
-export class SandboxGScript implements IGameScript<Config> {
+export class SandboxGScript extends GameScript<Config> {
+  name = "sandbox";
+
   public config = {
     seed: "",
     flatWorld: false,
@@ -23,8 +24,6 @@ export class SandboxGScript implements IGameScript<Config> {
   private terrainGenerator: ReturnType<
     typeof TerrainGenModule.getTerrainGenerator
   > | null = null;
-
-  constructor(private game: Game) {}
 
   async setup(): Promise<void> {
     console.log("Setting up sandbox game script");

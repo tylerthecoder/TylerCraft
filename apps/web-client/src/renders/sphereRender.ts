@@ -1,11 +1,12 @@
+import { WebGlGScript } from "../game-scripts/webgl-gscript";
 import { RenderData, Renderer } from "./renderer";
 import { Camera, Entity, IDim } from "@craft/engine";
 
 export class SphereRenderer extends Renderer {
   radius = 1;
 
-  constructor(public entity: Entity) {
-    super();
+  constructor(webGlGScript: WebGlGScript, public entity: Entity) {
+    super(webGlGScript);
 
     this.radius = entity.dim[0];
 

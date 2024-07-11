@@ -2,16 +2,18 @@ import { Game } from "./game.js";
 import { GameAction } from "./gameActions.js";
 import { Entity, GameStateDiff } from "./index.js";
 
-export interface IGameScriptConstuctor {
-  new (game: Game, ...args: any[]): IGameScript;
-}
+export type GameScriptConfig = Record<string, any> | undefined;
 
-export interface IGameScript<
-  Config extends Record<string, any> = Record<string, any>
+export abstract class GameScript<
+  Config extends GameScriptConfig = GameScriptConfig
 > {
+  abstract name: string;
   actions?: { [key: string]: () => void };
 
   config?: Config;
+
+  constructor(protected game: Game, ..._args: unknown[]) {}
+
   setConfig?(config: Config): void;
 
   setup?(): void | Promise<void>;

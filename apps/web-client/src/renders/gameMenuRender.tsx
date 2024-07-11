@@ -1,8 +1,8 @@
 import ReactDOM from "react-dom";
 import { Game, GameAction, GameActionType } from "@craft/engine";
 import React, { useEffect } from "react";
-import { getEleOrError } from "../controllers/gameKeyboardController";
 import styles from "./gameMenu.module.css";
+import { getEleOrError } from "../utils";
 
 // make section button with same props as normal button
 const SectionButton = (
@@ -101,16 +101,13 @@ export const GameMenu = (props: { game: Game }) => {
         <div className={styles.menu}>
           <div className={styles.sidebar}>
             <SectionButton onClick={() => setOpenSection("main")}>
-              {" "}
-              Main Menu{" "}
+              Main Menu
             </SectionButton>
             <SectionButton onClick={() => setOpenSection("about")}>
-              {" "}
-              About{" "}
+              About
             </SectionButton>
             <SectionButton onClick={() => setOpenSection("config")}>
-              {" "}
-              Config{" "}
+              Config
             </SectionButton>
 
             {gameScriptButtons}
@@ -140,8 +137,8 @@ const AboutSection = () => {
   );
 };
 
-export const renderGameMenu = (game: Game) => {
-  const container = getEleOrError("menuContainer");
-
-  ReactDOM.render(<GameMenu game={game} />, container);
-};
+// export const renderGameMenu = (game: Game) => {
+//   const container = getEleOrError("menuContainer");
+//
+//   ReactDOM.render(<GameMenu game={game} />, container);
+// };

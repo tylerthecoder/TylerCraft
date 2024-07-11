@@ -10,15 +10,18 @@ import {
   SocketMessage,
   setConfig,
   ISerializedChunk,
+  GameScript,
 } from "@craft/engine";
 import SocketServer from "./socket.js";
-import { IGameScript } from "@craft/engine/game-script.js";
 
-export class ServerGameScript implements IGameScript {
+export class ServerGameScript extends GameScript {
+  name = "server";
+
   public clients: Players;
   public actionMap: MapArray<WebSocket, GameAction> = new MapArray();
 
-  constructor(private game: Game, private socketInterface: SocketServer) {
+  constructor(game: Game, private socketInterface: SocketServer) {
+    super(game);
     // Remove all players since none are connected yet
     game.entities.removeAllPlayers();
 

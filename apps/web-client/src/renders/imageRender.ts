@@ -1,14 +1,18 @@
 import { Vector3D, Camera, IDim } from "@craft/engine";
-import { canvas } from "../canvas";
 import { RenderData, Renderer } from "./renderer";
 import ShapeBuilder from "../services/shape-builder";
+import { WebGlGScript } from "../game-scripts/webgl-gscript";
 
 // Draws an image at a certain location
-export class ImageRenderer extends Renderer {
+export class ImageReneCanvasderer extends Renderer {
   private galleryIndex = 0;
 
-  constructor(private pos: Vector3D, private face: number) {
-    super();
+  constructor(
+    webGlGScript: WebGlGScript,
+    private pos: Vector3D,
+    private face: number
+  ) {
+    super(webGlGScript);
     this.setup();
   }
 
@@ -24,7 +28,9 @@ export class ImageRenderer extends Renderer {
   }
 
   render(camera: Camera): void {
-    this.setActiveTexture(canvas.getGalleryTexture(this.galleryIndex));
+    this.setActiveTexture(
+      this.webGlGScript.getGalleryTexture(this.galleryIndex)
+    );
     this.renderObject(this.pos.data as IDim, camera);
   }
 }
