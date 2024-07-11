@@ -25,6 +25,7 @@
     "ts:dev": "tsc -b -w src",
     "build": "yarn workspaces foreach -p -i -t -A run build",
     "dev": "yarn workspaces foreach -p -i -A run dev",
+    "test": "yarn workspaces foreach -p -i -A run test",
     "engine": "yarn workspace @craft/engine",
     "web": "yarn workspace @craft/web-client",
     "server": "yarn workspace @craft/server",
