@@ -18,6 +18,9 @@ jobs:
       with:
         node-version: '20'
 
+    - name: Setup Rust
+      run: rustup component add rust-std
+
     - name: Install wasm-pack
       run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
