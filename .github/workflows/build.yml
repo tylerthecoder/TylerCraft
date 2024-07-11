@@ -27,15 +27,6 @@ jobs:
     - name: Install dependencies
       run: yarn
 
-    - name: Build World
-      run: yarn world build
-
-    - name: Build Terrain Gen
-      run: yarn terrain-gen build
-
-    - name: Build Engine
-      run: yarn engine build
-
-    - name: Build Web
-      run: yarn web build
+    - name: Build
+      run: yarn build
 
