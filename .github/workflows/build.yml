@@ -18,6 +18,9 @@ jobs:
       with:
         node-version: '20'
 
+    - name: Setup Rust
+      cmd: rustup target add wasm32-unknown-unknown
+
     - name: Install wasm-pack
       run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
@@ -26,9 +29,6 @@ jobs:
 
     - name: Install dependencies
       run: yarn
-
-    - name: Build First Rust package
-      run: yarn world build
 
     - name: Build
       run: yarn build

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "build": "wasm-pack build --mode no-install -- --verbose && node add-module-type.js",
+    "build": "wasm-pack build --mode no-install && node add-module-type.js",
     "test": "cargo test -- --nocapture",
     "dev": "cargo watch -N -w src -s 'yarn build'",
     "clean": "rm -rf pkg"

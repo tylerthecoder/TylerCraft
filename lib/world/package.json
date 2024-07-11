@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "build": "wasm-pack build --mode no-install -- --verbose && node add-module-type.js",
+    "build": "wasm-pack build --mode no-install && node add-module-type.js",
     "build:quick": "wasm-pack build --dev && node add-module-type.js",
     "build:node": "wasm-pack build --target nodeinstalljs --out-dir pkg-nodejs",
     "test": "cargo test -- --nocapture",
