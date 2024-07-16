@@ -74,10 +74,11 @@ export class SandboxGScript extends GameScript<Config> {
     if (this.config.infinite) {
       for (const entity of this.game.entities.iterable()) {
         const chunkIds = this.getChunkPosAroundPoint(entity.pos);
-        for (const chunkId of chunkIds) {
+        // console.log("Chunk ids", chunkIds);
+        chunk: for (const chunkId of chunkIds) {
           const isChunkLoaded = this.game.world.hasChunk(chunkId);
           if (isChunkLoaded) {
-            break;
+            continue chunk;
           }
 
           console.log("Generating chunk around player");
@@ -90,6 +91,9 @@ export class SandboxGScript extends GameScript<Config> {
           }
 
           this.game.upsertChunk(chunk);
+
+          // Only load a single chunk per frame
+          return;
         }
       }
     }

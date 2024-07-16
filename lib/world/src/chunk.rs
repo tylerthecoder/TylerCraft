@@ -1,6 +1,7 @@
 use crate::block::{BlockData, BlockType, ChunkBlock};
 use crate::positions::{ChunkPos, InnerChunkPos};
 use crate::world::world_block::WorldBlock;
+use phf::set;
 use serde::{Deserialize, Serialize};
 use serde_big_array::BigArray;
 use wasm_bindgen::prelude::*;
@@ -24,13 +25,23 @@ pub const CHUNK_HEIGHT: i16 = 64;
 
 const CHUNK_MEM_SIZE: usize = (CHUNK_HEIGHT * CHUNK_WIDTH * CHUNK_WIDTH) as usize;
 
+type BlockDataArray = [BlockData; CHUNK_MEM_SIZE];
+
+fn default_block_data() -> BlockDataArray {
+    [BlockData::None; CHUNK_MEM_SIZE]
+}
+
 #[derive(Serialize, Deserialize)]
 #[wasm_bindgen]
 pub struct Chunk {
     #[serde(with = "BigArray")]
     blocks: [BlockType; CHUNK_MEM_SIZE],
-    #[serde(with = "BigArray")]
-    block_data: [BlockData; CHUNK_MEM_SIZE],
+
+    // #[serde(with = "BigArray")]
+    #[serde(skip)]
+    #[serde(default = "default_block_data")]
+    block_data: BlockDataArray,
+
     #[wasm_bindgen(skip)]
     pub position: ChunkPos,
 
@@ -38,6 +49,17 @@ pub struct Chunk {
     #[wasm_bindgen(skip)]
     #[serde(skip)]
     pub dirty_blocks: Vec<InnerChunkPos>,
+}
+
+impl Default for Chunk {
+    fn default() -> Self {
+        Chunk {
+            blocks: [BlockType::Void; CHUNK_MEM_SIZE],
+            block_data: [BlockData::None; CHUNK_MEM_SIZE],
+            position: ChunkPos { x: 0, y: 0 },
+            dirty_blocks: Vec::new(),
+        }
+    }
 }
 
 impl Chunk {

@@ -1,4 +1,4 @@
-import { Camera, Game } from "@craft/engine";
+import { Camera, Game, PlayerActionService } from "@craft/engine";
 import TextureMapper from "../textureMapper";
 import { IS_MOBILE } from "../app";
 import { CanvasGameScript } from "../game-scripts/canvas-gscript";
@@ -17,20 +17,24 @@ export class HudGScript extends GameScript {
   private eToolbeltItems = Array.from(
     document.querySelectorAll(".toolbelt-item")
   ) as HTMLElement[];
-  private eUseItemButton = document.getElementById("useItemButton")!;
-  private eUseItemButton2 = document.getElementById("useItemButton2")!;
-  private eForwardButton = document.getElementById("forwardButton")!;
-  private eJumpButton = document.getElementById("jumpButton")!;
+  private eUseItemButton = getEleOrError("useItemButton");
+  private eUseItemButton2 = getEleOrError("useItemButton2");
+  private eForwardButton = getEleOrError("forwardButton");
+  private eJumpButton = getEleOrError("jumpButton");
+  private eStats = getEleOrError("stats");
   public eHud = getEleOrError<HTMLDivElement>("hud");
   public eMenuContainer = getEleOrError<HTMLDivElement>("menuContainer");
 
   public eHudCanvas = getEleOrError<HTMLCanvasElement>("hudCanvas");
   public hudCxt: CanvasRenderingContext2D;
 
+  private lastSelected = -1;
+
   constructor(
     game: Game,
     private basicGScript: BasicGScript,
-    private canvasGScript: CanvasGameScript
+    private canvasGScript: CanvasGameScript,
+    private playerActionService: PlayerActionService
   ) {
     super(game);
 
@@ -90,19 +94,20 @@ export class HudGScript extends GameScript {
   }
 
   private lastStats = "";
-  drawStats(camera: Camera) {
-    const cameraPos = camera.pos.data.map((d) => d.toFixed(2)).join(",");
-
+  drawStats() {
+    const cameraPos = this.basicGScript.mainPlayer.pos.data
+      .map((d) => d.toFixed(2))
+      .join(",");
     const numChunks = this.game.world.getLoadedChunkIds().length;
 
-    const statsElement = document.getElementById("stats")!;
     const statsString = `
       playerPos: ${cameraPos} <br />
       fps: ${this.canvasGScript.frameRate.toFixed(0)} <br />
       numChunks: ${numChunks}
     `;
+
     if (this.lastStats !== statsString) {
-      statsElement.innerHTML = statsString;
+      this.eStats.innerHTML = statsString;
       this.lastStats = statsString;
     }
 
@@ -111,6 +116,19 @@ export class HudGScript extends GameScript {
     //   rotVec.data = rotVec.data.map((n) => Math.floor(n * 100) / 100);
     //   this.drawText(rotVec.toIndex(), 0, 70);
     // }
+  }
+
+  update(_delta: number): void {
+    this.clearScreen();
+
+    this.drawStats();
+
+    if (this.lastSelected !== this.basicGScript.mainPlayer.belt.selectedIndex) {
+      this.drawBelt();
+      this.lastSelected = this.basicGScript.mainPlayer.belt.selectedIndex;
+    }
+
+    this.drawHealthBar();
   }
 
   drawBelt() {
@@ -182,21 +200,5 @@ export class HudGScript extends GameScript {
     hideElement(this.eJumpButton);
     hideElement(this.eUseItemButton);
     hideElement(this.eUseItemButton2);
-  }
-
-  private lastSelected = -1;
-
-  render(camera: Camera) {
-    this.clearScreen();
-
-    this.drawStats(camera);
-
-    if (this.lastSelected !== this.basicGScript.mainPlayer.belt.selectedIndex) {
-      this.drawBelt();
-      this.lastSelected = this.basicGScript.mainPlayer.belt.selectedIndex;
-    }
-
-    // draw selected items
-    this.drawHealthBar();
   }
 }
