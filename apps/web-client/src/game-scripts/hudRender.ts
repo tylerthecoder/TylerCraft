@@ -1,4 +1,4 @@
-import { Camera, Game, PlayerActionService } from "@craft/engine";
+import { Game } from "@craft/engine";
 import TextureMapper from "../textureMapper";
 import { IS_MOBILE } from "../app";
 import { CanvasGameScript } from "../game-scripts/canvas-gscript";
@@ -33,8 +33,7 @@ export class HudGScript extends GameScript {
   constructor(
     game: Game,
     private basicGScript: BasicGScript,
-    private canvasGScript: CanvasGameScript,
-    private playerActionService: PlayerActionService
+    private canvasGScript: CanvasGameScript
   ) {
     super(game);
 
