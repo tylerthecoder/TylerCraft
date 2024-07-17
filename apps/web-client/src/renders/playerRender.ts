@@ -1,15 +1,19 @@
 import { Player, Camera, Vector3D, IDim } from "@craft/engine";
 import { RenderData, Renderer } from "./renderer";
 import ShapeBuilder from "../services/shape-builder";
-import { canvas } from "../canvas";
 import TextureMapper from "../textureMapper";
+import { WebGlGScript } from "../game-scripts/webgl-gscript";
 
 export class PlayerRenderer extends Renderer {
   private renderData = new RenderData();
 
-  constructor(public player: Player) {
-    super();
-    this.setActiveTexture(canvas.textureAtlas);
+  constructor(
+    webGlGScript: WebGlGScript,
+
+    public player: Player
+  ) {
+    super(webGlGScript);
+    this.setActiveTexture(this.webGlGScript.textureAtlas);
   }
 
   render(camera: Camera) {

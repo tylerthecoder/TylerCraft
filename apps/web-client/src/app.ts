@@ -14,7 +14,7 @@ import { renderWorldPicker } from "./world-picker";
 import { createRoot } from "react-dom/client";
 import { ClientDbGamesService } from "./services/sp-games-service";
 import { NetworkGamesService } from "./services/mp-games-service";
-import { SandboxUseCase } from "./usecases/sandbox";
+import { BasicGScript } from "./game-scripts/basic-gscript";
 
 export interface IExtendedWindow extends Window {
   game?: Game;
@@ -399,8 +399,9 @@ async function startGame(game: Engine.Game) {
 
   LoadingScreen.show("Building Mountains");
 
-  // Assume the sandbox usecase for now
-  await SandboxUseCase(game);
+  game.addGameScript(BasicGScript);
+  await game.setupScripts();
+  game.startTimer();
 
   console.log("Game Started");
 

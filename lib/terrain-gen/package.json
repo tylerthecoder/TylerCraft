@@ -1,14 +1,14 @@
 {
-	"name": "@craft/terrain-gen",
-	"version": "1.0.0",
-	"type": "module",
-	"scripts": {
-		"build": "wasm-pack build && node add-module-type.js",
-		"test": "cargo test -- --nocapture",
-		"dev": "cargo watch -N -w src -s 'yarn build'",
-		"clean": "rm -rf pkg"
-	},
-	"module": "./pkg/terrain_gen.js",
-	"main": "./pkg/terrain_gen.js",
-	"types": "./pkg/terrain_gen.d.ts"
+  "name": "@craft/terrain-gen",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "wasm-pack build --mode no-install && node add-module-type.js",
+    "test": "cargo test -- --nocapture",
+    "dev": "cargo watch -N -w src -s 'yarn build'",
+    "clean": "rm -rf pkg"
+  },
+  "module": "./pkg/terrain_gen.js",
+  "main": "./pkg/terrain_gen.js",
+  "types": "./pkg/terrain_gen.d.ts"
 }

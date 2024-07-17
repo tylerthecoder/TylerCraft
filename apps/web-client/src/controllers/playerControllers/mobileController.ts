@@ -1,16 +1,14 @@
 import {
   MetaAction,
   Vector2D,
-  EntityController,
   Player,
-  PlayerAction,
-  PlayerActionType,
   Game,
-  IDim,
+  PlayerController,
+  PlayerActionService,
 } from "@craft/engine";
 import { CanvasGameScript } from "../../game-scripts/canvas-gscript";
 
-export class MobileController extends EntityController {
+export class MobileController extends PlayerController {
   private eForwardButton = document.getElementById("forwardButton")!;
   private eJumpButton = document.getElementById("jumpButton")!;
   private eToolbeltItems = Array.from(
@@ -20,11 +18,11 @@ export class MobileController extends EntityController {
   private eUseItemButton2 = document.getElementById("useItemButton2")!;
 
   constructor(
-    private game: Game,
-    private player: Player,
-    private sendAction: (action: PlayerAction) => void
+    playerActionService: PlayerActionService,
+    game: Game,
+    player: Player
   ) {
-    super();
+    super(playerActionService, game, player);
     const canvasGScript = this.game.getGameScript(CanvasGameScript);
 
     let lastWindowTouch: Touch;
@@ -166,12 +164,7 @@ export class MobileController extends EntityController {
     // item selection
     this.eToolbeltItems.forEach((item, index) => {
       item.addEventListener("touchstart", () => {
-        this.handleAction(
-          PlayerAction.make(PlayerActionType.SetBeltIndex, {
-            playerUid: this.player.uid,
-            index,
-          })
-        );
+        this.selectBelt(index);
       });
     });
 
@@ -179,13 +172,7 @@ export class MobileController extends EntityController {
       e.preventDefault();
       e.stopPropagation();
 
-      this.handleAction(
-        PlayerAction.make(PlayerActionType.PlaceBlock, {
-          playerUid: this.player.uid,
-          playerPos: this.player.pos.data as IDim,
-          playerRot: this.player.rot.data as IDim,
-        })
-      );
+      this.primaryAction();
     });
 
     this.eUseItemButton.addEventListener("touchmove", (e: TouchEvent) => {
@@ -201,14 +188,7 @@ export class MobileController extends EntityController {
     this.eUseItemButton2.addEventListener("touchstart", (e: TouchEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      console.log("Removing");
-      this.handleAction(
-        PlayerAction.make(PlayerActionType.RemoveBlock, {
-          playerUid: this.player.uid,
-          playerPos: this.player.pos.data as IDim,
-          playerRot: this.player.rot.data as IDim,
-        })
-      );
+      this.secondaryAction();
     });
 
     this.eUseItemButton2.addEventListener("touchmove", (e: TouchEvent) => {
@@ -220,11 +200,6 @@ export class MobileController extends EntityController {
       e.preventDefault();
       e.stopPropagation();
     });
-  }
-
-  handleAction(action: PlayerAction) {
-    console.log("Mobile controller hanling action", action);
-    this.sendAction(action);
   }
 
   update() {

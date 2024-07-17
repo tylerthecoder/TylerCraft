@@ -18,24 +18,21 @@ jobs:
       with:
         node-version: '20'
 
+    - name: Setup Rust
+      run: rustup target add wasm32-unknown-unknown
+
     - name: Install wasm-pack
       run: curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
     - name: Install wasm bindgen
       run: cargo install wasm-bindgen-cli
 
-    - name: Install dependencies
+    - name: Install NPM dependencies
       run: yarn
 
-    - name: Build World
-      run: yarn world build
+    - name: Build
+      run: yarn build
 
-    - name: Build Terrain Gen
-      run: yarn terrain-gen build
-
-    - name: Build Engine
-      run: yarn engine build
-
-    - name: Build Web
-      run: yarn web build
+    - name: Test
+      run: yarn test
 

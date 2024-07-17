@@ -115,7 +115,7 @@ export default class Players {
     if (!player) {
       return;
     }
-    this.playerActionsService.performAction(player.uid, playerAction);
+    this.playerActionsService.performAction(playerAction);
 
     // tell everyone about the new action
     this.sendMessageToAll(

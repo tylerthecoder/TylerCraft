@@ -5,7 +5,6 @@
     "apps/server",
     "apps/terrain-app",
     "apps/web-client",
-    "usecases/parkor",
     "lib/engine",
     "lib/world",
     "lib/terrain-gen",
@@ -24,10 +23,9 @@
   ],
   "scripts": {
     "ts:dev": "tsc -b -w src",
-    "dev": "turbo dev",
-    "build": "turbo build",
-    "clean": "turbo clean",
-    "lint": "turbo lint",
+    "build": "yarn workspaces foreach -p -i -t -A run build",
+    "dev": "yarn workspaces foreach -p -i -A run dev",
+    "test": "yarn workspaces foreach -p -i -A run test",
     "engine": "yarn workspace @craft/engine",
     "web": "yarn workspace @craft/web-client",
     "server": "yarn workspace @craft/server",
@@ -35,14 +33,11 @@
     "terrain-gen": "yarn workspace @craft/terrain-gen",
     "terrain-app": "yarn workspace @craft/terrain-app"
   },
-  "devDependencies": {
-    "turbo": "^2.0.6"
-  },
   "nodemonConfig": {
     "ignore": [
       "public/**/*",
       "worlds/**/*"
     ]
   },
-  "packageManager": "yarn@3.2.1"
+  "packageManager": "yarn@4.3.1"
 }

@@ -1,4 +1,4 @@
-import { CONFIG, Vector3D } from "@craft/engine";
+import { Game, Vector3D } from "@craft/engine";
 import type {
   Navigator,
   XRSession,
@@ -7,41 +7,51 @@ import type {
   XRReferenceSpace,
 } from "webxr";
 import { mat4 } from "gl-matrix";
-import VertexShader from "../shaders/vertex.glsl?raw";
-import FragmentShader from "../shaders/fragment.glsl?raw";
+import VertexShader from "../../shaders/vertex.glsl?raw";
+import FragmentShader from "../../shaders/fragment.glsl?raw";
+import { GameScript } from "@craft/engine/game-script";
 
 const WebGlLayer = (window as any).XRWebGLLayer as typeof XRWebGLLayer;
 
-export class CanvasProgram {
+type Conifg = {
+  transparency: boolean;
+  glFov: number;
+};
+
+export class WebGlGScript extends GameScript<Conifg> {
+  name = "canvas";
+
   public eCanvas = document.getElementById("glCanvas") as HTMLCanvasElement;
-  public eHudCanvas = document.getElementById("hudCanvas") as HTMLCanvasElement;
-  public eHud = document.getElementById("hud") as HTMLCanvasElement;
   public eWebxrButton = document.getElementById(
     "webxrButton"
   ) as HTMLCanvasElement;
   public gl: WebGLRenderingContext;
-  public hudCxt: CanvasRenderingContext2D;
   public program: {
     program: WebGLProgram;
     attribLocations: { [name: string]: number };
     uniformLocations: { [name: string]: WebGLUniformLocation };
   };
-
   public navigator = window.navigator as any as Navigator;
   public webXrSession: XRSession | null = null;
   public xrRefSpace: XRReferenceSpace | null = null;
   public currentXRFrame: XRFrame | null = null;
   public textureAtlas: WebGLTexture;
-
-  // all of these images will be immediately
   private galleryImagesPaths: string[] = ["./img/tree.jpg"];
   private galleryImages: WebGLTexture[] = [];
 
-  public static factory() {
-    return new CanvasProgram();
-  }
+  public config = {
+    transparency: true,
+    glFov: 0,
+  };
 
-  constructor() {
+  constructor(game: Game) {
+    super(game);
+
+    this.config = {
+      transparency: game.config.transparency,
+      glFov: game.config.glFov,
+    };
+
     // init gl eCanvas
     const gl = this.eCanvas.getContext("webgl2", {
       // premultipliedAlpha: false,
@@ -61,8 +71,6 @@ export class CanvasProgram {
     this.gl = gl;
 
     const getCanvasDimensions = () => {
-      this.eHudCanvas.height = window.innerHeight;
-      this.eHudCanvas.width = window.innerWidth;
       this.eCanvas.height = window.innerHeight;
       this.eCanvas.width = window.innerWidth;
       this.gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
@@ -72,13 +80,11 @@ export class CanvasProgram {
     window.addEventListener("resize", getCanvasDimensions);
     getCanvasDimensions();
 
-    this.hudCxt = this.eHudCanvas.getContext("2d")!;
-
     gl.enable(gl.DEPTH_TEST); // Enable depth testing
     gl.depthFunc(gl.LEQUAL); // Near things obscure far things
     gl.activeTexture(gl.TEXTURE0); // Tell WebGL we want to affect texture unit 0
     // for transparent images
-    if (CONFIG.transparency) {
+    if (this.config.transparency) {
       // this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
       // gl.blendFunc(this.gl.ONE, this.gl.ONE_MINUS_SRC_ALPHA);
       gl.blendFuncSeparate(
@@ -153,10 +159,6 @@ export class CanvasProgram {
     this.initWebXR().then(() => {
       console.log("WebXR initialized");
     });
-  }
-
-  public createAndBindArrayBuffer() {
-    const arrayBuffer = this.gl.createBuffer();
   }
 
   public loadTextureFromUrl(url: string, gl: WebGLRenderingContext) {
@@ -242,7 +244,7 @@ export class CanvasProgram {
     // ratio that matches the display size of the eCanvas
     // and we only want to see objects between 0.1 units
     // and 100 units away from the camera.
-    const fieldOfView = CONFIG.glFov;
+    const fieldOfView = this.config.glFov;
     const eCanvasElement = this.gl.canvas as HTMLCanvasElement;
     const aspect = eCanvasElement.clientWidth / eCanvasElement.clientHeight;
     const zNear = 0.1;
@@ -368,5 +370,3 @@ export class CanvasProgram {
     return shader;
   }
 }
-
-export const canvas = new CanvasProgram();

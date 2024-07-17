@@ -1,5 +1,6 @@
 [package]
 name = "terrain-gen"
+license = "GPL2"
 version = "0.1.0"
 authors = ["Tyler Tracy <tylertracy1999@gmail.com>"]
 edition = "2018"
@@ -11,7 +12,7 @@ crate-type = ["cdylib", "rlib"]
 default = ["console_error_panic_hook"]
 
 [dependencies]
-wasm-bindgen = "0.2.84"
+wasm-bindgen = { version = "0.2.92" }
 world = { path = "../world" }
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires

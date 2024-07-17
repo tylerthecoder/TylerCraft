@@ -1,5 +1,6 @@
 export * from "./controllers/controller.js";
 export * from "./controllers/emptyController.js";
+export * from "./game-script.js";
 export * from "./gameActions.js";
 export * from "./gameStateDiff.js";
 export * from "./blockdata.js";

@@ -13,8 +13,8 @@ import {
 import { SocketListener } from "../socket";
 import { SocketInterface, getMyUid } from "../app";
 import { ApiService } from "../services/api-service";
-import { IGameScript } from "@craft/engine/game-script";
-import { BasicUsecase } from "../usecases/sandbox";
+import { GameScript } from "@craft/engine/game-script";
+import { BasicGScript } from "../game-scripts/basic-gscript";
 
 export class NetworkGamesService implements IGamesService {
   private async waitForWelcomeMessage() {
@@ -45,7 +45,8 @@ export class NetworkGamesService implements IGamesService {
 
     const game = Game.make(constructGame, gameSaver);
 
-    game.addGameScript(ServerSideGameScript);
+    const basic = game.addGameScript(BasicGScript);
+    game.addGameScript(ServerSideGameScript, basic);
 
     return game;
   }
@@ -107,20 +108,23 @@ export class NetworkGamesService implements IGamesService {
   }
 }
 
-export class ServerSideGameScript implements IGameScript {
+export class ServerSideGameScript extends GameScript {
+  name = "server-side";
+
   debug = true;
-  constructor(private game: Game) {}
+
+  constructor(game: Game, private basic: BasicGScript) {
+    super(game);
+  }
 
   setup() {
     console.log("Setting up ServerSideGameScript");
     SocketInterface.addListener(this.onSocketMessage.bind(this));
 
-    this.game
-      .getGameScript(BasicUsecase)
-      .playerActionService.addActionListener(
-        this.game.getGameScript(BasicUsecase).mainPlayer.uid,
-        this.onPlayerAction.bind(this)
-      );
+    this.basic.playerActionService.addActionListener(
+      this.basic.mainPlayer.uid,
+      this.onPlayerAction.bind(this)
+    );
   }
 
   onGameAction(action: GameAction) {
@@ -143,9 +147,8 @@ export class ServerSideGameScript implements IGameScript {
 
   private onSocketMessage(message: SocketMessage) {
     console.log("MP: Got message", message);
-    const mainPlayer = this.game.getGameScript(BasicUsecase).mainPlayer;
-    const playerActionService =
-      this.game.getGameScript(BasicUsecase).playerActionService;
+    const mainPlayer = this.basic.mainPlayer;
+    const playerActionService = this.basic.playerActionService;
 
     if (message.isType(ISocketMessageType.gameDiff)) {
       this.game.handleStateDiff(message.data);
@@ -157,10 +160,7 @@ export class ServerSideGameScript implements IGameScript {
         message.data.data
       );
 
-      playerActionService.performAction(
-        message.data.data.playerUid,
-        playerAction
-      );
+      playerActionService.performAction(playerAction);
     }
   }
 }

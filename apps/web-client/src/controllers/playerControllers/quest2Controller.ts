@@ -1,14 +1,14 @@
 import { MetaAction, Vector3D, EntityController, Player } from "@craft/engine";
 import { quat } from "gl-matrix";
-import { canvas } from "../../canvas";
+import { WebGlGScript } from "../../game-scripts/webgl-gscript";
 
 export class Quest2Controller extends EntityController {
-  constructor(private player: Player) {
+  constructor(private player: Player, private webGlGScript: WebGlGScript) {
     super();
   }
 
   update() {
-    const { webXrSession, currentXRFrame, xrRefSpace } = canvas;
+    const { webXrSession, currentXRFrame, xrRefSpace } = this.webGlGScript;
 
     if (!webXrSession || !currentXRFrame || !xrRefSpace) {
       return;

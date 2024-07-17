@@ -1,13 +1,13 @@
 import { RenderData, Renderer } from "./renderer";
 import { Camera, Entity, IDim } from "@craft/engine";
 import TextureMapper from "../textureMapper";
-import { canvas } from "../canvas";
 import ShapeBuilder from "../services/shape-builder";
+import { WebGlGScript } from "../game-scripts/webgl-gscript";
 
 export class CubeRenderer extends Renderer {
-  constructor(public entity: Entity) {
-    super();
-    this.setActiveTexture(canvas.textureAtlas);
+  constructor(public webGlGScript: WebGlGScript, public entity: Entity) {
+    super(webGlGScript);
+    this.setActiveTexture(this.webGlGScript.textureAtlas);
     this.setup();
   }
 

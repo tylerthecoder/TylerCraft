@@ -7,7 +7,7 @@ import { GameActionHandler, GameAction } from "./gameActions.js";
 import { GameStateDiff, GameDiffDto } from "./gameStateDiff.js";
 import CubeHelpers, { Cube } from "./entities/cube.js";
 import { Entity, EntityDto, getChunkId, ISerializedChunk } from "./index.js";
-import { IGameScript, IGameScriptConstuctor } from "./game-script.js";
+import { GameScript } from "./game-script.js";
 
 export interface ISerializedGame {
   name: string;
@@ -41,7 +41,7 @@ export interface IGameSaver {
 export class Game {
   public stateDiff: GameStateDiff;
   private gameActionHandler: GameActionHandler;
-  private gameScripts: IGameScript[] = [];
+  private gameScripts: GameScript[] = [];
 
   static make(dto: IContructGameOptions, gameSaver: IGameSaver) {
     const world = World.make(dto.world);
@@ -78,32 +78,60 @@ export class Game {
     };
   }
 
-  public addGameScript<T extends IGameScriptConstuctor>(
-    script: T,
-    ...args: ConstructorParameters<T> extends [Game, ...infer R] ? R : never
-  ): InstanceType<T> {
+  public addGameScript<Args extends unknown[], T extends GameScript>(
+    script: new (game: Game, ...args: Args) => T,
+    ...args: Args
+  ): T {
     const s = new script(this, ...args);
     this.gameScripts.push(s);
-
-    return s as InstanceType<T>;
+    return s;
   }
 
-  public getGameScript<T extends IGameScriptConstuctor>(
-    script: T
-  ): InstanceType<T> {
+  public getGameScript<Args extends unknown[], T extends GameScript>(
+    script: new (game: Game, ...args: Args) => T
+  ): T {
     for (const s of this.gameScripts) {
       if (s instanceof script) {
-        return s as InstanceType<T>;
+        return s;
       }
     }
 
     throw new Error("Script not found");
   }
 
+  public getScriptActions(): GameScript[] {
+    const scriptsWithActions = [];
+    for (const s of this.gameScripts) {
+      if (s.actions || s.config) {
+        scriptsWithActions.push(s);
+      }
+    }
+    return scriptsWithActions;
+  }
+
   public async setupScripts() {
     for (const script of this.gameScripts) {
       await script.setup?.();
     }
+  }
+
+  // This could maybe be a game script
+  public startTimer() {
+    let lastTime = 0;
+    const update = () => {
+      const now = Date.now();
+      const diff = now - lastTime;
+      lastTime = now;
+
+      // Idk if this is still needed
+      if (diff > 100) {
+        console.log("Skipping update, time diff is too large", diff);
+        return;
+      }
+      this.update(diff);
+    };
+
+    setInterval(update, 1000 / 40);
   }
 
   public update(delta: number) {
@@ -233,6 +261,9 @@ export class Game {
     const player = this.entities.createOrGetPlayer(uid);
     if (opts.updateState) {
       this.stateDiff.updateEntity(player.uid);
+    }
+    for (const script of this.gameScripts) {
+      script.onNewEntity?.(player);
     }
     return player;
   }
