@@ -12,7 +12,36 @@ pub struct Vec2<T> {
     pub y: T,
 }
 
-impl<T> Vec2<T> {
+impl<T, U> Sub<Vec2<U>> for Vec2<T>
+where
+    T: Sub<U, Output = T> + Copy,
+{
+    type Output = Vec2<T>;
+
+    fn sub(self, rhs: Vec2<U>) -> Self::Output {
+        Vec2 {
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+        }
+    }
+}
+
+impl<T, U> Mul<Vec2<U>> for Vec2<T>
+where
+    T: Mul<U, Output = T> + Copy,
+    U: Copy,
+{
+    type Output = Vec2<T>;
+
+    fn mul(self, rhs: Vec2<U>) -> Self::Output {
+        Vec2 {
+            x: self.x * rhs.x,
+            y: self.y * rhs.y,
+        }
+    }
+}
+
+impl<T: Add<Output = T> + Clone + Copy> Vec2<T> {
     pub fn new(x: T, y: T) -> Vec2<T> {
         Vec2 { x, y }
     }
@@ -44,6 +73,10 @@ impl<T> Vec2<T> {
         }
     }
 
+    pub fn sum(&self) -> T {
+        self.x + self.y
+    }
+
     /** Returns a list of adjacent vectors that lie in a flat plane
      * I.e no vectors that have a different y direction.
      */
@@ -69,6 +102,20 @@ impl<T> Vec2<T> {
             y: y_val,
             z: self.y,
         }
+    }
+
+    pub fn distance_to<U>(&self, vec: Vec2<U>) -> f32
+    where
+        U: Sub<U, Output = T> + Copy + Mul<T, Output = T> + Add<T, Output = T>,
+        T: Sub<U, Output = T> + Copy + Mul<T, Output = T> + Add<T, Output = T>,
+        f32: From<T>,
+    {
+        let diff = *self - vec;
+        let diff_squared = diff * diff;
+        let sum = diff_squared.sum();
+        // take the sqrt of sum
+        let sum_f32: f32 = sum.into();
+        sum_f32.sqrt()
     }
 
     pub fn move_in_flat_direction(&self, direction: &FlatDirection) -> Vec2<T>

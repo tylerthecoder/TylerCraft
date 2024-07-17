@@ -37,9 +37,8 @@ export class SandboxGScript extends GameScript<Config> {
       loadDistance: this.game.config.loadDistance,
     };
 
-    this.terrainGenerator = TerrainGenModule.getTerrainGenerator(
-      Number(this.config.seed),
-      this.config.flatWorld
+    this.terrainGenerator = TerrainGenModule.getParkorTerrainGenerator(
+      Number(this.config.seed)
     );
 
     // Load the chunks around the player

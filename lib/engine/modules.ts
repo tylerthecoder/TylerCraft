@@ -57,6 +57,20 @@ class TerrainGenModuleClass {
     this._module = await loadWasmModule(TerrainGenWasm, "TerrainGen");
   }
 
+  getParkorTerrainGenerator(seed: number) {
+    const terrainGenerator = this.module.ParkorChunkGetter.new();
+
+    return {
+      getChunk: (chunkPos: Vector2D) => {
+        console.log("Generating Chunk", chunkPos);
+        const chunk = terrainGenerator
+          .get_chunk_wasm(chunkPos.get(0), chunkPos.get(1))
+          .serialize();
+        return chunk as unknown as ISerializedChunk;
+      },
+    };
+  }
+
   getTerrainGenerator(seed: number, flatWorld: boolean) {
     const terrainGenerator = new this.module.TerrainGenerator(seed, flatWorld);
 
