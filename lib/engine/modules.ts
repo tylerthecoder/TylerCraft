@@ -2,9 +2,11 @@ import * as WorldWasm from "@craft/rust-world";
 import * as TerrainGenWasm from "@craft/terrain-gen";
 import { Vector2D } from "./utils/vector.js";
 import {
+  GameAction,
   IChunkReader,
   ISerializedChunk,
   ISerializedWorld,
+  SandboxGScript,
   World,
 } from "./index.js";
 export * as WorldModuleTypes from "@craft/rust-world";
@@ -15,6 +17,27 @@ async function loadWasmModule(module: any, name = "") {
   console.log(`Loaded Wasm Module: ${name} 🎉`);
   return loadedModule;
 }
+
+(window as any).test = async () => {
+  await WorldModule.load();
+  const game = WorldModule.createGame();
+  const player = WorldModule.createPlayer(Number(1));
+  game.addPlayer(player);
+};
+
+export class GameWrapper {
+  constructor(private game: WorldWasm.Game) {}
+
+  handleAction(action: GameAction) {
+    this.game.handle_action_wasm(action);
+  }
+
+  addPlayer(player: WorldWasm.Player) {
+    this.game.add_entity_wasm(player);
+  }
+}
+
+export type PlayerAction = "Jump" | { Move: WorldWasm.Direction[] };
 
 // Wrapper class for world logic
 class WorldModuleClass {
@@ -37,6 +60,16 @@ class WorldModuleClass {
     const wasmWorld = WorldModule.module.World.new_wasm();
     const world = new World(wasmWorld, data);
     return world;
+  }
+
+  public createGame(): GameWrapper {
+    const game = WorldModule.module.Game.new();
+    return new GameWrapper(game);
+  }
+
+  public createPlayer(uid: number) {
+    const player = WorldModule.module.Player.make(uid);
+    return player;
   }
 }
 

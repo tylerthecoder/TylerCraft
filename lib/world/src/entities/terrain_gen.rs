@@ -1,16 +1,6 @@
-mod utils;
-use noise::{NoiseFn, Perlin};
-use rand::rngs::StdRng;
-use rand::SeedableRng;
-use rand_distr::{Distribution, Uniform};
-use serde::{Deserialize, Serialize};
-use wasm_bindgen::prelude::*;
-use world::{
-    block::{self, BlockType, ChunkBlock},
-    chunk::{Chunk, CHUNK_WIDTH},
-    direction::{Direction, Directions, EVERY_FLAT_DIRECTION},
-    positions::{ChunkPos, InnerChunkPos, WorldPos},
-    world::world_block::WorldBlock,
+use crate::{
+    chunk::Chunk,
+    positions::{ChunkPos, WorldPos},
 };
 
 // remove all the positions that are too close to each other in the chunk

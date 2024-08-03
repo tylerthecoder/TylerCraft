@@ -1,3 +1,4 @@
+import { MovableEntity } from "../entities/moveableEntity.js";
 import { GameScript } from "../game-script.js";
 import { TerrainGenModule } from "../modules.js";
 import { Vector2D, Vector3D } from "../utils/vector.js";
@@ -9,6 +10,11 @@ interface Config {
   infinite: boolean;
   loadDistance: number;
 }
+
+// await WorldModule.load();
+// const game = WorldModule.createGame();
+// const player = WorldModule.createPlayer(Number(1));
+// game.addPlayer(player);
 
 // init the terrian gen module and load all chunks around palyer
 export class SandboxGScript extends GameScript<Config> {
@@ -70,8 +76,16 @@ export class SandboxGScript extends GameScript<Config> {
   }
 
   update(_delta: number): void {
-    if (this.config.infinite) {
-      for (const entity of this.game.entities.iterable()) {
+    for (const entity of this.game.entities.iterable()) {
+      // Prevent from falling out of the world
+      if (entity.pos.get(1) < -10) {
+        entity.pos.set(1, 30);
+        if (entity instanceof MovableEntity) {
+          entity.vel.set(1, -0.1);
+        }
+      }
+
+      if (this.config.infinite) {
         const chunkIds = this.getChunkPosAroundPoint(entity.pos);
         // console.log("Chunk ids", chunkIds);
         chunk: for (const chunkId of chunkIds) {

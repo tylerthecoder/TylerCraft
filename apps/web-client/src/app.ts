@@ -16,6 +16,7 @@ import { ClientDbGamesService } from "./services/sp-games-service";
 import { NetworkGamesService } from "./services/mp-games-service";
 import { BasicGScript } from "./game-scripts/basic-gscript";
 
+// Add the world to this too
 export interface IExtendedWindow extends Window {
   game?: Game;
 }

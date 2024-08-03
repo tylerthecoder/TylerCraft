@@ -1,6 +1,6 @@
 use crate::vec::Vec3;
 use serde::{Deserialize, Serialize};
-use std::f32::consts::PI;
+use std::{f32::consts::PI, ops::Add};
 
 #[derive(Clone, Copy, PartialEq, Debug, Serialize, Deserialize)]
 pub struct SphericalRotation {
@@ -14,6 +14,35 @@ pub struct SphericalRotation {
 impl SphericalRotation {
     pub fn new(theta: f32, phi: f32) -> SphericalRotation {
         SphericalRotation { theta, phi }
+    }
+}
+
+impl Add for SphericalRotation {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        // Add the angles
+        let mut new_theta = self.theta + other.theta;
+        let mut new_phi = self.phi + other.phi;
+
+        // Ensure theta is in [0, 2PI]
+        if new_theta < 0.0 {
+            new_theta += 2.0 * std::f32::consts::PI;
+        } else if new_theta > 2.0 * std::f32::consts::PI {
+            new_theta -= 2.0 * std::f32::consts::PI;
+        }
+
+        // Ensure phi is in [-PI/2, PI/2]
+        if new_phi < -std::f32::consts::FRAC_PI_2 {
+            new_phi = -std::f32::consts::FRAC_PI_2;
+        } else if new_phi > std::f32::consts::FRAC_PI_2 {
+            new_phi = std::f32::consts::FRAC_PI_2;
+        }
+
+        Self {
+            theta: new_theta,
+            phi: new_phi,
+        }
     }
 }
 
