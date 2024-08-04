@@ -24,6 +24,7 @@ web-sys = "0.3.64"
 rand = { version = "0.8.5" }
 rand_distr = "0.4.3"
 getrandom = { version = "0.2", features = ["js"] }
+serde = "1.0.204"
 
 
 [dev-dependencies]

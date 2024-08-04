@@ -73,6 +73,30 @@ impl ChunkPos {
         let y = self.y as i32;
         x + (y << 16)
     }
+
+    pub fn to_id(&self) -> u64 {
+        let mut x: u64 = 2 * (self.x.abs() as u64);
+        let mut y: u64 = 2 * (self.y.abs() as u64);
+        if self.x < 0 {
+            x += 1
+        }
+        if self.y < 0 {
+            y += 1
+        }
+        let id = ((x + y) * (x + y + 1) / 2) + y;
+
+        id
+    }
+}
+
+impl std::ops::Add<ChunkPos> for ChunkPos {
+    type Output = ChunkPos;
+    fn add(self, other: ChunkPos) -> ChunkPos {
+        ChunkPos {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        }
+    }
 }
 
 impl FineWorldPos {

@@ -4,56 +4,48 @@ import { TerrainGenModule } from "../modules.js";
 import { Vector2D, Vector3D } from "../utils/vector.js";
 import { World } from "../world/world.js";
 
-interface Config {
+type Config = {
   seed: string;
-  flatWorld: boolean;
-  infinite: boolean;
   loadDistance: number;
-}
+};
 
-// await WorldModule.load();
-// const game = WorldModule.createGame();
-// const player = WorldModule.createPlayer(Number(1));
-// game.addPlayer(player);
-
-// init the terrian gen module and load all chunks around palyer
-export class SandboxGScript extends GameScript<Config> {
-  name = "sandbox";
+export class ParkorGScript extends GameScript<Config> {
+  name = "parkor";
 
   public config = {
     seed: "",
-    flatWorld: false,
-    infinite: false,
     loadDistance: 3,
   };
 
   private terrainGenerator: ReturnType<
-    typeof TerrainGenModule.getTerrainGenerator
+    typeof TerrainGenModule.getParkorTerrainGenerator
   > | null = null;
 
   async setup(): Promise<void> {
     console.log("Setting up sandbox game script");
     // Load the entire world?
-    await TerrainGenModule.load();
 
     this.config = {
       seed: this.game.config.seed,
-      flatWorld: this.game.config.terrain.flatWorld,
-      infinite: this.game.config.terrain.infiniteGen,
       loadDistance: this.game.config.loadDistance,
     };
 
     this.terrainGenerator = TerrainGenModule.getParkorTerrainGenerator(
       Number(this.config.seed)
     );
-
-    // Load the chunks around the player
   }
 
   setConfig(config: Config): void {
     this.config = config;
 
     // TODO: Update the terrain generator's config
+  }
+
+  loadChunk(chunkPos: Vector2D): void {
+    const hasChunk = this.game.world.hasChunk(chunkPos);
+    if (hasChunk) {
+      return;
+    }
   }
 
   getChunkPosAroundPoint(pos: Vector3D): Vector2D[] {
@@ -85,29 +77,27 @@ export class SandboxGScript extends GameScript<Config> {
         }
       }
 
-      if (this.config.infinite) {
-        const chunkIds = this.getChunkPosAroundPoint(entity.pos);
-        // console.log("Chunk ids", chunkIds);
-        chunk: for (const chunkId of chunkIds) {
-          const isChunkLoaded = this.game.world.hasChunk(chunkId);
-          if (isChunkLoaded) {
-            continue chunk;
-          }
-
-          console.log("Generating chunk around player");
-
-          const chunk = this.terrainGenerator?.getChunk(chunkId);
-
-          if (!chunk) {
-            console.log("Failed generating chunk", chunkId);
-            break;
-          }
-
-          this.game.upsertChunk(chunk);
-
-          // Only load a single chunk per frame
-          return;
+      const chunkIds = this.getChunkPosAroundPoint(entity.pos);
+      // console.log("Chunk ids", chunkIds);
+      chunk: for (const chunkId of chunkIds) {
+        const isChunkLoaded = this.game.world.hasChunk(chunkId);
+        if (isChunkLoaded) {
+          continue chunk;
         }
+
+        console.log("Generating chunk around player");
+
+        const chunk = this.terrainGenerator?.getChunk(chunkId);
+
+        if (!chunk) {
+          console.log("Failed generating chunk", chunkId);
+          break;
+        }
+
+        this.game.upsertChunk(chunk);
+
+        // Only load a single chunk per frame
+        return;
       }
     }
   }

@@ -4,14 +4,13 @@ import {
   Game,
   IDim,
   Player,
-  PlayerAction,
-  PlayerActionService,
   PlayerActionType,
   PlayerController,
 } from "@craft/engine";
 import { CanvasGameScript } from "../../game-scripts/canvas-gscript";
 import { WebGlGScript } from "../../game-scripts/webgl-gscript";
 import { HudGScript } from "../../game-scripts/hudRender";
+import { PlayerAction } from "@craft/engine/modules";
 
 export class KeyboardPlayerEntityController extends PlayerController {
   cleanup(): void {
@@ -29,11 +28,11 @@ export class KeyboardPlayerEntityController extends PlayerController {
   private hasJumped = false;
 
   constructor(
-    playerActionService: PlayerActionService,
+    onAction: (playerAction: PlayerAction) => void,
     game: Game,
     player: Player
   ) {
-    super(playerActionService, game, player);
+    super(onAction, game, player);
 
     const hudEle = game.getGameScript(HudGScript).eHud;
     const webGlCanvas = game.getGameScript(WebGlGScript).eCanvas;

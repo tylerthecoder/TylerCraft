@@ -13,6 +13,10 @@ impl World {
             .ok_or(ChunkNotLoadedError)
     }
 
+    pub fn chunk_count(&self) -> usize {
+        self.chunks.len()
+    }
+
     pub fn has_chunk(&self, chunk_pos: &ChunkPos) -> bool {
         self.chunks.contains_key(&chunk_pos.to_world_index())
     }

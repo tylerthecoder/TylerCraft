@@ -1,11 +1,12 @@
 // Player actions are an API that lets you controll a player
 // The player should know nothing about these.
 
-import { BlockType } from "@craft/rust-world";
-import { Direction, Game, IDim, Vector3D } from "../../index.js";
+import { BlockType, Direction } from "@craft/rust-world";
+import { Game, IDim, Vector3D } from "../../index.js";
 import { MessageDto, MessageHolder } from "../../messageHelpers.js";
 import CubeHelpers from "../cube.js";
 import { Player } from "./player.js";
+import { PlayerAction } from "../../modules.js";
 
 export enum PlayerActionType {
   Jump = "jump",
@@ -70,14 +71,14 @@ export interface PlayerActionData
 
 export type PlayerActionDto = MessageDto<PlayerActionType, PlayerActionData>;
 
-export class PlayerAction extends MessageHolder<
-  PlayerActionType,
-  PlayerActionData
-> {
-  static make<T extends PlayerActionType>(type: T, data: PlayerActionData[T]) {
-    return new PlayerAction(type, data);
-  }
-}
+// export class PlayerAction extends MessageHolder<
+//   PlayerActionType,
+//   PlayerActionData
+// > {
+//   static make<T extends PlayerActionType>(type: T, data: PlayerActionData[T]) {
+//     return new PlayerAction(type, data);
+//   }
+// }
 
 export class PlayerActionService {
   constructor(private game: Game) {}
@@ -126,27 +127,17 @@ export class PlayerActionService {
 
 export abstract class PlayerController {
   constructor(
-    protected playerActionService: PlayerActionService,
+    protected onAction: (action: PlayerAction) => void,
     protected game: Game,
     protected player: Player
   ) {}
 
   jump() {
-    const jumpAction = PlayerAction.make(PlayerActionType.Jump, {
-      playerUid: this.player.uid,
-    });
-
-    this.playerActionService.performAction(jumpAction);
+    this.onAction("Jump");
   }
 
   move(directions: Direction[]) {
-    const action = PlayerAction.make(PlayerActionType.Move, {
-      directions: Array.from(directions),
-      playerUid: this.player.uid,
-      playerRot: this.player.rot.data as IDim,
-    });
-
-    this.playerActionService.performAction(action);
+    this.onAction({ Move: directions });
   }
 
   primaryAction() {

@@ -1,6 +1,6 @@
-import { Game } from "./game.js";
 import { GameAction } from "./gameActions.js";
-import { Entity, GameStateDiff } from "./index.js";
+import { Entity, Game, GameStateDiff } from "./index.js";
+import { GameWrapper } from "./modules.js";
 
 export type GameScriptConfig = Record<string, any> | undefined;
 

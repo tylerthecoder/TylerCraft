@@ -18,10 +18,6 @@ export interface BeltDto {
 
 class Belt {
   public selectedIndex = 0;
-  public length = 10;
-
-  public itemActions: ((game: Game) => void)[] = [];
-
   public items: Item[] = [
     BlockType.Stone,
     BlockType.Gold,
@@ -296,12 +292,6 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     // }
 
     if (this.fire.count > 0 && !this.fire.holding) this.fire.count--;
-
-    // Prevent from falling out of the world
-    if (this.pos.get(1) < -10) {
-      this.pos.set(1, 30);
-      this.vel.set(1, -0.1);
-    }
 
     // Am I on the ground? (Only need to check if I have moved)
     const belowPos = this.pos.add(new Vector3D([0, -0.1, 0]));
