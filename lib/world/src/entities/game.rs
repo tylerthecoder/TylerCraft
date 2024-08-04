@@ -3,44 +3,44 @@ use super::{
     player::{Player, WorldBlock},
 };
 use crate::{chunk::Chunk, world::World};
-use std::{any::Any, collections::HashMap};
+use std::{any::Any, borrow::BorrowMut, collections::HashMap};
 use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 
 pub trait GameScript {
-    fn update(&self, delta: u8) -> ();
+    fn update(&self, world: &World, ents: &Vec<Box<Player>>, delta: u8) -> GameDiff;
     fn on_diff(&self, diff: &GameDiff) -> ();
 }
 
-#[wasm_bindgen]
-struct JsGameScript {
-    update_jsfn: js_sys::Function,
-}
-
-impl GameScript for JsGameScript {
-    fn update(&self, delta: u8) -> () {
-        let val = JsValue::from(delta);
-        // let res = self.update_jsfn.call1(&val);
-        // print the error
-        // if let Err(e) = res {
-        //     let err = Error::from(e);
-        // };
-    }
-
-    fn on_diff(&self, diff: &GameDiff) -> () {
-        todo!()
-    }
-}
-
-#[wasm_bindgen]
-impl JsGameScript {
-    pub fn make(val: JsValue) -> JsGameScript {
-        let update_fn = js_sys::Reflect::get(&val, &JsValue::from("update")).unwrap();
-
-        JsGameScript {
-            update_jsfn: update_fn.into(),
-        }
-    }
-}
+// #[wasm_bindgen]
+// struct JsGameScript {
+//     update_jsfn: js_sys::Function,
+// }
+//
+// impl GameScript for JsGameScript {
+//     fn update(&self, delta: u8) -> () {
+//         let val = JsValue::from(delta);
+//         // let res = self.update_jsfn.call1(&val);
+//         // print the error
+//         // if let Err(e) = res {
+//         //     let err = Error::from(e);
+//         // };
+//     }
+//
+//     fn on_diff(&self, diff: &GameDiff) -> () {
+//         todo!()
+//     }
+// }
+//
+// #[wasm_bindgen]
+// impl JsGameScript {
+//     pub fn make(val: JsValue) -> JsGameScript {
+//         let update_fn = js_sys::Reflect::get(&val, &JsValue::from("update")).unwrap();
+//
+//         JsGameScript {
+//             update_jsfn: update_fn.into(),
+//         }
+//     }
+// }
 
 pub trait PlayerScript {
     fn name(&self) -> &'static str;
@@ -116,15 +116,12 @@ impl Game {
             script.update(world, &mut player);
         }
 
-        // update all controllers
-        // self.controllers
-        //     .iter_mut()
-        //     .for_each(|controller| controller.update(world));
-
         // send diff to all scripts
-        self.game_scripts.iter().for_each(|script| {
-            script.update(1);
-        });
+
+        for gscript in &mut self.game_scripts {
+            let diff = gscript.update(&self.world, &self.entities, 1);
+            self.diff.combine(diff)
+        }
 
         self.game_scripts.iter().for_each(|script| {
             script.on_diff(&self.diff);
@@ -153,10 +150,6 @@ impl Game {
         self.game_scripts.push(game_script);
     }
 
-    fn add_entity(&mut self, entity: Box<Player>) {
-        self.entities.push(entity);
-    }
-
     pub fn get_entities(&self) -> &Vec<Box<Player>> {
         &self.entities
     }
@@ -183,7 +176,7 @@ pub struct GameDiff {
 }
 
 impl GameDiff {
-    fn empty() -> GameDiff {
+    pub fn empty() -> GameDiff {
         GameDiff {
             new_entities: Vec::new(),
             new_blocks: Vec::new(),
@@ -191,6 +184,14 @@ impl GameDiff {
             removed_entities: Vec::new(),
             removed_blocks: Vec::new(),
         }
+    }
+
+    pub fn combine(&mut self, other: GameDiff) {
+        self.new_entities.extend(other.new_entities);
+        self.new_blocks.extend(other.new_blocks);
+        self.new_chunks.extend(other.new_chunks);
+        self.removed_entities.extend(other.removed_entities);
+        self.removed_blocks.extend(other.removed_blocks);
     }
 
     pub fn add_entity(&mut self, entity: Box<Player>) {
@@ -214,6 +215,7 @@ mod tests {
     use crate::entities::{
         player::Player,
         player_jump_script::{PlayerJumpAction, PlayerJumpScript},
+        sandbox::SandBoxGScript,
     };
 
     use super::*;
@@ -235,7 +237,7 @@ mod tests {
     }
 
     #[test]
-    pub fn basic() {
+    pub fn add_player() {
         let mut game = Game::new();
         let player = Box::new(Player::make(1));
         game.schedule_entity_insert(player);
@@ -247,15 +249,20 @@ mod tests {
         });
     }
 
-    pub fn game_script() {
+    #[test]
+    pub fn generate_chunk() {
         let mut game = Game::new();
         let player = Box::new(Player::make(1));
         game.schedule_entity_insert(player);
         game.update();
 
-        // expect game to have a player in it
-        game.get_entities().iter().for_each(|ent| {
-            assert_eq!(ent.id(), 1);
-        });
+        let sandbox_game_script = Box::new(SandBoxGScript::default());
+        game.add_game_script(sandbox_game_script);
+        game.update();
+
+        // Check that chunks loaded
+        let chunk_count = game.world.chunk_count();
+
+        assert_eq!(chunk_count, 1);
     }
 }

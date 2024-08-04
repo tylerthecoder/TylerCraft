@@ -1,52 +1,79 @@
-use super::{
-    entity::{Entity, EntityAction, EntityId},
-    game::PlayerScript,
-};
+use super::entity::{Entity, EntityAction, EntityId};
 use crate::{
     block::{BlockData, BlockType},
     direction::Direction,
     geometry::rotation::SphericalRotation,
+    positions::{ChunkPos, FineWorldPos, WorldPos},
     world::World,
 };
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::wasm_bindgen;
 
-#[derive(Clone, Serialize, Deserialize)]
-#[wasm_bindgen]
-struct FineWorldPos {
-    x: f32,
-    y: f32,
-    z: f32,
-}
-
-#[wasm_bindgen]
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Copy)]
-struct WorldPos {
-    x: i32,
-    y: i32,
-    z: i32,
-}
-
+// #[derive(Clone, Serialize, Deserialize)]
+// #[wasm_bindgen]
+// struct FineWorldPos {
+//     x: f32,
+//     y: f32,
+//     z: f32,
+// }
+// impl FineWorldPos {
+//     pub fn to_world_pos(&self) -> WorldPos {
+//         WorldPos {
+//             x: self.x.floor() as i32,
+//             y: self.y.floor() as i32,
+//             z: self.z.floor() as i32,
+//         }
+//     }
+// }
+//
+// #[wasm_bindgen]
+// #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Copy)]
+// struct WorldPos {
+//     x: i32,
+//     y: i32,
+//     z: i32,
+// }
 // Convert World pos to Fine World pos
-impl From<WorldPos> for FineWorldPos {
-    fn from(world_pos: WorldPos) -> Self {
-        FineWorldPos {
-            x: world_pos.x as f32,
-            y: world_pos.y as f32,
-            z: world_pos.z as f32,
-        }
-    }
-}
-
-impl From<FineWorldPos> for WorldPos {
-    fn from(fine_pos: FineWorldPos) -> Self {
-        WorldPos {
-            x: fine_pos.x.floor() as i32,
-            y: fine_pos.y.floor() as i32,
-            z: fine_pos.z.floor() as i32,
-        }
-    }
-}
+// impl From<WorldPos> for FineWorldPos {
+//     fn from(world_pos: WorldPos) -> Self {
+//         FineWorldPos {
+//             x: world_pos.x as f32,
+//             y: world_pos.y as f32,
+//             z: world_pos.z as f32,
+//         }
+//     }
+// }
+//
+// impl From<FineWorldPos> for WorldPos {
+//     fn from(fine_pos: FineWorldPos) -> Self {
+//         WorldPos {
+//             x: fine_pos.x.floor() as i32,
+//             y: fine_pos.y.floor() as i32,
+//             z: fine_pos.z.floor() as i32,
+//         }
+//     }
+// }
+//
+// impl From<WorldPos> for ChunkPos {
+//     fn from(world_pos: WorldPos) -> Self {
+//         let x = if world_pos.x < 0 {
+//             ((world_pos.x + 1) / CHUNK_WIDTH as i32) - 1
+//         } else {
+//             world_pos.x / CHUNK_WIDTH as i32
+//         };
+//
+//         let y = if world_pos.z < 0 {
+//             ((world_pos.z + 1) / CHUNK_WIDTH as i32) - 1
+//         } else {
+//             world_pos.z / CHUNK_WIDTH as i32
+//         };
+//
+//         ChunkPos {
+//             x: x as i16,
+//             y: y as i16,
+//         }
+//     }
+// }
 
 #[wasm_bindgen]
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Copy)]
@@ -79,10 +106,10 @@ impl std::ops::Add for Velocity {
 }
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Copy)]
-#[wasm_bindgen]
+// #[wasm_bindgen]
 pub struct WorldBlock {
     pub block_type: BlockType,
-    #[wasm_bindgen(skip)]
+    // #[wasm_bindgen(skip)]
     pub extra_data: BlockData,
     pub world_pos: WorldPos,
 }

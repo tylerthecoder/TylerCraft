@@ -1,14 +1,26 @@
 use super::{
-    player::{Game, GameScript, Player},
+    game::{Game, GameDiff, GameScript},
+    player::Player,
     terrain_gen::TerrainGenerator,
 };
 use crate::{positions::ChunkPos, world::World};
 
-struct SandBoxGScript {
+pub struct SandBoxGScript {
     seed: u32,
     flat_world: bool,
     load_distance: u8,
     terrain_gen: TerrainGenerator,
+}
+
+impl Default for SandBoxGScript {
+    fn default() -> Self {
+        SandBoxGScript {
+            seed: 0,
+            flat_world: false,
+            load_distance: 1,
+            terrain_gen: TerrainGenerator::new(0, false),
+        }
+    }
 }
 
 impl SandBoxGScript {
@@ -17,13 +29,14 @@ impl SandBoxGScript {
             seed,
             flat_world,
             load_distance,
+            terrain_gen: TerrainGenerator::new(seed, flat_world),
         }
     }
 
     fn get_chunks_around_player(&self, player: &Player) -> Vec<ChunkPos> {
-        let poses = vec![];
+        let mut poses = vec![];
 
-        let player_chunk_pos: ChunkPos = player.pos.to_chunk_pos();
+        let player_chunk_pos: ChunkPos = player.pos.to_world_pos().to_chunk_pos();
 
         for i in -(self.load_distance as i16)..self.load_distance as i16 {
             for j in -(self.load_distance as i16)..self.load_distance as i16 {
@@ -35,34 +48,33 @@ impl SandBoxGScript {
         poses
     }
 
-    fn load_chunks_around_player(&self, players: Vec<&Player>, game: &mut Game) -> () {
+    fn load_chunks_around_player(&self, players: &Vec<Box<Player>>, world: &World) -> GameDiff {
         let nearby_unloaded_chunks: Vec<ChunkPos> = players
             .iter()
             .flat_map(|p| self.get_chunks_around_player(p))
-            .filter(|pos| !world.is_chunk_loaded(pos))
+            .filter(|pos| !world.has_chunk(pos))
             .collect();
 
         // only load the first chunk
         let chunk_pos = nearby_unloaded_chunks.first();
 
+        let mut gdiff = GameDiff::empty();
+
         if let Some(chunk_pos) = chunk_pos {
             let chunk = self.terrain_gen.get_chunk(chunk_pos.x, chunk_pos.y);
-            game.schedule_chunk_insert(Box::new(chunk));
+            gdiff.add_chunk(Box::new(chunk));
         }
+
+        gdiff
     }
 }
 
 impl GameScript for SandBoxGScript {
-    fn update(&self, game: &Game, delta: u8) -> () {
-        let ents = game.get_entities();
+    fn update(&self, world: &World, ents: &Vec<Box<Player>>, _delta: u8) -> GameDiff {
+        self.load_chunks_around_player(ents, world)
+    }
 
-        // for ent in ents {
-        //     let mut any_ent = *ent.to_owned().borrow_mut();
-        //
-        //     // downcast to player
-        //     if let Some(player) = any_ent
-        //         // do something with player
-        //     }
-        // }
+    fn on_diff(&self, _diff: &GameDiff) -> () {
+        // on diff
     }
 }

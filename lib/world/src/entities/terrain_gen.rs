@@ -1,7 +1,14 @@
 use crate::{
-    chunk::Chunk,
-    positions::{ChunkPos, WorldPos},
+    block::{BlockData, BlockType, ChunkBlock},
+    chunk::{Chunk, CHUNK_WIDTH},
+    direction::{Direction, Directions, EVERY_FLAT_DIRECTION},
+    positions::{ChunkPos, InnerChunkPos, WorldPos},
+    world::world_block::WorldBlock,
 };
+use noise::{NoiseFn, Perlin};
+use rand::{rngs::StdRng, SeedableRng};
+use rand_distr::{Distribution, Uniform};
+use serde::{Deserialize, Serialize};
 
 // remove all the positions that are too close to each other in the chunk
 fn remove_close_positions<'a, I, J>(pos_iter: I, checking_pos_iter: J) -> Vec<WorldPos>
@@ -74,7 +81,7 @@ impl TreeLocator {
                     z: self.world_z,
                 },
                 block_type: BlockType::Wood,
-                extra_data: block::BlockData::None,
+                extra_data: BlockData::None,
             })
             .collect::<Vec<WorldBlock>>();
 
@@ -92,8 +99,7 @@ impl TreeLocator {
             blocks.push(WorldBlock {
                 world_pos: pos,
                 block_type: BlockType::Leaf,
-
-                extra_data: block::BlockData::None,
+                extra_data: BlockData::None,
             });
         }
 
@@ -110,7 +116,7 @@ impl TreeRandomSpreadGenerator {
         &self,
         chunk_pos: ChunkPos,
     ) -> Box<dyn Iterator<Item = WorldPos>> {
-        let chunk_seed = self.seed + (chunk_pos.x as u64 * 1000) + (chunk_pos.y as u64 * 1000000);
+        let chunk_seed = self.seed + chunk_pos.to_id();
         let mut rng: StdRng = SeedableRng::seed_from_u64(chunk_seed);
         let dist = Uniform::new(0, CHUNK_WIDTH);
 
@@ -236,7 +242,7 @@ impl FlowerLocator {
             )
             .to_inner_chunk_pos(),
             block_type: BlockType::RedFlower,
-            extra_data: block::BlockData::None,
+            extra_data: BlockData::None,
         }
     }
 }
@@ -244,7 +250,7 @@ impl FlowerLocator {
 impl FlowerGetter {
     fn get_flowers(self: &Self, chunk_pos: &ChunkPos) -> Vec<FlowerLocator> {
         // generate 15-25 random flowers per chunk
-        let chunk_seed = self.seed + (chunk_pos.x as u64 * 1000) + (chunk_pos.y as u64 * 1000000);
+        let chunk_seed = self.seed + chunk_pos.to_id();
         let mut rng: StdRng = SeedableRng::seed_from_u64(chunk_seed);
         let dist = Uniform::new(0, CHUNK_WIDTH);
         let flower_count_getter = Uniform::new(15, 25);
@@ -350,7 +356,7 @@ impl BasicChunkGetter {
                     let block = ChunkBlock {
                         pos: InnerChunkPos::new(x, y, z),
                         block_type: BlockType::Stone,
-                        extra_data: block::BlockData::None,
+                        extra_data: BlockData::None,
                     };
 
                     chunk.add_block(block);
@@ -359,7 +365,7 @@ impl BasicChunkGetter {
                 let block = ChunkBlock {
                     pos: InnerChunkPos::new(x, height, z),
                     block_type: BlockType::Grass,
-                    extra_data: block::BlockData::None,
+                    extra_data: BlockData::None,
                 };
                 chunk.add_block(block);
             }
@@ -379,7 +385,7 @@ impl FlatWorldChunkGetter {
                 let block = ChunkBlock {
                     pos: InnerChunkPos::new(x, 0, z),
                     block_type: BlockType::Grass,
-                    extra_data: block::BlockData::None,
+                    extra_data: BlockData::None,
                 };
                 chunk.add_block(block);
             }
@@ -389,16 +395,16 @@ impl FlatWorldChunkGetter {
 }
 
 #[derive(Serialize, Deserialize)]
-#[wasm_bindgen]
+// #[wasm_bindgen]
 struct ParkorChunkGetter {
-    #[wasm_bindgen(skip)]
+    // #[wasm_bindgen(skip)]
     pub current_blocks: Vec<WorldBlock>,
 
     // how far away the blocks are generated from requested chunks
     pub load_distance: u8,
 }
 
-#[wasm_bindgen]
+// #[wasm_bindgen]
 impl ParkorChunkGetter {
     pub fn new() -> ParkorChunkGetter {
         ParkorChunkGetter {
@@ -431,14 +437,14 @@ impl ParkorChunkGetter {
             WorldBlock {
                 world_pos: next_pos,
                 block_type: BlockType::Stone,
-                extra_data: block::BlockData::None,
+                extra_data: BlockData::None,
             }
         } else {
             // return the first block
             WorldBlock {
                 world_pos: WorldPos::new(0, 0, 0),
                 block_type: BlockType::Stone,
-                extra_data: block::BlockData::None,
+                extra_data: BlockData::None,
             }
         }
     }
@@ -477,15 +483,15 @@ impl ParkorChunkGetter {
     }
 }
 
-#[wasm_bindgen]
+// #[wasm_bindgen]
 pub struct TerrainGenerator {
     pub seed: u32,
     pub flat_world: bool,
 }
 
-#[wasm_bindgen]
+// #[wasm_bindgen]
 impl TerrainGenerator {
-    #[wasm_bindgen(constructor)]
+    // #[wasm_bindgen(constructor)]
     pub fn new(seed: u32, flat_world: bool) -> TerrainGenerator {
         TerrainGenerator { seed, flat_world }
     }
