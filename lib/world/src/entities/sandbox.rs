@@ -1,5 +1,5 @@
 use super::{
-    game::{Game, GameDiff, GameScript},
+    game::{Game, GameDiff, GameSchedule, GameScript},
     player::Player,
     terrain_gen::TerrainGenerator,
 };
@@ -48,7 +48,7 @@ impl SandBoxGScript {
         poses
     }
 
-    fn load_chunks_around_player(&self, players: &Vec<Box<Player>>, world: &World) -> GameDiff {
+    fn load_chunks_around_player(&self, players: &Vec<Box<Player>>, world: &World) -> GameSchedule {
         let nearby_unloaded_chunks: Vec<ChunkPos> = players
             .iter()
             .flat_map(|p| self.get_chunks_around_player(p))
@@ -58,11 +58,11 @@ impl SandBoxGScript {
         // only load the first chunk
         let chunk_pos = nearby_unloaded_chunks.first();
 
-        let mut gdiff = GameDiff::empty();
+        let mut gdiff = GameSchedule::empty();
 
         if let Some(chunk_pos) = chunk_pos {
             let chunk = self.terrain_gen.get_chunk(chunk_pos.x, chunk_pos.y);
-            gdiff.add_chunk(Box::new(chunk));
+            gdiff.add_chunk(chunk);
         }
 
         gdiff
@@ -70,11 +70,11 @@ impl SandBoxGScript {
 }
 
 impl GameScript for SandBoxGScript {
-    fn update(&self, world: &World, ents: &Vec<Box<Player>>, _delta: u8) -> GameDiff {
+    fn update(&self, world: &World, ents: &Vec<Box<Player>>, _delta: u8) -> GameSchedule {
         self.load_chunks_around_player(ents, world)
     }
 
-    fn on_diff(&self, _diff: &GameDiff) -> () {
+    fn on_diff(&self, _diff: GameDiff) -> () {
         // on diff
     }
 }

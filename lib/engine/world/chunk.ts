@@ -7,15 +7,6 @@ export interface ILookingAtData {
   dist: number;
 }
 
-export interface ISerializedChunk {
-  position: {
-    x: number;
-    y: number;
-  };
-  blocks: BlockType[];
-  block_data: ("None" | { Image: string })[];
-}
-
 export const getChunkId = (serChunk: ISerializedChunk) => {
   const vec = new Vector2D([serChunk.position.x, serChunk.position.y]);
   return vec.toIndex();

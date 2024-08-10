@@ -1,4 +1,4 @@
-use crate::vec::Vec3;
+use crate::{entities::player::Velocity, vec::Vec3};
 use serde::{Deserialize, Serialize};
 use std::{f32::consts::PI, ops::Add};
 
@@ -50,7 +50,7 @@ impl Into<Vec3<f32>> for SphericalRotation {
     /**
      * Converts a spherical rotation into a unit vector.
      */
-    fn into(self) -> Vec3<f32> {
+    fn into(self) -> Velocity {
         let phi_offset = (PI / 2.0) - self.phi;
         let theta_offset = self.theta + (PI / 2.0);
 

@@ -41,7 +41,7 @@ where
     }
 }
 
-impl<T: Add<Output = T> + Clone + Copy> Vec2<T> {
+impl<T: Add<Output = T> + Clone + Copy + PartialOrd + Into<i64>> Vec2<T> {
     pub fn new(x: T, y: T) -> Vec2<T> {
         Vec2 { x, y }
     }
@@ -114,7 +114,7 @@ impl<T: Add<Output = T> + Clone + Copy> Vec2<T> {
         let diff_squared = diff * diff;
         let sum = diff_squared.sum();
         // take the sqrt of sum
-        let sum_f32: f32 = sum.into();
+        let sum_f32: f32 = sum.into() as f32;
         sum_f32.sqrt()
     }
 
@@ -134,6 +134,7 @@ impl<T: Add<Output = T> + Clone + Copy> Vec2<T> {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[repr(C)]
 pub struct Vec3<T> {
     pub x: T,
     pub y: T,

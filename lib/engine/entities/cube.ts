@@ -9,11 +9,6 @@ export type CubeDto = {
   pos: IDim;
 };
 
-export type Cube = {
-  type: BlockType;
-  pos: Vector3D;
-};
-
 export type ISerializedCube = {
   block_type: BlockType;
   extra_data: "None";

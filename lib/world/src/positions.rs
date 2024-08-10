@@ -1,5 +1,5 @@
 use crate::{
-    chunk::CHUNK_WIDTH,
+    chunk::{ChunkId, CHUNK_WIDTH},
     vec::{Vec2, Vec3},
 };
 
@@ -75,18 +75,44 @@ impl ChunkPos {
     }
 
     pub fn to_id(&self) -> u64 {
-        let mut x: u64 = 2 * (self.x.abs() as u64);
-        let mut y: u64 = 2 * (self.y.abs() as u64);
-        if self.x < 0 {
-            x += 1
-        }
-        if self.y < 0 {
-            y += 1
-        }
-        let id = ((x + y) * (x + y + 1) / 2) + y;
+        let a = if self.x >= 0 {
+            (2 * self.x as i64) as u64
+        } else {
+            (-2 * self.x as i64 - 1) as u64
+        };
 
-        id
+        let b = if self.y >= 0 {
+            (2 * self.y as i64) as u64
+        } else {
+            (-2 * self.y as i64 - 1) as u64
+        };
+
+        ((a + b) * (a + b + 1)) / 2 + a
     }
+
+    pub fn from_id(z: u64) -> ChunkPos {
+        let w = (((8 * z + 1) as f64).sqrt() - 1.0) / 2.0;
+        let w = w.floor() as u64;
+        let t = (w * w + w) / 2;
+        let a = (z - t) as i32;
+        let b = (w as i32) - a;
+
+        let x = if a % 2 == 0 {
+            (a / 2) as i16
+        } else {
+            (-(a + 1) / 2) as i16
+        };
+
+        let y = if b % 2 == 0 {
+            (b / 2) as i16
+        } else {
+            (-(b + 1) / 2) as i16
+        };
+
+        ChunkPos { x, y }
+    }
+
+
 }
 
 impl std::ops::Add<ChunkPos> for ChunkPos {

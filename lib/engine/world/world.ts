@@ -16,12 +16,6 @@ import { WorldModule, WorldModuleTypes } from "../modules.js";
 import { ChunkMesh } from "./chunkMesh.js";
 import { CameraRay } from "../index.js";
 
-type ISerializedChunkHolder = ISerializedChunk[];
-
-export interface ISerializedWorld {
-  chunks: ISerializedChunkHolder;
-}
-
 export class World {
   static make(data?: ISerializedWorld): World {
     return WorldModule.createWorld(data);

@@ -1,6 +1,6 @@
 use super::World;
 use crate::{
-    chunk::Chunk,
+    chunk::{Chunk, ChunkId},
     direction::Directions,
     geometry::ray::Ray,
     world::{world_block::WorldBlock, ChunkPos, WorldPos},
@@ -68,11 +68,12 @@ impl World {
         })
     }
 
-    pub fn get_chunk_mesh_wasm(&self, val: JsValue) -> Result<JsValue, Error> {
-        from_value(val).and_then(|pos: ChunkPos| {
-            let mesh = self.get_chunk_mesh(&pos).map_err(Self::convert_error)?;
+    pub fn get_chunk_mesh_wasm(&self, chunk_id: ChunkId) -> Result<JsValue, Error> {
+        let chunk_pos = ChunkPos::from_id(chunk_id);
 
-            let wasm_chunk_mesh = mesh
+        let mesh = self.get_chunk_mesh(&chunk_pos).map_err(Self::convert_error)?;
+
+        let wasm_chunk_mesh = mesh
                 .into_iter()
                 .map(|(world_pos, directions)| {
                     let block = self.get_block(&world_pos);
@@ -80,8 +81,7 @@ impl World {
                 })
                 .collect::<Vec<(WorldBlock, Directions)>>();
 
-            to_value(&wasm_chunk_mesh)
-        })
+        to_value(&wasm_chunk_mesh)
     }
 
     pub fn is_block_loaded_wasm(&self, val: JsValue) -> Result<JsValue, Error> {

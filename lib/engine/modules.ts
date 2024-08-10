@@ -1,14 +1,7 @@
 import * as WorldWasm from "@craft/rust-world";
 import * as TerrainGenWasm from "@craft/terrain-gen";
-import { Vector2D } from "./utils/vector.js";
-import {
-  GameAction,
-  IChunkReader,
-  ISerializedChunk,
-  ISerializedWorld,
-  SandboxGScript,
-  World,
-} from "./index.js";
+import { Vector2D, Vector3D } from "./utils/vector.js";
+import { World } from "./index.js";
 export * as WorldModuleTypes from "@craft/rust-world";
 
 async function loadWasmModule(module: any, name = "") {
@@ -17,27 +10,107 @@ async function loadWasmModule(module: any, name = "") {
   console.log(`Loaded Wasm Module: ${name} 🎉`);
   return loadedModule;
 }
+export interface ISerializedChunk {
+  position: {
+    x: number;
+    y: number;
+  };
+  blocks: WorldWasm.BlockType[];
+  block_data: ("None" | { Image: string })[];
+}
 
-(window as any).test = async () => {
-  await WorldModule.load();
-  const game = WorldModule.createGame();
-  const player = WorldModule.createPlayer(Number(1));
-  game.addPlayer(player);
+type ISerializedChunkHolder = ISerializedChunk[];
+
+export interface ISerializedWorld {
+  chunks: ISerializedChunkHolder;
+}
+
+export type SerializedGame = {
+  world: ISerializedWorld;
+  players: Player[];
+};
+
+export type PlayerAction = WorldWasm.PlayerJumpAction;
+
+export type GameDiff = {
+  updated_entities: number[];
+  updated_chunks: number[];
+};
+
+export type GameScript = {
+  onDiff: (diff: GameDiff) => void;
+};
+
+export type Cube = {
+  type: WorldWasm.BlockType;
+  pos: Vector3D;
+};
+
+export type ChunkMesh = {
+  mesh: Array<{ block: Cube; faces: WorldWasm.Direction[] }>;
+  chunkPos: { x: number; y: number };
+};
+
+export type Player = {
+  speed: number;
+  max_speed: number;
+  gravity: number;
+  uid: number;
+  pos: {
+    x: number;
+    y: number;
+    z: number;
+  };
+  dim: {
+    x: number;
+    y: number;
+    z: number;
+  };
+  rot: {
+    theta: number;
+    phi: number;
+  };
+  vel: {
+    x: number;
+    y: number;
+    z: number;
+  };
+  is_flying: boolean;
+  on_ground: boolean;
+  moving_directions: WorldWasm.Direction[];
 };
 
 export class GameWrapper {
   constructor(private game: WorldWasm.Game) {}
 
-  handleAction(action: GameAction) {
+  static createGame(): GameWrapper {
+    const game = WorldWasm.Game.new_wasm();
+    return new GameWrapper(game);
+  }
+
+  makeJumpAction(entityId: number) {
+    return WorldWasm.PlayerJumpAction.make_wasm(entityId);
+  }
+
+  handleAction(action: WorldWasm.EntityAction) {
     this.game.handle_action_wasm(action);
   }
 
-  addPlayer(player: WorldWasm.Player) {
-    this.game.add_entity_wasm(player);
+  makeGameScript(script: GameScript) {
+    return WorldWasm.WasmGameScript.make(script);
   }
-}
 
-export type PlayerAction = "Jump" | { Move: WorldWasm.Direction[] };
+  addGameScript(script: WorldWasm.WasmGameScript) {
+    this.game.add_game_script_wasm(script);
+  }
+
+  getChunkMeshFromChunkId(chunkId: number): ChunkMesh {
+    const big = BigInt(chunkId);
+    return this.game.get_chunk_mesh_from_chunk_id(big);
+  }
+
+  handlePlayerAction(action: PlayerAction) {}
+}
 
 // Wrapper class for world logic
 class WorldModuleClass {
@@ -60,11 +133,6 @@ class WorldModuleClass {
     const wasmWorld = WorldModule.module.World.new_wasm();
     const world = new World(wasmWorld, data);
     return world;
-  }
-
-  public createGame(): GameWrapper {
-    const game = WorldModule.module.Game.new();
-    return new GameWrapper(game);
   }
 
   public createPlayer(uid: number) {

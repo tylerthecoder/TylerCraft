@@ -1,4 +1,6 @@
 use std::any::Any;
+use serde::{Deserialize, Serialize};
+use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 
 use crate::world::World;
 
@@ -9,8 +11,29 @@ pub trait Entity: Any {
     fn id(&self) -> u32;
 }
 
-pub trait EntityAction: Any {
-    fn name(&self) -> &'static str;
-    fn entityid(&self) -> EntityId;
-    fn data(&self) -> Box<dyn Any>;
+
+#[wasm_bindgen]
+pub struct EntityAction {
+    pub entity_id: EntityId,
+    #[wasm_bindgen(skip)]
+    pub name: &'static str,
+    #[wasm_bindgen(skip)]
+    pub data: Box<dyn Any>,
+}
+
+
+pub mod wasm {
+    use wasm_bindgen::prelude::*;
+
+
+    // #[wasm_bindgen]
+    // impl EntityAction {
+
+
+
+
+    // }
+
+
+
 }

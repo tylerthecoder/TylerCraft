@@ -1,51 +1,24 @@
 use super::{
     entity::{Entity, EntityAction, EntityId},
-    player::{Player, WorldBlock},
+    player::Player,
 };
-use crate::{chunk::Chunk, world::World};
+use crate::{
+    chunk::{Chunk, ChunkId},
+    world::{world_block::WorldBlock, World},
+};
+use serde::{Deserialize, Serialize};
 use std::{any::Any, borrow::BorrowMut, collections::HashMap};
 use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 
 pub trait GameScript {
-    fn update(&self, world: &World, ents: &Vec<Box<Player>>, delta: u8) -> GameDiff;
-    fn on_diff(&self, diff: &GameDiff) -> ();
+    fn update(&self, world: &World, ents: &Vec<Box<Player>>, delta: u8) -> GameSchedule;
+    fn on_diff(&self, diff: GameDiff) -> ();
 }
-
-// #[wasm_bindgen]
-// struct JsGameScript {
-//     update_jsfn: js_sys::Function,
-// }
-//
-// impl GameScript for JsGameScript {
-//     fn update(&self, delta: u8) -> () {
-//         let val = JsValue::from(delta);
-//         // let res = self.update_jsfn.call1(&val);
-//         // print the error
-//         // if let Err(e) = res {
-//         //     let err = Error::from(e);
-//         // };
-//     }
-//
-//     fn on_diff(&self, diff: &GameDiff) -> () {
-//         todo!()
-//     }
-// }
-//
-// #[wasm_bindgen]
-// impl JsGameScript {
-//     pub fn make(val: JsValue) -> JsGameScript {
-//         let update_fn = js_sys::Reflect::get(&val, &JsValue::from("update")).unwrap();
-//
-//         JsGameScript {
-//             update_jsfn: update_fn.into(),
-//         }
-//     }
-// }
 
 pub trait PlayerScript {
     fn name(&self) -> &'static str;
     fn update(&mut self, world: &World, player: &mut Player);
-    fn handle_action(&mut self, action: Box<dyn EntityAction>);
+    fn handle_action(&mut self, action: EntityAction);
 }
 
 type ScriptId = u32;
@@ -57,10 +30,9 @@ pub struct Game {
     game_scripts: Vec<Box<dyn GameScript>>,
     player_scripts: HashMap<ScriptId, Box<dyn PlayerScript>>,
     player_scripts_entity_map: HashMap<ScriptId, EntityId>,
-    diff: GameDiff,
+    schedule: GameSchedule,
 }
 
-// #[wasm_bindgen]
 impl Game {
     pub fn new() -> Game {
         Game {
@@ -69,7 +41,7 @@ impl Game {
             game_scripts: Vec::new(),
             player_scripts: HashMap::new(),
             player_scripts_entity_map: HashMap::new(),
-            diff: GameDiff::empty(),
+            schedule: GameSchedule::empty(),
         }
     }
 
@@ -79,14 +51,14 @@ impl Game {
         self.player_scripts_entity_map.insert(id, entity_id);
     }
 
-    pub fn handle_action(&mut self, action: Box<dyn EntityAction>) {
+    pub fn handle_action(&mut self, action: EntityAction) {
         for (id, script) in self.player_scripts.iter_mut() {
             let script_entity_id = *self
                 .player_scripts_entity_map
                 .get(id)
                 .expect("Script not found");
 
-            if action.entityid() == script_entity_id {
+            if action.entity_id == script_entity_id {
                 script.handle_action(action);
                 break;
             }
@@ -120,27 +92,27 @@ impl Game {
 
         for gscript in &mut self.game_scripts {
             let diff = gscript.update(&self.world, &self.entities, 1);
-            self.diff.combine(diff)
+            self.schedule.combine(diff)
         }
 
         self.game_scripts.iter().for_each(|script| {
-            script.on_diff(&self.diff);
+            script.on_diff(self.schedule.to_game_diff());
         });
 
         // Apply diff to game
         // Add all new entities
-        let new_ents = std::mem::take(&mut self.diff.new_entities);
+        let new_ents = std::mem::take(&mut self.schedule.new_entities);
         self.entities.extend(new_ents);
 
         // Remove entities
-        for entid in self.diff.removed_entities.clone() {
+        for entid in self.schedule.removed_entities.clone() {
             self.entities.retain(|entity| entity.id() != entid);
         }
 
         // add chunks to world
-        let new_chunks = std::mem::take(&mut self.diff.new_chunks);
+        let new_chunks = std::mem::take(&mut self.schedule.new_chunks);
         for chunk in new_chunks {
-            self.world.insert_chunk(*chunk);
+            self.world.insert_chunk(chunk);
         }
     }
 }
@@ -158,26 +130,32 @@ impl Game {
         self.entities.iter().find(|entity| entity.id() == id)
     }
 
-    pub fn schedule_chunk_insert(&mut self, chunk: Box<Chunk>) {
-        self.diff.new_chunks.push(chunk)
+    pub fn schedule_chunk_insert(&mut self, chunk: Chunk) {
+        self.schedule.new_chunks.push(chunk)
     }
 
     pub fn schedule_entity_insert(&mut self, entity: Box<Player>) {
-        self.diff.new_entities.push(entity);
+        self.schedule.new_entities.push(entity);
     }
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct GameDiff {
+    pub updated_entities: Vec<EntityId>,
+    pub updated_chunks: Vec<ChunkId>,
+}
+
+pub struct GameSchedule {
     pub new_entities: Vec<Box<Player>>,
     pub new_blocks: Vec<WorldBlock>,
-    pub new_chunks: Vec<Box<Chunk>>,
+    pub new_chunks: Vec<Chunk>,
     pub removed_entities: Vec<EntityId>,
     pub removed_blocks: Vec<WorldBlock>,
 }
 
-impl GameDiff {
-    pub fn empty() -> GameDiff {
-        GameDiff {
+impl GameSchedule {
+    pub fn empty() -> GameSchedule {
+        GameSchedule {
             new_entities: Vec::new(),
             new_blocks: Vec::new(),
             new_chunks: Vec::new(),
@@ -186,7 +164,18 @@ impl GameDiff {
         }
     }
 
-    pub fn combine(&mut self, other: GameDiff) {
+    pub fn to_game_diff(&self) -> GameDiff {
+        let mut updated_entities: Vec<EntityId> =
+            self.new_entities.iter().map(|entity| entity.id()).collect();
+        updated_entities.extend(self.removed_entities.iter().map(|entity_id| entity_id));
+        let updated_chunks = self.new_chunks.iter().map(|chunk| chunk.get_id()).collect();
+        GameDiff {
+            updated_entities,
+            updated_chunks,
+        }
+    }
+
+    pub fn combine(&mut self, other: GameSchedule) {
         self.new_entities.extend(other.new_entities);
         self.new_blocks.extend(other.new_blocks);
         self.new_chunks.extend(other.new_chunks);
@@ -202,7 +191,7 @@ impl GameDiff {
         self.new_blocks.push(block);
     }
 
-    pub fn add_chunk(&mut self, chunk: Box<Chunk>) {
+    pub fn add_chunk(&mut self, chunk: Chunk) {
         self.new_chunks.push(chunk);
     }
 
@@ -229,7 +218,7 @@ mod tests {
         game.update();
         game.add_script(1, jump_script);
         game.update();
-        let jump_action = Box::new(PlayerJumpAction { entityid: 1 });
+        let jump_action = PlayerJumpAction::new(1);
         game.handle_action(jump_action);
         game.update();
         let player = game.get_entity_by_id(1).unwrap();
@@ -262,7 +251,85 @@ mod tests {
 
         // Check that chunks loaded
         let chunk_count = game.world.chunk_count();
-
         assert_eq!(chunk_count, 1);
+
+        game.update();
+
+        let chunk_count = game.world.chunk_count();
+        assert_eq!(chunk_count, 2);
+    }
+}
+
+pub mod wasm {
+    use std::{cell::RefCell, rc::Rc};
+
+    use super::{Game, GameDiff, GameSchedule, GameScript};
+    use crate::{
+        chunk::{chunk_mesh::ChunkMesh, Chunk, ChunkId}, entities::{entity::{EntityAction, EntityId}, player::Player}, world::World
+    };
+    use serde_wasm_bindgen::Error;
+    use wasm_bindgen::prelude::*;
+
+    #[wasm_bindgen]
+    impl Game {
+        pub fn new_wasm() -> Game {
+            Game::new()
+        }
+
+        pub fn make_player_wasm() -> Player {
+            Player::make(1)
+        }
+
+        pub fn handle_action_wasm(&mut self, action: EntityAction) {
+            self.handle_action(action);
+        }
+
+        pub fn schedule_chunk_insert_wasm(&mut self, chunk: Chunk) {
+            self.schedule_chunk_insert(chunk);
+        }
+
+        pub fn add_game_script_wasm(&mut self, script: WasmGameScript) {
+            self.add_game_script(Box::new(script));
+        }
+
+        pub fn get_chunk_mesh_from_chunk_id(&self, chunk_id: ChunkId) -> Result<JsValue, Error> {
+            self.world.get_chunk_mesh_wasm(chunk_id)
+        }
+
+        pub fn get_player_wasm(&self, player_id: EntityId) -> Result<JsValue, Error> {
+            let maybe_player = self.get_entity_by_id(player_id);
+            if let Some(player) = maybe_player {
+                let player_js = serde_wasm_bindgen::to_value(&player).unwrap();
+                Ok(player_js)
+            } else {
+                Err(Error::new("Player not found"))
+            }
+        }
+    }
+
+    #[wasm_bindgen]
+    pub struct WasmGameScript {
+        on_diff_jsfn: js_sys::Function,
+    }
+
+    #[wasm_bindgen]
+    impl WasmGameScript {
+        pub fn make(val: JsValue) -> WasmGameScript {
+            let on_diff_jsfn = js_sys::Reflect::get(&val, &JsValue::from("on_diff")).unwrap();
+            WasmGameScript {
+                on_diff_jsfn: on_diff_jsfn.into(),
+            }
+        }
+    }
+
+    impl GameScript for WasmGameScript {
+        fn update(&self, world: &World, ents: &Vec<Box<Player>>, delta: u8) -> GameSchedule {
+            GameSchedule::empty()
+        }
+
+        fn on_diff(&self, diff: GameDiff) -> () {
+            let val = serde_wasm_bindgen::to_value(&diff).unwrap();
+            self.on_diff_jsfn.call1(&val, &val);
+        }
     }
 }

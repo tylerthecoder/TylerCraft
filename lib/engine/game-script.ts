@@ -12,7 +12,7 @@ export abstract class GameScript<
 
   config?: Config;
 
-  constructor(protected game: Game, ..._args: unknown[]) {}
+  constructor(protected game: GameWrapper, ..._args: unknown[]) {}
 
   setConfig?(config: Config): void;
 
@@ -29,5 +29,5 @@ export abstract class GameScript<
 
   onRemovedEntity?(entity: Entity): void;
 
-  onChunkUpdate?(chunkId: string): void;
+  onChunkUpdate?(chunkId: number): void;
 }

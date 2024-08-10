@@ -20,6 +20,8 @@ interface ITextStyle {
 }
 "#;
 
+pub type ChunkId = u64;
+
 pub const CHUNK_WIDTH: i16 = 16;
 pub const CHUNK_HEIGHT: i16 = 64;
 
@@ -70,6 +72,10 @@ impl Chunk {
             position,
             dirty_blocks: Vec::new(),
         }
+    }
+
+    pub fn get_id(&self) -> ChunkId {
+        self.position.to_id()
     }
 
     pub fn get_all_blocks(&self) -> Vec<ChunkBlock> {

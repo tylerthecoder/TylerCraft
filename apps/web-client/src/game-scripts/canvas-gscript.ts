@@ -18,6 +18,7 @@ import { ChunkRenderer } from "../renders/chunkRender";
 import { BlockType } from "@craft/rust-world";
 import { PlayerRenderer } from "../renders/playerRender";
 import { SphereRenderer } from "../renders/sphereRender";
+import { GameDiff, GameWrapper } from "@craft/engine/modules";
 
 type Config = {
   renderDistance: number;
@@ -37,7 +38,7 @@ export class CanvasGameScript extends GameScript<Config> {
 
   private renderers: Renderer[] = [];
   private entityRenderers: Map<string, Renderer> = new Map();
-  private chunkRenderers: Map<string, ChunkRenderer> = new Map();
+  private chunkRenderers: Map<number, ChunkRenderer> = new Map();
   shouldRenderMainPlayer = false;
 
   isSpectating = false;
@@ -49,7 +50,7 @@ export class CanvasGameScript extends GameScript<Config> {
   mainPlayer: Player;
 
   constructor(
-    game: Game,
+    game: GameWrapper,
     private webGlGScript: WebGlGScript,
     private basic: BasicGScript
   ) {
@@ -79,6 +80,17 @@ export class CanvasGameScript extends GameScript<Config> {
     this.camera = this.webGlGScript.isXr
       ? new XrCamera(this.mainPlayer)
       : new EntityCamera(this.mainPlayer);
+  }
+
+  onDiff(diff: GameDiff) {
+    for (const entityId of diff.updated_entities) {
+      const entity = this.game.entities.get(entityId);
+      this.onNewEntity(entity);
+    }
+
+    for (const chunkId of diff.updated_chunks) {
+      this.onChunkUpdate(chunkId);
+    }
   }
 
   getFilter(camera: Camera): Vector3D | null {
@@ -273,15 +285,10 @@ export class CanvasGameScript extends GameScript<Config> {
     this.entityRenderers.delete(entity.uid);
   }
 
-  onChunkUpdate(chunkId: string): void {
+  onChunkUpdate(chunkId: number): void {
     console.log("CanvasGameScript: Chunk update", chunkId);
-    const chunkPos = World.chunkIdToChunkPos(chunkId);
-    const chunkMesh = this.game.world.getChunkMesh(chunkPos);
-    const chunkRenderer = new ChunkRenderer(
-      this.webGlGScript,
-      chunkMesh,
-      chunkPos
-    );
+    const chunkMesh = this.game.getChunkMeshFromChunkId(chunkId);
+    const chunkRenderer = new ChunkRenderer(this.webGlGScript, chunkMesh);
     chunkRenderer.getBufferData();
     this.chunkRenderers.set(chunkId, chunkRenderer);
   }

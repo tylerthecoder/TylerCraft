@@ -3,6 +3,8 @@ use crate::{
     plane::WorldPlane,
     positions::{ChunkPos, InnerChunkPos, WorldPos},
 };
+use js_sys::wasm_bindgen;
+    use wasm_bindgen::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 

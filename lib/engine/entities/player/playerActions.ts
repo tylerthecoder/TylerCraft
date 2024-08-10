@@ -6,7 +6,7 @@ import { Game, IDim, Vector3D } from "../../index.js";
 import { MessageDto, MessageHolder } from "../../messageHelpers.js";
 import CubeHelpers from "../cube.js";
 import { Player } from "./player.js";
-import { PlayerAction } from "../../modules.js";
+import { GameWrapper, PlayerAction } from "../../modules.js";
 
 export enum PlayerActionType {
   Jump = "jump",
@@ -81,7 +81,7 @@ export type PlayerActionDto = MessageDto<PlayerActionType, PlayerActionData>;
 // }
 
 export class PlayerActionService {
-  constructor(private game: Game) {}
+  constructor(private game: GameWrapper) {}
 
   private playerActions = new Map<
     string,

@@ -4,7 +4,6 @@ import {
   arraySub,
   getBlockData,
   IDim,
-  ChunkMesh,
   Vector3D,
   Vector2D,
 } from "@craft/engine";
@@ -12,16 +11,16 @@ import TextureMapper from "../textureMapper";
 import { BlockShape, BlockType } from "@craft/rust-world";
 import ShapeBuilder from "../services/shape-builder";
 import { WebGlGScript } from "../game-scripts/webgl-gscript";
+import { ChunkMesh } from "@craft/engine/modules";
 
 export class ChunkRenderer extends Renderer {
   private otherRenders: Renderer[] = [];
+  public position: Vector2D;
 
-  constructor(
-    public webGlGScript: WebGlGScript,
-    public chunkMesh: ChunkMesh,
-    public position: Vector2D
-  ) {
+  constructor(public webGlGScript: WebGlGScript, public chunkMesh: ChunkMesh) {
     super(webGlGScript);
+
+    this.position = new Vector2D([chunkMesh.chunkPos.x, chunkMesh.chunkPos.y]);
     this.setActiveTexture(webGlGScript.textureAtlas);
     this.getBufferData();
   }

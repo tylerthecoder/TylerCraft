@@ -1,28 +1,28 @@
 use super::{
-    entity::{EntityAction, EntityId},
+    entity::{self, EntityAction, EntityId},
     game::PlayerScript,
     player::{Player, Velocity},
 };
 use crate::world::World;
-use std::any::Any;
+use wasm_bindgen::prelude::wasm_bindgen;
 
+#[wasm_bindgen]
 pub struct PlayerJumpAction {
     pub entityid: EntityId,
 }
 
-impl EntityAction for PlayerJumpAction {
-    fn name(&self) -> &'static str {
-        "Jump-Action"
-    }
-
-    fn entityid(&self) -> EntityId {
-        self.entityid
-    }
-    fn data(&self) -> Box<dyn std::any::Any> {
-        Box::new(())
+impl PlayerJumpAction {
+    pub fn new(entity_id: EntityId) -> EntityAction {
+        EntityAction {
+            entity_id: entity_id,
+            name: "Jump-Action",
+            data: Box::new(()),
+        }
     }
 }
 
+
+#[wasm_bindgen]
 pub struct PlayerJumpScript {
     jump_speed: f32,
     is_jumping: bool,
@@ -77,11 +77,29 @@ impl PlayerScript for PlayerJumpScript {
         println!("Player velocity: {:?}", player.vel);
     }
 
-    fn handle_action(&mut self, action: Box<dyn EntityAction>) {
+    fn handle_action(&mut self, action: EntityAction) {
         println!("Handling action");
 
-        if action.name() == "Jump-Action" {
+        if action.name == "Jump-Action" {
             self.jump();
         }
     }
+}
+
+
+pub mod wasm {
+    use wasm_bindgen::prelude::*;
+    use crate::entities::entity::{EntityAction, EntityId};
+    use super::{PlayerJumpAction, PlayerJumpScript};
+
+    #[wasm_bindgen]
+    impl PlayerJumpAction {
+        // make jump action
+        pub fn make_wasm(entity_id: EntityId) -> EntityAction {
+            PlayerJumpAction::new(entity_id)
+        }
+
+
+    }
+
 }
