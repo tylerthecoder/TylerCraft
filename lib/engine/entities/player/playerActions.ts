@@ -6,7 +6,7 @@ import { Game, IDim, Vector3D } from "../../index.js";
 import { MessageDto, MessageHolder } from "../../messageHelpers.js";
 import CubeHelpers from "../cube.js";
 import { Player } from "./player.js";
-import { GameWrapper, PlayerAction } from "../../modules.js";
+import { EntityAction, GameWrapper, PlayerAction } from "../../modules.js";
 
 export enum PlayerActionType {
   Jump = "jump",
@@ -84,13 +84,13 @@ export class PlayerActionService {
   constructor(private game: GameWrapper) {}
 
   private playerActions = new Map<
-    string,
-    Array<(action: PlayerAction) => void>
+    number,
+    Array<(action: EntityAction) => void>
   >();
 
   addActionListener(
-    playerId: string,
-    listener: (action: PlayerAction) => void
+    playerId: number,
+    listener: (action: EntityAction) => void
   ) {
     this.playerActions.set(playerId, [
       ...(this.playerActions.get(playerId) || []),
@@ -98,23 +98,10 @@ export class PlayerActionService {
     ]);
   }
 
-  performAction(action: PlayerAction) {
-    const playerId = action.data.playerUid;
-    const player = this.game.entities.tryGet(playerId);
+  performAction(action: EntityAction) {
+    this.game.handleAction(action);
 
-    if (!player) {
-      console.log("Player not found", playerId);
-      return;
-    }
-
-    if (!(player instanceof Player)) {
-      console.log("Entity is not a player", player);
-      return;
-    }
-
-    handlePlayerAction(this.game, player, action);
-
-    const listeners = this.playerActions.get(playerId);
+    const listeners = this.playerActions.get(action.entity_id);
     if (!listeners) {
       return;
     }
@@ -127,13 +114,18 @@ export class PlayerActionService {
 
 export abstract class PlayerController {
   constructor(
-    protected onAction: (action: PlayerAction) => void,
-    protected game: Game,
-    protected player: Player
+    protected playerActionService: PlayerActionService,
+    protected game: GameWrapper,
+    protected playerId: number
   ) {}
 
   jump() {
-    this.onAction("Jump");
+    const action = this.game.makeJumpAction(this.playerId);
+    this.playerActionService.performAction(action);
+  }
+
+  rotate(x: number, y: number) {
+    // TO-DO
   }
 
   move(directions: Direction[]) {

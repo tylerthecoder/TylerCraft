@@ -1,29 +1,27 @@
 import {
   MetaAction,
   Vector2D,
-  Player,
-  Game,
   PlayerController,
   PlayerActionService,
 } from "@craft/engine";
-import { CanvasGameScript } from "../../game-scripts/canvas-gscript";
+import { GameWrapper } from "@craft/engine/modules";
+import { getEleOrError } from "../../utils";
 
 export class MobileController extends PlayerController {
-  private eForwardButton = document.getElementById("forwardButton")!;
-  private eJumpButton = document.getElementById("jumpButton")!;
+  private eForwardButton = getEleOrError("forwardButton");
+  private eJumpButton = getEleOrError("jumpButton");
   private eToolbeltItems = Array.from(
     document.querySelectorAll(".toolbelt-item")
   );
-  private eUseItemButton = document.getElementById("useItemButton")!;
-  private eUseItemButton2 = document.getElementById("useItemButton2")!;
+  private eUseItemButton = getEleOrError("useItemButton");
+  private eUseItemButton2 = getEleOrError("useItemButton2");
 
   constructor(
     playerActionService: PlayerActionService,
-    game: Game,
-    player: Player
+    game: GameWrapper,
+    playerId: number
   ) {
-    super(playerActionService, game, player);
-    const canvasGScript = this.game.getGameScript(CanvasGameScript);
+    super(playerActionService, game, playerId);
 
     let lastWindowTouch: Touch;
     const lastTouchStartPos = new Vector2D([0, 0]);
@@ -58,7 +56,7 @@ export class MobileController extends PlayerController {
 
         lastTouchStartPos.data = [touch.clientX, touch.clientY];
 
-        canvasGScript.camera.rotateBy(-dx, -dy);
+        this.rotate(-dx, -dy);
       },
       { passive: false }
     );

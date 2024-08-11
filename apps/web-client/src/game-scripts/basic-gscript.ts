@@ -46,7 +46,7 @@ export class BasicGScript extends GameScript {
     console.log("Starting basic usecase");
     console.log("My UID", getMyUid());
 
-    const player = WorldModule.createPlayer(Number(getMyUid()));
+    const player = g.createPlayer(Number(getMyUid()));
     this.mainPlayer = player;
     game.addPlayer(player);
 

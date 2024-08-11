@@ -1,4 +1,4 @@
-import { Game, Vector3D } from "@craft/engine";
+import { Vector3D } from "@craft/engine";
 import type {
   Navigator,
   XRSession,
@@ -10,6 +10,7 @@ import { mat4 } from "gl-matrix";
 import VertexShader from "../../shaders/vertex.glsl?raw";
 import FragmentShader from "../../shaders/fragment.glsl?raw";
 import { GameScript } from "@craft/engine/game-script";
+import { GameWrapper } from "@craft/engine/modules";
 
 const WebGlLayer = (window as any).XRWebGLLayer as typeof XRWebGLLayer;
 
@@ -41,16 +42,11 @@ export class WebGlGScript extends GameScript<Conifg> {
 
   public config = {
     transparency: true,
-    glFov: 0,
+    glFov: (45 * Math.PI) / 180,
   };
 
-  constructor(game: Game) {
+  constructor(game: GameWrapper) {
     super(game);
-
-    this.config = {
-      transparency: game.config.transparency,
-      glFov: game.config.glFov,
-    };
 
     // init gl eCanvas
     const gl = this.eCanvas.getContext("webgl2", {

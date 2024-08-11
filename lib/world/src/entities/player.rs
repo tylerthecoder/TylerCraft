@@ -4,7 +4,7 @@ use crate::{
     vec::Vec3, world::World,
 };
 use serde::{Deserialize, Serialize};
-use wasm_bindgen::prelude::wasm_bindgen;
+use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 
 pub type Velocity = Vec3<f32>;
 pub type Size3 = Vec3<f32>;
@@ -33,7 +33,6 @@ pub struct Player {
     pub pos: FineWorldPos,
     dim: Size3,
 
-
     rot: SphericalRotation,
     #[wasm_bindgen(skip)]
     pub vel: Velocity,
@@ -51,7 +50,6 @@ impl Entity for Player {
     }
 }
 
-#[wasm_bindgen]
 impl Player {
     pub fn make(uid: EntityId) -> Player {
         Player {
@@ -74,6 +72,21 @@ impl Player {
             is_flying: false,
             on_ground: false,
             moving_directions: Vec::new(),
+        }
+    }
+}
+
+pub mod wasm {
+    use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
+
+    use crate::entities::entity::EntityId;
+
+    use super::Player;
+
+    #[wasm_bindgen]
+    impl Player {
+        pub fn make_wasm(uid: EntityId) -> JsValue {
+            serde_wasm_bindgen::to_value(&Player::make(uid)).unwrap()
         }
     }
 }

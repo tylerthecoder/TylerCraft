@@ -1,7 +1,5 @@
 import * as WorldWasm from "@craft/rust-world";
-import * as TerrainGenWasm from "@craft/terrain-gen";
-import { Vector2D, Vector3D } from "./utils/vector.js";
-import { World } from "./index.js";
+import { Vector3D } from "./utils/vector.js";
 export * as WorldModuleTypes from "@craft/rust-world";
 
 async function loadWasmModule(module: any, name = "") {
@@ -31,6 +29,8 @@ export type SerializedGame = {
 };
 
 export type PlayerAction = WorldWasm.PlayerJumpAction;
+
+export type EntityAction = WorldWasm.EntityAction;
 
 export type GameDiff = {
   updated_entities: number[];
@@ -83,9 +83,13 @@ export type Player = {
 export class GameWrapper {
   constructor(private game: WorldWasm.Game) {}
 
-  static createGame(): GameWrapper {
+  static makeGame(): GameWrapper {
     const game = WorldWasm.Game.new_wasm();
     return new GameWrapper(game);
+  }
+
+  makeAndAddPlayer(uid: number) {
+    this.game.make_and_add_player_wasm(uid);
   }
 
   makeJumpAction(entityId: number) {
@@ -109,82 +113,88 @@ export class GameWrapper {
     return this.game.get_chunk_mesh_from_chunk_id(big);
   }
 
-  handlePlayerAction(action: PlayerAction) {}
+  addPlayer(player: WorldWasm.Player) {
+    this.game.add_player_wasm(player);
+  }
+
+  getPlayer(uid: number): WorldWasm.Player {
+    return this.game.get_player_wasm(uid);
+  }
 }
 
 // Wrapper class for world logic
-class WorldModuleClass {
-  private _module: typeof WorldWasm | null = null;
+// class WorldModuleClass {
+//   private _module: typeof WorldWasm | null = null;
 
-  private get module() {
-    if (!this._module) {
-      throw new Error("Module not loaded");
-    }
-    return this._module;
-  }
+//   private get module() {
+//     if (!this._module) {
+//       throw new Error("Module not loaded");
+//     }
+//     return this._module;
+//   }
 
-  async load(): Promise<void> {
-    if (this._module) return;
-    this._module = await loadWasmModule(WorldWasm, "World");
-  }
+//   async load(): Promise<void> {
+//     if (this._module) return;
+//     this._module = await loadWasmModule(WorldWasm, "World");
+//   }
 
-  public createWorld(data?: ISerializedWorld) {
-    console.log("Creating wasm world");
-    const wasmWorld = WorldModule.module.World.new_wasm();
-    const world = new World(wasmWorld, data);
-    return world;
-  }
+//   public createWorld(data?: ISerializedWorld) {
+//     console.log("Creating wasm world");
+//     const wasmWorld = WorldModule.module.World.new_wasm();
+//     const world = new World(wasmWorld, data);
+//     return world;
+//   }
 
-  public createPlayer(uid: number) {
-    const player = WorldModule.module.Player.make(uid);
-    return player;
-  }
-}
+//   public createPlayer(uid: number) {
+//     const player = WorldModule.module.Player.make(uid);
+//     return player;
+//   }
+// }
 
-export const WorldModule = new WorldModuleClass();
+// export const WorldModule = new WorldModuleClass();
 
-class TerrainGenModuleClass {
-  private _module: typeof TerrainGenWasm | null = null;
+// class TerrainGenModuleClass {
+//   private _module: typeof TerrainGenWasm | null = null;
 
-  private get module() {
-    if (!this._module) {
-      throw new Error("Terrain gen module not loaded");
-    }
-    return this._module;
-  }
+//   private get module() {
+//     if (!this._module) {
+//       throw new Error("Terrain gen module not loaded");
+//     }
+//     return this._module;
+//   }
 
-  public async load(): Promise<void> {
-    if (this._module) return;
-    this._module = await loadWasmModule(TerrainGenWasm, "TerrainGen");
-  }
+//   public async load(): Promise<void> {
+//     if (this._module) return;
+//     this._module = await loadWasmModule(TerrainGenWasm, "TerrainGen");
+//   }
 
-  getParkorTerrainGenerator(seed: number) {
-    const terrainGenerator = this.module.ParkorChunkGetter.new();
+//   getParkorTerrainGenerator(seed: number) {
+//     const terrainGenerator = this.module.ParkorChunkGetter.new();
 
-    return {
-      getChunk: (chunkPos: Vector2D) => {
-        console.log("Generating Chunk", chunkPos);
-        const chunk = terrainGenerator
-          .get_chunk_wasm(chunkPos.get(0), chunkPos.get(1))
-          .serialize();
-        return chunk as unknown as ISerializedChunk;
-      },
-    };
-  }
+//     return {
+//       getChunk: (chunkPos: Vector2D) => {
+//         console.log("Generating Chunk", chunkPos);
+//         const chunk = terrainGenerator
+//           .get_chunk_wasm(chunkPos.get(0), chunkPos.get(1))
+//           .serialize();
+//         return chunk as unknown as ISerializedChunk;
+//       },
+//     };
+//   }
 
-  getTerrainGenerator(seed: number, flatWorld: boolean) {
-    const terrainGenerator = new this.module.TerrainGenerator(seed, flatWorld);
+//   getTerrainGenerator(seed: number, flatWorld: boolean) {
+//     const terrainGenerator = new this.module.TerrainGenerator(seed, flatWorld);
 
-    return {
-      getChunk: (chunkPos: Vector2D) => {
-        console.log("Generating Chunk", chunkPos);
-        const chunk = terrainGenerator
-          .get_chunk(chunkPos.get(0), chunkPos.get(1))
-          .serialize();
-        return chunk as unknown as ISerializedChunk;
-      },
-    };
-  }
-}
+//     return {
+//       getChunk: (chunkPos: Vector2D) => {
+//         console.log("Generating Chunk", chunkPos);
+//         const chunk = terrainGenerator
+//           .get_chunk(chunkPos.get(0), chunkPos.get(1))
+//           .serialize();
+//         return chunk as unknown as ISerializedChunk;
+//       },
+//     };
+//   }
+// }
 
-export const TerrainGenModule = new TerrainGenModuleClass();
+// export const TerrainGenModule = new TerrainGenModuleClass();

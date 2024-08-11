@@ -21,7 +21,6 @@ impl PlayerJumpAction {
     }
 }
 
-
 #[wasm_bindgen]
 pub struct PlayerJumpScript {
     jump_speed: f32,
@@ -69,6 +68,10 @@ impl PlayerScript for PlayerJumpScript {
         "Jump"
     }
 
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
     fn update(&mut self, world: &World, player: &mut Player) {
         let jump_force = self.jump_force(player);
         player.vel = jump_force + player.vel;
@@ -98,8 +101,5 @@ pub mod wasm {
         pub fn make_wasm(entity_id: EntityId) -> EntityAction {
             PlayerJumpAction::new(entity_id)
         }
-
-
     }
-
 }

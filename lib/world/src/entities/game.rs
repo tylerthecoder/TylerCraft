@@ -15,10 +15,11 @@ pub trait GameScript {
     fn on_diff(&self, diff: GameDiff) -> ();
 }
 
-pub trait PlayerScript {
+pub trait PlayerScript: Any {
     fn name(&self) -> &'static str;
     fn update(&mut self, world: &World, player: &mut Player);
     fn handle_action(&mut self, action: EntityAction);
+    fn as_any(&self) -> &dyn Any;
 }
 
 type ScriptId = u32;
@@ -49,6 +50,36 @@ impl Game {
         let id = 1;
         self.player_scripts.insert(id, script);
         self.player_scripts_entity_map.insert(id, entity_id);
+    }
+
+    pub fn get_entity_script<T>(&self, entity_id: EntityId) -> Option<&T>
+    where
+        T: PlayerScript + Any,
+    {
+        let player_scripts: Vec<&Box<dyn PlayerScript>> = self
+            .player_scripts
+            .iter()
+            .filter(|(script_id, _)| {
+                let ent_id = *self
+                    .player_scripts_entity_map
+                    .get(script_id)
+                    .expect("Script not found");
+                ent_id == entity_id
+            })
+            .map(|(_, script)| script)
+            .collect();
+
+        println!("player_scripts_len: {:?}", player_scripts.len());
+
+        for script in player_scripts.iter() {
+            println!("script_name: {:?}", script.name());
+        }
+
+        let script = player_scripts
+            .iter()
+            .find_map(|script| script.as_any().downcast_ref::<T>());
+
+        script
     }
 
     pub fn handle_action(&mut self, action: EntityAction) {
@@ -115,9 +146,7 @@ impl Game {
             self.world.insert_chunk(chunk);
         }
     }
-}
 
-impl Game {
     pub fn add_game_script(&mut self, game_script: Box<dyn GameScript>) {
         self.game_scripts.push(game_script);
     }
@@ -223,6 +252,9 @@ mod tests {
         game.update();
         let player = game.get_entity_by_id(1).unwrap();
         assert!(player.vel.y > 0.0);
+
+        let jump_script = game.get_entity_script::<PlayerJumpScript>(1);
+        assert!(jump_script.is_some());
     }
 
     #[test]
@@ -265,7 +297,13 @@ pub mod wasm {
 
     use super::{Game, GameDiff, GameSchedule, GameScript};
     use crate::{
-        chunk::{chunk_mesh::ChunkMesh, Chunk, ChunkId}, entities::{entity::{EntityAction, EntityId}, player::Player}, world::World
+        chunk::{chunk_mesh::ChunkMesh, Chunk, ChunkId},
+        entities::{
+            entity::{EntityAction, EntityId},
+            player::Player,
+            player_rot_script::PlayerRotScript,
+        },
+        world::World,
     };
     use serde_wasm_bindgen::Error;
     use wasm_bindgen::prelude::*;
@@ -278,6 +316,16 @@ pub mod wasm {
 
         pub fn make_player_wasm() -> Player {
             Player::make(1)
+        }
+
+        pub fn make_and_add_player_wasm(&mut self, uid: EntityId) -> () {
+            let player = Player::make(uid);
+            self.add_player_wasm(player);
+        }
+
+        pub fn get_player_rot_script(&self, player_id: EntityId) -> Option<PlayerRotScript> {
+            self.get_entity_script::<PlayerRotScript>(player_id)
+                .and_then(|script| Some(*script))
         }
 
         pub fn handle_action_wasm(&mut self, action: EntityAction) {
@@ -294,6 +342,10 @@ pub mod wasm {
 
         pub fn get_chunk_mesh_from_chunk_id(&self, chunk_id: ChunkId) -> Result<JsValue, Error> {
             self.world.get_chunk_mesh_wasm(chunk_id)
+        }
+
+        pub fn add_player_wasm(&mut self, player: Player) {
+            self.schedule_entity_insert(Box::new(player));
         }
 
         pub fn get_player_wasm(&self, player_id: EntityId) -> Result<JsValue, Error> {

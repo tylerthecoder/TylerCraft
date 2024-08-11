@@ -48,13 +48,14 @@ function getElementByIdOrThrow(id: string): HTMLElement {
 
 // generate your unique id
 // kind of bad to do this client side, but I can make it better later
-const UID_KEY = "tylercraft-uid";
+const UID_KEY = "tylercraft-user-id";
 if (!localStorage.getItem(UID_KEY)) {
-  localStorage.setItem(UID_KEY, Math.random() + "");
+  const randomNum = Math.floor(Math.random() * 10000000);
+  localStorage.setItem(UID_KEY, randomNum.toString());
 }
 
 export function getMyUid() {
-  const uid = localStorage.getItem(UID_KEY);
+  const uid = Number(localStorage.getItem(UID_KEY));
   if (!uid) throw new Error("UID not defined");
   return uid;
 }

@@ -11,7 +11,6 @@ import {
 import { XrCamera } from "../cameras/xrCamera";
 import { EntityCamera } from "../cameras/entityCamera";
 import { GameScript } from "@craft/engine/game-script";
-import { BasicGScript } from "./basic-gscript";
 import { WebGlGScript } from "./webgl-gscript";
 import { Renderer } from "../renders/renderer";
 import { ChunkRenderer } from "../renders/chunkRender";
@@ -47,12 +46,10 @@ export class CanvasGameScript extends GameScript<Config> {
   totTime = 0;
   pastDeltas: number[] = [];
 
-  mainPlayer: Player;
-
   constructor(
     game: GameWrapper,
     private webGlGScript: WebGlGScript,
-    private basic: BasicGScript
+    private mainPlayerId: number
   ) {
     super(game);
 
@@ -61,10 +58,6 @@ export class CanvasGameScript extends GameScript<Config> {
     window.addEventListener("keydown", (e) => {
       this.handleKeyDown(e.key);
     });
-
-    this.mainPlayer = this.basic.mainPlayer;
-
-    console.log("Main player", this.mainPlayer);
 
     // Create renderers for initial entities
     for (const entity of game.entities.iterable()) {
