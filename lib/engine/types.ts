@@ -1,6 +1,6 @@
-import { IConfig } from "./config.js";
+import { IConfig } from "./src/config.js";
 import { EntityDto } from "./entities/entity.js";
-import { PlayerActionDto } from "./entities/player/playerActions.js";
+import { PlayerActionDto } from "./src/playerActions.js";
 import {
   Game,
   IContructGameOptions,
@@ -11,8 +11,6 @@ import { GameActionDto } from "./gameActions.js";
 import { GameDiffDto } from "./gameStateDiff.js";
 import { MessageDto, MessageHolder } from "./messageHelpers.js";
 import { ISerializedChunk } from "./world/chunk.js";
-
-export type IDim = [number, number, number];
 
 // Defs
 // There are actions and state changes

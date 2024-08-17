@@ -1,13 +1,19 @@
 import { Player } from "./entities/player/player.js";
 import { ISerializedWorld, World } from "./world/world.js";
-import { CONFIG, IConfig, setConfig } from "./config.js";
+import { CONFIG, IConfig, setConfig } from "./src/config.js";
 import { EntityHolder, ISerializedEntities } from "./entities/entityHolder.js";
 import { Random } from "./utils/random.js";
 import { GameActionHandler, GameAction } from "./gameActions.js";
 import { GameStateDiff, GameDiffDto } from "./gameStateDiff.js";
 import CubeHelpers, { Cube } from "./entities/cube.js";
-import { Entity, EntityDto, getChunkId, ISerializedChunk } from "./index.js";
-import { GameScript } from "./game-script.js";
+import {
+  Entity,
+  EntityDto,
+  getChunkId,
+  ISerializedChunk,
+} from "./src/index.js";
+import { GameScript } from "./src/game-script.js";
+import { GameWrapper } from "./modules.js";
 
 export interface ISerializedGame {
   name: string;
@@ -79,7 +85,7 @@ export class Game {
   }
 
   public addGameScript<Args extends unknown[], T extends GameScript>(
-    script: new (game: Game, ...args: Args) => T,
+    script: new (game: GameWrapper, ...args: Args) => T,
     ...args: Args
   ): T {
     const s = new script(this, ...args);
@@ -88,7 +94,7 @@ export class Game {
   }
 
   public getGameScript<Args extends unknown[], T extends GameScript>(
-    script: new (game: Game, ...args: Args) => T
+    script: new (game: GameWrapper, ...args: Args) => T
   ): T {
     for (const s of this.gameScripts) {
       if (s instanceof script) {

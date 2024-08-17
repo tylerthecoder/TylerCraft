@@ -1,5 +1,5 @@
-import { Vector2D, Vector3D } from "../utils/vector.js";
-import { CONFIG } from "../config.js";
+import { Vector2D, Vector3D } from "../src/vector.js";
+import { CONFIG } from "../src/config.js";
 import { Random } from "../utils/random.js";
 import CubeHelpers, { Cube } from "../entities/cube.js";
 import { World } from "./world.js";

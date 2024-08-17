@@ -113,16 +113,24 @@ impl TreeLocator {
 
 pub struct TreeRandomSpreadGenerator {
     seed: u64,
+    dist: Uniform<u8>,
 }
 
 impl TreeRandomSpreadGenerator {
+    fn make_from_seed(seed: u64) -> TreeRandomSpreadGenerator {
+        TreeRandomSpreadGenerator {
+            seed,
+            dist: Uniform::new(0, CHUNK_WIDTH),
+        }
+    }
+
+
     fn get_potential_tree_locations(
         &self,
         chunk_pos: ChunkPos,
     ) -> Box<dyn Iterator<Item = WorldPos>> {
         let chunk_seed = self.seed + (chunk_pos.x as u64 * 1000) + (chunk_pos.y as u64 * 1000000);
         let mut rng: StdRng = SeedableRng::seed_from_u64(chunk_seed);
-        let dist = Uniform::new(0, CHUNK_WIDTH);
 
         let mut tree_locations: Vec<WorldPos> = Vec::new();
 

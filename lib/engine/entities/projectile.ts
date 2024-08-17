@@ -1,4 +1,4 @@
-import { Game, Vector3D } from "../index.js";
+import { Game, Vector3D } from "../src/index.js";
 import { World } from "../world/index.js";
 import { IEntity } from "./entity.js";
 import { IEntityType } from "./entityType.js";

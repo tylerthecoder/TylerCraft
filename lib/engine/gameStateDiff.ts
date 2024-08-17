@@ -1,6 +1,6 @@
 import { EntityDto } from "./entities/entity.js";
 import { Game } from "./game.js";
-import { Vector2D } from "./utils/vector.js";
+import { Vector2D } from "./src/vector.js";
 import { getChunkId, ISerializedChunk } from "./world/chunk.js";
 
 export interface GameDiffDto {

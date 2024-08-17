@@ -12,6 +12,12 @@ export default defineConfig({
     commonjsOptions: {
       include: [/@craft\/engine/, /node_modules/],
     },
+    // rollupOptions: {
+    //   input: {
+    //     index: "./index1.html",
+    //     test: "./src/index2.html",
+    //   },
+    // },
   },
   plugins: [react(), wasm(), topLevelAwait()],
   worker: {

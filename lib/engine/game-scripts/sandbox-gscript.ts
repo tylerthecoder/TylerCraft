@@ -1,5 +1,5 @@
 import { MovableEntity } from "../entities/moveableEntity.js";
-import { GameScript } from "../game-script.js";
+import { GameScript } from "../src/game-script.js";
 import { TerrainGenModule } from "../modules.js";
 import { Vector2D, Vector3D } from "../utils/vector.js";
 import { World } from "../world/world.js";

@@ -1,5 +1,5 @@
 import { Random } from "../utils/random.js";
-import { Vector2D, VectorIndex } from "../utils/vector.js";
+import { Vector2D, VectorIndex } from "../src/vector.js";
 
 export enum Biome {
   Plains,

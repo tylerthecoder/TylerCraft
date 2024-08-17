@@ -5,16 +5,11 @@ import CubeHelpers, {
 } from "../entities/cube.js";
 import { ILookingAtData, ISerializedChunk } from "./chunk.js";
 import { Entity } from "../entities/entity.js";
-import { CONFIG } from "../config.js";
-import {
-  Vector3D,
-  Vector2D,
-  Direction,
-  getDirectionFromString,
-} from "../utils/vector.js";
+import { CONFIG } from "../src/config.js";
+import { Vector3D, Vector2D, Direction } from "../src/vector.js";
 import { WorldModule, WorldModuleTypes } from "../modules.js";
 import { ChunkMesh } from "./chunkMesh.js";
-import { CameraRay } from "../index.js";
+import { CameraRay } from "../src/index.js";
 
 export class World {
   static make(data?: ISerializedWorld): World {
@@ -210,21 +205,21 @@ export class World {
     return diff.chunk_ids;
   }
 
-  lookingAt(camera: CameraRay): ILookingAtData | null {
-    const lookingData: {
-      block: ISerializedCube;
-      face: string;
-      distance: number;
-    } | null = this.wasmWorld.get_pointed_at_block_wasm(camera);
+  // lookingAt(camera: CameraRay): ILookingAtData | null {
+  //   const lookingData: {
+  //     block: ISerializedCube;
+  //     face: string;
+  //     distance: number;
+  //   } | null = this.wasmWorld.get_pointed_at_block_wasm(camera);
 
-    console.log("Cam looking at ", lookingData, camera);
+  //   console.log("Cam looking at ", lookingData, camera);
 
-    if (!lookingData) return null;
+  //   if (!lookingData) return null;
 
-    return {
-      cube: CubeHelpers.fromWasmCube(lookingData.block),
-      face: getDirectionFromString(lookingData.face),
-      dist: lookingData.distance,
-    };
-  }
+  //   return {
+  //     cube: CubeHelpers.fromWasmCube(lookingData.block),
+  //     face: getDirectionFromString(lookingData.face),
+  //     dist: lookingData.distance,
+  //   };
+  // }
 }

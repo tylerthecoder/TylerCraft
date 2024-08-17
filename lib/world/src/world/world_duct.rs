@@ -42,6 +42,15 @@ impl World {
         return to_value(&keys);
     }
 
+    pub fn get_loaded_chunk_ids(&self) -> Vec<u64> {
+        let keys = self
+            .chunks
+            .values()
+            .map(|c| c.position.to_id())
+            .collect::<Vec<u64>>();
+        keys
+    }
+
     pub fn is_chunk_loaded_wasm(&self, val: JsValue) -> Result<bool, Error> {
         from_value(val).map(|pos: ChunkPos| self.get_chunk(&pos).is_ok())
     }
@@ -70,6 +79,8 @@ impl World {
 
     pub fn get_chunk_mesh_wasm(&self, chunk_id: ChunkId) -> Result<JsValue, Error> {
         let chunk_pos = ChunkPos::from_id(chunk_id);
+
+        web_sys::console::log_1(&JsValue::from_str(&format!("Rust Getting chunk mesh: {}", chunk_id)));
 
         let mesh = self.get_chunk_mesh(&chunk_pos).map_err(Self::convert_error)?;
 

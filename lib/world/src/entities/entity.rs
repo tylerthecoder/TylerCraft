@@ -1,7 +1,5 @@
 use std::any::Any;
-use serde::{Deserialize, Serialize};
-use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
-
+use wasm_bindgen::prelude::*;
 use crate::world::World;
 
 pub type EntityId = u32;
@@ -23,17 +21,4 @@ pub struct EntityAction {
 
 
 pub mod wasm {
-    use wasm_bindgen::prelude::*;
-
-
-    // #[wasm_bindgen]
-    // impl EntityAction {
-
-
-
-
-    // }
-
-
-
 }

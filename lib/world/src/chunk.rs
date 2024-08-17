@@ -1,7 +1,6 @@
 use crate::block::{BlockData, BlockType, ChunkBlock};
 use crate::positions::{ChunkPos, InnerChunkPos};
 use crate::world::world_block::WorldBlock;
-use phf::set;
 use serde::{Deserialize, Serialize};
 use serde_big_array::BigArray;
 use wasm_bindgen::prelude::*;

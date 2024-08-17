@@ -1,39 +1,41 @@
 import { Renderer, RenderData } from "./renderer";
 import {
   Camera,
-  arraySub,
   getBlockData,
-  IDim,
   Vector3D,
   Vector2D,
+  ChunkMeshWrapper,
 } from "@craft/engine";
 import TextureMapper from "../textureMapper";
 import { BlockShape, BlockType } from "@craft/rust-world";
 import ShapeBuilder from "../services/shape-builder";
 import { WebGlGScript } from "../game-scripts/webgl-gscript";
-import { ChunkMesh } from "@craft/engine/modules";
 
 export class ChunkRenderer extends Renderer {
   private otherRenders: Renderer[] = [];
-  public position: Vector2D;
 
-  constructor(public webGlGScript: WebGlGScript, public chunkMesh: ChunkMesh) {
+  constructor(
+    public webGlGScript: WebGlGScript,
+    public chunkPos: Vector2D,
+    public chunkMesh: ChunkMeshWrapper
+  ) {
     super(webGlGScript);
 
-    this.position = new Vector2D([chunkMesh.chunkPos.x, chunkMesh.chunkPos.y]);
     this.setActiveTexture(webGlGScript.textureAtlas);
     this.getBufferData();
   }
 
   get worldPos(): Vector3D {
-    return this.position.insert(0, 1);
+    return this.chunkPos.insert(0, 1);
   }
 
   render(camera: Camera, trans?: boolean): void {
     // if (!this.isLoaded) return;
+
+    console.log("Rendering chunk", this.chunkPos, camera);
     this.setActiveTexture(this.webGlGScript.textureAtlas);
 
-    this.renderObject(this.worldPos.data as IDim, camera, trans);
+    this.renderObject(this.worldPos, camera, trans);
 
     this.otherRenders.forEach((r) => {
       r.render(camera);
@@ -53,11 +55,11 @@ export class ChunkRenderer extends Renderer {
     const transRenData = new RenderData(true);
 
     this.chunkMesh.mesh.forEach((face) => {
-      const { block: cube, faces } = face;
+      const [cube, faces] = face;
 
       if (cube.type === BlockType.Void) return;
 
-      const relativePos = arraySub(cube.pos.data, this.worldPos.data);
+      const relativePos = cube.pos.sub(this.worldPos).data;
       const blockData = getBlockData(cube.type);
       const blockRenData = blockData.transparent ? transRenData : renData;
 

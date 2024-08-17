@@ -297,25 +297,34 @@ pub mod wasm {
 
     use super::{Game, GameDiff, GameSchedule, GameScript};
     use crate::{
-        chunk::{chunk_mesh::ChunkMesh, Chunk, ChunkId},
-        entities::{
+        chunk::{chunk_mesh::ChunkMesh, Chunk, ChunkId}, entities::{
             entity::{EntityAction, EntityId},
             player::Player,
-            player_rot_script::PlayerRotScript,
-        },
-        world::World,
+            player_rot_script::PlayerRotScript, sandbox::SandBoxGScript,
+        }, positions::{ChunkPos, WorldPos}, world::World
     };
-    use serde_wasm_bindgen::Error;
+    use serde_wasm_bindgen::{from_value, Error};
     use wasm_bindgen::prelude::*;
+
+
+
 
     #[wasm_bindgen]
     impl Game {
         pub fn new_wasm() -> Game {
-            Game::new()
+            let mut g = Game::new();
+            let sandbox_game_script = Box::new(SandBoxGScript::default());
+            g.add_game_script(sandbox_game_script);
+            g.update();
+            g
         }
 
         pub fn make_player_wasm() -> Player {
             Player::make(1)
+        }
+
+        pub fn update_wasm(&mut self) {
+            self.update();
         }
 
         pub fn make_and_add_player_wasm(&mut self, uid: EntityId) -> () {
@@ -340,8 +349,34 @@ pub mod wasm {
             self.add_game_script(Box::new(script));
         }
 
-        pub fn get_chunk_mesh_from_chunk_id(&self, chunk_id: ChunkId) -> Result<JsValue, Error> {
+        pub fn get_chunk_mesh_by_chunkid_wasm(&self, chunk_id: ChunkId) -> Result<JsValue, Error> {
+            web_sys::console::log_1(&JsValue::from_str(&format!("Rust Getting chunk mesh: {}", chunk_id)));
             self.world.get_chunk_mesh_wasm(chunk_id)
+        }
+
+        pub fn get_chunk_pos_from_id_wasm(&self, chunk_id: ChunkId) -> Result<JsValue, Error> {
+            let chunk_pos = ChunkPos::from_id(chunk_id);
+            let chunk_pos_js = serde_wasm_bindgen::to_value(&chunk_pos).unwrap();
+            Ok(chunk_pos_js)
+        }
+
+        pub fn get_chunk_id_from_chunk_pos_wasm(&self, value: JsValue) -> ChunkId {
+            let chunk_pos: ChunkPos = from_value(value).unwrap();
+            chunk_pos.to_id()
+        }
+
+        pub fn get_world_pos_from_chunk_pos_wasm(&self, x: i16, y: i16) -> Result<JsValue, Error> {
+            let chunk_pos = ChunkPos { x, y };
+            let world_pos: WorldPos = chunk_pos.to_world_pos();
+            let world_pos_js = serde_wasm_bindgen::to_value(&world_pos).unwrap();
+            Ok(world_pos_js)
+        }
+
+        pub fn get_chunk_pos_from_world_pos_wasm(&self, x: i32, y: i32, z: i32) -> Result<JsValue, Error> {
+            let world_pos = WorldPos { x, y, z };
+            let chunk_pos: ChunkPos = world_pos.to_chunk_pos();
+            let chunk_pos_js = serde_wasm_bindgen::to_value(&chunk_pos).unwrap();
+            Ok(chunk_pos_js)
         }
 
         pub fn add_player_wasm(&mut self, player: Player) {
@@ -357,19 +392,38 @@ pub mod wasm {
                 Err(Error::new("Player not found"))
             }
         }
+
+        pub fn get_entities_wasm(&self) -> Result<JsValue, Error> {
+            let entities = self.get_entities();
+            let entities_js = serde_wasm_bindgen::to_value(&entities).unwrap();
+            Ok(entities_js)
+        }
+
+        pub fn get_loaded_chunk_ids_wasm(&self) -> Vec<u64> {
+            return self.world.get_loaded_chunk_ids();
+        }
+
+        pub fn get_block_wasm(&self, x: i32, y: i32, z: i32) -> Result<JsValue, Error> {
+            let world_pos = WorldPos { x, y, z };
+            let block = self.world.get_block(&world_pos);
+            let block_js = serde_wasm_bindgen::to_value(&block).unwrap();
+            Ok(block_js)
+        }
     }
 
     #[wasm_bindgen]
     pub struct WasmGameScript {
+        context: JsValue,
         on_diff_jsfn: js_sys::Function,
     }
 
     #[wasm_bindgen]
     impl WasmGameScript {
         pub fn make(val: JsValue) -> WasmGameScript {
-            let on_diff_jsfn = js_sys::Reflect::get(&val, &JsValue::from("on_diff")).unwrap();
+            let on_diff_jsfn = js_sys::Reflect::get(&val, &JsValue::from("onDiff")).unwrap();
             WasmGameScript {
                 on_diff_jsfn: on_diff_jsfn.into(),
+                context: val,
             }
         }
     }
@@ -380,8 +434,9 @@ pub mod wasm {
         }
 
         fn on_diff(&self, diff: GameDiff) -> () {
+            // console log diff
             let val = serde_wasm_bindgen::to_value(&diff).unwrap();
-            self.on_diff_jsfn.call1(&val, &val);
+            self.on_diff_jsfn.call1(&self.context, &val).unwrap();
         }
     }
 }

@@ -1,5 +1,5 @@
-import { getBlockData } from "../blockdata.js";
-import { Direction, Vector3D } from "../utils/vector.js";
+import { getBlockData } from "../src/blockdata.js";
+import { Direction, Vector3D } from "../src/vector.js";
 import { IDim } from "../types.js";
 import { Entity, FaceLocater } from "./entity.js";
 import { BlockShape, BlockType } from "@craft/rust-world";

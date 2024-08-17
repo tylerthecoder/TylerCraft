@@ -3,18 +3,14 @@
  */
 import * as Engine from "@craft/engine";
 console.log("Engine", Engine);
-import {
-  camelCaseToNormalCase,
-  CONFIG,
-  Game,
-  IGameMetadata,
-} from "@craft/engine";
+import { camelCaseToNormalCase, CONFIG } from "@craft/engine";
 import { SocketHandler } from "./socket";
 import { renderWorldPicker } from "./world-picker";
 import { createRoot } from "react-dom/client";
 import { ClientDbGamesService } from "./services/sp-games-service";
 import { NetworkGamesService } from "./services/mp-games-service";
 import { BasicGScript } from "./game-scripts/basic-gscript";
+import { hideElement, showElement } from "./utils";
 
 // Add the world to this too
 export interface IExtendedWindow extends Window {
@@ -24,57 +20,9 @@ export interface IExtendedWindow extends Window {
 // Loading the engine
 await Engine.WorldModule.load();
 
-export const IS_MOBILE = /Mobi/.test(window.navigator.userAgent);
-console.log("Is Mobile: ", IS_MOBILE);
-
 // helper functions
-function showElement(e: HTMLElement) {
-  e.classList.remove("hidden");
-  e.classList.add("shown");
-}
-
-function hideElement(e: HTMLElement) {
-  e.classList.add("hidden");
-  e.classList.remove("shown");
-}
-
-function getElementByIdOrThrow(id: string): HTMLElement {
-  const e = document.getElementById(id);
-  if (!e) {
-    throw new Error(`Element with id ${id} not found`);
-  }
-  return e;
-}
-
-// generate your unique id
-// kind of bad to do this client side, but I can make it better later
-const UID_KEY = "tylercraft-user-id";
-if (!localStorage.getItem(UID_KEY)) {
-  const randomNum = Math.floor(Math.random() * 10000000);
-  localStorage.setItem(UID_KEY, randomNum.toString());
-}
-
-export function getMyUid() {
-  const uid = Number(localStorage.getItem(UID_KEY));
-  if (!uid) throw new Error("UID not defined");
-  return uid;
-}
 
 // Get all of the elements
-const ePlayLocalButton = getElementByIdOrThrow("playLocalButton");
-const ePlayOnlineButton = getElementByIdOrThrow("playOnlineButton");
-export const eStartMenu = getElementByIdOrThrow("startMenu");
-const eGameTypeScreen = getElementByIdOrThrow("pickGameTypeScreen");
-export const ePickWorldScreen = getElementByIdOrThrow("pickWorldScreen");
-const eBackButton = getElementByIdOrThrow("backButton");
-const eWorldOptionsScreen = getElementByIdOrThrow("worldOptionsScreen");
-const eConfigForm = getElementByIdOrThrow("configForm") as HTMLFormElement;
-const eConfigFormExtra = getElementByIdOrThrow("configFormExtra");
-const eConfigFormStartButton = getElementByIdOrThrow(
-  "configFormStartButton"
-) as HTMLButtonElement;
-const eLoadingScreen = getElementByIdOrThrow("loadingScreen");
-const eLoadingScreenMsg = getElementByIdOrThrow("loadingScreenMsg");
 
 const LoadingScreen = {
   show: (msg: string) => {

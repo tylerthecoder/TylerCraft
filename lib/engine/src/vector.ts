@@ -1,35 +1,5 @@
 type IDim = [number, number, number];
-
-// type VectorIndex = bigint;
 export type VectorIndex = string;
-
-export const getDirectionFromString = (dir: string): Direction => {
-  switch (dir) {
-    case "Up":
-      return Direction.Up;
-    case "Down":
-      return Direction.Down;
-    case "West":
-      return Direction.Left;
-    case "East":
-      return Direction.Right;
-    case "North":
-      return Direction.Forwards;
-    case "South":
-      return Direction.Backwards;
-    default:
-      throw new Error(`Invalid direction: ${dir}`);
-  }
-};
-
-export const ALL_DIRECTIONS = [
-  Direction.Forwards,
-  Direction.Backwards,
-  Direction.Left,
-  Direction.Right,
-  Direction.Up,
-  Direction.Down,
-];
 
 export class Vector<T extends number[] = IDim> {
   static xVectors = [
@@ -343,24 +313,6 @@ export class Vector3D extends Vector<[number, number, number]> {
     // return new Vector3D([data1, data2]);
     const ords = index.split(",").map((n) => parseInt(n));
     return new Vector3D(ords);
-  }
-
-  static fromDirection(direction: Direction): Vector3D {
-    console.log("From direction", direction);
-    switch (direction) {
-      case Direction.Forwards:
-        return new Vector3D([0, 0, 1]);
-      case Direction.Backwards:
-        return new Vector3D([0, 0, -1]);
-      case Direction.Right:
-        return new Vector3D([1, 0, 0]);
-      case Direction.Left:
-        return new Vector3D([-1, 0, 0]);
-      case Direction.Up:
-        return new Vector3D([0, 1, 0]);
-      case Direction.Down:
-        return new Vector3D([0, -1, 0]);
-    }
   }
 
   toIndex(): VectorIndex {

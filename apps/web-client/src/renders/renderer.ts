@@ -1,4 +1,4 @@
-import { Camera, arraySub, IDim } from "@craft/engine";
+import { Camera, Vector3D } from "@craft/engine";
 import { mat4, vec3 } from "gl-matrix";
 import { WebGlGScript } from "../game-scripts/webgl-gscript";
 
@@ -169,7 +169,7 @@ export abstract class Renderer {
 
   abstract render(camera: Camera): void;
 
-  renderXrObject(pos: number[], camera: Camera, trans?: boolean) {
+  renderXrObject(pos: Vector3D, camera: Camera, trans?: boolean) {
     const { currentXRFrame, xrRefSpace, gl, program, webXrSession } =
       this.webGlGScript;
     if (!currentXRFrame || !xrRefSpace || !webXrSession) {
@@ -202,11 +202,13 @@ export abstract class Renderer {
         view.transform.inverse.matrix as mat4
       );
 
+      const move_pos = pos.sub(camera.pos).data;
+
       // Now move the drawing position to where we want to start drawing the square.
       mat4.translate(
         modelViewMatrix, // destination matrix
         modelViewMatrix, // matrix to translate
-        new Float32Array(arraySub(pos, camera.pos.data)) as vec3
+        new Float32Array(move_pos) as vec3
       );
 
       gl.uniformMatrix4fv(
@@ -235,7 +237,7 @@ export abstract class Renderer {
     }
   }
 
-  renderObject(pos: IDim, camera: Camera, trans?: boolean) {
+  renderObject(pos: Vector3D, camera: Camera, trans?: boolean) {
     if (this.webGlGScript.currentXRFrame) {
       return this.renderXrObject(pos, camera, trans);
     }
@@ -244,25 +246,25 @@ export abstract class Renderer {
 
     // Set the drawing position to the "identity" point, which is
     // the center of the scene.
-    const modelViewMatrix = mat4.create();
-    mat4.rotate(
-      modelViewMatrix,
-      modelViewMatrix,
-      camera.rot.get(2) - Math.PI / 2,
-      [1, 0, 0]
-    );
-    mat4.rotate(
-      modelViewMatrix,
-      modelViewMatrix,
-      camera.rot.get(1) - Math.PI / 2,
-      [0, 1, 0]
-    );
 
+    // TODO tweak these to work
+    // need to invert
+    // theta = -this.rot.get(1) + (Math.PI * 3) / 2,
+    // // Convert to [-pi/2, pi/2]
+    // phi =  -(Math.PI / 2 - this.rot.get(2)),
+    const theta = Math.PI / 2 - camera.rot.get(2);
+    const phi = Math.PI / 2 - camera.rot.get(1);
+    const modelViewMatrix = mat4.create();
+
+    mat4.rotate(modelViewMatrix, modelViewMatrix, theta, [1, 0, 0]);
+    mat4.rotate(modelViewMatrix, modelViewMatrix, phi, [0, 1, 0]);
+
+    const move_pos = pos.sub(camera.pos).data;
     // Now move the drawing position to where we want to start drawing the square.
     mat4.translate(
       modelViewMatrix, // destination matrix
       modelViewMatrix, // matrix to translate
-      new Float32Array(arraySub(pos, camera.pos.data)) as vec3
+      new Float32Array(move_pos) as vec3
     );
 
     this.bindCube(trans || false);

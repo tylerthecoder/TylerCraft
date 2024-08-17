@@ -1,6 +1,4 @@
-import { GameAction } from "./gameActions.js";
-import { Entity, Game, GameStateDiff } from "./index.js";
-import { GameWrapper } from "./modules.js";
+import { GameWrapper } from "./wrappers.js";
 
 export type GameScriptConfig = Record<string, any> | undefined;
 
@@ -21,13 +19,13 @@ export abstract class GameScript<
   // Called for every game loop
   update?(delta: number): void;
 
-  onGameAction?(action: GameAction): void;
+  // onGameAction?(action: GameAction): void;
 
-  onGameStateDiff?(stateDiff: GameStateDiff): void;
+  // onGameStateDiff?(stateDiff: GameStateDiff): void;
 
-  onNewEntity?(entity: Entity): void;
+  // onNewEntity?(entity: Entity): void;
 
-  onRemovedEntity?(entity: Entity): void;
+  // onRemovedEntity?(entity: Entity): void;
 
-  onChunkUpdate?(chunkId: number): void;
+  // onChunkUpdate?(chunkId: number): void;
 }

@@ -1,16 +1,15 @@
 import {
   CONFIG,
-  Direction,
-  Game,
-  IDim,
-  Player,
-  PlayerActionType,
+  PlayerActionService,
   PlayerController,
+  GameWrapper,
 } from "@craft/engine";
-import { CanvasGameScript } from "../../game-scripts/canvas-gscript";
 import { WebGlGScript } from "../../game-scripts/webgl-gscript";
-import { HudGScript } from "../../game-scripts/hudRender";
-import { PlayerAction } from "@craft/engine/modules";
+import { Direction } from "@craft/rust-world";
+import {
+  CanvasGameScript,
+  PlayerPerspective,
+} from "../../game-scripts/canvas-gscript";
 
 export class KeyboardPlayerEntityController extends PlayerController {
   cleanup(): void {
@@ -19,7 +18,6 @@ export class KeyboardPlayerEntityController extends PlayerController {
 
   private keys = new Set();
   private keysPressed = new Set();
-  private hasMouseMoved = false;
   private currentMoveDirections = new Set<Direction>();
   private prevMoveDirections = new Set<Direction>();
 
@@ -28,36 +26,34 @@ export class KeyboardPlayerEntityController extends PlayerController {
   private hasJumped = false;
 
   constructor(
-    onAction: (playerAction: PlayerAction) => void,
-    game: Game,
-    player: Player
+    playerActionService: PlayerActionService,
+    game: GameWrapper,
+    playerId: number,
+    private canvasGScript: CanvasGameScript,
+    webGlGScript: WebGlGScript
   ) {
-    super(onAction, game, player);
+    super(playerActionService, game, playerId);
 
-    const hudEle = game.getGameScript(HudGScript).eHud;
-    const webGlCanvas = game.getGameScript(WebGlGScript).eCanvas;
+    const webGlCanvas = webGlGScript.eCanvas;
 
     // Pointer lock to the canvas
-    hudEle.addEventListener("mousedown", (e: MouseEvent) => {
-      if (e.target !== hudEle) {
+    webGlCanvas.addEventListener("mousedown", (e: MouseEvent) => {
+      if (e.target !== webGlCanvas) {
         return;
       }
-
       if (document.pointerLockElement !== webGlCanvas) {
         webGlCanvas.requestPointerLock();
       }
     });
 
-    window.addEventListener("mousedown", (e: MouseEvent) => {
+    webGlCanvas.addEventListener("mousedown", (e: MouseEvent) => {
       if (document.pointerLockElement !== webGlCanvas) {
         return;
       }
 
       if (e.button === 2) {
-        // right click
         this.primaryAction();
       } else if (e.button === 0) {
-        // left click
         this.secondaryAction();
       }
       e.preventDefault();
@@ -65,13 +61,17 @@ export class KeyboardPlayerEntityController extends PlayerController {
 
     window.addEventListener("mousemove", (e: MouseEvent) => {
       if (document.pointerLockElement === webGlCanvas) {
-        const moveX = e.movementX * CONFIG.player.mouseRotSpeed;
+        let moveX = e.movementX * CONFIG.player.mouseRotSpeed;
         const moveY = e.movementY * CONFIG.player.mouseRotSpeed;
 
-        const canvas = this.game.getGameScript(CanvasGameScript);
-        canvas.camera.rotateBy(moveX, moveY);
-
-        this.hasMouseMoved = true;
+        if (
+          this.canvasGScript.perspective === PlayerPerspective.ThirdPersonFront
+        ) {
+          moveX += Math.PI;
+          this.rotate(moveX, moveY);
+        } else {
+          this.rotate(moveX, moveY);
+        }
       }
     });
 
@@ -94,20 +94,12 @@ export class KeyboardPlayerEntityController extends PlayerController {
 
       if (totalWheelDelta > 100) {
         totalWheelDelta = 0;
-        this.handleAction(
-          PlayerAction.make(PlayerActionType.BeltRight, {
-            playerUid: this.player.uid,
-          })
-        );
+        this.beltRight();
       }
 
       if (totalWheelDelta < -100) {
         totalWheelDelta = 0;
-        this.handleAction(
-          PlayerAction.make(PlayerActionType.BeltLeft, {
-            playerUid: this.player.uid,
-          })
-        );
+        this.beltLeft();
       }
     });
 
@@ -124,16 +116,16 @@ export class KeyboardPlayerEntityController extends PlayerController {
     this.keys.add(key.toLowerCase());
     switch (key) {
       case "w":
-        this.currentMoveDirections.add(Direction.Forwards);
+        this.currentMoveDirections.add(Direction.North);
         break;
       case "s":
-        this.currentMoveDirections.add(Direction.Backwards);
+        this.currentMoveDirections.add(Direction.South);
         break;
       case "a":
-        this.currentMoveDirections.add(Direction.Left);
+        this.currentMoveDirections.add(Direction.West);
         break;
       case "d":
-        this.currentMoveDirections.add(Direction.Right);
+        this.currentMoveDirections.add(Direction.East);
         break;
       case "e":
         this.currentMoveDirections.add(Direction.Up);
@@ -145,11 +137,7 @@ export class KeyboardPlayerEntityController extends PlayerController {
         this.toggleCreative();
         break;
       case "j":
-        this.handleAction(
-          PlayerAction.make(PlayerActionType.PlaceDebugBlock, {
-            playerUid: this.player.uid,
-          })
-        );
+        this.debugBlock();
         break;
       case " ":
         if (this.hasJumped) {
@@ -195,13 +183,13 @@ export class KeyboardPlayerEntityController extends PlayerController {
     this.keys.delete(key.toLowerCase());
     this.keysPressed.add(key.toLowerCase());
     if (key === "w") {
-      this.currentMoveDirections.delete(Direction.Forwards);
+      this.currentMoveDirections.delete(Direction.North);
     } else if (key === "s") {
-      this.currentMoveDirections.delete(Direction.Backwards);
+      this.currentMoveDirections.delete(Direction.South);
     } else if (key === "a") {
-      this.currentMoveDirections.delete(Direction.Left);
+      this.currentMoveDirections.delete(Direction.West);
     } else if (key === "d") {
-      this.currentMoveDirections.delete(Direction.Right);
+      this.currentMoveDirections.delete(Direction.East);
     } else if (key === "e") {
       this.currentMoveDirections.delete(Direction.Up);
     } else if (key === "q") {
@@ -212,16 +200,6 @@ export class KeyboardPlayerEntityController extends PlayerController {
   }
 
   update() {
-    if (this.hasMouseMoved) {
-      this.handleAction(
-        PlayerAction.make(PlayerActionType.Rotate, {
-          playerRot: this.player.rot.data as IDim,
-          playerUid: this.player.uid,
-        })
-      );
-      this.hasMouseMoved = false;
-    }
-
     // check if previous directions is different than current directions
     let areDifferent = false;
     for (const direction of this.currentMoveDirections) {
@@ -243,29 +221,5 @@ export class KeyboardPlayerEntityController extends PlayerController {
       // Copy prev to current
       this.prevMoveDirections = new Set(this.currentMoveDirections);
     }
-
-    // if there were any actions performed
-    if (this.player.moveDirections.length > 0) {
-      this.numOfUpdates++;
-
-      if (this.numOfUpdates > 10) {
-        this.numOfUpdates = 0;
-        this.sendPos();
-      }
-    }
-  }
-
-  handleAction(action: PlayerAction) {
-    // console.log("Keyboard controller hanling action", action, this.id);
-    this.playerActionService.performAction(action);
-  }
-
-  sendPos() {
-    this.handleAction(
-      PlayerAction.make(PlayerActionType.SetPos, {
-        playerUid: this.player.uid,
-        pos: this.player.pos.data as IDim,
-      })
-    );
   }
 }

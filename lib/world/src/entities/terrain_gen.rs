@@ -109,22 +109,33 @@ impl TreeLocator {
 
 pub struct TreeRandomSpreadGenerator {
     seed: u64,
+    dist: Uniform<u16>,
 }
 
 impl TreeRandomSpreadGenerator {
+
+    pub fn make_from_seed(seed: u64) -> TreeRandomSpreadGenerator {
+        TreeRandomSpreadGenerator {
+            seed,
+            dist: Uniform::new(0, CHUNK_WIDTH as u16),
+        }
+    }
+
     fn get_potential_tree_locations(
         &self,
         chunk_pos: ChunkPos,
     ) -> Box<dyn Iterator<Item = WorldPos>> {
         let chunk_seed = self.seed + chunk_pos.to_id();
         let mut rng: StdRng = SeedableRng::seed_from_u64(chunk_seed);
-        let dist = Uniform::new(0, CHUNK_WIDTH);
 
         let mut tree_locations: Vec<WorldPos> = Vec::new();
 
-        for _ in 0..20 {
-            let x = dist.sample(&mut rng);
-            let z = dist.sample(&mut rng);
+        // sample 40 numbers
+        let tree_locations_rnd = self.dist.sample_iter(&mut rng).take(40).collect::<Vec<u16>>();
+
+        for i in 0..20 {
+            let x = tree_locations_rnd[i];
+            let z = tree_locations_rnd[i + 20];
 
             let pos = WorldPos {
                 x: (chunk_pos.x * CHUNK_WIDTH) as i32 + x as i32,
@@ -307,7 +318,7 @@ impl BasicChunkGetter {
 
         let mut chunk = Chunk::new(*chunk_pos);
 
-        let trees_in_chunk = TreeRandomSpreadGenerator { seed: 100 };
+        let trees_in_chunk = TreeRandomSpreadGenerator::make_from_seed(100);
 
         let trees = trees_in_chunk.get_trees(*chunk_pos);
 

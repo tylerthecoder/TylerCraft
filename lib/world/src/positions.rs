@@ -112,6 +112,14 @@ impl ChunkPos {
         ChunkPos { x, y }
     }
 
+    pub fn to_world_pos(&self) -> WorldPos {
+        WorldPos {
+            x: self.x as i32 * CHUNK_WIDTH as i32 + CHUNK_WIDTH as i32 / 2,
+            y: 0,
+            z: self.y as i32 * CHUNK_WIDTH as i32 + CHUNK_WIDTH as i32 / 2,
+        }
+    }
+
 
 }
 

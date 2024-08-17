@@ -1,6 +1,6 @@
-import { Game, World } from "../index.js";
+import { Game, World } from "../src/index.js";
 import { IDim } from "../types.js";
-import { Vector3D } from "../utils/vector.js";
+import { Vector3D } from "../src/vector.js";
 import { Cube } from "./cube.js";
 import { IEntityType } from "./entityType.js";
 

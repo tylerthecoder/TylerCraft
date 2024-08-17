@@ -1,4 +1,4 @@
-import { Vector3D } from "@craft/engine";
+import { GameScript, GameWrapper, Vector3D } from "@craft/engine";
 import type {
   Navigator,
   XRSession,
@@ -9,8 +9,6 @@ import type {
 import { mat4 } from "gl-matrix";
 import VertexShader from "../../shaders/vertex.glsl?raw";
 import FragmentShader from "../../shaders/fragment.glsl?raw";
-import { GameScript } from "@craft/engine/game-script";
-import { GameWrapper } from "@craft/engine/modules";
 
 const WebGlLayer = (window as any).XRWebGLLayer as typeof XRWebGLLayer;
 

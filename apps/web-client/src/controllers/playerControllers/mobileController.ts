@@ -81,7 +81,7 @@ export class MobileController extends PlayerController {
         jumpTouches.push(touches.item(i)!);
       }
 
-      this.player.metaActions.add(MetaAction.jump);
+      // this.player.metaActions.add(MetaAction.jump);
     });
 
     this.eJumpButton.addEventListener("touchmove", (e: TouchEvent) => {
@@ -103,7 +103,7 @@ export class MobileController extends PlayerController {
       }
 
       if (shouldJump) {
-        this.player.metaActions.add(MetaAction.jump);
+        // this.player.metaActions.add(MetaAction.jump);
       }
 
       e.preventDefault();
@@ -123,7 +123,7 @@ export class MobileController extends PlayerController {
       }
 
       // e.touches.
-      this.player.metaActions.delete(MetaAction.jump);
+      // this.player.metaActions.delete(MetaAction.jump);
     });
 
     // handle forward button
@@ -132,7 +132,7 @@ export class MobileController extends PlayerController {
       e.preventDefault();
       e.stopPropagation();
       lastForwardTouch = e.changedTouches.item(0)!;
-      this.player.metaActions.add(MetaAction.forward);
+      // this.player.metaActions.add(MetaAction.forward);
     });
 
     this.eForwardButton.addEventListener("touchmove", (e: TouchEvent) => {
@@ -145,9 +145,9 @@ export class MobileController extends PlayerController {
         const diffY = lastForwardTouch.clientY - touch.clientY;
 
         if (diffY > 50) {
-          this.player.metaActions.add(MetaAction.jump);
+          // this.player.metaActions.add(MetaAction.jump);
         } else {
-          this.player.metaActions.delete(MetaAction.jump);
+          // this.player.metaActions.delete(MetaAction.jump);
         }
       }
     });
@@ -155,8 +155,8 @@ export class MobileController extends PlayerController {
     this.eForwardButton.addEventListener("touchend", (e: TouchEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      this.player.metaActions.delete(MetaAction.forward);
-      this.player.metaActions.delete(MetaAction.jump);
+      // this.player.metaActions.delete(MetaAction.forward);
+      // this.player.metaActions.delete(MetaAction.jump);
     });
 
     // item selection

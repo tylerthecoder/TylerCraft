@@ -1,4 +1,4 @@
-import { IDim } from "./types.js";
+export type IDim = [number, number, number];
 
 export function roundToNPlaces(num: number, n: number) {
   return Math.round((num + Number.EPSILON) * 10 ** n) / 10 ** n;

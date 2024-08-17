@@ -1,16 +1,17 @@
 import { IEntity } from "../entity.js";
 import { IDim } from "../../types.js";
 import { MovableEntity, MovableEntityDto } from "../moveableEntity.js";
-import { CONFIG } from "../../config.js";
-import { Direction, Vector3D } from "../../utils/vector.js";
+import { CONFIG } from "../../src/config.js";
+import { Direction, Vector3D } from "../../src/vector.js";
 import CubeHelpers from "../cube.js";
 import { Game } from "../../game.js";
 import { IEntityType } from "../entityType.js";
 import { BlockType } from "@craft/rust-world";
 import { Item, ThrowableItem } from "../../item.js";
 import { Projectile } from "../projectile.js";
-import { PlayerAction } from "./playerActions.js";
+import { PlayerAction } from "../../src/playerActions.js";
 import { World } from "../../world/index.js";
+import { GameWrapper } from "../../modules.js";
 
 export interface BeltDto {
   selectedBlock: Item;
@@ -222,7 +223,9 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     }
     for (const dir of this.moveDirections) {
       const vel = moveDirection(dir);
-      desiredVel = desiredVel.add(vel);
+      if (vel) {
+        desiredVel = desiredVel.add(vel);
+      }
     }
     const currentVel = this.vel;
 
@@ -310,26 +313,27 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
     }
   }
 
-  doPrimaryAction(game: Game) {
-    const item = this.belt.selectedItem;
+  // doPrimaryAction(game: Game) {
+  //   const item = this.belt.selectedItem;
 
-    console.log("Doing primary action", item);
+  //   console.log("Doing primary action", item);
 
-    if (item === ThrowableItem.Fireball) {
-      this.fireball(game);
-    } else {
-      this.placeBlock(game, item);
-    }
-  }
+  //   if (item === ThrowableItem.Fireball) {
+  //     this.fireball(game);
+  //   } else {
+  //     this.placeBlock(game, item);
+  //   }
+  // }
 
-  doSecondaryAction(game: Game) {
-    const ray = this.getRay();
-    const lookingData = game.world.lookingAt(ray);
-    if (!lookingData) return;
-    const { cube } = lookingData;
-    if (!cube) return;
-    game.removeBlock(cube);
-  }
+  // doSecondaryAction(game: GameWrapper) {
+  //   const ray = this.getRay();
+
+  //   const lookingData = game.getPointedAtBlock(this.camera);
+  //   if (!lookingData) return;
+  //   const { cube } = lookingData;
+  //   if (!cube) return;
+  //   game.removeBlock(cube);
+  // }
 
   private actionListeners: ((action: PlayerAction) => void)[] = [];
   addActionListener(listener: (action: PlayerAction) => void) {
@@ -346,24 +350,24 @@ export class Player extends MovableEntity<PlayerDto> implements IEntity {
   }
 
   // Player actions
-  placeBlock(game: Game, blockType: BlockType) {
-    const ray = this.getRay();
-    const lookingData = game.world.lookingAt(ray);
-    if (!lookingData) return;
-    console.log("Looking at data", lookingData);
-    const { cube } = lookingData;
-    if (!cube) return;
+  // placeBlock(game: Game, blockType: BlockType) {
+  //   const ray = this.getRay();
+  //   const lookingData = game.world.lookingAt(ray);
+  //   if (!lookingData) return;
+  //   console.log("Looking at data", lookingData);
+  //   const { cube } = lookingData;
+  //   if (!cube) return;
 
-    const newCubePos = lookingData.cube.pos.add(
-      Vector3D.fromDirection(lookingData.face)
-    );
+  //   const newCubePos = lookingData.cube.pos.add(
+  //     Vector3D.fromDirection(lookingData.face)
+  //   );
 
-    const newCube = CubeHelpers.createCube(blockType, newCubePos);
+  //   const newCube = CubeHelpers.createCube(blockType, newCubePos);
 
-    console.log("Placed Cube", newCube);
+  //   console.log("Placed Cube", newCube);
 
-    game.placeBlock(newCube);
-  }
+  //   game.placeBlock(newCube);
+  // }
 
   fireball(game: Game) {
     if (this.fire.count > 0) return;

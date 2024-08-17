@@ -3,8 +3,9 @@ use crate::{geometry::rotation::SphericalRotation, world::World};
 use super::{entity::{EntityAction, EntityId}, game::{Game, PlayerScript}, player::Player};
 use wasm_bindgen::prelude::wasm_bindgen;
 
+#[wasm_bindgen]
 pub struct PlayerRotAction {
-	pub player_id: String,
+	pub player_id: EntityId,
 	pub rot_diff: SphericalRotation,
 }
 
@@ -54,5 +55,15 @@ impl PlayerScript for PlayerRotScript {
 	fn update(&mut self, world: &World, player: &mut Player) {
 		// NO-OP
 
+	}
+}
+
+pub mod wasm {
+	use super::*;
+	#[wasm_bindgen]
+	impl PlayerRotAction {
+		pub fn make_wasm(player_id: EntityId, x: f32, y: f32) -> EntityAction {
+			PlayerRotAction::new(player_id, SphericalRotation::new(x, y))
+		}
 	}
 }

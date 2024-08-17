@@ -1,4 +1,4 @@
-import { Player, Camera, Vector3D, IDim } from "@craft/engine";
+import { Camera, Vector3D, PlayerWrapper } from "@craft/engine";
 import { RenderData, Renderer } from "./renderer";
 import ShapeBuilder from "../services/shape-builder";
 import TextureMapper from "../textureMapper";
@@ -7,18 +7,14 @@ import { WebGlGScript } from "../game-scripts/webgl-gscript";
 export class PlayerRenderer extends Renderer {
   private renderData = new RenderData();
 
-  constructor(
-    webGlGScript: WebGlGScript,
-
-    public player: Player
-  ) {
+  constructor(webGlGScript: WebGlGScript, public player: PlayerWrapper) {
     super(webGlGScript);
     this.setActiveTexture(this.webGlGScript.textureAtlas);
   }
 
   render(camera: Camera) {
     this.calculateBuffers();
-    this.renderObject(this.player.pos.data as IDim, camera);
+    this.renderObject(this.player.pos, camera);
   }
 
   static handSize = new Vector3D([0.2, 0.2, 0.2]);
@@ -34,8 +30,7 @@ export class PlayerRenderer extends Renderer {
     const theta = this.player.rot.get(1);
     const phi = -this.player.rot.get(2) + Math.PI / 2;
     const rightLegRot = Math.sin(this.player.distanceMoved);
-    const playerDimVec = new Vector3D(this.player.dim);
-    const halfPlayerSize = playerDimVec.scalarMultiply(0.5);
+    const halfPlayerSize = this.player.dim.scalarMultiply(0.5);
     const headPos = halfPlayerSize.add(new Vector3D([0, 0.9, 0]));
     ShapeBuilder.buildBox((edge) => {
       return edge
@@ -63,12 +58,11 @@ export class PlayerRenderer extends Renderer {
     const theta = this.player.rot.get(1);
     // const phi = -this.player.rot.get(2) + Math.PI / 2;
 
-    const playerDimVec = new Vector3D(this.player.dim);
     const armSize = new Vector3D([0.3, 0.8, 0.3]);
     const bodySize = new Vector3D([0.4, 0.8, 0.8]);
     const legSize = new Vector3D([0.4, 0.7, 0.4]);
 
-    const halfPlayerSize = playerDimVec.scalarMultiply(0.5);
+    const halfPlayerSize = this.player.dim.scalarMultiply(0.5);
     const bodyOrigin = bodySize.scalarMultiply(0.5);
     const armOrigin = armSize.multiply(new Vector3D([0.5, 1, 0.5]));
     const legOrigin = legSize.multiply(new Vector3D([0.5, 1, 0.5]));

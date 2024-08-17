@@ -8,6 +8,7 @@ import { BasicGScript } from "./basic-gscript";
 import { GameMenu } from "../renders/gameMenuRender";
 import React from "react";
 import ReactDOM from "react-dom";
+import { GameWrapper } from "@craft/engine/modules";
 
 export class HudGScript extends GameScript {
   name = "hud";
@@ -31,9 +32,9 @@ export class HudGScript extends GameScript {
   private lastSelected = -1;
 
   constructor(
-    game: Game,
-    private basicGScript: BasicGScript,
-    private canvasGScript: CanvasGameScript
+    game: GameWrapper,
+    private canvasGScript: CanvasGameScript,
+    private mainPlayerUid: number
   ) {
     super(game);
 
@@ -94,9 +95,12 @@ export class HudGScript extends GameScript {
 
   private lastStats = "";
   drawStats() {
-    const cameraPos = this.basicGScript.mainPlayer.pos.data
-      .map((d) => d.toFixed(2))
-      .join(",");
+    const mainPlayer = this.game.getPlayer(this.mainPlayerUid);
+    if (!mainPlayer) {
+      return;
+    }
+
+    const cameraPos = mainPlayer.pos.data.map((d) => d.toFixed(2)).join(",");
     const numChunks = this.game.world.getLoadedChunkIds().length;
 
     const statsString = `
