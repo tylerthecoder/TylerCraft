@@ -495,6 +495,7 @@ impl ParkorChunkGetter {
 }
 
 // #[wasm_bindgen]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct TerrainGenerator {
     pub seed: u32,
     pub flat_world: bool,

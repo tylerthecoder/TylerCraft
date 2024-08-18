@@ -5,7 +5,7 @@ pub mod entities;
 pub mod geometry;
 pub mod plane;
 pub mod positions;
-mod utils;
+pub mod utils;
 pub mod vec;
 pub mod world;
 

@@ -1,105 +1,97 @@
-use super::{
-    entity::{self, EntityAction, EntityId},
-    game::PlayerScript,
-    player::{Player, Velocity},
-};
-use crate::world::World;
+use crate::{geometry::velocity::Velocity, world::World};
 use wasm_bindgen::prelude::wasm_bindgen;
+use super::{entity::{Entity, EntityId, EntityQuery, EntityQueryResults}, entity_action::{EntityAction, EntityActionDto}, entity_component::impl_component, game::GameSchedule, game_script::GameScript, player::Flying};
 
 #[wasm_bindgen]
 pub struct PlayerJumpAction {
-    pub entityid: EntityId,
+    pub entity_id: EntityId,
 }
 
 impl PlayerJumpAction {
-    pub fn new(entity_id: EntityId) -> EntityAction {
-        EntityAction {
-            entity_id: entity_id,
+    pub fn new(entity_id: EntityId) -> Self {
+        Self { entity_id }
+    }
+}
+
+impl EntityAction for PlayerJumpAction {
+    fn get_name(&self) -> &'static str {
+        "Jump-Action"
+    }
+
+    fn get_dto(&self) -> EntityActionDto {
+        EntityActionDto {
+            entity_id: self.entity_id,
             name: "Jump-Action",
             data: Box::new(()),
         }
     }
+
+    fn handle(&self, entity: &mut Entity) {
+        let jump_data = entity.get::<JumpData>().unwrap().to_owned();
+        let vel = entity.get::<Velocity>().unwrap().to_owned();
+
+        println!("jump_data: {:?}", jump_data);
+
+        let flying = entity.get::<Flying>();
+
+        if flying.is_some() && flying.unwrap().is_flying {
+            return;
+        }
+
+        if jump_data.is_jumping {
+            return;
+        }
+
+        let new_jump_data = jump_data.stop_jumping();
+
+
+        let diff_y_vel = jump_data.jump_speed - vel.y;
+
+        let jump_force = Velocity {
+            x: 0.0,
+            y: diff_y_vel,
+            z: 0.0,
+        };
+
+        let new_vel = jump_force + vel;
+
+        println!("new_vel: {:?}", new_vel);
+
+        entity.set::<Velocity>(new_vel);
+        entity.set::<JumpData>(new_jump_data);
+    }
+
+    fn entity_id(&self) -> super::entity::EntityId {
+        self.entity_id
+    }
+
 }
 
 #[wasm_bindgen]
-pub struct PlayerJumpScript {
+#[derive(Debug)]
+pub struct JumpData {
     jump_speed: f32,
     is_jumping: bool,
     have_db_jumped: bool,
     jump_count: u8,
 }
 
-impl PlayerJumpScript {
-    pub fn new() -> PlayerJumpScript {
-        PlayerJumpScript {
-            jump_speed: 2.0,
+impl JumpData {
+    pub fn new(jump_speed: f32) -> Self {
+        Self {
+            jump_speed,
             is_jumping: false,
             have_db_jumped: false,
             jump_count: 0,
         }
     }
 
-    fn jump_force(&mut self, player: &mut Player) -> Velocity {
-        if player.is_flying {
-            return Velocity::zero();
-        }
-        if !self.is_jumping {
-            return Velocity::zero();
-        }
-        self.is_jumping = false;
-
-        let diff_y_vel = self.jump_speed - player.vel.y;
-
-        Velocity {
-            x: 0.0,
-            y: diff_y_vel,
-            z: 0.0,
-        }
-    }
-
-    pub fn jump(&mut self) {
-        println!("Jump Called");
-        self.is_jumping = true;
-    }
-}
-
-impl PlayerScript for PlayerJumpScript {
-    fn name(&self) -> &'static str {
-        "Jump"
-    }
-
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
-
-    fn update(&mut self, world: &World, player: &mut Player) {
-        let jump_force = self.jump_force(player);
-        player.vel = jump_force + player.vel;
-        println!("Jumping");
-        println!("Jump force: {:?}", jump_force);
-        println!("Player velocity: {:?}", player.vel);
-    }
-
-    fn handle_action(&mut self, action: EntityAction) {
-        println!("Handling action");
-
-        if action.name == "Jump-Action" {
-            self.jump();
+    pub fn stop_jumping(&self) -> JumpData {
+        JumpData {
+            is_jumping: false,
+            ..*self
         }
     }
 }
 
-
-pub mod wasm {
-    use wasm_bindgen::prelude::*;
-    use crate::entities::entity::{EntityAction, EntityId};
-    use super::{PlayerJumpAction, PlayerJumpScript};
-
-    #[wasm_bindgen]
-    impl PlayerJumpAction {
-        // make jump action
-        pub fn make_wasm(entity_id: EntityId) -> EntityAction {
-            PlayerJumpAction::new(entity_id)
-        }
-    }
-}
+impl_component!(JumpData);

@@ -1,9 +1,11 @@
-use crate::{entities::player::Velocity, vec::Vec3};
+use crate::{entities::{entity_component::impl_component}, vec::Vec3};
 use serde::{Deserialize, Serialize};
 use std::{f32::consts::PI, ops::Add};
 use wasm_bindgen::prelude::wasm_bindgen;
 
-#[derive(Clone, Copy, PartialEq, Debug, Serialize, Deserialize)]
+use super::velocity::Velocity;
+
+#[derive(Clone, Copy, PartialEq, Debug, Default,Serialize, Deserialize)]
 #[wasm_bindgen]
 pub struct SphericalRotation {
     /** The flat angle. [0, 2PI] */
@@ -12,6 +14,8 @@ pub struct SphericalRotation {
     /** The up/down angle. [-PI/2, PI/2] */
     pub phi: f32,
 }
+
+impl_component!(SphericalRotation);
 
 impl SphericalRotation {
     pub fn new(theta: f32, phi: f32) -> SphericalRotation {

@@ -95,8 +95,8 @@ export class PlayerWrapper {
   distanceMoved = 0;
   moving_directions: WorldWasm.Direction[] = [];
 
-  constructor(player: WorldWasm.Player) {
-    // console.log("Constructing Player NOT DONE", player);
+  constructor(player: WorldWasm.Player, rot_script: WorldWasm.PlayerRotScript) {
+    this.rot = new Vector3D([0, rot_script.rot.phi, rot_script.rot.theta]);
   }
 }
 
@@ -141,11 +141,14 @@ export class GameWrapper {
   }
 
   makeRotateAction(entityId: number, x: number, y: number) {
+    console.log("Making rotate action", entityId, x, y);
     return WorldWasm.PlayerRotAction.make_wasm(entityId, x, y);
   }
 
   handleAction(action: WorldWasm.EntityAction) {
-    this.game.handle_action_wasm(action);
+    const newAction = action.clone();
+    console.log("Handling action", newAction);
+    this.game.handle_action_wasm(newAction);
   }
 
   getChunkPosFromChunkId(chunkId: number): Vector2D {
@@ -182,7 +185,11 @@ export class GameWrapper {
 
   getPlayer(uid: number): PlayerWrapper {
     const player: WorldWasm.Player = this.game.get_player_wasm(uid);
-    return new PlayerWrapper(player);
+    const rot_script = this.game.get_player_rot_script_wasm(uid);
+    if (!rot_script) {
+      throw new Error("Player rot script not found");
+    }
+    return new PlayerWrapper(player, rot_script);
   }
 
   getBlock(pos: Vector3D): BlockWrapper {
@@ -192,7 +199,7 @@ export class GameWrapper {
 
   getEntities(): PlayerWrapper[] {
     const entities: WorldWasm.Player[] = this.game.get_entities_wasm();
-    return entities.map((entity) => new PlayerWrapper(entity));
+    return entities.map((entity) => this.getPlayer(entity.uid));
   }
 
   getLoadedChunkIds(): number[] {

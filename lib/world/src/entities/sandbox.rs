@@ -1,10 +1,9 @@
 use super::{
-    game::{Game, GameDiff, GameSchedule, GameScript},
-    player::Player,
-    terrain_gen::TerrainGenerator,
+    entity::EntityQueryResults, game::{Game, GameDiff, GameSchedule}, game_script::GameScript, terrain_gen::TerrainGenerator
 };
-use crate::{positions::ChunkPos, world::World};
+use crate::{positions::{ChunkPos, FineWorldPos}, world::World};
 
+#[derive(Debug)]
 pub struct SandBoxGScript {
     seed: u32,
     flat_world: bool,
@@ -33,10 +32,10 @@ impl SandBoxGScript {
         }
     }
 
-    fn get_chunks_around_player(&self, player: &Player) -> Vec<ChunkPos> {
+    fn get_chunks_around_player(&self, pos: &FineWorldPos) -> Vec<ChunkPos> {
         let mut poses = vec![];
 
-        let player_chunk_pos: ChunkPos = player.pos.to_world_pos().to_chunk_pos();
+        let player_chunk_pos: ChunkPos = pos.to_world_pos().to_chunk_pos();
 
         for i in -(self.load_distance as i16)..self.load_distance as i16 {
             for j in -(self.load_distance as i16)..self.load_distance as i16 {
@@ -47,9 +46,14 @@ impl SandBoxGScript {
 
         poses
     }
+}
 
-    fn load_chunks_around_player(&self, players: &Vec<Box<Player>>, world: &World) -> GameSchedule {
-        let nearby_unloaded_chunks: Vec<ChunkPos> = players
+impl GameScript for SandBoxGScript {
+    fn update(&mut self, world: &World, query_results: EntityQueryResults) -> Option<GameSchedule> {
+
+        let entity_poses: Vec<FineWorldPos> = query_results.entities.iter().map(|ent| ent.get::<FineWorldPos>().unwrap().clone()).collect();
+
+        let nearby_unloaded_chunks: Vec<ChunkPos> = entity_poses
             .iter()
             .flat_map(|p| self.get_chunks_around_player(p))
             .filter(|pos| !world.has_chunk(pos))
@@ -65,16 +69,6 @@ impl SandBoxGScript {
             gdiff.add_chunk(chunk);
         }
 
-        gdiff
-    }
-}
-
-impl GameScript for SandBoxGScript {
-    fn update(&self, world: &World, ents: &Vec<Box<Player>>, _delta: u8) -> GameSchedule {
-        self.load_chunks_around_player(ents, world)
-    }
-
-    fn on_diff(&self, _diff: GameDiff) -> () {
-        // on diff
+        Some(gdiff)
     }
 }

@@ -1,4 +1,4 @@
-import { Direction } from "@craft/rust-world";
+import { BlockType, Direction } from "@craft/rust-world";
 import { EntityAction, GameWrapper } from "./wrappers.js";
 
 // export enum PlayerActionType {

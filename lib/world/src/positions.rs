@@ -1,5 +1,6 @@
 use crate::{
-    chunk::{ChunkId, CHUNK_WIDTH},
+    chunk::CHUNK_WIDTH,
+    entities::entity_component::impl_component,
     vec::{Vec2, Vec3},
 };
 
@@ -10,6 +11,11 @@ pub type InnerChunkPos = Vec3<u8>;
 pub type WorldPos = Vec3<i32>;
 pub type ChunkPos = Vec2<i16>;
 pub type FineWorldPos = Vec3<f32>;
+
+impl_component!(WorldPos);
+impl_component!(ChunkPos);
+impl_component!(InnerChunkPos);
+impl_component!(FineWorldPos);
 
 impl InnerChunkPos {
     pub fn to_chunk_index(&self) -> usize {
@@ -119,8 +125,6 @@ impl ChunkPos {
             z: self.y as i32 * CHUNK_WIDTH as i32 + CHUNK_WIDTH as i32 / 2,
         }
     }
-
-
 }
 
 impl std::ops::Add<ChunkPos> for ChunkPos {

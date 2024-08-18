@@ -1,69 +1,33 @@
-use std::any::Any;
-use crate::{geometry::rotation::SphericalRotation, world::World};
-use super::{entity::{EntityAction, EntityId}, game::{Game, PlayerScript}, player::Player};
+use super::entity::EntityId;
+use super::entity_action::{EntityAction, EntityActionDto};
+use crate::geometry::rotation::SphericalRotation;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 #[wasm_bindgen]
 pub struct PlayerRotAction {
-	pub player_id: EntityId,
-	pub rot_diff: SphericalRotation,
+    pub player_id: EntityId,
+    pub rot_diff: SphericalRotation,
 }
 
-impl PlayerRotAction {
-	pub fn new(player_id: EntityId, rot_diff: SphericalRotation) -> EntityAction {
-		EntityAction {
-			entity_id: player_id,
-			name: "PlayerRot",
-			data: Box::new(rot_diff),
-		}
-	}
-}
+impl EntityAction for PlayerRotAction {
+    fn entity_id(&self) -> super::entity::EntityId {
+        self.player_id
+    }
 
-#[wasm_bindgen]
-#[derive(Clone, Copy)]
-pub struct PlayerRotScript {
-	pub rot: SphericalRotation,
-}
+    fn get_name(&self) -> &'static str {
+        "PlayerRot"
+    }
 
-impl PlayerRotScript {
-	pub fn apply_rot(&mut self, rot: SphericalRotation) {
-		self.rot = self.rot + rot;
-	}
-}
+    fn get_dto(&self) -> super::entity_action::EntityActionDto {
+        EntityActionDto {
+            entity_id: self.player_id,
+            name: "PlayerRot",
+            data: Box::new(self.rot_diff),
+        }
+    }
 
-impl PlayerScript for PlayerRotScript {
-	fn name(&self) -> &'static str {
-		"PlayerRot"
-	}
-
-	fn handle_action(&mut self, action: EntityAction) {
-		if action.name == "PlayerRot" {
-			let data = action.data;
-			if let Some(rot_diff) = data.downcast_ref::<SphericalRotation>() {
-				self.apply_rot(*rot_diff);
-			} else {
-				panic!("PlayerRotScript received invalid action data");
-			}
-		}
-	}
-
-	fn as_any(&self) -> &dyn Any {
-		self
-	}
-
-
-	fn update(&mut self, world: &World, player: &mut Player) {
-		// NO-OP
-
-	}
-}
-
-pub mod wasm {
-	use super::*;
-	#[wasm_bindgen]
-	impl PlayerRotAction {
-		pub fn make_wasm(player_id: EntityId, x: f32, y: f32) -> EntityAction {
-			PlayerRotAction::new(player_id, SphericalRotation::new(x, y))
-		}
-	}
+    fn handle(&self, entity: &mut super::entity::Entity) {
+        let new_rot = entity.get::<SphericalRotation>().unwrap().to_owned() + self.rot_diff;
+        entity.set::<SphericalRotation>(new_rot);
+    }
 }

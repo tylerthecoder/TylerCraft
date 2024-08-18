@@ -32,7 +32,6 @@ export class ChunkRenderer extends Renderer {
   render(camera: Camera, trans?: boolean): void {
     // if (!this.isLoaded) return;
 
-    console.log("Rendering chunk", this.chunkPos, camera);
     this.setActiveTexture(this.webGlGScript.textureAtlas);
 
     this.renderObject(this.worldPos, camera, trans);

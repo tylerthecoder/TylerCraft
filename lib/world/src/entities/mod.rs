@@ -1,7 +1,12 @@
 pub mod entity;
+pub mod entity_component;
 pub mod game;
 pub mod player;
+pub mod game_script;
 pub mod player_jump_script;
 pub mod player_rot_script;
+pub mod player_move_script;
 pub mod sandbox;
 pub mod terrain_gen;
+pub mod entity_action;
+pub mod velocity_script;
