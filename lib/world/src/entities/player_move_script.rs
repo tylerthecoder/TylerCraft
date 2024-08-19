@@ -1,32 +1,27 @@
 use crate::{direction::Direction, geometry::{rotation::SphericalRotation, velocity::Velocity}};
 use wasm_bindgen::prelude::*;
-use super::{entity::{Entity, EntityId, EntityQuery, EntityQueryResults}, entity_action::{EntityAction, EntityActionDto}, entity_component::impl_component, game::GameSchedule, game_script::GameScript};
+use super::{entity::{Entity, EntityQuery, EntityQueryResults}, entity_action::{ActionData, EntityActionDto, EntityActionHandler, EntityActionDtoMaker}, entity_component::impl_component, game::GameSchedule, game_script::GameScript};
 
 #[wasm_bindgen]
-pub struct PlayerMoveAction {
-    pub entity_id: super::entity::EntityId,
-    pub direction: crate::direction::Direction,
+#[derive(Clone, Debug)]
+pub struct MoveActionData {
+    pub direction: Direction,
 }
 
-impl EntityAction for PlayerMoveAction {
-    fn entity_id(&self) -> EntityId {
-        self.entity_id
+pub struct MoveAction { }
+impl EntityActionDtoMaker<MoveActionData> for MoveAction {
+    fn get_action_type_static() -> &'static str {
+        "PlayerMove"
+    }
+}
+impl EntityActionHandler for MoveAction {
+    fn get_action_type(&self) -> &'static str {
+        "PlayerMove"
     }
 
-    fn get_name(&self) -> &'static str {
-        "player_move"
-    }
-
-    fn get_dto(&self) -> EntityActionDto {
-        EntityActionDto {
-            entity_id: self.entity_id,
-            name: self.get_name(),
-            data: Box::new(self.direction),
-        }
-    }
-
-    fn handle(&self, entity: &mut Entity) {
-        entity.set::<MovingDirection>(Some(self.direction));
+    fn handle_dto(&self, entity: &mut Entity, data: &EntityActionDto) {
+        let data = data.get_data::<MoveActionData>().unwrap();
+        entity.set::<MovingDirection>(Some(data.direction));
     }
 }
 

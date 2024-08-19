@@ -1,5 +1,5 @@
 use crate::{geometry::velocity::Velocity, positions::{FineWorldPos, WorldPos}};
-use super::{entity::{EntityQuery, EntityQueryResults}, entity_action::EntityAction, game::GameSchedule, game_script::GameScript};
+use super::{entity::{EntityQuery, EntityQueryResults}, game::GameSchedule, game_script::GameScript};
 
 
 #[derive(Debug)]

@@ -42,10 +42,8 @@ impl Game {
     pub fn update(&mut self) {
         let world = &self.world;
         // apply actions
-        for action in self.action_holder.get_actions() {
-            let entity = self.entity_holder.get_entity_by_id_mut(action.entity_id()).unwrap();
-            action.handle(entity);
-        }
+
+        self.action_holder.handle_actions(&mut self.entity_holder);
 
         for script in self.scripts.get_scripts_mut() {
             let query = script.get_query();
@@ -153,7 +151,7 @@ impl GameSchedule {
 
 mod tests {
     use crate::{entities::{
-        game::Game, player::make_player, player_jump_script::PlayerJumpAction, sandbox::SandBoxGScript
+        entity_action::EntityActionDtoMaker, game::Game, player::make_player, player_jump_script::{JumpAction, JumpActionData}, sandbox::SandBoxGScript
     }, geometry::velocity::Velocity};
 
     #[test]
@@ -175,13 +173,13 @@ mod tests {
         let player = make_player(1);
         game.schedule_entity_insert(player);
         game.update();
-        let jump_action = Box::new(PlayerJumpAction::new(1));
-        game.action_holder.add_action(jump_action);
+        let jump_action_handler = JumpAction::make_handler();
+        game.action_holder.add_handler(jump_action_handler);
+        let jump_action = JumpAction::make_dto(1, JumpActionData{});
+        game.action_holder.add(jump_action);
         game.update();
         let player = game.entity_holder.get_entity_by_id(1).unwrap();
         let player_vel = player.get::<Velocity>().unwrap();
-        println!("player_vel: {:?}", player_vel);
-
         assert!(player_vel.y > 0.0);
     }
 
@@ -214,7 +212,7 @@ pub mod wasm {
     use crate::{
         chunk::{chunk_mesh::ChunkMesh, Chunk, ChunkId},
         entities::{
-            entity::{Entity, EntityId}, entity_action::EntityAction, player::make_player, sandbox::SandBoxGScript
+            entity::{Entity, EntityId}, entity_action::{EntityActionDto}, player::{make_player, wasm::WasmPlayer}, sandbox::SandBoxGScript
         },
         positions::{ChunkPos, WorldPos},
         world::World,
@@ -233,10 +231,6 @@ pub mod wasm {
             g
         }
 
-        // pub fn make_player_wasm() -> Entity {
-        //     make_player(1)
-        // }
-
         pub fn update_wasm(&mut self) {
             self.update();
         }
@@ -247,14 +241,9 @@ pub mod wasm {
             self.update();
         }
 
-        // pub fn get_player_rot_script_wasm(&self, player_id: EntityId) -> Option<PlayerRotScript> {
-        //     self.get_entity_script::<PlayerRotScript>(player_id)
-        //         .and_then(|script| Some(*script))
-        // }
-
-        // pub fn handle_action_wasm(&mut self, action: EntityAction) {
-        //     self.action_holder.add_action(action);
-        // }
+        pub fn handle_action_wasm(&mut self, action: EntityActionDto) {
+            self.action_holder.add(action);
+        }
 
         pub fn schedule_chunk_insert_wasm(&mut self, chunk: Chunk) {
             self.schedule_chunk_insert(chunk);
@@ -302,25 +291,23 @@ pub mod wasm {
             Ok(chunk_pos_js)
         }
 
-        // pub fn add_player_wasm(&mut self, player: Player) {
-        //     self.schedule_entity_insert(Box::new(player));
-        // }
+        pub fn get_player_wasm(&self, player_id: EntityId) -> Result<JsValue, Error> {
+            let maybe_player = self.entity_holder.get_entity_by_id(player_id);
+            if let Some(player) = maybe_player {
+                let wasm_player = WasmPlayer::make_from_entity(player);
+                let player_js = serde_wasm_bindgen::to_value(&wasm_player).unwrap();
+                Ok(player_js)
+            } else {
+                Err(Error::new("Player not found"))
+            }
+        }
 
-        // pub fn get_player_wasm(&self, player_id: EntityId) -> Result<JsValue, Error> {
-        //     let maybe_player = self.entity_holder.get_entity_by_id(player_id);
-        //     if let Some(player) = maybe_player {
-        //         let player_js = serde_wasm_bindgen::to_value(&player).unwrap();
-        //         Ok(player_js)
-        //     } else {
-        //         Err(Error::new("Player not found"))
-        //     }
-        // }
-
-        // pub fn get_entities_wasm(&self) -> Result<JsValue, Error> {
-        //     let entities = self.entity_holder.get_all();
-        //     let entities_js = serde_wasm_bindgen::to_value(&entities).unwrap();
-        //     Ok(entities_js)
-        // }
+        pub fn get_players_wasm(&self) -> Result<JsValue, Error> {
+            let players = self.entity_holder.get_all();
+            let players_wasm: Vec<WasmPlayer> = players.iter().map(|player| WasmPlayer::make_from_entity(player)).collect();
+            let players_js = serde_wasm_bindgen::to_value(&players_wasm).unwrap();
+            Ok(players_js)
+        }
 
         pub fn get_loaded_chunk_ids_wasm(&self) -> Vec<u64> {
             return self.world.get_loaded_chunk_ids();

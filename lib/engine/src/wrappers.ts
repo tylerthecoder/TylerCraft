@@ -82,6 +82,14 @@ export class ChunkMeshWrapper {
   }
 }
 
+type RustPlayer = {
+  uid: number;
+  pos: RustPos;
+  dim: RustPos;
+  rot: { phi: number; theta: number };
+  moving_direction: WorldWasm.Direction;
+};
+
 export class PlayerWrapper {
   speed = 0;
   max_speed = 0;
@@ -93,10 +101,13 @@ export class PlayerWrapper {
   is_flying = false;
   on_ground = false;
   distanceMoved = 0;
-  moving_directions: WorldWasm.Direction[] = [];
+  moving_direction: WorldWasm.Direction | undefined;
 
-  constructor(player: WorldWasm.Player, rot_script: WorldWasm.PlayerRotScript) {
-    this.rot = new Vector3D([0, rot_script.rot.phi, rot_script.rot.theta]);
+  constructor(player: RustPlayer) {
+    this.pos = new Vector3D([player.pos.x, player.pos.y, player.pos.z]);
+    this.dim = new Vector3D([player.dim.x, player.dim.y, player.dim.z]);
+    this.rot = new Vector3D([0, player.rot.phi, player.rot.theta]);
+    this.moving_direction = player.moving_direction;
   }
 }
 
@@ -136,16 +147,23 @@ export class GameWrapper {
     this.game.make_and_add_player_wasm(uid);
   }
 
-  makeJumpAction(entityId: number) {
-    return WorldWasm.PlayerJumpAction.make_wasm(entityId);
+  makeJumpAction(entityId: number): WorldWasm.EntityActionDto {
+    return WorldWasm.PlayerJumpAction.new(entityId);
   }
 
-  makeRotateAction(entityId: number, x: number, y: number) {
+  makeRotateAction(
+    entityId: number,
+    x: number,
+    y: number
+  ): WorldWasm.EntityActionDto {
     console.log("Making rotate action", entityId, x, y);
-    return WorldWasm.PlayerRotAction.make_wasm(entityId, x, y);
+    const rotDiff = new WorldWasm.SphericalRotation();
+    rotDiff.phi = x;
+    rotDiff.theta = y;
+    return WorldWasm.PlayerRotAction.new(entityId, rotDiff);
   }
 
-  handleAction(action: WorldWasm.EntityAction) {
+  handleAction(action: WorldWasm.EntityActionDto) {
     const newAction = action.clone();
     console.log("Handling action", newAction);
     this.game.handle_action_wasm(newAction);

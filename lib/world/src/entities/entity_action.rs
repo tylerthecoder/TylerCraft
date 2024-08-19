@@ -1,36 +1,19 @@
 use std::any::Any;
 use wasm_bindgen::prelude::*;
 use std::fmt::Debug;
+use super::entity::{Entity, EntityHolder, EntityId};
 
-use super::entity::Entity;
-
-#[wasm_bindgen]
-pub struct EntityActionDto {
-    pub entity_id: super::entity::EntityId,
-    #[wasm_bindgen(skip)]
-    pub name: &'static str,
-    #[wasm_bindgen(skip)]
-    pub data: Box<dyn CloneAny>,
-}
-
-pub trait EntityAction {
-    fn entity_id(&self) -> super::entity::EntityId;
-    fn get_name(&self) -> &'static str;
-    fn get_dto(&self) -> EntityActionDto;
-    fn handle(&self, entity: &mut Entity);
-}
-
-pub trait CloneAny: Any + Debug {
-    fn clone_box(&self) -> Box<dyn CloneAny>;
+pub trait ActionData: Any + Debug {
+    fn clone_box(&self) -> Box<dyn ActionData>;
 
     fn as_any(&self) -> &dyn Any;
 }
 
-impl<T> CloneAny for T
+impl<T> ActionData for T
 where
     T: Any + Clone + Debug,
 {
-    fn clone_box(&self) -> Box<dyn CloneAny> {
+    fn clone_box(&self) -> Box<dyn ActionData> {
         Box::new(self.clone())
     }
 
@@ -39,27 +22,74 @@ where
     }
 }
 
+
+#[wasm_bindgen]
+#[derive(Debug)]
+pub struct EntityActionDto {
+    pub entity_id: super::entity::EntityId,
+    #[wasm_bindgen(skip)]
+    pub name: &'static str,
+    #[wasm_bindgen(skip)]
+    pub data: Box<dyn ActionData>,
+}
+
 impl EntityActionDto {
-    pub fn is_action_type<T: CloneAny>(&self, name: &'static str) -> Option<&T> {
-        if self.name == name {
-            self.data.as_any().downcast_ref::<T>()
-        } else {
-            None
+    pub fn get_data<T: ActionData>(&self) -> Option<&T> {
+        self.data.as_any().downcast_ref::<T>()
+    }
+}
+
+pub trait EntityActionHandler {
+    fn get_action_type(&self) -> &'static str;
+    fn handle_dto(&self, entity: &mut Entity, data: &EntityActionDto);
+}
+
+pub trait EntityActionDtoMaker<T: ActionData>: EntityActionHandler {
+    fn get_action_type_static() -> &'static str;
+
+    fn make_handler() -> Box<dyn EntityActionHandler>
+    where
+        Self: Sized + Default + 'static,
+    {
+        Box::new(Self::default())
+    }
+
+    fn make_dto(entity_id: EntityId, data: T) -> EntityActionDto {
+        EntityActionDto {
+            entity_id,
+            name: Self::get_action_type_static(),
+            data: Box::new(data)
         }
     }
 }
 
 #[derive(Default)]
 pub struct EntityActionHolder {
-    actions: Vec<Box<dyn EntityAction>>,
+    actions: Vec<EntityActionDto>,
+    handlers: Vec<Box<dyn EntityActionHandler>>,
 }
 
 impl EntityActionHolder {
-    pub fn add_action(&mut self, action: Box<dyn EntityAction>) {
-        self.actions.push(action);
+    pub fn add(&mut self, dto: EntityActionDto) {
+        self.actions.push(dto);
     }
 
-    pub fn get_actions(&self) -> &Vec<Box<dyn EntityAction>> {
-        &self.actions
+    pub fn add_handler(&mut self, handler: Box<dyn EntityActionHandler>) {
+        self.handlers.push(handler);
+    }
+
+    pub fn handle_actions(&self, entity_holder: &mut EntityHolder) {
+        for action in &self.actions {
+            println!("Handling action: {:?}", action);
+            let entity = entity_holder.get_entity_by_id_mut(action.entity_id);
+            println!("Entity: {:?}", entity);
+            if let Some(entity) = entity {
+                for handler in &self.handlers {
+                    if handler.get_action_type() == action.name {
+                        handler.handle_dto(entity, action);
+                    }
+                }
+            }
+        }
     }
 }

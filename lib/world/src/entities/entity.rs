@@ -6,6 +6,7 @@ use super::entity_component::Component;
 pub type EntityId = u32;
 
 
+#[derive(Debug)]
 pub struct Entity {
     pub id: EntityId,
     components: Vec<Box<dyn Component>>,

@@ -1,33 +1,41 @@
-use super::entity::EntityId;
-use super::entity_action::{EntityAction, EntityActionDto};
+use super::entity::{Entity, EntityId};
+use super::entity_action::{EntityActionDto, EntityActionDtoMaker, EntityActionHandler};
 use crate::geometry::rotation::SphericalRotation;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 #[wasm_bindgen]
-pub struct PlayerRotAction {
-    pub player_id: EntityId,
+#[derive(Clone, Debug)]
+pub struct RotateActionData {
     pub rot_diff: SphericalRotation,
 }
 
-impl EntityAction for PlayerRotAction {
-    fn entity_id(&self) -> super::entity::EntityId {
-        self.player_id
+pub struct RotateAction { }
+impl EntityActionDtoMaker<RotateActionData> for RotateAction {
+    fn get_action_type_static() -> &'static str {
+        "PlayerRot-Action"
     }
-
-    fn get_name(&self) -> &'static str {
+}
+impl EntityActionHandler for RotateAction {
+    fn get_action_type(&self) -> &'static str {
         "PlayerRot"
     }
 
-    fn get_dto(&self) -> super::entity_action::EntityActionDto {
-        EntityActionDto {
-            entity_id: self.player_id,
-            name: "PlayerRot",
-            data: Box::new(self.rot_diff),
-        }
-    }
+    fn handle_dto(&self, entity: &mut Entity, data: &EntityActionDto) {
+        let data = data.get_data::<RotateActionData>().unwrap();
 
-    fn handle(&self, entity: &mut super::entity::Entity) {
-        let new_rot = entity.get::<SphericalRotation>().unwrap().to_owned() + self.rot_diff;
+        let new_rot = entity.get::<SphericalRotation>().unwrap().to_owned() + data.rot_diff;
         entity.set::<SphericalRotation>(new_rot);
+    }
+}
+
+pub mod wasm {
+    use super::*;
+
+    #[wasm_bindgen]
+    impl RotateAction {
+        pub fn make_wasm(entity_id: EntityId, rot_diff: SphericalRotation) -> EntityActionDto {
+            let data = RotateActionData { rot_diff };
+            RotateAction::make_dto(entity_id, data)
+        }
     }
 }

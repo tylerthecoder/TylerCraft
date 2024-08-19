@@ -1,32 +1,26 @@
 use crate::{geometry::velocity::Velocity, world::World};
 use wasm_bindgen::prelude::wasm_bindgen;
-use super::{entity::{Entity, EntityId, EntityQuery, EntityQueryResults}, entity_action::{EntityAction, EntityActionDto}, entity_component::impl_component, game::GameSchedule, game_script::GameScript, player::Flying};
+use super::{entity::{Entity, EntityId, EntityQuery, EntityQueryResults}, entity_action::{ActionData, EntityActionDto, EntityActionDtoMaker, EntityActionHandler}, entity_component::impl_component, game::GameSchedule, game_script::GameScript, player::Flying};
 
-#[wasm_bindgen]
-pub struct PlayerJumpAction {
-    pub entity_id: EntityId,
-}
 
-impl PlayerJumpAction {
-    pub fn new(entity_id: EntityId) -> Self {
-        Self { entity_id }
+#[derive(Clone, Debug)]
+pub struct JumpActionData {}
+
+#[derive(Clone, Debug, Default)]
+pub struct JumpAction { }
+impl EntityActionDtoMaker<JumpActionData> for JumpAction {
+    fn get_action_type_static() -> &'static str {
+        "Jump-Action"
     }
 }
 
-impl EntityAction for PlayerJumpAction {
-    fn get_name(&self) -> &'static str {
+impl EntityActionHandler for JumpAction {
+    fn get_action_type(&self) -> &'static str {
         "Jump-Action"
     }
 
-    fn get_dto(&self) -> EntityActionDto {
-        EntityActionDto {
-            entity_id: self.entity_id,
-            name: "Jump-Action",
-            data: Box::new(()),
-        }
-    }
-
-    fn handle(&self, entity: &mut Entity) {
+    fn handle_dto(&self, entity: &mut Entity, data: &EntityActionDto) {
+        let _data = data.get_data::<JumpActionData>().unwrap();
         let jump_data = entity.get::<JumpData>().unwrap().to_owned();
         let vel = entity.get::<Velocity>().unwrap().to_owned();
 
@@ -61,10 +55,6 @@ impl EntityAction for PlayerJumpAction {
         entity.set::<JumpData>(new_jump_data);
     }
 
-    fn entity_id(&self) -> super::entity::EntityId {
-        self.entity_id
-    }
-
 }
 
 #[wasm_bindgen]
@@ -95,3 +85,16 @@ impl JumpData {
 }
 
 impl_component!(JumpData);
+
+
+pub mod wasm {
+    use super::*;
+
+    #[wasm_bindgen]
+    impl JumpAction {
+        pub fn make_wasm(entity_id: EntityId) -> EntityActionDto {
+            let data = JumpActionData { };
+            JumpAction::make_dto(entity_id, data)
+        }
+    }
+}
