@@ -1,361 +1,143 @@
-use crate::direction::{Axis, Direction, Directions, FlatDirection, EVERY_FLAT_DIRECTION};
-use num::{traits::real::Real, Num, One, Zero};
+use crate::direction::Directions;
+use num::{integer::Roots, traits::real::Real, Num, One, Zero};
 use serde::{Deserialize, Serialize};
-use std::{
-    fmt::Display,
-    ops::{Add, AddAssign, Div, Mul, Neg, Sub, SubAssign},
-};
+use std::{fmt::Display, ops::{Add, AddAssign, Div, Mul, Neg, Sub, SubAssign}};
+use crate::direction::DirectionVectorExtension;
 
-#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
-pub struct Vec2<T> {
-    pub x: T,
-    pub y: T,
+pub trait AsF32 {
+    fn as_f32(self) -> f32;
 }
 
-impl<T, U> Sub<Vec2<U>> for Vec2<T>
-where
-    T: Sub<U, Output = T> + Copy,
-{
-    type Output = Vec2<T>;
-
-    fn sub(self, rhs: Vec2<U>) -> Self::Output {
-        Vec2 {
-            x: self.x - rhs.x,
-            y: self.y - rhs.y,
-        }
+// Note: this might cut off the precision of bigger numbers
+impl AsF32 for i32 {
+    fn as_f32(self) -> f32 {
+        self as f32
     }
 }
 
-impl<T, U> Mul<Vec2<U>> for Vec2<T>
-where
-    T: Mul<U, Output = T> + Copy,
-    U: Copy,
-{
-    type Output = Vec2<T>;
-
-    fn mul(self, rhs: Vec2<U>) -> Self::Output {
-        Vec2 {
-            x: self.x * rhs.x,
-            y: self.y * rhs.y,
-        }
+impl AsF32 for f32 {
+    fn as_f32(self) -> f32 {
+        self
     }
 }
 
-impl<T: Add<Output = T> + Clone + Copy + PartialOrd + Into<i64>> Vec2<T> {
-    pub fn new(x: T, y: T) -> Vec2<T> {
-        Vec2 { x, y }
+impl AsF32 for i16 {
+    fn as_f32(self) -> f32 {
+        self as f32
+    }
+}
+
+impl AsF32 for u8 {
+    fn as_f32(self) -> f32 {
+        self as f32
+    }
+}
+
+impl AsF32 for i8 {
+    fn as_f32(self) -> f32 {
+        self as f32
+    }
+}
+
+pub trait Vector3Ops: Sized {
+    type Scalar: Copy
+        + std::ops::Add<Output = Self::Scalar>
+        + std::ops::Sub<Output = Self::Scalar>
+        + std::ops::Mul<Output = Self::Scalar>
+        + std::ops::Div<Output = Self::Scalar>
+        + Display
+        + One
+        + Neg<Output = Self::Scalar>
+        + Zero
+        + AsF32
+        + Copy;
+
+    fn new(x: Self::Scalar, y: Self::Scalar, z: Self::Scalar) -> Self;
+    fn x(&self) -> Self::Scalar;
+    fn y(&self) -> Self::Scalar;
+    fn z(&self) -> Self::Scalar;
+
+    fn set_x(&mut self, val: Self::Scalar);
+    fn set_y(&mut self, val: Self::Scalar);
+    fn set_z(&mut self, val: Self::Scalar);
+
+    fn copy(&self) -> Self {
+        Self::new(self.x(), self.y(), self.z())
     }
 
-    pub fn to_index(&self) -> String
+    fn add<V>(&self, other: &V) -> Self
     where
-        T: Display,
+        V: Vector3Ops,
+        V::Scalar: Into<Self::Scalar>,
+        Self::Scalar: std::ops::Add<Output = Self::Scalar>,
     {
-        format!("{},{}", self.x, self.y).as_str().to_owned()
+        Self::new(
+            self.x() + other.x().into(),
+            self.y() + other.y().into(),
+            self.z() + other.z().into(),
+        )
     }
 
-    pub fn scalar_mul(&self, val: T) -> Vec2<T>
+    fn sub<V: Vector3Ops<Scalar = Self::Scalar>>(&self, other: &V) -> Self {
+        Self::new(
+            self.x() - other.x(),
+            self.y() - other.y(),
+            self.z() - other.z(),
+        )
+    }
+
+    fn scalar_mult(&self, val: Self::Scalar) -> Self {
+        Self::new(self.x() * val, self.y() * val, self.z() * val)
+    }
+
+    fn sqr(&self) -> Self {
+        Self::new(self.x() * self.x(), self.y() * self.y(), self.z() * self.z())
+    }
+
+    fn dot<V: Vector3Ops<Scalar = Self::Scalar>>(&self, other: &V) -> Self::Scalar {
+        self.x() * other.x() + self.y() * other.y() + self.z() * other.z()
+    }
+
+    fn magnitude_squared(&self) -> Self::Scalar {
+        self.x() * self.x() + self.y() * self.y() + self.z() * self.z()
+    }
+
+    fn get_mag(&self) -> f32 {
+        let x = self.x().as_f32();
+        let y = self.y().as_f32();
+        let z = self.z().as_f32();
+
+        (x * x + y * y + z * z).sqrt()
+    }
+
+    fn sum(&self) -> Self::Scalar {
+        self.x() + self.y() + self.z()
+    }
+
+    fn set_mag(&self, mag: Self::Scalar) -> Self
     where
-        T: Mul<T, Output = T> + Copy,
-    {
-        Vec2 {
-            x: self.x * val,
-            y: self.y * val,
-        }
-    }
-
-    pub fn add_vec(&self, vec: Vec2<T>) -> Vec2<T>
-    where
-        T: Mul<T, Output = T> + Copy,
-    {
-        Vec2 {
-            x: self.x * vec.x,
-            y: self.y * vec.y,
-        }
-    }
-
-    pub fn sum(&self) -> T {
-        self.x + self.y
-    }
-
-    /** Returns a list of adjacent vectors that lie in a flat plane
-     * I.e no vectors that have a different y direction.
-     */
-    pub fn get_adjacent_vecs(&self) -> Vec<Vec2<T>>
-    where
-        T: Copy + Add<T, Output = T> + AddAssign<T> + One + SubAssign,
-    {
-        let mut adj_vecs: Vec<Vec2<T>> = Vec::new();
-        for direction in EVERY_FLAT_DIRECTION {
-            let adj_vec = self.move_in_flat_direction(&direction);
-            adj_vecs.push(adj_vec);
-        }
-        adj_vecs
-    }
-
-    // disclaimer, this is weird.
-    pub fn move_to_3d(&self, y_val: T) -> Vec3<T>
-    where
-        T: Copy,
-    {
-        Vec3 {
-            x: self.x,
-            y: y_val,
-            z: self.y,
-        }
-    }
-
-    pub fn distance_to<U>(&self, vec: Vec2<U>) -> f32
-    where
-        U: Sub<U, Output = T> + Copy + Mul<T, Output = T> + Add<T, Output = T>,
-        T: Sub<U, Output = T> + Copy + Mul<T, Output = T> + Add<T, Output = T>,
-        f32: From<T>,
-    {
-        let diff = *self - vec;
-        let diff_squared = diff * diff;
-        let sum = diff_squared.sum();
-        // take the sqrt of sum
-        let sum_f32: f32 = sum.into() as f32;
-        sum_f32.sqrt()
-    }
-
-    pub fn move_in_flat_direction(&self, direction: &FlatDirection) -> Vec2<T>
-    where
-        T: Copy + Add<T, Output = T> + AddAssign<T> + One + SubAssign,
-    {
-        let mut new_vec = *self;
-        match direction {
-            FlatDirection::North => new_vec.y += T::one(),
-            FlatDirection::South => new_vec.y -= T::one(),
-            FlatDirection::East => new_vec.x += T::one(),
-            FlatDirection::West => new_vec.x -= T::one(),
-        }
-        new_vec
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[repr(C)]
-pub struct Vec3<T> {
-    pub x: T,
-    pub y: T,
-    pub z: T,
-}
-
-impl<T, U> Add<Vec3<U>> for Vec3<T>
-where
-    T: Add<U, Output = T> + Copy,
-{
-    type Output = Vec3<T>;
-    fn add(self, rhs: Vec3<U>) -> Self::Output {
-        Vec3 {
-            x: self.x + rhs.x,
-            y: self.y + rhs.y,
-            z: self.z + rhs.z,
-        }
-    }
-}
-
-impl<T, U> Sub<Vec3<U>> for Vec3<T>
-where
-    T: Sub<U, Output = T> + Copy,
-{
-    type Output = Vec3<T>;
-
-    fn sub(self, rhs: Vec3<U>) -> Self::Output {
-        Vec3 {
-            x: self.x - rhs.x,
-            y: self.y - rhs.y,
-            z: self.z - rhs.z,
-        }
-    }
-}
-
-impl<T, U> Mul<Vec3<U>> for Vec3<T>
-where
-    T: Mul<U, Output = T> + Copy,
-    U: Copy,
-{
-    type Output = Vec3<T>;
-
-    fn mul(self, rhs: Vec3<U>) -> Self::Output {
-        Vec3 {
-            x: self.x * rhs.x,
-            y: self.y * rhs.y,
-            z: self.z * rhs.z,
-        }
-    }
-}
-
-impl<T, U> Mul<U> for Vec3<T>
-where
-    T: Mul<U, Output = T> + Copy,
-    U: Copy + Num,
-{
-    type Output = Vec3<T>;
-
-    fn mul(self, val: U) -> Self::Output {
-        Vec3 {
-            x: self.x * val,
-            y: self.y * val,
-            z: self.z * val,
-        }
-    }
-}
-
-impl<
-        T: Add<Output = T>
-            + Sub<Output = T>
-            + Mul<T, Output = T>
-            + Display
-            + Copy
-            + AddAssign<T>
-            + One
-            + SubAssign,
-    > Vec3<T>
-{
-    pub fn new(x: T, y: T, z: T) -> Vec3<T> {
-        Vec3 { x, y, z }
-    }
-
-    pub fn get_mag(&self) -> f32
-    where
-        T: Into<f32>,
-    {
-        let x_f32: f32 = self.x.into();
-        let y_f32: f32 = self.y.into();
-        let z_f32: f32 = self.z.into();
-        (x_f32 * x_f32 + y_f32 * y_f32 + z_f32 * z_f32).sqrt()
-    }
-
-    pub fn get_component_from_direction(&self, direction: Direction) -> T {
-        match direction {
-            Direction::North => self.z,
-            Direction::South => self.z,
-            Direction::East => self.x,
-            Direction::West => self.x,
-            Direction::Up => self.y,
-            Direction::Down => self.y,
-        }
-    }
-
-    pub fn get_opposite_components_from_direction(&self, direction: Direction) -> (T, T) {
-        match direction {
-            Direction::North => (self.x, self.y),
-            Direction::South => (self.x, self.y),
-            Direction::East => (self.y, self.z),
-            Direction::West => (self.y, self.z),
-            Direction::Up => (self.x, self.z),
-            Direction::Down => (self.x, self.z),
-        }
-    }
-
-    pub fn get_component_from_axis(&self, axis: Axis) -> T {
-        match axis {
-            Axis::X => self.x,
-            Axis::Y => self.y,
-            Axis::Z => self.z,
-        }
-    }
-
-    pub fn set_component_from_axis(&mut self, axis: Axis, val: T) {
-        match axis {
-            Axis::X => self.x = val,
-            Axis::Y => self.y = val,
-            Axis::Z => self.z = val,
-        }
-    }
-
-    pub fn to_index(&self) -> String {
-        format!("{},{},{}", self.x, self.y, self.z)
-            .as_str()
-            .to_owned()
-    }
-
-    pub fn move_direction(&self, direction: &Direction) -> Vec3<T> {
-        let mut new_vec = self.clone();
-        match direction {
-            Direction::North => new_vec.z += One::one(),
-            Direction::South => new_vec.z -= One::one(),
-            Direction::East => new_vec.x += One::one(),
-            Direction::West => new_vec.x -= One::one(),
-            Direction::Up => new_vec.y += One::one(),
-            Direction::Down => new_vec.y -= One::one(),
-        }
-        new_vec
-    }
-
-    pub fn sum(&self) -> T {
-        self.x + self.y + self.z
-    }
-
-    pub fn set_mag(&self, mag: T) -> Vec3<T>
-    where
-        T: Into<f32> + From<f32> + Div<f32, Output = T>,
+        Self::Scalar: Into<f32> + From<f32> + Div<f32, Output = Self::Scalar>,
     {
         let current_mag = self.get_mag();
-        let scale: T = mag / current_mag;
+        let scale: Self::Scalar = mag / current_mag;
         self.scalar_mult(scale)
     }
 
-    pub fn scalar_mult(&self, val: T) -> Vec3<T> {
-        Vec3 {
-            x: self.x * val,
-            y: self.y * val,
-            z: self.z * val,
-        }
-    }
-
-    pub fn add_vec<U>(&self, vec: Vec3<U>) -> Vec3<T>
+    fn distance_to<U>(&self, vec: &U) -> f32
     where
-        U: Add<U, Output = T>,
-        T: Add<U, Output = T> + Copy,
+        U: Vector3Ops<Scalar = Self::Scalar>,
     {
-        Vec3 {
-            x: self.x + vec.x,
-            y: self.y + vec.y,
-            z: self.z + vec.z,
-        }
+        self.sub(vec).sqr().sum().as_f32().sqrt()
     }
 
-    pub fn distance_to<U>(&self, vec: Vec3<U>) -> f32
+    fn map<B, F>(&self, f: F) -> Self
     where
-        U: Sub<U, Output = T> + Copy + Mul<T, Output = T> + Add<T, Output = T>,
-        T: Sub<U, Output = T> + Copy + Mul<T, Output = T> + Add<T, Output = T>,
-        f32: From<T>,
+        F: Fn(Self::Scalar) -> Self::Scalar,
     {
-        let diff = *self - vec;
-        let diff_squared = diff * diff;
-        let sum = diff_squared.sum();
-        // take the sqrt of sum
-        let sum_f32: f32 = sum.into();
-        sum_f32.sqrt()
+        Self::new(f(self.x()), f(self.y()), f(self.z()))
     }
 
-    pub fn distance_to_2<U, V>(&self, vec: &Vec3<U>) -> V
-    where
-        U: Sub<U, Output = T> + Copy + Mul<T, Output = T> + Add<T, Output = T>,
-        T: Sub<U, Output = T> + Copy + Mul<T, Output = T> + Add<T, Output = T>,
-        V: From<T> + Real,
-    {
-        let diff = *self - *vec;
-        let diff_squared = diff * diff;
-        let sum = diff_squared.sum();
-        let sum_f32: V = sum.into();
-        sum_f32.sqrt()
-    }
-
-    pub fn map<B, F>(&self, f: F) -> Vec3<B>
-    where
-        F: Fn(T) -> B,
-    {
-        Vec3 {
-            x: f(self.x),
-            y: f(self.y),
-            z: f(self.z),
-        }
-    }
-
-    pub fn get_adjacent_vecs(&self) -> Vec<Vec3<T>> {
+    fn get_adjacent_vecs(&self) -> Vec<Self> {
         let mut vecs = Vec::new();
         for direction in Directions::all() {
             vecs.push(self.move_direction(&direction));
@@ -366,9 +148,9 @@ impl<
     /**
      * Like get_adjacent_vecs, but also returns the original vector
      */
-    pub fn get_cross_vecs(&self) -> Vec<Vec3<T>> {
-        let mut vecs = Vec::new();
-        vecs.push(self.clone());
+    fn get_cross_vecs(&self) -> Vec<Self> {
+        let mut vecs: Vec<Self> = Vec::new();
+        vecs.push(self.copy());
         for direction in Directions::all() {
             vecs.push(self.move_direction(&direction));
         }
@@ -379,38 +161,315 @@ impl<
      * Returns all blocks in a cube around the vector
      * I am not proud of this
      */
-    pub fn get_cube_vecs(&self) -> Vec<Vec3<T>>
-    where
-        T: Add<Output = T> + Sub<Output = T> + Copy + One + Neg<Output = T> + Zero,
-    {
-        let mut vecs = Vec::new();
-
-        vecs.push(self.clone());
-
-        for x in [-T::one(), T::one(), T::zero()].iter().cloned() {
-            for y in [-T::one(), T::one(), T::zero()].iter().cloned() {
-                for z in [-T::one(), T::one(), T::zero()].iter().cloned() {
-                    vecs.push(Vec3::new(self.x + x, self.y + y, self.z + z));
+    fn get_cube_vecs(&self) -> Vec<Self> {
+        let mut vecs: Vec<Self> = Vec::new();
+        vecs.push(self.copy());
+        let one = Self::Scalar::one();
+        let zero = Self::Scalar::zero();
+        for x in [-one, one, zero].iter().cloned() {
+            for y in [-one, one, zero].iter().cloned() {
+                for z in [-one, one, zero].iter().cloned() {
+                    vecs.push(Self::new(self.x() + x, self.y() + y, self.z() + z));
                 }
             }
         }
 
         vecs
     }
+
+    fn to_index(&self) -> String {
+        format!("{},{},{}", self.x(), self.y(), self.z())
+            .as_str()
+            .to_owned()
+    }
 }
+
+// Macro to implement common operations
+macro_rules! impl_vector_ops {
+    ($vector_type:ident, $scalar_type:ty) => {
+        impl $crate::vec::Vector3Ops for $vector_type {
+            type Scalar = $scalar_type;
+
+            fn new(x: Self::Scalar, y: Self::Scalar, z: Self::Scalar) -> Self {
+                Self { x, y, z }
+            }
+
+            fn x(&self) -> Self::Scalar {
+                self.x
+            }
+            fn y(&self) -> Self::Scalar {
+                self.y
+            }
+            fn z(&self) -> Self::Scalar {
+                self.z
+            }
+
+            fn set_x(&mut self, val: Self::Scalar) {
+                self.x = val
+            }
+            fn set_y(&mut self, val: Self::Scalar) {
+                self.y = val
+            }
+            fn set_z(&mut self, val: Self::Scalar) {
+                self.z = val
+            }
+        }
+    };
+}
+pub(crate) use impl_vector_ops;
+
+pub struct Vec3f32 {
+    x: f32,
+    y: f32,
+    z: f32,
+}
+
+impl_vector_ops!(Vec3f32, f32);
+
+pub struct Vec3i16 {
+    pub x: i16,
+    pub y: i16,
+    pub z: i16,
+}
+
+impl_vector_ops!(Vec3i16, i16);
+
+
+#[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+pub struct Vec3u8 {
+    pub x: i8,
+    pub y: i8,
+    pub z: i8,
+}
+
+impl_vector_ops!(Vec3u8, i8);
+
+
+
+// #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+// pub struct Vec2<T> {
+//     pub x: T,
+//     pub y: T,
+// }
+
+// impl<T, U> Sub<Vec2<U>> for Vec2<T>
+// where
+//     T: Sub<U, Output = T> + Copy,
+// {
+//     type Output = Vec2<T>;
+
+//     fn sub(self, rhs: Vec2<U>) -> Self::Output {
+//         Vec2 {
+//             x: self.x - rhs.x,
+//             y: self.y - rhs.y,
+//         }
+//     }
+// }
+
+// impl<T, U> Mul<Vec2<U>> for Vec2<T>
+// where
+//     T: Mul<U, Output = T> + Copy,
+//     U: Copy,
+// {
+//     type Output = Vec2<T>;
+
+//     fn mul(self, rhs: Vec2<U>) -> Self::Output {
+//         Vec2 {
+//             x: self.x * rhs.x,
+//             y: self.y * rhs.y,
+//         }
+//     }
+// }
+
+// impl<T: Add<Output = T> + Clone + Copy + PartialOrd + Into<i64>> Vec2<T> {
+//     pub fn new(x: T, y: T) -> Vec2<T> {
+//         Vec2 { x, y }
+//     }
+
+//     pub fn to_index(&self) -> String
+//     where
+//         T: Display,
+//     {
+//         format!("{},{}", self.x, self.y).as_str().to_owned()
+//     }
+
+//     pub fn scalar_mul(&self, val: T) -> Vec2<T>
+//     where
+//         T: Mul<T, Output = T> + Copy,
+//     {
+//         Vec2 {
+//             x: self.x * val,
+//             y: self.y * val,
+//         }
+//     }
+
+//     pub fn add_vec(&self, vec: Vec2<T>) -> Vec2<T>
+//     where
+//         T: Mul<T, Output = T> + Copy,
+//     {
+//         Vec2 {
+//             x: self.x * vec.x,
+//             y: self.y * vec.y,
+//         }
+//     }
+
+//     pub fn sum(&self) -> T {
+//         self.x + self.y
+//     }
+
+//     /** Returns a list of adjacent vectors that lie in a flat plane
+//      * I.e no vectors that have a different y direction.
+//      */
+//     pub fn get_adjacent_vecs(&self) -> Vec<Vec2<T>>
+//     where
+//         T: Copy + Add<T, Output = T> + AddAssign<T> + One + SubAssign,
+//     {
+//         let mut adj_vecs: Vec<Vec2<T>> = Vec::new();
+//         for direction in EVERY_FLAT_DIRECTION {
+//             let adj_vec = self.move_in_flat_direction(&direction);
+//             adj_vecs.push(adj_vec);
+//         }
+//         adj_vecs
+//     }
+
+//     // disclaimer, this is weird.
+//     pub fn move_to_3d(&self, y_val: T) -> Vec3<T>
+//     where
+//         T: Copy,
+//     {
+//         Vec3 {
+//             x: self.x,
+//             y: y_val,
+//             z: self.y,
+//         }
+//     }
+
+//     pub fn distance_to<U>(&self, vec: Vec2<U>) -> f32
+//     where
+//         U: Sub<U, Output = T> + Copy + Mul<T, Output = T> + Add<T, Output = T>,
+//         T: Sub<U, Output = T> + Copy + Mul<T, Output = T> + Add<T, Output = T>,
+//         f32: From<T>,
+//     {
+//         let diff = *self - vec;
+//         let diff_squared = diff * diff;
+//         let sum = diff_squared.sum();
+//         // take the sqrt of sum
+//         let sum_f32: f32 = sum.into() as f32;
+//         sum_f32.sqrt()
+//     }
+
+//     pub fn move_in_flat_direction(&self, direction: &FlatDirection) -> Vec2<T>
+//     where
+//         T: Copy + Add<T, Output = T> + AddAssign<T> + One + SubAssign,
+//     {
+//         let mut new_vec = *self;
+//         match direction {
+//             FlatDirection::North => new_vec.y += T::one(),
+//             FlatDirection::South => new_vec.y -= T::one(),
+//             FlatDirection::East => new_vec.x += T::one(),
+//             FlatDirection::West => new_vec.x -= T::one(),
+//         }
+//         new_vec
+//     }
+// }
+
+// #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+// #[repr(C)]
+// pub struct Vec3<T> {
+//     pub x: T,
+//     pub y: T,
+//     pub z: T,
+// }
+
+// impl<T, U> Add<Vec3<U>> for Vec3<T>
+// where
+//     T: Add<U, Output = T> + Copy,
+// {
+//     type Output = Vec3<T>;
+//     fn add(self, rhs: Vec3<U>) -> Self::Output {
+//         Vec3 {
+//             x: self.x + rhs.x,
+//             y: self.y + rhs.y,
+//             z: self.z + rhs.z,
+//         }
+//     }
+// }
+
+// impl<T, U> Sub<Vec3<U>> for Vec3<T>
+// where
+//     T: Sub<U, Output = T> + Copy,
+// {
+//     type Output = Vec3<T>;
+
+//     fn sub(self, rhs: Vec3<U>) -> Self::Output {
+//         Vec3 {
+//             x: self.x - rhs.x,
+//             y: self.y - rhs.y,
+//             z: self.z - rhs.z,
+//         }
+//     }
+// }
+
+// impl<T, U> Mul<Vec3<U>> for Vec3<T>
+// where
+//     T: Mul<U, Output = T> + Copy,
+//     U: Copy,
+// {
+//     type Output = Vec3<T>;
+
+//     fn mul(self, rhs: Vec3<U>) -> Self::Output {
+//         Vec3 {
+//             x: self.x * rhs.x,
+//             y: self.y * rhs.y,
+//             z: self.z * rhs.z,
+//         }
+//     }
+// }
+
+// impl<T, U> Mul<U> for Vec3<T>
+// where
+//     T: Mul<U, Output = T> + Copy,
+//     U: Copy + Num,
+// {
+//     type Output = Vec3<T>;
+
+//     fn mul(self, val: U) -> Self::Output {
+//         Vec3 {
+//             x: self.x * val,
+//             y: self.y * val,
+//             z: self.z * val,
+//         }
+//     }
+// }
+
+// impl<
+//         T: Add<Output = T>
+//             + Sub<Output = T>
+//             + Mul<T, Output = T>
+//             + Display
+//             + Copy
+//             + AddAssign<T>
+//             + One
+//             + SubAssign,
+//     > Vec3<T>
+// {
+//     pub fn new(x: T, y: T, z: T) -> Vec3<T> {
+//         Vec3 { x, y, z }
+//     }
+// }
 
 #[cfg(test)]
 pub mod tests {
-    use crate::vec::Vec3;
+    use crate::vec::{Vec3f32, Vector3Ops};
 
     #[test]
     fn test_distance_to() {
-        let vec1 = Vec3::new(0 as i16, 0 as i16, 0 as i16);
-        let vec2 = Vec3::new(1, 1, 1);
-        assert_eq!(vec1.distance_to(vec2), 1.7320508);
+        let vec1 = Vec3f32 { x: 0 as f32, y: 0 as f32, z: 0 as f32 };
+        let vec2 = Vec3f32 { x: 1 as f32, y: 1 as f32, z: 1 as f32 };
+        assert_eq!(vec1.distance_to(&vec2), 1.7320508);
 
-        let vec1 = Vec3::new(0 as i16, 0 as i16, 0 as i16);
-        let vec2 = Vec3::new(1, 0, 0);
-        assert_eq!(vec1.distance_to(vec2), 1.0);
+        let vec1 = Vec3f32 { x: 0 as f32, y: 0 as f32, z: 0 as f32 };
+        let vec2 = Vec3f32 { x: 1 as f32, y: 0 as f32, z: 0 as f32 };
+        assert_eq!(vec1.distance_to(&vec2), 1.0);
     }
 }

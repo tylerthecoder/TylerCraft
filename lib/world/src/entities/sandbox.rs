@@ -1,7 +1,7 @@
 use super::{
-    entity::EntityQueryResults, game::{Game, GameDiff, GameSchedule}, game_script::GameScript, terrain_gen::TerrainGenerator
+    entity::{EntityQuery, EntityQueryResults}, game::{Game, GameDiff, GameSchedule}, game_script::GameScript, terrain_gen::TerrainGenerator
 };
-use crate::{positions::{ChunkPos, FineWorldPos}, world::World};
+use crate::{components::fine_world_pos::FineWorldPos, positions::ChunkPos, world::World};
 
 #[derive(Debug)]
 pub struct SandBoxGScript {
@@ -49,6 +49,13 @@ impl SandBoxGScript {
 }
 
 impl GameScript for SandBoxGScript {
+
+    fn get_query(&self) -> EntityQuery {
+        let mut query = EntityQuery::new();
+        query.add::<FineWorldPos>();
+        query
+    }
+
     fn update(&mut self, world: &World, query_results: EntityQueryResults) -> Option<GameSchedule> {
 
         let entity_poses: Vec<FineWorldPos> = query_results.entities.iter().map(|ent| ent.get::<FineWorldPos>().unwrap().clone()).collect();

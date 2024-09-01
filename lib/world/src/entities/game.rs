@@ -150,9 +150,9 @@ impl GameSchedule {
 }
 
 mod tests {
-    use crate::{entities::{
-        entity_action::EntityActionDtoMaker, game::Game, player::make_player, player_jump_script::{JumpAction, JumpActionData}, sandbox::SandBoxGScript
-    }, geometry::velocity::Velocity};
+    use crate::{direction::Direction, entities::{
+        entity_action::EntityActionDtoMaker, game::Game, player::make_player, player_jump_script::{JumpAction, JumpActionData}, player_move_script::{MoveAction, MoveActionData, MoveScript}, sandbox::SandBoxGScript, velocity_script::{self, VelocityScript}
+    }, components::{fine_world_pos::FineWorldPos, velocity::Velocity}};
 
     #[test]
     pub fn add_player() {
@@ -184,6 +184,37 @@ mod tests {
     }
 
     #[test]
+    pub fn move_script() {
+        let mut game = Game::new();
+        let player = make_player(1);
+        player.print_components();
+
+        game.schedule_entity_insert(player);
+        game.update();
+
+        let move_script = Box::new(MoveScript::default());
+        game.add_script(move_script);
+        game.update();
+
+        let velocity_script = Box::new(VelocityScript::default());
+        game.add_script(velocity_script);
+        game.update();
+
+        game.action_holder.add_handler(MoveAction::make_handler());
+
+        let move_action = MoveAction::make_dto(1, MoveActionData {
+            direction: Direction::North,
+        });
+        game.action_holder.add(move_action);
+        game.update();
+
+        let player = game.entity_holder.get_entity_by_id(1).unwrap();
+        let player_pos = player.get::<FineWorldPos>().unwrap();
+        assert!(player_pos.z > 0.0);
+
+    }
+
+    #[test]
     pub fn generate_chunk() {
         let mut game = Game::new();
         let player = make_player(1);
@@ -210,12 +241,9 @@ pub mod wasm {
 
     use super::{Game, GameDiff, GameSchedule, GameScript};
     use crate::{
-        chunk::{chunk_mesh::ChunkMesh, Chunk, ChunkId},
-        entities::{
-            entity::{Entity, EntityId}, entity_action::{EntityActionDto}, player::{make_player, wasm::WasmPlayer}, sandbox::SandBoxGScript
-        },
-        positions::{ChunkPos, WorldPos},
-        world::World,
+        chunk::{chunk_mesh::ChunkMesh, Chunk, ChunkId}, components::world_pos::WorldPos, entities::{
+            entity::{Entity, EntityId}, entity_action::EntityActionDto, player::{make_player, wasm::WasmPlayer}, sandbox::SandBoxGScript
+        }, positions::ChunkPos, world::World
     };
     use serde_wasm_bindgen::{from_value, Error};
     use wasm_bindgen::prelude::*;

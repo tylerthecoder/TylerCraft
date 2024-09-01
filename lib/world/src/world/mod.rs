@@ -1,8 +1,9 @@
 use self::world_block::WorldBlock;
 use crate::chunk::chunk_mesh::ChunkMesh;
 use crate::chunk::Chunk;
-use crate::direction::{Direction, Directions};
-use crate::positions::{ChunkPos, WorldPos};
+use crate::components::world_pos::WorldPos;
+use crate::direction::{Direction, DirectionVectorExtension, Directions};
+use crate::positions::{ChunkPos};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::{self, fmt};
@@ -46,7 +47,7 @@ impl fmt::Display for ChunkIndexOutOfBoundsError {
 #[derive(Serialize, Deserialize)]
 pub struct WorldStateDiff {
     /** A list of chunk ids that were changed */
-    pub chunk_ids: HashSet<String>,
+    pub chunk_ids: HashSet<u64>,
 }
 
 #[derive(Default, Serialize, Deserialize)]
@@ -124,8 +125,7 @@ impl World {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::block::{BlockData, BlockType};
-    use crate::positions::WorldPos;
+    use crate::{block::{BlockData, BlockType}, vec::Vector3Ops};
 
     #[test]
     fn get_adjacent_blocks() {

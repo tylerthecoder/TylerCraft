@@ -1,5 +1,6 @@
-use crate::{direction::Direction, geometry::{rotation::SphericalRotation, velocity::Velocity}};
 use wasm_bindgen::prelude::*;
+use crate::{components::{fine_world_pos::FineWorldPos, velocity::Velocity}, direction::Direction, geometry::rotation::SphericalRotation};
+
 use super::{entity::{Entity, EntityQuery, EntityQueryResults}, entity_action::{ActionData, EntityActionDto, EntityActionHandler, EntityActionDtoMaker}, entity_component::impl_component, game::GameSchedule, game_script::GameScript};
 
 #[wasm_bindgen]
@@ -8,15 +9,16 @@ pub struct MoveActionData {
     pub direction: Direction,
 }
 
+#[derive(Clone, Debug, Default)]
 pub struct MoveAction { }
 impl EntityActionDtoMaker<MoveActionData> for MoveAction {
     fn get_action_type_static() -> &'static str {
-        "PlayerMove"
+        "Move"
     }
 }
 impl EntityActionHandler for MoveAction {
     fn get_action_type(&self) -> &'static str {
-        "PlayerMove"
+        "Move"
     }
 
     fn handle_dto(&self, entity: &mut Entity, data: &EntityActionDto) {
@@ -28,10 +30,10 @@ impl EntityActionHandler for MoveAction {
 pub type MovingDirection = Option<Direction>;
 impl_component!(MovingDirection);
 
-#[derive(Debug)]
-pub struct PlayerMoveScript { }
+#[derive(Debug, Default)]
+pub struct MoveScript { }
 
-impl GameScript for PlayerMoveScript {
+impl GameScript for MoveScript {
 
     fn get_query(&self) -> EntityQuery {
         let mut query = EntityQuery::new();
@@ -41,20 +43,19 @@ impl GameScript for PlayerMoveScript {
         query
     }
 
-    fn update(&mut self, world: &crate::world::World, query_results: EntityQueryResults) -> Option<GameSchedule> {
+    fn update(&mut self, _world: &crate::world::World, query_results: EntityQueryResults) -> Option<GameSchedule> {
         for entity in query_results.entities {
-            let mut new_rot = entity.get::<SphericalRotation>().unwrap();
-            let moving_dir = entity.get::<MovingDirection>().unwrap();
-            let vel = entity.get::<Velocity>().unwrap().to_owned();
+            let rot = entity.get::<SphericalRotation>().unwrap().to_owned();
+            let moving_dir = entity.get::<MovingDirection>().unwrap().to_owned();
 
-            // let force = moving_dir.into();
+            println!("moving dir: {:?}", moving_dir);
 
-            let new_vel = vel;
-
-            entity.set::<Velocity>(new_vel);
+            if moving_dir.is_some() {
+                let new_vel: Velocity = rot.into();
+                entity.set::<Velocity>(new_vel);
+            }
         }
 
         None
     }
 }
-

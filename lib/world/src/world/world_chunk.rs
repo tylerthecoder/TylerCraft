@@ -1,10 +1,9 @@
 use std::collections::HashSet;
-
 use super::{ChunkNotLoadedError, World, WorldStateDiff};
 use crate::{
-    chunk::{chunk_mesh::ChunkMesh, Chunk},
-    positions::{ChunkPos, WorldPos},
+    chunk::{chunk_mesh::ChunkMesh, Chunk}, components::world_pos::WorldPos, positions::ChunkPos
 };
+use crate::vec::Vector3Ops;
 
 impl World {
     pub fn get_chunk(&self, chunk_pos: &ChunkPos) -> Result<&Chunk, ChunkNotLoadedError> {
@@ -39,13 +38,13 @@ impl World {
 
     pub fn insert_chunk(&mut self, chunk: Chunk) -> WorldStateDiff {
         // Update adjacent chunk meshes
-        let updated_chunk_ids: HashSet<String> = chunk
+        let updated_chunk_ids: HashSet<u64> = chunk
             .position
             .get_adjacent_vecs()
             .iter()
             .filter_map(|chunk_pos| {
                 if self.update_chunk_mesh(chunk_pos).is_ok() {
-                    Some(chunk_pos.to_index())
+                    Some(chunk_pos.to_id())
                 } else {
                     None
                 }
@@ -79,10 +78,7 @@ impl World {
 #[cfg(test)]
 mod tests {
     use crate::{
-        block::{BlockData, BlockType, ChunkBlock},
-        chunk::Chunk,
-        positions::{ChunkPos, InnerChunkPos, WorldPos},
-        world::{world_block::WorldBlock, World},
+        block::{BlockData, BlockType, ChunkBlock}, chunk::Chunk, components::world_pos::WorldPos, positions::{ChunkPos, InnerChunkPos}, vec::Vector3Ops, world::{world_block::WorldBlock, World}
     };
 
     #[test]

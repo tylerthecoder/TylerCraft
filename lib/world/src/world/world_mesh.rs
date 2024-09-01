@@ -2,8 +2,7 @@ use std::collections::HashSet;
 
 use super::{ChunkNotLoadedError, World, WorldStateDiff};
 use crate::{
-    chunk::chunk_mesh::{BlockMesh, ChunkMesh},
-    positions::{ChunkPos, WorldPos},
+    chunk::chunk_mesh::{BlockMesh, ChunkMesh}, components::world_pos::WorldPos, positions::ChunkPos, vec::Vector3Ops
 };
 
 impl World {
@@ -57,7 +56,7 @@ impl World {
     pub fn update_chunks_around_block(&mut self, world_pos: &WorldPos) -> WorldStateDiff {
         // Check to see if any of the adjacent blocks are in different chunks.
         // Don't need to filter out duplicates since they aren't possible
-        let updated_ids: HashSet<String> = world_pos
+        let updated_ids: HashSet<u64> = world_pos
             .get_cross_vecs()
             .iter()
             // Map to chunk id
@@ -66,7 +65,7 @@ impl World {
             .filter_map(|chunk_pos: ChunkPos| {
                 // Forget about the result, if the chunk isn't loaded, it doesn't matter
                 if self.update_chunk_mesh(&chunk_pos).is_ok() {
-                    Some(chunk_pos.to_index())
+                    Some(chunk_pos.to_id())
                 } else {
                     None
                 }
@@ -82,11 +81,7 @@ impl World {
 #[cfg(test)]
 mod tests {
     use crate::{
-        block::{BlockData, BlockType},
-        chunk::{chunk_mesh::BlockMesh, Chunk},
-        direction::{Direction, Directions},
-        positions::{ChunkPos, WorldPos},
-        world::{world_block::WorldBlock, World},
+        block::{BlockData, BlockType}, chunk::{chunk_mesh::BlockMesh, Chunk}, components::world_pos::WorldPos, direction::{Direction, Directions}, positions::ChunkPos, vec::Vector3Ops, world::{world_block::WorldBlock, World}
     };
 
     #[test]

@@ -99,8 +99,8 @@ impl Chunk {
             .collect()
     }
 
-    pub fn get_uuid(&self) -> String {
-        self.position.to_index()
+    pub fn get_uuid(&self) -> u64 {
+        self.position.to_id()
     }
 
     pub fn add_block(&mut self, block: ChunkBlock) {

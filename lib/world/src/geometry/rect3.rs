@@ -1,6 +1,11 @@
+use crate::components::fine_world_pos::FineWorldPos;
+use crate::components::size3::Size3;
+use crate::components::world_pos::WorldPos;
+use crate::direction::DirectionVectorExtension;
+use crate::vec::Vector3Ops;
+use crate::world::World;
+
 use super::line_segment::{LineSegment, LineSegmentIntersectionInfo};
-use crate::positions::WorldPos;
-use crate::{positions::FineWorldPos, vec::Vec3, world::World};
 use serde::{Deserialize, Serialize};
 use serde_wasm_bindgen::{from_value, to_value};
 use std::cmp::Ordering;
@@ -10,7 +15,7 @@ use wasm_bindgen::JsValue;
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Copy)]
 pub struct Rect3 {
     pub pos: FineWorldPos,
-    pub dim: Vec3<f32>,
+    pub dim: Size3,
 }
 
 static DISTANCE_EPSILON: f32 = 0.03;
@@ -106,13 +111,13 @@ impl World {
             rect, end_pos
         );
 
-        let diff = end_pos - rect.pos;
+        let diff = end_pos.sub(&rect.pos);
 
         println!("diff: {:?}", diff);
 
         let line_segments = rect.get_all_points().map(|point| LineSegment {
             start_pos: point,
-            end_pos: point + diff,
+            end_pos: point.add(&diff),
         });
 
         for segment in &line_segments {
@@ -225,12 +230,7 @@ impl World {
 #[cfg(test)]
 pub mod tests {
     use crate::{
-        block::{BlockData, BlockType},
-        chunk::Chunk,
-        geometry::rect3::Rect3,
-        positions::{FineWorldPos, WorldPos},
-        vec::Vec3,
-        world::{world_block::WorldBlock, World},
+        block::{BlockData, BlockType}, chunk::Chunk, components::{fine_world_pos::FineWorldPos, size3::Size3, world_pos::WorldPos}, geometry::rect3::Rect3, vec::Vector3Ops, world::{world_block::WorldBlock, World}
     };
 
     use super::DISTANCE_EPSILON;
@@ -298,7 +298,7 @@ pub mod tests {
                     y: 2.3,
                     z: 0.5,
                 },
-                dim: Vec3::new(1.0, 1.0, 1.0),
+                dim: Size3::new(1.0, 1.0, 1.0),
             },
             FineWorldPos {
                 x: 0.5,
@@ -327,7 +327,7 @@ pub mod tests {
                     y: 2.3,
                     z: 0.5,
                 },
-                dim: Vec3::new(1.0, 1.0, 1.0),
+                dim: Size3::new(1.0, 1.0, 1.0),
             },
             FineWorldPos {
                 x: 0.5,
@@ -356,7 +356,7 @@ pub mod tests {
                     y: 1.3,
                     z: 2.5,
                 },
-                dim: Vec3::new(1.0, 1.0, 1.0),
+                dim: Size3::new(1.0, 1.0, 1.0),
             },
             FineWorldPos {
                 x: 0.5,
@@ -381,7 +381,7 @@ pub mod tests {
                     y: 1.3,
                     z: -1.5,
                 },
-                dim: Vec3::new(1.0, 1.0, 1.0),
+                dim: Size3::new(1.0, 1.0, 1.0),
             },
             FineWorldPos {
                 x: -3.5,
@@ -410,7 +410,7 @@ pub mod tests {
                     y: 1.5,
                     z: -1.5,
                 },
-                dim: Vec3::new(0.8, 0.8, 0.8),
+                dim: Size3::new(0.8, 0.8, 0.8),
             },
             FineWorldPos {
                 x: 0.5,
@@ -439,7 +439,7 @@ pub mod tests {
                     y: 1.5,
                     z: 0.5,
                 },
-                dim: Vec3::new(1.0, 1.0, 1.0),
+                dim: Size3::new(1.0, 1.0, 1.0),
             },
             FineWorldPos {
                 x: 0.5,
@@ -464,7 +464,7 @@ pub mod tests {
                     y: 1.03,
                     z: 0.023,
                 },
-                dim: Vec3::new(1.0, 1.0, 1.0),
+                dim: Size3::new(1.0, 1.0, 1.0),
             },
             FineWorldPos {
                 x: 5.007,
@@ -548,7 +548,7 @@ pub mod tests {
                     y: 1.1,
                     z: 0.5,
                 },
-                dim: Vec3::new(1.0, 2.0, 1.0),
+                dim: Size3::new(1.0, 2.0, 1.0),
             },
             FineWorldPos {
                 x: -0.3,
@@ -584,7 +584,7 @@ pub mod tests {
                     y: 1.3,
                     z: -1.5,
                 },
-                dim: Vec3::new(0.8, 2.0, 0.8),
+                dim: Size3::new(0.8, 2.0, 0.8),
             },
             FineWorldPos {
                 x: -2.5,
@@ -620,7 +620,7 @@ pub mod tests {
                     y: 1.3,
                     z: 1.9,
                 },
-                dim: Vec3::new(0.8, 2.0, 0.8),
+                dim: Size3::new(0.8, 2.0, 0.8),
             },
             FineWorldPos {
                 x: 2.3,
@@ -649,7 +649,7 @@ pub mod tests {
                     y: 1.1,
                     z: 0.5,
                 },
-                dim: Vec3::new(1.0, 1.0, 1.0),
+                dim: Size3::new(1.0, 1.0, 1.0),
             },
             FineWorldPos {
                 x: 0.3,
@@ -691,7 +691,7 @@ pub mod tests {
                     y: 2.3,
                     z: 0.5,
                 },
-                dim: Vec3::new(1.0, 1.0, 1.0),
+                dim: Size3::new(1.0, 1.0, 1.0),
             },
             vec![],
         );
@@ -711,7 +711,7 @@ pub mod tests {
                     y: 0.5,
                     z: 0.0,
                 },
-                dim: Vec3::new(1.0, 1.0, 1.0),
+                dim: Size3::new(1.0, 1.0, 1.0),
             },
             vec![WorldPos::new(0, 0, 0)],
         );

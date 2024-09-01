@@ -1,4 +1,4 @@
-use crate::{geometry::velocity::Velocity, world::World};
+use crate::{components::velocity::Velocity, vec::Vector3Ops, world::World};
 use wasm_bindgen::prelude::wasm_bindgen;
 use super::{entity::{Entity, EntityId, EntityQuery, EntityQueryResults}, entity_action::{ActionData, EntityActionDto, EntityActionDtoMaker, EntityActionHandler}, entity_component::impl_component, game::GameSchedule, game_script::GameScript, player::Flying};
 
@@ -47,7 +47,7 @@ impl EntityActionHandler for JumpAction {
             z: 0.0,
         };
 
-        let new_vel = jump_force + vel;
+        let new_vel = vel.add(&jump_force);
 
         println!("new_vel: {:?}", new_vel);
 

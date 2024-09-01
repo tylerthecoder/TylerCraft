@@ -15,8 +15,8 @@ impl Chunk {
         })
     }
 
-    pub fn get_chunk_id(&self) -> String {
-        self.position.to_index()
+    pub fn get_chunk_id(&self) -> u64 {
+        self.position.to_id()
     }
 
     pub fn add_block_wasm(&mut self, js_block: JsValue) -> Result<(), Error> {

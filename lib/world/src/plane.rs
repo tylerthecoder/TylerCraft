@@ -1,8 +1,6 @@
 use serde::{Deserialize, Serialize};
-
 use crate::{
-    direction::Direction,
-    positions::{FineWorldPos, WorldPos},
+    components::{fine_world_pos::FineWorldPos, world_pos::WorldPos}, direction::{Direction, DirectionVectorExtension}
 };
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Copy)]
@@ -73,8 +71,7 @@ impl WorldPlane {
 #[cfg(test)]
 mod tests {
     use crate::{
-        direction::Direction,
-        positions::{FineWorldPos, WorldPos},
+        components::{fine_world_pos::FineWorldPos, world_pos::WorldPos}, direction::Direction, vec::Vector3Ops
     };
 
     use super::WorldPlane;

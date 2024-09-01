@@ -1,10 +1,7 @@
 use crate::{
-    direction::Directions,
-    plane::WorldPlane,
-    positions::{ChunkPos, InnerChunkPos, WorldPos},
+    components::world_pos::WorldPos, direction::Directions, plane::WorldPlane, positions::{ChunkPos, InnerChunkPos}
 };
 use js_sys::wasm_bindgen;
-    use wasm_bindgen::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -81,9 +78,7 @@ impl IntoIterator for &ChunkMesh {
 #[cfg(test)]
 mod tests {
     use crate::{
-        chunk::chunk_mesh::{BlockMesh, ChunkMesh},
-        direction::Directions,
-        positions::{ChunkPos, WorldPos},
+        chunk::chunk_mesh::{BlockMesh, ChunkMesh}, components::world_pos::WorldPos, direction::Directions, positions::ChunkPos, vec::Vector3Ops
     };
 
     #[test]
@@ -92,9 +87,9 @@ mod tests {
         let mut chunk_mesh = ChunkMesh::new(chunk_pos);
         let world_pos = WorldPos::new(0, 0, 0);
         let directions = Directions::all();
-        chunk_mesh.insert(world_pos, directions);
+        chunk_mesh.insert(world_pos.clone(), directions);
         assert_eq!(
-            chunk_mesh.get(world_pos),
+            chunk_mesh.get(world_pos.clone()),
             BlockMesh {
                 world_pos,
                 directions
@@ -108,7 +103,7 @@ mod tests {
         let chunk_mesh = ChunkMesh::new(chunk_pos);
         let world_pos = WorldPos::new(0, 0, 0);
         assert_eq!(
-            chunk_mesh.get(world_pos),
+            chunk_mesh.get(world_pos.clone()),
             BlockMesh {
                 world_pos,
                 directions: Directions::empty()

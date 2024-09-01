@@ -1,4 +1,5 @@
-use crate::geometry::rotation::SphericalRotation;
+use crate::{geometry::{rotation::SphericalRotation, vec2::Vec2Ops}, vec::Vector3Ops};
+use num::One;
 use serde::{Deserialize, Serialize};
 use std::{
     f32::consts::PI,
@@ -195,3 +196,86 @@ impl Into<SphericalRotation> for Direction {
         }
     }
 }
+
+
+pub trait DirectionVectorExtension: Vector3Ops {
+    fn get_component_from_direction(&self, direction: Direction) -> Self::Scalar {
+        match direction {
+            Direction::North => self.z(),
+            Direction::South => self.z(),
+            Direction::East => self.x(),
+            Direction::West => self.x(),
+            Direction::Up => self.y(),
+            Direction::Down => self.y(),
+        }
+    }
+
+    fn get_opposite_components_from_direction(&self, direction: Direction) -> (Self::Scalar, Self::Scalar) {
+        match direction {
+            Direction::North => (self.x(), self.y()),
+            Direction::South => (self.x(), self.y()),
+            Direction::East => (self.y(), self.z()),
+            Direction::West => (self.y(), self.z()),
+            Direction::Up => (self.x(), self.z()),
+            Direction::Down => (self.x(), self.z()),
+        }
+    }
+
+    fn get_component_from_axis(&self, axis: Axis) -> Self::Scalar {
+        match axis {
+            Axis::X => self.x(),
+            Axis::Y => self.y(),
+            Axis::Z => self.z(),
+        }
+    }
+
+    fn set_component_from_axis(&mut self, axis: Axis, val: Self::Scalar) {
+        match axis {
+            Axis::X => self.set_x(val),
+            Axis::Y => self.set_y(val),
+            Axis::Z => self.set_z(val),
+        }
+    }
+
+    fn move_direction(&self, direction: &Direction) -> Self {
+        let mut new_vec = self.copy();
+        match direction {
+            Direction::North => new_vec.set_z(new_vec.z() + One::one()),
+            Direction::South => new_vec.set_z(new_vec.z() - One::one()),
+            Direction::East => new_vec.set_x(new_vec.x() + One::one()),
+            Direction::West => new_vec.set_x(new_vec.x() - One::one()),
+            Direction::Up => new_vec.set_y(new_vec.y() + One::one()),
+            Direction::Down => new_vec.set_y(new_vec.y() - One::one()),
+        }
+        new_vec
+    }
+
+    fn move_in_flat_direction(&self, direction: &FlatDirection) -> Self {
+        let mut new_vec = self.copy();
+        match direction {
+            FlatDirection::North => new_vec.set_y(new_vec.y() + One::one()),
+            FlatDirection::South => new_vec.set_y(new_vec.y() - One::one()),
+            FlatDirection::East => new_vec.set_x(new_vec.x() + One::one()),
+            FlatDirection::West => new_vec.set_x(new_vec.x() - One::one())
+        }
+        new_vec
+    }
+
+}
+
+impl<V: Vector3Ops> DirectionVectorExtension for V {}
+
+pub trait DirectionVectorExtension2: Vec2Ops {
+    fn move_in_flat_direction(&self, direction: &FlatDirection) -> Self {
+        let mut new_vec = self.copy();
+        match direction {
+            FlatDirection::North => new_vec.set_y(new_vec.y() + One::one()),
+            FlatDirection::South => new_vec.set_y(new_vec.y() - One::one()),
+            FlatDirection::East => new_vec.set_x(new_vec.x() + One::one()),
+            FlatDirection::West => new_vec.set_x(new_vec.x() - One::one())
+        }
+        new_vec
+    }
+}
+
+impl<V: Vec2Ops> DirectionVectorExtension2 for V {}

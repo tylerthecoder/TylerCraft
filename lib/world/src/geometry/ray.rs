@@ -1,11 +1,6 @@
 use super::{line_segment::LineSegment, rotation::SphericalRotation};
 use crate::{
-    chunk::chunk_mesh::BlockMesh,
-    direction::Direction,
-    plane::WorldPlane,
-    positions::FineWorldPos,
-    vec::Vec3,
-    world::{world_block::WorldBlock, World},
+    chunk::chunk_mesh::BlockMesh, components::fine_world_pos::FineWorldPos, direction::{Direction, DirectionVectorExtension}, plane::WorldPlane, vec::Vector3Ops, world::{world_block::WorldBlock, World}
 };
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
@@ -37,15 +32,16 @@ pub struct LookingAt {
 }
 
 impl Ray {
+
     pub fn move_forward_mut(&mut self, amount: f32) {
-        let rot_vec: Vec3<f32> = self.rot.into();
-        self.pos = rot_vec.scalar_mult(amount)
+        let rot_vec = self.rot.get_unit_vector();
+        self.pos = FineWorldPos::from_vec3(rot_vec.scalar_mult(amount));
     }
 
     pub fn move_forward(&self, amount: f32) -> Ray {
-        let rot_vec: Vec3<f32> = self.rot.into();
+        let rot_vec = self.rot.get_unit_vector();
         Ray {
-            pos: self.pos.add_vec(rot_vec.scalar_mult(amount)),
+            pos: self.pos.add(&rot_vec.scalar_mult(amount)),
             rot: self.rot,
         }
     }
@@ -69,17 +65,17 @@ impl Ray {
         // PlanePos[dim] = CameraPos[dim] + t * CameraRotation
         // t = (PlanePos[dim] - CameraPos[dim]) / CameraRotation
 
-        let rot_vec: Vec3<f32> = self.rot.into();
+        let rot_vec = self.rot.get_unit_vector();
 
         let t = (plane.get_relative_y() as f32
             - self.pos.get_component_from_direction(plane.direction))
             / rot_vec.get_component_from_direction(plane.direction);
 
         // Now find the actual position
-        let intersect_pos = self.pos.add_vec(rot_vec.scalar_mult(t));
+        let intersect_pos = self.pos.add(&rot_vec.scalar_mult(t));
 
         if plane.contains(intersect_pos) {
-            Some(self.pos.distance_to(intersect_pos))
+            Some(self.pos.distance_to(&intersect_pos))
         } else {
             None
         }
@@ -106,13 +102,7 @@ impl World {
 mod tests {
     use super::{LookingAt, Ray};
     use crate::{
-        block::{BlockData, BlockType},
-        chunk::{chunk_mesh::BlockMesh, Chunk},
-        direction::{Direction, Directions},
-        geometry::rotation::SphericalRotation,
-        plane::WorldPlane,
-        positions::{FineWorldPos, WorldPos},
-        world::{world_block::WorldBlock, World},
+        block::{BlockData, BlockType}, chunk::{chunk_mesh::BlockMesh, Chunk}, components::{fine_world_pos::FineWorldPos, world_pos::WorldPos}, direction::{Direction, Directions}, geometry::rotation::SphericalRotation, plane::WorldPlane, vec::Vector3Ops, world::{world_block::WorldBlock, World}
     };
 
     #[test]

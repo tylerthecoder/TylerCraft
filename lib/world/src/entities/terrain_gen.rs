@@ -1,14 +1,11 @@
 use crate::{
-    block::{BlockData, BlockType, ChunkBlock},
-    chunk::{Chunk, CHUNK_WIDTH},
-    direction::{Direction, Directions, EVERY_FLAT_DIRECTION},
-    positions::{ChunkPos, InnerChunkPos, WorldPos},
-    world::world_block::WorldBlock,
+    block::{BlockData, BlockType, ChunkBlock}, chunk::{Chunk, CHUNK_WIDTH}, components::world_pos::WorldPos, direction::{Direction, DirectionVectorExtension, Directions, EVERY_FLAT_DIRECTION}, geometry::vec2::Vec2Ops, positions::{ChunkPos, InnerChunkPos}, vec::Vector3Ops, world::world_block::WorldBlock
 };
 use noise::{NoiseFn, Perlin};
 use rand::{rngs::StdRng, SeedableRng};
 use rand_distr::{Distribution, Uniform};
 use serde::{Deserialize, Serialize};
+use crate::direction::DirectionVectorExtension2;
 
 // remove all the positions that are too close to each other in the chunk
 fn remove_close_positions<'a, I, J>(pos_iter: I, checking_pos_iter: J) -> Vec<WorldPos>
@@ -21,7 +18,7 @@ where
     for pos in pos_iter {
         let mut too_close = false;
         for other_pos in checking_pos_iter.clone() {
-            if pos.distance_to_2::<i32, f64>(&other_pos) < 3.0 {
+            if pos.distance_to(other_pos) < 3.0 {
                 too_close = true;
                 break;
             }
@@ -146,7 +143,7 @@ impl TreeRandomSpreadGenerator {
             // loop over and make sure that the tree is not too close to any other trees
             let mut too_close = false;
             for other_pos in tree_locations.iter() {
-                if pos.distance_to_2::<i32, f64>(&other_pos) < 3.0 {
+                if pos.distance_to(other_pos) < 3.0 {
                     too_close = true;
                     break;
                 }
@@ -365,7 +362,7 @@ impl BasicChunkGetter {
 
                 for y in 0u8..height {
                     let block = ChunkBlock {
-                        pos: InnerChunkPos::new(x, y, z),
+                        pos: InnerChunkPos::new(x as i8, y as i8, z as i8),
                         block_type: BlockType::Stone,
                         extra_data: BlockData::None,
                     };
@@ -374,7 +371,7 @@ impl BasicChunkGetter {
                 }
                 // add top grass block
                 let block = ChunkBlock {
-                    pos: InnerChunkPos::new(x, height, z),
+                    pos: InnerChunkPos::new(x as i8, height as i8, z as i8),
                     block_type: BlockType::Grass,
                     extra_data: BlockData::None,
                 };
@@ -394,7 +391,7 @@ impl FlatWorldChunkGetter {
         for x in 0u8..CHUNK_WIDTH as u8 {
             for z in 0u8..CHUNK_WIDTH as u8 {
                 let block = ChunkBlock {
-                    pos: InnerChunkPos::new(x, 0, z),
+                    pos: InnerChunkPos::new(x as i8, 0, z as i8),
                     block_type: BlockType::Grass,
                     extra_data: BlockData::None,
                 };
@@ -467,7 +464,7 @@ impl ParkorChunkGetter {
         let mut count = 0;
 
         // keep loading the next block until it isn't load distance away from me
-        while next_block.world_pos.to_chunk_pos().distance_to(*chunk_pos) as u8
+        while next_block.world_pos.to_chunk_pos().distance_to(chunk_pos) as u8
             <= self.load_distance
             && count < 10
         {
