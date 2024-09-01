@@ -1,4 +1,4 @@
-use crate::positions::{ChunkPos, InnerChunkPos, WorldPos};
+use crate::{positions::{ChunkPos, InnerChunkPos, WorldPos}, vec::Vector3Ops};
 
 #[test]
 fn index_conversion() {

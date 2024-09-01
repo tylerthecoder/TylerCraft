@@ -8,7 +8,6 @@ mod unit_tests;
 pub type InnerChunkPos = Vec3u8;
 pub type ChunkPos = Vec2i16;
 
-impl_component!(WorldPos);
 impl_component!(ChunkPos);
 impl_component!(InnerChunkPos);
 
