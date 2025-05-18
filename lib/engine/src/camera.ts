@@ -18,9 +18,10 @@ const getPlayerOffset = (player: PlayerWrapper) => {
 };
 
 export const makeCameraForPlayer = (player: PlayerWrapper) => {
+  const adjustedRot = player.rot.add(new Vector3D([0, 0, 0]));
   return {
     pos: player.pos.add(getPlayerOffset(player)),
-    rot: player.rot,
+    rot: adjustedRot,
   };
 };
 

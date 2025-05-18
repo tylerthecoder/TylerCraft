@@ -28,6 +28,9 @@ impl EntityActionHandler for RotateAction {
         let data = data.get_data::<RotateActionData>().unwrap();
 
         let new_rot = entity.get::<SphericalRotation>().unwrap().to_owned() + data.rot_diff;
+
+        js_log(&format!("New rot: {:?}", new_rot));
+
         entity.set::<SphericalRotation>(new_rot);
     }
 }

@@ -184,7 +184,7 @@ export class CanvasGameScript extends GameScript<Config> {
       ) {
         continue;
       }
-      entityRenderer.render(camera);
+      // entityRenderer.render(camera);
     }
 
     // loop through all of the chunks that I would be able to see.

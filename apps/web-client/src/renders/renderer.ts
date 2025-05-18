@@ -15,7 +15,7 @@ export class RenderData implements IRenderData {
 
   indexOffset = 0;
 
-  constructor(private shouldLog = false) {}
+  constructor(private shouldLog = false) { }
 
   public pushData(renData: Partial<RenderData>) {
     if (this.shouldLog) {
@@ -50,7 +50,7 @@ export abstract class Renderer {
   amount = 0;
   transAmount = 0;
 
-  constructor(protected webGlGScript: WebGlGScript) {}
+  constructor(protected webGlGScript: WebGlGScript) { }
 
   protected setBuffers(renData: IRenderData, transRenData?: IRenderData) {
     const gl = this.webGlGScript.gl;
@@ -247,13 +247,8 @@ export abstract class Renderer {
     // Set the drawing position to the "identity" point, which is
     // the center of the scene.
 
-    // TODO tweak these to work
-    // need to invert
-    // theta = -this.rot.get(1) + (Math.PI * 3) / 2,
-    // // Convert to [-pi/2, pi/2]
-    // phi =  -(Math.PI / 2 - this.rot.get(2)),
-    const theta = Math.PI / 2 - camera.rot.get(2);
-    const phi = Math.PI / 2 - camera.rot.get(1);
+    const theta = camera.rot.get(1);
+    const phi = camera.rot.get(2);
     const modelViewMatrix = mat4.create();
 
     mat4.rotate(modelViewMatrix, modelViewMatrix, theta, [1, 0, 0]);

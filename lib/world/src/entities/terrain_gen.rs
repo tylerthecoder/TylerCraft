@@ -1,11 +1,18 @@
+use crate::direction::DirectionVectorExtension2;
 use crate::{
-    block::{BlockData, BlockType, ChunkBlock}, chunk::{Chunk, CHUNK_WIDTH}, components::world_pos::WorldPos, direction::{Direction, DirectionVectorExtension, Directions, EVERY_FLAT_DIRECTION}, geometry::vec2::Vec2Ops, positions::{ChunkPos, InnerChunkPos}, vec::Vector3Ops, world::world_block::WorldBlock
+    block::{BlockData, BlockType, ChunkBlock},
+    chunk::{Chunk, CHUNK_WIDTH},
+    components::world_pos::WorldPos,
+    direction::{Direction, DirectionVectorExtension, Directions, EVERY_FLAT_DIRECTION},
+    geometry::vec2::Vec2Ops,
+    positions::{ChunkPos, InnerChunkPos},
+    vec::Vector3Ops,
+    world::world_block::WorldBlock,
 };
 use noise::{NoiseFn, Perlin};
 use rand::{rngs::StdRng, SeedableRng};
 use rand_distr::{Distribution, Uniform};
 use serde::{Deserialize, Serialize};
-use crate::direction::DirectionVectorExtension2;
 
 // remove all the positions that are too close to each other in the chunk
 fn remove_close_positions<'a, I, J>(pos_iter: I, checking_pos_iter: J) -> Vec<WorldPos>
@@ -110,7 +117,6 @@ pub struct TreeRandomSpreadGenerator {
 }
 
 impl TreeRandomSpreadGenerator {
-
     pub fn make_from_seed(seed: u64) -> TreeRandomSpreadGenerator {
         TreeRandomSpreadGenerator {
             seed,
@@ -128,7 +134,11 @@ impl TreeRandomSpreadGenerator {
         let mut tree_locations: Vec<WorldPos> = Vec::new();
 
         // sample 40 numbers
-        let tree_locations_rnd = self.dist.sample_iter(&mut rng).take(40).collect::<Vec<u16>>();
+        let tree_locations_rnd = self
+            .dist
+            .sample_iter(&mut rng)
+            .take(40)
+            .collect::<Vec<u16>>();
 
         for i in 0..20 {
             let x = tree_locations_rnd[i];
@@ -402,6 +412,21 @@ impl FlatWorldChunkGetter {
     }
 }
 
+struct DebugWorldChunkGetter {}
+
+impl DebugWorldChunkGetter {
+    pub fn get_chunk(&self, chunk_pos: &ChunkPos) -> Chunk {
+        let mut chunk = Chunk::new(*chunk_pos);
+        let block = ChunkBlock {
+            pos: InnerChunkPos::new(0, 0, 0),
+            block_type: BlockType::Grass,
+            extra_data: BlockData::None,
+        };
+        chunk.add_block(block);
+        chunk
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 // #[wasm_bindgen]
 struct ParkorChunkGetter {
@@ -464,8 +489,7 @@ impl ParkorChunkGetter {
         let mut count = 0;
 
         // keep loading the next block until it isn't load distance away from me
-        while next_block.world_pos.to_chunk_pos().distance_to(chunk_pos) as u8
-            <= self.load_distance
+        while next_block.world_pos.to_chunk_pos().distance_to(chunk_pos) as u8 <= self.load_distance
             && count < 10
         {
             self.current_blocks.push(next_block);
@@ -496,13 +520,18 @@ impl ParkorChunkGetter {
 pub struct TerrainGenerator {
     pub seed: u32,
     pub flat_world: bool,
+    pub debug_world: bool,
 }
 
 // #[wasm_bindgen]
 impl TerrainGenerator {
     // #[wasm_bindgen(constructor)]
-    pub fn new(seed: u32, flat_world: bool) -> TerrainGenerator {
-        TerrainGenerator { seed, flat_world }
+    pub fn new(seed: u32, flat_world: bool, debug_world: bool) -> TerrainGenerator {
+        TerrainGenerator {
+            seed,
+            flat_world,
+            debug_world,
+        }
     }
 
     pub fn get_chunk(&self, chunk_x: i16, chunk_y: i16) -> Chunk {
@@ -513,6 +542,11 @@ impl TerrainGenerator {
 
         if self.flat_world {
             let chunk_getter = FlatWorldChunkGetter {};
+            return chunk_getter.get_chunk(&chunk_pos);
+        }
+
+        if self.debug_world {
+            let chunk_getter = DebugWorldChunkGetter {};
             return chunk_getter.get_chunk(&chunk_pos);
         }
 

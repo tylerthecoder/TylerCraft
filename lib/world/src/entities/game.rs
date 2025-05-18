@@ -275,10 +275,10 @@ pub mod wasm {
 
     #[wasm_bindgen]
     impl Game {
-        pub fn new_wasm() -> Game {
+        pub fn new_wasm(flat_world: bool, debug_world: bool) -> Game {
             console_error_panic_hook::set_once();
             let mut g = Game::new();
-            let sandbox_script = Box::new(SandBoxGScript::default());
+            let sandbox_script = Box::new(SandBoxGScript::new(0, flat_world, debug_world, 1));
             g.add_script(sandbox_script);
             g.update();
 

@@ -119,7 +119,6 @@ export abstract class PlayerController {
   }
 
   rotate(x: number, y: number) {
-    // TO-DO
     const action = this.game.makeRotateAction(this.playerId, x, y);
     this.playerActionService.performAction(action);
   }

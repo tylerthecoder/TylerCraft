@@ -18,7 +18,11 @@ impl_component!(Flying);
 
 pub fn make_player(uid: EntityId) -> Entity {
     let mut ent = Entity::new(uid);
-    ent.add::<FineWorldPos>(FineWorldPos::default());
+    ent.add::<FineWorldPos>(FineWorldPos {
+        x: 0.0,
+        y: 10.0,
+        z: 0.0,
+    });
     ent.add::<Velocity>(Velocity::default());
     ent.add::<SphericalRotation>(SphericalRotation::new(0.0, 0.0));
     ent.add::<MovingDirection>(None);

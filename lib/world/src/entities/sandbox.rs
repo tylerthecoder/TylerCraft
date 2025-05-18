@@ -1,5 +1,8 @@
 use super::{
-    entity::{EntityQuery, EntityQueryResults}, game::{Game, GameDiff, GameSchedule}, game_script::GameScript, terrain_gen::TerrainGenerator
+    entity::{EntityQuery, EntityQueryResults},
+    game::{Game, GameDiff, GameSchedule},
+    game_script::GameScript,
+    terrain_gen::TerrainGenerator,
 };
 use crate::{components::fine_world_pos::FineWorldPos, positions::ChunkPos, world::World};
 
@@ -17,18 +20,23 @@ impl Default for SandBoxGScript {
             seed: 0,
             flat_world: false,
             load_distance: 1,
-            terrain_gen: TerrainGenerator::new(0, false),
+            terrain_gen: TerrainGenerator::new(0, false, false),
         }
     }
 }
 
 impl SandBoxGScript {
-    pub fn new(seed: u32, flat_world: bool, infinite: bool, load_distance: u8) -> SandBoxGScript {
+    pub fn new(
+        seed: u32,
+        flat_world: bool,
+        debug_world: bool,
+        load_distance: u8,
+    ) -> SandBoxGScript {
         SandBoxGScript {
             seed,
             flat_world,
             load_distance,
-            terrain_gen: TerrainGenerator::new(seed, flat_world),
+            terrain_gen: TerrainGenerator::new(seed, flat_world, debug_world),
         }
     }
 
@@ -49,7 +57,6 @@ impl SandBoxGScript {
 }
 
 impl GameScript for SandBoxGScript {
-
     fn get_query(&self) -> EntityQuery {
         let mut query = EntityQuery::new();
         query.add::<FineWorldPos>();
@@ -57,8 +64,11 @@ impl GameScript for SandBoxGScript {
     }
 
     fn update(&mut self, world: &World, query_results: EntityQueryResults) -> Option<GameSchedule> {
-
-        let entity_poses: Vec<FineWorldPos> = query_results.entities.iter().map(|ent| ent.get::<FineWorldPos>().unwrap().clone()).collect();
+        let entity_poses: Vec<FineWorldPos> = query_results
+            .entities
+            .iter()
+            .map(|ent| ent.get::<FineWorldPos>().unwrap().clone())
+            .collect();
 
         let nearby_unloaded_chunks: Vec<ChunkPos> = entity_poses
             .iter()

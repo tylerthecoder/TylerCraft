@@ -73,6 +73,8 @@ export class ChunkRenderer extends Renderer {
             blockRenData.pushData({ textureCords });
           }
 
+          console.log("BlockRenData", cube.pos, blockData);
+
           break;
         }
         case BlockShape.Flat: {
@@ -103,6 +105,8 @@ export class ChunkRenderer extends Renderer {
         }
       }
     });
+
+    console.log("ChunkRenderer: Buffer data", renData, transRenData);
 
     this.setBuffers(renData, transRenData);
   }

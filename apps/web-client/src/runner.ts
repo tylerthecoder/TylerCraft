@@ -12,7 +12,7 @@ export function run() {
 
   // hideElement(eStartMenu);
 
-  const game = GameWrapper.makeGame();
+  const game = GameWrapper.makeGame(true, true);
 
   const main_player_uid = getMyUid();
 

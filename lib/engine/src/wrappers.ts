@@ -122,8 +122,8 @@ export class BlockWrapper {
 export class GameWrapper {
   constructor(private game: WorldWasm.Game) { }
 
-  static makeGame(): GameWrapper {
-    const game = WorldWasm.Game.new_wasm();
+  static makeGame(flat_world: boolean, debug_world: boolean): GameWrapper {
+    const game = WorldWasm.Game.new_wasm(flat_world, debug_world);
     return new GameWrapper(game);
   }
 
@@ -141,11 +141,11 @@ export class GameWrapper {
 
   makeRotateAction(
     entityId: number,
-    x: number,
-    y: number
+    theta: number,
+    phi: number
   ): WorldWasm.EntityActionDto {
-    console.log("Making rotate action", entityId, x, y);
-    const rotDiff = WorldWasm.SphericalRotation.new_wasm(y, x);
+    console.log("Making rotate action", entityId, theta, phi);
+    const rotDiff = WorldWasm.SphericalRotation.new_wasm(theta, phi);
     return WorldWasm.RotateAction.make_wasm(entityId, rotDiff);
   }
 
