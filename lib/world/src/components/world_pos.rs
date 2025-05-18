@@ -1,7 +1,12 @@
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
-use crate::{chunk::CHUNK_WIDTH, entities::entity_component::impl_component, positions::{ChunkPos, InnerChunkPos}, vec::{impl_vector_ops, Vector3Ops}};
+use crate::{
+    chunk::{CHUNK_HEIGHT, CHUNK_WIDTH},
+    entities::entity_component::impl_component,
+    positions::{ChunkPos, InnerChunkPos},
+    vec::{impl_vector_ops, Vector3Ops},
+};
 
 use super::fine_world_pos::FineWorldPos;
 
@@ -31,9 +36,11 @@ impl WorldPos {
     }
 
     pub fn to_inner_chunk_pos(&self) -> InnerChunkPos {
-        let x = (((self.x as i8 % 16) + 16) % 16) as i8;
-        let y = self.y as i8;
-        let z = (((self.z as i8 % 16) + 16) % 16) as i8;
+        let x =
+            (((self.x as i8 % CHUNK_WIDTH as i8) + CHUNK_WIDTH as i8) % CHUNK_WIDTH as i8) as i8;
+        let y = ((self.y as i8 % CHUNK_HEIGHT as i8) + CHUNK_HEIGHT as i8) % CHUNK_HEIGHT as i8;
+        let z =
+            (((self.z as i8 % CHUNK_WIDTH as i8) + CHUNK_WIDTH as i8) % CHUNK_WIDTH as i8) as i8;
         InnerChunkPos::new(x, y, z)
     }
 

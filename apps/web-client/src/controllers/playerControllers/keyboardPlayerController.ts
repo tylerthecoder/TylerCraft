@@ -18,8 +18,7 @@ export class KeyboardPlayerEntityController extends PlayerController {
 
   private keys = new Set();
   private keysPressed = new Set();
-  private currentMoveDirections = new Set<Direction>();
-  private prevMoveDirections = new Set<Direction>();
+  private currentMoveDirection: Direction | "None" = "None";
 
   private numOfUpdates = 0;
 
@@ -70,7 +69,7 @@ export class KeyboardPlayerEntityController extends PlayerController {
           moveX += Math.PI;
           this.rotate(moveX, moveY);
         } else {
-          this.rotate(moveX, moveY);
+          this.rotate(-moveX, moveY);
         }
       }
     });
@@ -116,22 +115,28 @@ export class KeyboardPlayerEntityController extends PlayerController {
     this.keys.add(key.toLowerCase());
     switch (key) {
       case "w":
-        this.currentMoveDirections.add(Direction.North);
+        this.currentMoveDirection = Direction.North;
+        this.move(Direction.North);
         break;
       case "s":
-        this.currentMoveDirections.add(Direction.South);
+        this.currentMoveDirection = Direction.South;
+        this.move(Direction.South);
         break;
       case "a":
-        this.currentMoveDirections.add(Direction.West);
+        this.currentMoveDirection = Direction.West;
+        this.move(Direction.West);
         break;
       case "d":
-        this.currentMoveDirections.add(Direction.East);
+        this.currentMoveDirection = Direction.East;
+        this.move(Direction.East);
         break;
       case "e":
-        this.currentMoveDirections.add(Direction.Up);
+        this.currentMoveDirection = Direction.Up;
+        this.move(Direction.Up);
         break;
       case "q":
-        this.currentMoveDirections.add(Direction.Down);
+        this.currentMoveDirection = Direction.Down;
+        this.move(Direction.Down);
         break;
       case "c":
         this.toggleCreative();
@@ -183,43 +188,39 @@ export class KeyboardPlayerEntityController extends PlayerController {
     this.keys.delete(key.toLowerCase());
     this.keysPressed.add(key.toLowerCase());
     if (key === "w") {
-      this.currentMoveDirections.delete(Direction.North);
+      if (this.currentMoveDirection === Direction.North) {
+        this.currentMoveDirection = "None";
+        this.move("None");
+      }
     } else if (key === "s") {
-      this.currentMoveDirections.delete(Direction.South);
+      if (this.currentMoveDirection === Direction.South) {
+        this.currentMoveDirection = "None";
+        this.move("None");
+      }
     } else if (key === "a") {
-      this.currentMoveDirections.delete(Direction.West);
+      if (this.currentMoveDirection === Direction.West) {
+        this.currentMoveDirection = "None";
+        this.move("None");
+      }
     } else if (key === "d") {
-      this.currentMoveDirections.delete(Direction.East);
+      if (this.currentMoveDirection === Direction.East) {
+        this.currentMoveDirection = "None";
+        this.move("None");
+      }
     } else if (key === "e") {
-      this.currentMoveDirections.delete(Direction.Up);
+      if (this.currentMoveDirection === Direction.Up) {
+        this.currentMoveDirection = "None";
+        this.move("None");
+      }
     } else if (key === "q") {
-      this.currentMoveDirections.delete(Direction.Down);
+      if (this.currentMoveDirection === Direction.Down) {
+        this.currentMoveDirection = "None";
+        this.move("None");
+      }
     } else if (key === " ") {
       this.hasJumped = false;
     }
   }
 
-  update() {
-    // check if previous directions is different than current directions
-    let areDifferent = false;
-    for (const direction of this.currentMoveDirections) {
-      if (!this.prevMoveDirections.has(direction)) {
-        areDifferent = true;
-        break;
-      }
-    }
-    for (const direction of this.prevMoveDirections) {
-      if (!this.currentMoveDirections.has(direction)) {
-        areDifferent = true;
-        break;
-      }
-    }
-
-    if (areDifferent) {
-      this.move(Array.from(this.currentMoveDirections.values()));
-
-      // Copy prev to current
-      this.prevMoveDirections = new Set(this.currentMoveDirections);
-    }
-  }
+  update() { }
 }

@@ -194,7 +194,7 @@ export class CanvasGameScript extends GameScript<Config> {
       this.config.chunkSize * this.config.renderDistance;
     const cameraChunkPos = this.game.getChunkPosFromWorldPos(camera.pos);
 
-    const cameraRotNorm = camera.rot.toCartesianCoords().normalize();
+    // const cameraRotNorm = camera.rot.toCartesianCoords().normalize();
 
     const renderChunk = (chunkPos: Vector2D) => {
       const chunkId = this.game.getChunkIdFromChunkPos(chunkPos);
@@ -232,15 +232,16 @@ export class CanvasGameScript extends GameScript<Config> {
           continue;
         }
 
+        // DISABLED: idk if this actually works
         // check if you are facing that right way to see the chunk
-        const diffChunkCamera = camera.pos.sub(chunkWorldPos).normalize();
-        const dist = diffChunkCamera.distFrom(cameraRotNorm);
+        // const diffChunkCamera = camera.pos.sub(chunkWorldPos).normalize();
+        // const dist = diffChunkCamera.distFrom(cameraRotNorm);
 
-        if (dist > this.config.fovFactor) {
-          // don't render this chunk because the player isn't looking at it
-          skippedChunkPos.add(chunkPos);
-          continue;
-        }
+        // if (dist > this.config.fovFactor) {
+        //   // don't render this chunk because the player isn't looking at it
+        //   skippedChunkPos.add(chunkPos);
+        //   continue;
+        // }
 
         renderedSet.add(chunkPos.toIndex());
 

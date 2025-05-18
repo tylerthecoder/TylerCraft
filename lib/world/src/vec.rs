@@ -1,8 +1,11 @@
+use crate::direction::DirectionVectorExtension;
 use crate::direction::Directions;
 use num::{integer::Roots, traits::real::Real, Num, One, Zero};
 use serde::{Deserialize, Serialize};
-use std::{fmt::Display, ops::{Add, AddAssign, Div, Mul, Neg, Sub, SubAssign}};
-use crate::direction::DirectionVectorExtension;
+use std::{
+    fmt::Display,
+    ops::{Add, AddAssign, Div, Mul, Neg, Sub, SubAssign},
+};
 
 pub trait AsF32 {
     fn as_f32(self) -> f32;
@@ -91,7 +94,11 @@ pub trait Vector3Ops: Sized {
     }
 
     fn sqr(&self) -> Self {
-        Self::new(self.x() * self.x(), self.y() * self.y(), self.z() * self.z())
+        Self::new(
+            self.x() * self.x(),
+            self.y() * self.y(),
+            self.z() * self.z(),
+        )
     }
 
     fn dot<V: Vector3Ops<Scalar = Self::Scalar>>(&self, other: &V) -> Self::Scalar {
@@ -234,7 +241,6 @@ pub struct Vec3i16 {
 
 impl_vector_ops!(Vec3i16, i16);
 
-
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 pub struct Vec3u8 {
     pub x: i8,
@@ -243,8 +249,6 @@ pub struct Vec3u8 {
 }
 
 impl_vector_ops!(Vec3u8, i8);
-
-
 
 // #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
 // pub struct Vec2<T> {
@@ -464,12 +468,28 @@ pub mod tests {
 
     #[test]
     fn test_distance_to() {
-        let vec1 = Vec3f32 { x: 0 as f32, y: 0 as f32, z: 0 as f32 };
-        let vec2 = Vec3f32 { x: 1 as f32, y: 1 as f32, z: 1 as f32 };
+        let vec1 = Vec3f32 {
+            x: 0 as f32,
+            y: 0 as f32,
+            z: 0 as f32,
+        };
+        let vec2 = Vec3f32 {
+            x: 1 as f32,
+            y: 1 as f32,
+            z: 1 as f32,
+        };
         assert_eq!(vec1.distance_to(&vec2), 1.7320508);
 
-        let vec1 = Vec3f32 { x: 0 as f32, y: 0 as f32, z: 0 as f32 };
-        let vec2 = Vec3f32 { x: 1 as f32, y: 0 as f32, z: 0 as f32 };
+        let vec1 = Vec3f32 {
+            x: 0 as f32,
+            y: 0 as f32,
+            z: 0 as f32,
+        };
+        let vec2 = Vec3f32 {
+            x: 1 as f32,
+            y: 0 as f32,
+            z: 0 as f32,
+        };
         assert_eq!(vec1.distance_to(&vec2), 1.0);
     }
 }

@@ -217,7 +217,7 @@ mod tests {
         let move_action = MoveAction::make_dto(
             1,
             MoveActionData {
-                direction: Direction::North,
+                direction: Some(Direction::North),
             },
         );
         game.action_holder.add(move_action);
@@ -262,9 +262,10 @@ pub mod wasm {
             entity_action::{EntityActionDto, EntityActionDtoMaker},
             player::{make_player, wasm::WasmPlayer},
             player_jump_script::JumpAction,
-            player_move_script::MoveAction,
+            player_move_script::{MoveAction, MoveScript},
             player_rot_script::RotateAction,
             sandbox::SandBoxGScript,
+            velocity_script::VelocityScript,
         },
         positions::ChunkPos,
         utils::js_log,
@@ -280,6 +281,9 @@ pub mod wasm {
             let mut g = Game::new();
             let sandbox_script = Box::new(SandBoxGScript::new(0, flat_world, debug_world, 1));
             g.add_script(sandbox_script);
+
+            g.add_script(Box::new(MoveScript::default()));
+            g.add_script(Box::new(VelocityScript::default()));
             g.update();
 
             // Add basic action handlers

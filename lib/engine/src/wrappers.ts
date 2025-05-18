@@ -144,9 +144,19 @@ export class GameWrapper {
     theta: number,
     phi: number
   ): WorldWasm.EntityActionDto {
-    console.log("Making rotate action", entityId, theta, phi);
     const rotDiff = WorldWasm.SphericalRotation.new_wasm(theta, phi);
     return WorldWasm.RotateAction.make_wasm(entityId, rotDiff);
+  }
+
+  makeMoveAction(
+    entityId: number,
+    direction: WorldWasm.Direction | "None"
+  ): WorldWasm.EntityActionDto {
+    console.log("Making move action", entityId, direction);
+    if (direction === "None") {
+      return WorldWasm.MoveAction.make_wasm(entityId, undefined);
+    }
+    return WorldWasm.MoveAction.make_wasm(entityId, direction);
   }
 
   handleAction(action: WorldWasm.EntityActionDto) {

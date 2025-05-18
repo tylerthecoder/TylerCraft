@@ -1,5 +1,10 @@
 use crate::{
-    chunk::CHUNK_WIDTH, components::world_pos::WorldPos, entities::entity_component::impl_component, geometry::vec2::Vec2i16, vec::{Vec3f32, Vec3u8, Vector3Ops}
+    chunk::CHUNK_WIDTH,
+    components::world_pos::WorldPos,
+    entities::entity_component::impl_component,
+    geometry::vec2::Vec2i16,
+    utils::js_log,
+    vec::{Vec3f32, Vec3u8, Vector3Ops},
 };
 
 #[cfg(test)]
@@ -27,16 +32,12 @@ impl InnerChunkPos {
     }
 
     pub fn to_world_pos(&self, chunk_pos: &ChunkPos) -> WorldPos {
-        let pos = chunk_pos
-            .scalar_mul(CHUNK_WIDTH)
-            .move_to_3d(0)
-            .add(self);
+        let pos = chunk_pos.scalar_mul(CHUNK_WIDTH).move_to_3d(0).add(self);
         WorldPos::new(pos.x() as i32, pos.y() as i32, pos.z() as i32)
     }
 }
 
 // impl WorldPos {
-
 
 //     pub fn is_valid(&self) -> bool {
 //         self.y >= 0 && self.y < 256
@@ -132,4 +133,3 @@ impl std::ops::Add<ChunkPos> for ChunkPos {
         }
     }
 }
-

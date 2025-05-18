@@ -123,8 +123,9 @@ export abstract class PlayerController {
     this.playerActionService.performAction(action);
   }
 
-  move(directions: Direction[]) {
-    // TO-DO
+  move(direction: Direction | "None") {
+    const action = this.game.makeMoveAction(this.playerId, direction);
+    this.playerActionService.performAction(action);
   }
 
   beltRight() {
