@@ -1,13 +1,20 @@
+use super::{
+    entity::{Entity, EntityId, EntityQuery, EntityQueryResults},
+    entity_action::{ActionData, EntityActionDto, EntityActionDtoMaker, EntityActionHandler},
+    entity_component::impl_component,
+    game::GameSchedule,
+    game_script::GameScript,
+    player::Flying,
+};
 use crate::{components::velocity::Velocity, vec::Vector3Ops, world::World};
 use wasm_bindgen::prelude::wasm_bindgen;
-use super::{entity::{Entity, EntityId, EntityQuery, EntityQueryResults}, entity_action::{ActionData, EntityActionDto, EntityActionDtoMaker, EntityActionHandler}, entity_component::impl_component, game::GameSchedule, game_script::GameScript, player::Flying};
-
 
 #[derive(Clone, Debug)]
 pub struct JumpActionData {}
 
 #[derive(Clone, Debug, Default)]
-pub struct JumpAction { }
+#[wasm_bindgen]
+pub struct JumpAction {}
 impl EntityActionDtoMaker<JumpActionData> for JumpAction {
     fn get_action_type_static() -> &'static str {
         "Jump-Action"
@@ -38,7 +45,6 @@ impl EntityActionHandler for JumpAction {
 
         let new_jump_data = jump_data.stop_jumping();
 
-
         let diff_y_vel = jump_data.jump_speed - vel.y;
 
         let jump_force = Velocity {
@@ -54,7 +60,6 @@ impl EntityActionHandler for JumpAction {
         entity.set::<Velocity>(new_vel);
         entity.set::<JumpData>(new_jump_data);
     }
-
 }
 
 #[wasm_bindgen]
@@ -86,14 +91,13 @@ impl JumpData {
 
 impl_component!(JumpData);
 
-
 pub mod wasm {
     use super::*;
 
     #[wasm_bindgen]
     impl JumpAction {
         pub fn make_wasm(entity_id: EntityId) -> EntityActionDto {
-            let data = JumpActionData { };
+            let data = JumpActionData {};
             JumpAction::make_dto(entity_id, data)
         }
     }

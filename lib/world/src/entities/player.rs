@@ -28,26 +28,30 @@ pub fn make_player(uid: EntityId) -> Entity {
 
 pub mod wasm {
     use crate::{
-        components::{fine_world_pos::FineWorldPos, velocity::Velocity}, entities::{
+        components::{fine_world_pos::FineWorldPos, velocity::Velocity},
+        entities::{
             entity::{Entity, EntityId},
             player_move_script::MovingDirection,
-        }, geometry::rotation::SphericalRotation
+        },
+        geometry::rotation::SphericalRotation,
     };
     use serde::{Deserialize, Serialize};
     use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 
     #[derive(Serialize, Deserialize)]
-
+    #[wasm_bindgen]
     pub struct WasmPlayer {
-        pos: FineWorldPos,
-        vel: Velocity,
-        rot: SphericalRotation,
-        moving_direction: MovingDirection,
+        pub id: EntityId,
+        pub pos: FineWorldPos,
+        pub vel: Velocity,
+        pub rot: SphericalRotation,
+        pub moving_direction: MovingDirection,
     }
 
     impl WasmPlayer {
         pub fn make_from_entity(entity: &Entity) -> WasmPlayer {
             WasmPlayer {
+                id: entity.id,
                 pos: entity.get::<FineWorldPos>().unwrap().clone(),
                 vel: entity.get::<Velocity>().unwrap().clone(),
                 rot: entity.get::<SphericalRotation>().unwrap().clone(),

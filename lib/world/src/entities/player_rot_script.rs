@@ -9,7 +9,9 @@ pub struct RotateActionData {
     pub rot_diff: SphericalRotation,
 }
 
-pub struct RotateAction { }
+#[wasm_bindgen]
+pub struct RotateAction {}
+
 impl EntityActionDtoMaker<RotateActionData> for RotateAction {
     fn get_action_type_static() -> &'static str {
         "PlayerRot-Action"

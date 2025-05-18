@@ -1,12 +1,14 @@
 use super::{
-    entity::{Entity, EntityHolder, EntityId}, entity_action::EntityActionHolder, game_script::{EntityScriptHolder, GameScript}
+    entity::{Entity, EntityHolder, EntityId},
+    entity_action::EntityActionHolder,
+    game_script::{EntityScriptHolder, GameScript},
 };
 use crate::{
     chunk::{Chunk, ChunkId},
     world::{world_block::WorldBlock, World},
 };
 use serde::{Deserialize, Serialize};
-use wasm_bindgen::{prelude::wasm_bindgen};
+use wasm_bindgen::prelude::wasm_bindgen;
 
 #[wasm_bindgen]
 pub struct Game {
@@ -150,9 +152,19 @@ impl GameSchedule {
 }
 
 mod tests {
-    use crate::{direction::Direction, entities::{
-        entity_action::EntityActionDtoMaker, game::Game, player::make_player, player_jump_script::{JumpAction, JumpActionData}, player_move_script::{MoveAction, MoveActionData, MoveScript}, sandbox::SandBoxGScript, velocity_script::{self, VelocityScript}
-    }, components::{fine_world_pos::FineWorldPos, velocity::Velocity}};
+    use crate::{
+        components::{fine_world_pos::FineWorldPos, velocity::Velocity},
+        direction::Direction,
+        entities::{
+            entity_action::EntityActionDtoMaker,
+            game::Game,
+            player::make_player,
+            player_jump_script::{JumpAction, JumpActionData},
+            player_move_script::{MoveAction, MoveActionData, MoveScript},
+            sandbox::SandBoxGScript,
+            velocity_script::{self, VelocityScript},
+        },
+    };
 
     #[test]
     pub fn add_player() {
@@ -175,7 +187,7 @@ mod tests {
         game.update();
         let jump_action_handler = JumpAction::make_handler();
         game.action_holder.add_handler(jump_action_handler);
-        let jump_action = JumpAction::make_dto(1, JumpActionData{});
+        let jump_action = JumpAction::make_dto(1, JumpActionData {});
         game.action_holder.add(jump_action);
         game.update();
         let player = game.entity_holder.get_entity_by_id(1).unwrap();
@@ -202,16 +214,18 @@ mod tests {
 
         game.action_holder.add_handler(MoveAction::make_handler());
 
-        let move_action = MoveAction::make_dto(1, MoveActionData {
-            direction: Direction::North,
-        });
+        let move_action = MoveAction::make_dto(
+            1,
+            MoveActionData {
+                direction: Direction::North,
+            },
+        );
         game.action_holder.add(move_action);
         game.update();
 
         let player = game.entity_holder.get_entity_by_id(1).unwrap();
         let player_pos = player.get::<FineWorldPos>().unwrap();
         assert!(player_pos.z > 0.0);
-
     }
 
     #[test]
@@ -241,9 +255,16 @@ pub mod wasm {
 
     use super::{Game, GameDiff, GameSchedule, GameScript};
     use crate::{
-        chunk::{chunk_mesh::ChunkMesh, Chunk, ChunkId}, components::world_pos::WorldPos, entities::{
-            entity::{Entity, EntityId}, entity_action::EntityActionDto, player::{make_player, wasm::WasmPlayer}, sandbox::SandBoxGScript
-        }, positions::ChunkPos, world::World
+        chunk::{chunk_mesh::ChunkMesh, Chunk, ChunkId},
+        components::world_pos::WorldPos,
+        entities::{
+            entity::{Entity, EntityId, EntityQueryResults},
+            entity_action::EntityActionDto,
+            player::{make_player, wasm::WasmPlayer},
+            sandbox::SandBoxGScript,
+        },
+        positions::ChunkPos,
+        world::World,
     };
     use serde_wasm_bindgen::{from_value, Error};
     use wasm_bindgen::prelude::*;
@@ -277,9 +298,9 @@ pub mod wasm {
             self.schedule_chunk_insert(chunk);
         }
 
-        // pub fn add_game_script_wasm(&mut self, script: WasmGameScript) {
-        //     self.add_script(Box::new(script));
-        // }
+        pub fn add_game_script_wasm(&mut self, script: WasmGameScript) {
+            self.add_script(Box::new(script));
+        }
 
         pub fn get_chunk_mesh_by_chunkid_wasm(&self, chunk_id: ChunkId) -> Result<JsValue, Error> {
             web_sys::console::log_1(&JsValue::from_str(&format!(
@@ -332,7 +353,10 @@ pub mod wasm {
 
         pub fn get_players_wasm(&self) -> Result<JsValue, Error> {
             let players = self.entity_holder.get_all();
-            let players_wasm: Vec<WasmPlayer> = players.iter().map(|player| WasmPlayer::make_from_entity(player)).collect();
+            let players_wasm: Vec<WasmPlayer> = players
+                .iter()
+                .map(|player| WasmPlayer::make_from_entity(player))
+                .collect();
             let players_js = serde_wasm_bindgen::to_value(&players_wasm).unwrap();
             Ok(players_js)
         }
@@ -350,6 +374,7 @@ pub mod wasm {
     }
 
     #[wasm_bindgen]
+    #[derive(Debug)]
     pub struct WasmGameScript {
         context: JsValue,
         on_diff_jsfn: js_sys::Function,
@@ -366,15 +391,19 @@ pub mod wasm {
         }
     }
 
-    // impl GameScript for WasmGameScript {
-    //     fn update(&self, world: &World, ents: &Vec<Box<Entity>>, delta: u8) -> GameSchedule {
-    //         GameSchedule::empty()
-    //     }
+    impl GameScript for WasmGameScript {
+        fn update(
+            &mut self,
+            _world: &World,
+            _query_results: EntityQueryResults,
+        ) -> Option<GameSchedule> {
+            None
+        }
 
-    //     fn on_diff(&self, diff: GameDiff) -> () {
-    //         // console log diff
-    //         let val = serde_wasm_bindgen::to_value(&diff).unwrap();
-    //         self.on_diff_jsfn.call1(&self.context, &val).unwrap();
-    //     }
-    // }
+        fn on_diff(&self, diff: GameDiff) -> () {
+            // console log diff
+            let val = serde_wasm_bindgen::to_value(&diff).unwrap();
+            self.on_diff_jsfn.call1(&self.context, &val).unwrap();
+        }
+    }
 }

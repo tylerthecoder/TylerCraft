@@ -2,7 +2,7 @@ use crate::{entities::entity_component::impl_component, vec::impl_vector_ops};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, Serialize, Deserialize)]
 #[wasm_bindgen]
 pub struct Velocity {
     pub x: f32,
@@ -12,7 +12,6 @@ pub struct Velocity {
 
 impl_component!(Velocity);
 impl_vector_ops!(Velocity, f32);
-
 
 impl Velocity {
     pub fn new(x: f32, y: f32, z: f32) -> Velocity {
@@ -27,4 +26,3 @@ impl Velocity {
         }
     }
 }
-

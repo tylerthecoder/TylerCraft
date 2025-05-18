@@ -30,10 +30,6 @@ export type SerializedGame = {
   players: PlayerWrapper[];
 };
 
-export type PlayerAction = WorldWasm.PlayerJumpAction;
-
-export type EntityAction = WorldWasm.EntityAction;
-
 export type GameDiff = {
   updated_entities: number[];
   updated_chunks: number[];
@@ -82,14 +78,6 @@ export class ChunkMeshWrapper {
   }
 }
 
-type RustPlayer = {
-  uid: number;
-  pos: RustPos;
-  dim: RustPos;
-  rot: { phi: number; theta: number };
-  moving_direction: WorldWasm.Direction;
-};
-
 export class PlayerWrapper {
   speed = 0;
   max_speed = 0;
@@ -103,9 +91,9 @@ export class PlayerWrapper {
   distanceMoved = 0;
   moving_direction: WorldWasm.Direction | undefined;
 
-  constructor(player: RustPlayer) {
+  constructor(player: WorldWasm.WasmPlayer) {
     this.pos = new Vector3D([player.pos.x, player.pos.y, player.pos.z]);
-    this.dim = new Vector3D([player.dim.x, player.dim.y, player.dim.z]);
+    this.dim = new Vector3D([1, 1, 1]);
     this.rot = new Vector3D([0, player.rot.phi, player.rot.theta]);
     this.moving_direction = player.moving_direction;
   }
@@ -132,7 +120,7 @@ export class BlockWrapper {
 }
 
 export class GameWrapper {
-  constructor(private game: WorldWasm.Game) {}
+  constructor(private game: WorldWasm.Game) { }
 
   static makeGame(): GameWrapper {
     const game = WorldWasm.Game.new_wasm();
@@ -148,7 +136,7 @@ export class GameWrapper {
   }
 
   makeJumpAction(entityId: number): WorldWasm.EntityActionDto {
-    return WorldWasm.PlayerJumpAction.new(entityId);
+    return WorldWasm.JumpAction.make_wasm(entityId);
   }
 
   makeRotateAction(
@@ -160,13 +148,12 @@ export class GameWrapper {
     const rotDiff = new WorldWasm.SphericalRotation();
     rotDiff.phi = x;
     rotDiff.theta = y;
-    return WorldWasm.PlayerRotAction.new(entityId, rotDiff);
+    return WorldWasm.RotateAction.make_wasm(entityId, rotDiff);
   }
 
   handleAction(action: WorldWasm.EntityActionDto) {
-    const newAction = action.clone();
-    console.log("Handling action", newAction);
-    this.game.handle_action_wasm(newAction);
+    console.log("Handling action", action);
+    this.game.handle_action_wasm(action);
   }
 
   getChunkPosFromChunkId(chunkId: number): Vector2D {
@@ -197,17 +184,9 @@ export class GameWrapper {
     return new ChunkMeshWrapper(val);
   }
 
-  addPlayer(player: WorldWasm.Player) {
-    this.game.add_player_wasm(player);
-  }
-
   getPlayer(uid: number): PlayerWrapper {
-    const player: WorldWasm.Player = this.game.get_player_wasm(uid);
-    const rot_script = this.game.get_player_rot_script_wasm(uid);
-    if (!rot_script) {
-      throw new Error("Player rot script not found");
-    }
-    return new PlayerWrapper(player, rot_script);
+    const player: WorldWasm.WasmPlayer = this.game.get_player_wasm(uid);
+    return new PlayerWrapper(player);
   }
 
   getBlock(pos: Vector3D): BlockWrapper {
@@ -216,8 +195,8 @@ export class GameWrapper {
   }
 
   getEntities(): PlayerWrapper[] {
-    const entities: WorldWasm.Player[] = this.game.get_entities_wasm();
-    return entities.map((entity) => this.getPlayer(entity.uid));
+    const entities: WorldWasm.WasmPlayer[] = this.game.get_players_wasm();
+    return entities.map((entity) => this.getPlayer(entity.id));
   }
 
   getLoadedChunkIds(): number[] {
@@ -249,7 +228,6 @@ export class GameWrapper {
     return new Vector2D([chunk_pos.x, chunk_pos.y]);
   }
 }
-
 // async function loadWasmModule(module: any, name = "") {
 //   console.log("Loading Wasm Module: ", name);
 //   const loadedModule = module.default ? await module.default : await module;

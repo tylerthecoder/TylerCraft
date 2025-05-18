@@ -1,14 +1,11 @@
-import { Game } from "@craft/engine";
+import { Game, GameWrapper } from "@craft/engine";
 import TextureMapper from "../textureMapper";
 import { IS_MOBILE } from "../app";
 import { CanvasGameScript } from "../game-scripts/canvas-gscript";
 import { getEleOrError, hideElement } from "../utils";
-import { GameScript } from "@craft/engine/game-script";
-import { BasicGScript } from "./basic-gscript";
 import { GameMenu } from "../renders/gameMenuRender";
 import React from "react";
 import ReactDOM from "react-dom";
-import { GameWrapper } from "@craft/engine/modules";
 
 export class HudGScript extends GameScript {
   name = "hud";
