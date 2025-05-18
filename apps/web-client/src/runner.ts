@@ -3,7 +3,8 @@ import { CanvasGameScript } from "./game-scripts/canvas-gscript";
 import { WebGlGScript } from "./game-scripts/webgl-gscript";
 import { MobileController } from "./controllers/playerControllers/mobileController";
 import { KeyboardPlayerEntityController } from "./controllers/playerControllers/keyboardPlayerController";
-import { getMyUid, hideElement, IS_MOBILE, showElement } from "./utils";
+import { getMyUid, IS_MOBILE } from "./utils";
+import { SandBoxGScript, TerrainGenerator } from "@craft/rust-world";
 // import { eStartMenu } from "./elements";
 
 export function run() {
@@ -12,7 +13,11 @@ export function run() {
 
   // hideElement(eStartMenu);
 
-  const game = GameWrapper.makeGame(true, true);
+  const game = GameWrapper.makeGame();
+
+  // add sandbox
+  const sandbox = new SandBoxGScript(1, new TerrainGenerator(0, true, false));
+  game.game.add_sandbox_wasm(sandbox);
 
   const main_player_uid = getMyUid();
 
@@ -33,8 +38,6 @@ export function run() {
   );
 
   game.makeAndAddGameScript(canvasGameScript);
-
-  // const hudGameScript = new HudGScript(game, canvasGameScript, main_player_uid);
 
   const playerController = (() => {
     if (IS_MOBILE) {
@@ -57,8 +60,6 @@ export function run() {
     playerController.update();
     canvasGameScript.update();
     canvasGameScript.renderLoop(0);
-    // const mesh = game.getChunkMeshFromChunkPos(4);
-    // console.log("Mesh", mesh);
   };
 
   setInterval(update, 1000 / 60);
@@ -68,9 +69,6 @@ export function run() {
   console.log(canvasGameScript);
 
   canvasGameScript.renderLoop(0);
-  // canvasGameScript.renderLoop(100);
-  // canvasGameScript.renderLoop(200);
-  // canvasGameScript.setup();
 }
 
 run();

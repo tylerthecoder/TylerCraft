@@ -264,7 +264,7 @@ pub mod wasm {
             player_jump_script::JumpAction,
             player_move_script::{MoveAction, MoveScript},
             player_rot_script::RotateAction,
-            sandbox::SandBoxGScript,
+            sandbox::{self, SandBoxGScript},
             velocity_script::VelocityScript,
         },
         positions::ChunkPos,
@@ -276,11 +276,9 @@ pub mod wasm {
 
     #[wasm_bindgen]
     impl Game {
-        pub fn new_wasm(flat_world: bool, debug_world: bool) -> Game {
+        pub fn new_wasm() -> Game {
             console_error_panic_hook::set_once();
             let mut g = Game::new();
-            let sandbox_script = Box::new(SandBoxGScript::new(0, flat_world, debug_world, 1));
-            g.add_script(sandbox_script);
 
             g.add_script(Box::new(MoveScript::default()));
             g.add_script(Box::new(VelocityScript::default()));

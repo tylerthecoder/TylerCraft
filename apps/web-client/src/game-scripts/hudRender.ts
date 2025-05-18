@@ -1,8 +1,6 @@
-import { Game, GameWrapper } from "@craft/engine";
-import TextureMapper from "../textureMapper";
-import { IS_MOBILE } from "../app";
+import { GameScript, GameWrapper } from "@craft/engine";
 import { CanvasGameScript } from "../game-scripts/canvas-gscript";
-import { getEleOrError, hideElement } from "../utils";
+import { getEleOrError, hideElement, IS_MOBILE } from "../utils";
 import { GameMenu } from "../renders/gameMenuRender";
 import React from "react";
 import ReactDOM from "react-dom";
@@ -64,7 +62,7 @@ export class HudGScript extends GameScript {
     }
 
     this.textureImg.onload = () => {
-      this.drawBelt();
+      // this.drawBelt();
     };
   }
 
@@ -98,12 +96,11 @@ export class HudGScript extends GameScript {
     }
 
     const cameraPos = mainPlayer.pos.data.map((d) => d.toFixed(2)).join(",");
-    const numChunks = this.game.world.getLoadedChunkIds().length;
+    // const numChunks = this.game.world.getLoadedChunkIds().length;
 
     const statsString = `
       playerPos: ${cameraPos} <br />
       fps: ${this.canvasGScript.frameRate.toFixed(0)} <br />
-      numChunks: ${numChunks}
     `;
 
     if (this.lastStats !== statsString) {
@@ -123,77 +120,77 @@ export class HudGScript extends GameScript {
 
     this.drawStats();
 
-    if (this.lastSelected !== this.basicGScript.mainPlayer.belt.selectedIndex) {
-      this.drawBelt();
-      this.lastSelected = this.basicGScript.mainPlayer.belt.selectedIndex;
-    }
+    // if (this.lastSelected !== this.basicGScript.mainPlayer.belt.selectedIndex) {
+    //   this.drawBelt();
+    //   this.lastSelected = this.basicGScript.mainPlayer.belt.selectedIndex;
+    // }
 
-    this.drawHealthBar();
+    // this.drawHealthBar();
   }
 
-  drawBelt() {
-    this.eToolbeltItems.forEach((item, index) => {
-      if (index === this.basicGScript.mainPlayer.belt.selectedIndex) {
-        item.classList.add("selected");
-      } else {
-        item.classList.remove("selected");
-      }
-    });
+  // drawBelt() {
+  //   this.eToolbeltItems.forEach((item, index) => {
+  //     if (index === this.basicGScript.mainPlayer.belt.selectedIndex) {
+  //       item.classList.add("selected");
+  //     } else {
+  //       item.classList.remove("selected");
+  //     }
+  //   });
 
-    const itemDim = this.eToolbeltItems[0].clientHeight;
+  //   const itemDim = this.eToolbeltItems[0].clientHeight;
 
-    const belt = this.basicGScript.mainPlayer.belt;
+  //   const belt = this.basicGScript.mainPlayer.belt;
 
-    if (!belt) {
-      return;
-    }
+  //   if (!belt) {
+  //     return;
+  //   }
 
-    // draw the icons
-    for (let i = 0; i < belt.length; i++) {
-      const item = belt.getItem(i);
-      if (!item) {
-        continue;
-      }
+  //   // draw the icons
+  //   for (let i = 0; i < belt.length; i++) {
+  //     const item = belt.getItem(i);
+  //     if (!item) {
+  //       continue;
+  //     }
 
-      const cords = TextureMapper.getBlockPreviewCords(
-        item,
-        this.textureImg.width,
-        this.textureImg.height
-      );
-      // Clip the textImage to the cords
-      const img = this.textureImg;
-      const croppedImg = document.createElement("canvas");
-      croppedImg.width = itemDim;
-      croppedImg.height = itemDim;
-      const ctx = croppedImg.getContext("2d");
-      if (!ctx) {
-        throw new Error("Could not get 2d context");
-      }
-      ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(
-        img,
-        cords.x1,
-        cords.y1,
-        cords.x2 - cords.x1,
-        cords.y2 - cords.y1,
-        0,
-        0,
-        croppedImg.width,
-        croppedImg.height
-      );
-      this.eToolbeltItems[
-        i
-      ].style.backgroundImage = `url(${croppedImg.toDataURL()})`;
-      this.eToolbeltItems[i].style.backgroundSize = "contain";
-    }
-  }
+  //     const cords = TextureMapper.getBlockPreviewCords(
+  //       item,
+  //       this.textureImg.width,
+  //       this.textureImg.height
+  //     );
+  //     // Clip the textImage to the cords
+  //     const img = this.textureImg;
+  //     const croppedImg = document.createElement("canvas");
+  //     croppedImg.width = itemDim;
+  //     croppedImg.height = itemDim;
+  //     const ctx = croppedImg.getContext("2d");
+  //     if (!ctx) {
+  //       throw new Error("Could not get 2d context");
+  //     }
+  //     ctx.imageSmoothingEnabled = false;
+  //     ctx.drawImage(
+  //       img,
+  //       cords.x1,
+  //       cords.y1,
+  //       cords.x2 - cords.x1,
+  //       cords.y2 - cords.y1,
+  //       0,
+  //       0,
+  //       croppedImg.width,
+  //       croppedImg.height
+  //     );
+  //     this.eToolbeltItems[
+  //       i
+  //     ].style.backgroundImage = `url(${croppedImg.toDataURL()})`;
+  //     this.eToolbeltItems[i].style.backgroundSize = "contain";
+  //   }
+  // }
 
-  drawHealthBar() {
-    if (!this.basicGScript.mainPlayer) return;
-    const { current, max } = this.basicGScript.mainPlayer.health;
-    const healthPercent = current / max;
-    this.eHealthBar.style.width = `${healthPercent * 100}%`;
-  }
+  // drawHealthBar() {
+  //   if (!this.basicGScript.mainPlayer) return;
+  //   const { current, max } = this.basicGScript.mainPlayer.health;
+  //   const healthPercent = current / max;
+  //   this.eHealthBar.style.width = `${healthPercent * 100}%`;
+  // }
 
   hideControls() {
     hideElement(this.eForwardButton);

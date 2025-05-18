@@ -120,10 +120,10 @@ export class BlockWrapper {
 }
 
 export class GameWrapper {
-  constructor(private game: WorldWasm.Game) { }
+  constructor(public game: WorldWasm.Game) { }
 
-  static makeGame(flat_world: boolean, debug_world: boolean): GameWrapper {
-    const game = WorldWasm.Game.new_wasm(flat_world, debug_world);
+  static makeGame(): GameWrapper {
+    const game = WorldWasm.Game.new_wasm();
     return new GameWrapper(game);
   }
 

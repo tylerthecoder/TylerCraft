@@ -1,8 +1,8 @@
 import ReactDOM from "react-dom";
-import { Game, GameAction, GameActionType } from "@craft/engine";
 import React, { useEffect } from "react";
 import styles from "./gameMenu.module.css";
 import { getEleOrError } from "../utils";
+import { Game } from "@craft/engine/game";
 
 // make section button with same props as normal button
 const SectionButton = (

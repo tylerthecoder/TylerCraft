@@ -13,6 +13,7 @@ use noise::{NoiseFn, Perlin};
 use rand::{rngs::StdRng, SeedableRng};
 use rand_distr::{Distribution, Uniform};
 use serde::{Deserialize, Serialize};
+use wasm_bindgen::prelude::wasm_bindgen;
 
 // remove all the positions that are too close to each other in the chunk
 fn remove_close_positions<'a, I, J>(pos_iter: I, checking_pos_iter: J) -> Vec<WorldPos>
@@ -515,17 +516,17 @@ impl ParkorChunkGetter {
     }
 }
 
-// #[wasm_bindgen]
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[wasm_bindgen]
+#[derive(Clone, Debug, Serialize, Deserialize, Copy)]
 pub struct TerrainGenerator {
     pub seed: u32,
     pub flat_world: bool,
     pub debug_world: bool,
 }
 
-// #[wasm_bindgen]
+#[wasm_bindgen]
 impl TerrainGenerator {
-    // #[wasm_bindgen(constructor)]
+    #[wasm_bindgen(constructor)]
     pub fn new(seed: u32, flat_world: bool, debug_world: bool) -> TerrainGenerator {
         TerrainGenerator {
             seed,

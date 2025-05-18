@@ -1,3 +1,5 @@
+use wasm_bindgen::prelude::wasm_bindgen;
+
 use super::{
     entity::{EntityQuery, EntityQueryResults},
     game::{Game, GameDiff, GameSchedule},
@@ -6,19 +8,16 @@ use super::{
 };
 use crate::{components::fine_world_pos::FineWorldPos, positions::ChunkPos, world::World};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
+#[wasm_bindgen]
 pub struct SandBoxGScript {
-    seed: u32,
-    flat_world: bool,
-    load_distance: u8,
-    terrain_gen: TerrainGenerator,
+    pub load_distance: u8,
+    pub terrain_gen: TerrainGenerator,
 }
 
 impl Default for SandBoxGScript {
     fn default() -> Self {
         SandBoxGScript {
-            seed: 0,
-            flat_world: false,
             load_distance: 1,
             terrain_gen: TerrainGenerator::new(0, false, false),
         }
@@ -26,17 +25,10 @@ impl Default for SandBoxGScript {
 }
 
 impl SandBoxGScript {
-    pub fn new(
-        seed: u32,
-        flat_world: bool,
-        debug_world: bool,
-        load_distance: u8,
-    ) -> SandBoxGScript {
+    pub fn new(load_distance: u8, terrain_gen: TerrainGenerator) -> SandBoxGScript {
         SandBoxGScript {
-            seed,
-            flat_world,
             load_distance,
-            terrain_gen: TerrainGenerator::new(seed, flat_world, debug_world),
+            terrain_gen,
         }
     }
 
@@ -87,5 +79,24 @@ impl GameScript for SandBoxGScript {
         }
 
         Some(gdiff)
+    }
+}
+
+pub mod wasm {
+    use super::*;
+
+    #[wasm_bindgen]
+    impl SandBoxGScript {
+        #[wasm_bindgen(constructor)]
+        pub fn new_wasm(load_distance: u8, terrain_gen: TerrainGenerator) -> SandBoxGScript {
+            SandBoxGScript::new(load_distance, terrain_gen)
+        }
+    }
+
+    #[wasm_bindgen]
+    impl Game {
+        pub fn add_sandbox_wasm(&mut self, sandbox_game_script: SandBoxGScript) {
+            self.add_script(Box::new(sandbox_game_script));
+        }
     }
 }
