@@ -1,5 +1,5 @@
-import { BlockType, Direction } from "@craft/rust-world";
-import { EntityAction, GameWrapper } from "./wrappers.js";
+import { BlockType, Direction, EntityActionDto } from "@craft/rust-world";
+import { GameWrapper } from "./wrappers.js";
 
 // export enum PlayerActionType {
 //   Jump = "jump",
@@ -74,16 +74,16 @@ import { EntityAction, GameWrapper } from "./wrappers.js";
 // }
 
 export class PlayerActionService {
-  constructor(private game: GameWrapper) {}
+  constructor(private game: GameWrapper) { }
 
   private playerActions = new Map<
     number,
-    Array<(action: EntityAction) => void>
+    Array<(action: EntityActionDto) => void>
   >();
 
   addActionListener(
     playerId: number,
-    listener: (action: EntityAction) => void
+    listener: (action: EntityActionDto) => void
   ) {
     this.playerActions.set(playerId, [
       ...(this.playerActions.get(playerId) || []),
@@ -91,10 +91,11 @@ export class PlayerActionService {
     ]);
   }
 
-  performAction(action: EntityAction) {
+  performAction(action: EntityActionDto) {
+    const entityId = action.entity_id;
     this.game.handleAction(action);
 
-    const listeners = this.playerActions.get(action.entity_id);
+    const listeners = this.playerActions.get(entityId);
     if (!listeners) {
       return;
     }
@@ -110,7 +111,7 @@ export abstract class PlayerController {
     protected playerActionService: PlayerActionService,
     protected game: GameWrapper,
     protected playerId: number
-  ) {}
+  ) { }
 
   jump() {
     const action = this.game.makeJumpAction(this.playerId);

@@ -1,18 +1,27 @@
+## 05_18_25
+
+This repo is in a messy state. It seems like a a lot of work is needed to clean it up. I think I was refactoring to have all of the entity logic in the rust code instead and I was half way through that. I think I'mm going to make a very simple
+UI to begin with that uses the rust code and attempts to render everything instead of messing with the server stuff for now.
+
+I got the actions to work in the UI. They are saved and updated. But the chunk rendering is a mess and isn't working.
+
 ## 07_11_24
-Spent a while trying to figure out why cargo randomly rebuilt dependencies. Figured out it was turbo's issue? So I removed turbo and moved to just using yarn. 
 
-I also love the game script idea. It is cleaning things up nicely. 
+Spent a while trying to figure out why cargo randomly rebuilt dependencies. Figured out it was turbo's issue? So I removed turbo and moved to just using yarn.
 
+I also love the game script idea. It is cleaning things up nicely.
 
 ## 06_22_24
-Trying to get the collision detection to be better with the player and the world. 
+
+Trying to get the collision detection to be better with the player and the world.
 
 Current plan:
-- Make a lib funciton that takes a box (pos, dim) and a pos it wants to go to and return the position it can actually go to. If the box would hit something while moving to the new position, then find the shorted distance to make the box not collide with anything. 
+
+- Make a lib funciton that takes a box (pos, dim) and a pos it wants to go to and return the position it can actually go to. If the box would hit something while moving to the new position, then find the shorted distance to make the box not collide with anything.
 
 Basic form of function:
-- Take all the world points of the block corner and the world points of the new potition. Create a line segment for each of these. Make a function that determines if a line segment is intersecting the world and at which point it intersects. Then find the line segment that minimizes the distance traveled and update all the box positions with that and return the new position and the face that it hit. Only stop applying force to a player if they hit something below them. 
 
+- Take all the world points of the block corner and the world points of the new potition. Create a line segment for each of these. Make a function that determines if a line segment is intersecting the world and at which point it intersects. Then find the line segment that minimizes the distance traveled and update all the box positions with that and return the new position and the face that it hit. Only stop applying force to a player if they hit something below them.
 
 ## Some other date
 
@@ -138,8 +147,6 @@ Real issue seems to be that wasm_pack writes twice.
 
 It now renders the chunks made in rust to the screen using the chunk mesh. Looks like it is including a couple extra faces that aren't needed but that can be fixed with time.
 
-
-
 # 2 / 15 / 23
 
 I've still been working here and there. Found a bug in the ray detection on the plane level. Test should be failing need to figure out why.
@@ -159,6 +166,7 @@ I think a better debug mode to aim to make is a way to have no chunks loaded, bu
 Maybe also make it where the block face that is being looked at is highlighted
 
 I guess to hot reload I could have something that looks like this
+
 ```
 if (hot) {
   const state = game.save()
@@ -168,7 +176,6 @@ if (hot) {
 ```
 
 Got the placing of a debug block working, just have to figure out how to place the block when there are no chunks. Do I want to check on the client if the chunk exists before inserting or add an option to automatically create the chunk if one doesn't exist.
-
 
 # 6 / 10 / 23
 
@@ -180,11 +187,9 @@ My idea to fix this is to add a dirty array to the chunk that is updated when a 
 
 That fixed it but it does not delete the dirty blocks in a chunk ever.
 
-
 Seems to still be an issue with placing blocks. Sometimes a a block seems to be not found and the ray goes through it. Only seems to happen when x or y cord is negative.
 
 Also might need to have a script that adds `type: module` to the package json in the wasm folder. That is preventing nodejs from loading the wasm module.
-
 
 Think I want to work on high lighting the block that is being looked at for debug purposes. It will help with this stuff a lot.
 
@@ -192,28 +197,24 @@ Looks like the blocks that aren't being found are because the ray isn't even che
 
 Found the issue. I made the ray check many more blocks while marching and it finds the correct one now.
 
-
 It is now able to be built and deployed. But there seems still be be some minor issues
+
 - infinite terrain generation doesn't work
 - Transparent blocks have some issues
 - Textures are rotated incorrectly
 
-
 Working on infinite chunk generation. I want to make it so a single chunk is rendered a frame.
 
 I made it where it now only sends a single chunk at a time to be loaded.
-
 
 # 6 / 11 / 23
 
 Added turbo repo and linting to the project. Moved everything around to make more sense and I think it is a good structure.
 Want to work on fixing terrain gen next.
 
-
 # 6 / 15 / 23
 
 Multiplayer kind of works not but is not robust at all. And all the textures are rotated incorrectly.
-
 
 Trying to think about the best way to have an entity be controlled by gpt4. Might want an "EntityController" that moves the entity around. Entities might have a "brain" that is passed in that controls the entity.
 
@@ -223,7 +224,6 @@ type entityController = {
   entity: Entity
   update: () => void
 }
-
 
 examples
 keyboardPlayerController {
@@ -244,26 +244,21 @@ socketPlayerController {
   }
 }
 
-
 # 08/23/23
 
 Thinking of what to work on next. I think rewritting the terrain generator in rust could be a good project
 
-
 # 09/03/23
 
-I've got covid, so I've had time to rewrite this is rust a bit. I've created a terrain gen app that does smooth height transitions, generates trees, and generates flowers. Making the trees be spread a part randomly is hard, but I solved it by doing it chunk by chunk and lazily loading the tree in nearby chunks to make sure there is no overlap. 
+I've got covid, so I've had time to rewrite this is rust a bit. I've created a terrain gen app that does smooth height transitions, generates trees, and generates flowers. Making the trees be spread a part randomly is hard, but I solved it by doing it chunk by chunk and lazily loading the tree in nearby chunks to make sure there is no overlap.
 
 I noticed that the transparency is broken and that some of the textures are rotated incorrectly. I think I will fix that next.
 
-
-
 # 09/04/23
 
-Fixed transparency, it was an issue with the new way I'm doing mesh generation. Fixed textured being rotated incorrectly too. Now noticing that a tree's leafs are not included if they go over a chunk boundary. Tackling that next. 
+Fixed transparency, it was an issue with the new way I'm doing mesh generation. Fixed textured being rotated incorrectly too. Now noticing that a tree's leafs are not included if they go over a chunk boundary. Tackling that next.
 
-Then I'll start thinking about biomes. 
-
+Then I'll start thinking about biomes.
 
 # 03/19/23
 

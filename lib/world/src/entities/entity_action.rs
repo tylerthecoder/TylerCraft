@@ -1,7 +1,9 @@
-use std::any::Any;
-use wasm_bindgen::prelude::*;
-use std::fmt::Debug;
+use crate::utils::js_log;
+
 use super::entity::{Entity, EntityHolder, EntityId};
+use std::any::Any;
+use std::fmt::Debug;
+use wasm_bindgen::prelude::*;
 
 pub trait ActionData: Any + Debug {
     fn clone_box(&self) -> Box<dyn ActionData>;
@@ -21,7 +23,6 @@ where
         self
     }
 }
-
 
 #[wasm_bindgen]
 #[derive(Debug)]
@@ -58,7 +59,7 @@ pub trait EntityActionDtoMaker<T: ActionData>: EntityActionHandler {
         EntityActionDto {
             entity_id,
             name: Self::get_action_type_static(),
-            data: Box::new(data)
+            data: Box::new(data),
         }
     }
 }
@@ -78,18 +79,28 @@ impl EntityActionHolder {
         self.handlers.push(handler);
     }
 
-    pub fn handle_actions(&self, entity_holder: &mut EntityHolder) {
+    pub fn handle_actions(&mut self, entity_holder: &mut EntityHolder) {
         for action in &self.actions {
+            js_log(&format!("Handling action: {:?}", action));
+            js_log(&format!("Num handlers: {:?}", self.handlers.len()));
             println!("Handling action: {:?}", action);
             let entity = entity_holder.get_entity_by_id_mut(action.entity_id);
             println!("Entity: {:?}", entity);
+            let mut action_handled = false;
             if let Some(entity) = entity {
                 for handler in &self.handlers {
                     if handler.get_action_type() == action.name {
                         handler.handle_dto(entity, action);
+                        action_handled = true;
                     }
                 }
             }
+            if !action_handled {
+                js_log(&format!("Action not handled: {:?}", action));
+            }
         }
+
+        // clear actions
+        self.actions.clear();
     }
 }

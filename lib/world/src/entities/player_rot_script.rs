@@ -1,6 +1,7 @@
 use super::entity::{Entity, EntityId};
 use super::entity_action::{EntityActionDto, EntityActionDtoMaker, EntityActionHandler};
 use crate::geometry::rotation::SphericalRotation;
+use crate::utils::js_log;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 #[wasm_bindgen]
@@ -10,16 +11,17 @@ pub struct RotateActionData {
 }
 
 #[wasm_bindgen]
+#[derive(Clone, Debug, Default)]
 pub struct RotateAction {}
 
 impl EntityActionDtoMaker<RotateActionData> for RotateAction {
     fn get_action_type_static() -> &'static str {
-        "PlayerRot-Action"
+        "Player-Rotate"
     }
 }
 impl EntityActionHandler for RotateAction {
     fn get_action_type(&self) -> &'static str {
-        "PlayerRot"
+        "Player-Rotate"
     }
 
     fn handle_dto(&self, entity: &mut Entity, data: &EntityActionDto) {

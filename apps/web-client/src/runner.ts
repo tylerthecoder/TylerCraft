@@ -4,12 +4,13 @@ import { WebGlGScript } from "./game-scripts/webgl-gscript";
 import { MobileController } from "./controllers/playerControllers/mobileController";
 import { KeyboardPlayerEntityController } from "./controllers/playerControllers/keyboardPlayerController";
 import { getMyUid, hideElement, IS_MOBILE, showElement } from "./utils";
-import { eStartMenu } from "./elements";
+// import { eStartMenu } from "./elements";
 
 export function run() {
   // Start the game
+  console.log("RUNNING Starting game");
 
-  hideElement(eStartMenu);
+  // hideElement(eStartMenu);
 
   const game = GameWrapper.makeGame();
 

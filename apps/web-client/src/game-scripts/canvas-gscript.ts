@@ -140,8 +140,8 @@ export class CanvasGameScript extends GameScript<Config> {
       this.perspective === PlayerPerspective.FirstPerson
         ? PlayerPerspective.ThirdPersonBack
         : this.perspective === PlayerPerspective.ThirdPersonBack
-        ? PlayerPerspective.ThirdPersonFront
-        : PlayerPerspective.FirstPerson;
+          ? PlayerPerspective.ThirdPersonFront
+          : PlayerPerspective.FirstPerson;
 
     return this.perspective !== PlayerPerspective.FirstPerson;
   }

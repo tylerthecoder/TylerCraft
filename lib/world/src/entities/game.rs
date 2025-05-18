@@ -259,11 +259,15 @@ pub mod wasm {
         components::world_pos::WorldPos,
         entities::{
             entity::{Entity, EntityId, EntityQueryResults},
-            entity_action::EntityActionDto,
+            entity_action::{EntityActionDto, EntityActionDtoMaker},
             player::{make_player, wasm::WasmPlayer},
+            player_jump_script::JumpAction,
+            player_move_script::MoveAction,
+            player_rot_script::RotateAction,
             sandbox::SandBoxGScript,
         },
         positions::ChunkPos,
+        utils::js_log,
         world::World,
     };
     use serde_wasm_bindgen::{from_value, Error};
@@ -277,6 +281,12 @@ pub mod wasm {
             let sandbox_script = Box::new(SandBoxGScript::default());
             g.add_script(sandbox_script);
             g.update();
+
+            // Add basic action handlers
+            g.action_holder.add_handler(MoveAction::make_handler());
+            g.action_holder.add_handler(JumpAction::make_handler());
+            g.action_holder.add_handler(RotateAction::make_handler());
+
             g
         }
 

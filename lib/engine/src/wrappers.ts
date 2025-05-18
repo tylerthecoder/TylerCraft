@@ -145,9 +145,7 @@ export class GameWrapper {
     y: number
   ): WorldWasm.EntityActionDto {
     console.log("Making rotate action", entityId, x, y);
-    const rotDiff = new WorldWasm.SphericalRotation();
-    rotDiff.phi = x;
-    rotDiff.theta = y;
+    const rotDiff = WorldWasm.SphericalRotation.new_wasm(y, x);
     return WorldWasm.RotateAction.make_wasm(entityId, rotDiff);
   }
 

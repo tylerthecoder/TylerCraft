@@ -1,10 +1,14 @@
-use crate::{components::{fine_world_pos::FineWorldPos, velocity::Velocity}, entities::entity_component::impl_component, vec::Vec3f32};
+use crate::vec::Vector3Ops;
+use crate::{
+    components::{fine_world_pos::FineWorldPos, velocity::Velocity},
+    entities::entity_component::impl_component,
+    vec::Vec3f32,
+};
 use serde::{Deserialize, Serialize};
 use std::{f32::consts::PI, ops::Add};
 use wasm_bindgen::prelude::wasm_bindgen;
-use crate::vec::Vector3Ops;
 
-#[derive(Clone, Copy, PartialEq, Debug, Default,Serialize, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Debug, Default, Serialize, Deserialize)]
 #[wasm_bindgen]
 pub struct SphericalRotation {
     /** The flat angle. [0, 2PI] */
@@ -14,13 +18,19 @@ pub struct SphericalRotation {
     pub phi: f32,
 }
 
+#[wasm_bindgen]
+impl SphericalRotation {
+    pub fn new_wasm(theta: f32, phi: f32) -> SphericalRotation {
+        SphericalRotation { theta, phi }
+    }
+}
+
 impl_component!(SphericalRotation);
 
 impl SphericalRotation {
     pub fn new(theta: f32, phi: f32) -> SphericalRotation {
         SphericalRotation { theta, phi }
     }
-
 
     pub fn get_unit_vector(&self) -> Vec3f32 {
         let phi_offset = (PI / 2.0) - self.phi;
