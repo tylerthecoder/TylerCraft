@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 use super::{
     entity::{Entity, EntityId},
     entity_component::impl_component,
@@ -9,7 +11,7 @@ use crate::{
     geometry::rotation::SphericalRotation,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Flying {
     pub is_flying: bool,
     pub on_ground: bool,

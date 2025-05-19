@@ -1,14 +1,26 @@
-import {
-  Game,
-  IGameMetadata,
-  ISerializedGame,
-  ICreateGameOptions,
-  IGameSaver,
-  IGamesService,
-  SandboxGScript,
-} from "@craft/engine";
+import { ISerializedEntities } from "@craft/engine/entities/entityHolder";
+import { ICreateGameOptions, IGameMetadata } from "@craft/engine/game";
+import { IConfig } from "@craft/engine/src/config";
+import { GameWrapper, ISerializedWorld } from "@craft/engine/src/wrappers";
+import { Game } from "@craft/rust-world";
 
-export class ClientDbGamesService implements IGamesService {
+export interface SerializedEntity {
+  id: number;
+  components: string[];
+}
+
+export interface SerializedEntities {
+  entities: SerializedEntity[];
+}
+
+export interface ISerializedGame {
+  gameId: string;
+  name: string;
+  entities?: ISerializedEntities;
+  world?: ISerializedWorld;
+}
+
+export class ClientDbGamesService {
   private static WORLDS_OBS = "worlds";
 
   static async factory() {
@@ -44,23 +56,13 @@ export class ClientDbGamesService implements IGamesService {
     return new ClientDbGamesService(db);
   }
 
-  private constructor(private db: IDBDatabase) {}
+  private constructor(private db: IDBDatabase) { }
 
   async createGame(
     createGameOptions: ICreateGameOptions | ISerializedGame
-  ): Promise<Game> {
-    const gameSaver = this.getGameSaver();
-    const game = Game.make(createGameOptions, gameSaver);
-    game.addGameScript(SandboxGScript);
+  ): Promise<GameWrapper> {
+    const game = GameWrapper.makeGame();
     return game;
-  }
-
-  private getGameSaver(): IGameSaver {
-    return {
-      save: async (game: Game) => {
-        this.saveGame(game);
-      },
-    };
   }
 
   getAllGames(): Promise<IGameMetadata[]> {
@@ -89,7 +91,7 @@ export class ClientDbGamesService implements IGamesService {
     });
   }
 
-  async getGame(gameId: string): Promise<Game | null> {
+  async getGame(gameId: string): Promise<GameWrapper | null> {
     const foundGame: ISerializedGame | null = await new Promise((resolve) => {
       const transaction = this.db.transaction([
         ClientDbGamesService.WORLDS_OBS,

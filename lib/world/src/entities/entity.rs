@@ -1,10 +1,11 @@
+use super::entity_component::Component;
+use serde::{Deserialize, Serialize};
+use serde_json;
 use std::{
     any::{Any, TypeId},
     fmt::Debug,
 };
 use wasm_bindgen::prelude::*;
-
-use super::entity_component::Component;
 
 pub type EntityId = u32;
 
@@ -12,6 +13,12 @@ pub type EntityId = u32;
 pub struct Entity {
     pub id: EntityId,
     components: Vec<Box<dyn Component>>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SerializedEntity {
+    pub id: EntityId,
+    pub components: Vec<String>,
 }
 
 impl Entity {
@@ -50,12 +57,57 @@ impl Entity {
             .any(|c| c.as_any().type_id() == type_id)
     }
 
+    pub fn serialize(&self) -> SerializedEntity {
+        let components = self
+            .components
+            .iter()
+            .map(|c| serde_json::to_string(c).unwrap())
+            .collect();
+        SerializedEntity {
+            id: self.id,
+            components,
+        }
+    }
+
+    pub fn deserialize(serialized: SerializedEntity) -> Entity {
+        let mut entity = Entity::new(serialized.id);
+        entity.components = serialized
+            .components
+            .iter()
+            .map(|c| serde_json::from_str(c).unwrap())
+            .collect();
+        entity
+    }
+
     pub fn print_components(&self) {
         println!("Entity ID: {:?}", self.id);
         for component in &self.components {
             println!("Component: {:?}", component);
             println!("Component Type ID: {:?}", component.as_any().type_id());
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::components::world_pos::WorldPos;
+
+    use super::*;
+
+    #[test]
+    fn test_serialize_deserialize() {
+        let mut entity = Entity::new(1);
+        let world_pos = WorldPos { x: 1, y: 2, z: 3 };
+        entity.add(world_pos);
+        let serialized = entity.serialize();
+        let deserialized = Entity::deserialize(serialized);
+        assert_eq!(entity.id, deserialized.id);
+        assert_eq!(entity.components.len(), deserialized.components.len());
+
+        let deserialized_world_pos = deserialized.get::<WorldPos>().unwrap();
+        assert_eq!(world_pos.x, deserialized_world_pos.x);
+        assert_eq!(world_pos.y, deserialized_world_pos.y);
+        assert_eq!(world_pos.z, deserialized_world_pos.z);
     }
 }
 

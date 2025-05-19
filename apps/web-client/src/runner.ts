@@ -39,6 +39,16 @@ class SinglePlayerTerrainChunkGetter {
   }
 }
 
+class GameSaver {
+  constructor(private game: GameWrapper) {
+    this.game = game;
+  }
+
+  saveChunk() {
+    this.game.game.save_game_wasm();
+  }
+}
+
 export function run() {
   // Start the game
   console.log("RUNNING Starting game");

@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 use super::{
     entity::{Entity, EntityId, EntityQuery, EntityQueryResults},
     entity_action::{ActionData, EntityActionDto, EntityActionDtoMaker, EntityActionHandler},
@@ -63,7 +65,7 @@ impl EntityActionHandler for JumpAction {
 }
 
 #[wasm_bindgen]
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct JumpData {
     jump_speed: f32,
     is_jumping: bool,

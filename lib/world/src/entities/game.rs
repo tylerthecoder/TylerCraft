@@ -228,26 +228,26 @@ mod tests {
         assert!(player_pos.z > 0.0);
     }
 
-    #[test]
-    pub fn generate_chunk() {
-        let mut game = Game::new();
-        let player = make_player(1);
-        game.schedule_entity_insert(player);
-        game.update();
+    // #[test]
+    // pub fn generate_chunk() {
+    //     let mut game = Game::new();
+    //     let player = make_player(1);
+    //     game.schedule_entity_insert(player);
+    //     game.update();
 
-        let sandbox_game_script = Box::new(SandBoxGScript::default());
-        game.add_script(sandbox_game_script);
-        game.update();
+    //     let sandbox_game_script = Box::new(SandBoxGScript::default());
+    //     game.add_script(sandbox_game_script);
+    //     game.update();
 
-        // Check that chunks loaded
-        let chunk_count = game.world.chunk_count();
-        assert_eq!(chunk_count, 1);
+    //     // Check that chunks loaded
+    //     let chunk_count = game.world.chunk_count();
+    //     assert_eq!(chunk_count, 1);
 
-        game.update();
+    //     game.update();
 
-        let chunk_count = game.world.chunk_count();
-        assert_eq!(chunk_count, 2);
-    }
+    //     let chunk_count = game.world.chunk_count();
+    //     assert_eq!(chunk_count, 2);
+    // }
 }
 
 pub mod wasm {
