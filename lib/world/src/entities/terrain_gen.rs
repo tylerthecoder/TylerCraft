@@ -14,6 +14,7 @@ use rand::{rngs::StdRng, SeedableRng};
 use rand_distr::{Distribution, Uniform};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::wasm_bindgen;
+use wasm_bindgen::JsValue;
 
 // remove all the positions that are too close to each other in the chunk
 fn remove_close_positions<'a, I, J>(pos_iter: I, checking_pos_iter: J) -> Vec<WorldPos>
@@ -533,6 +534,11 @@ impl TerrainGenerator {
             flat_world,
             debug_world,
         }
+    }
+
+    pub fn serialize(&self) -> Result<JsValue, serde_wasm_bindgen::Error> {
+        let serialized = serde_wasm_bindgen::to_value(self).unwrap();
+        Ok(serialized)
     }
 
     pub fn get_chunk(&self, chunk_x: i16, chunk_y: i16) -> Chunk {

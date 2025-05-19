@@ -1,3 +1,4 @@
+use serde::Serialize;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 use super::{
@@ -12,10 +13,11 @@ pub trait RequestChunk: std::fmt::Debug {
     fn request_chunk(&self, chunk_pos: ChunkPos);
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 #[wasm_bindgen]
 pub struct SandBoxGScript {
     pub load_distance: u8,
+    #[serde(skip)]
     request_chunk: Box<dyn RequestChunk>,
     // pub terrain_gen: TerrainGenerator,
 }
@@ -100,12 +102,16 @@ pub mod wasm {
     #[wasm_bindgen]
     impl SandBoxGScript {
         #[wasm_bindgen(constructor)]
-
         pub fn new_wasm(load_distance: u8, wasm_request_chunk: WasmRequestChunk) -> SandBoxGScript {
             SandBoxGScript {
                 load_distance,
                 request_chunk: Box::new(wasm_request_chunk),
             }
+        }
+
+        pub fn serialize(&self) -> Result<JsValue, serde_wasm_bindgen::Error> {
+            let serialized = serde_wasm_bindgen::to_value(self).unwrap();
+            Ok(serialized)
         }
     }
 

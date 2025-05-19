@@ -15,8 +15,9 @@ use crate::{
     world::{world_block::WorldBlock, World},
 };
 use serde::{Deserialize, Serialize};
+use serde_wasm_bindgen::Error;
 use uuid::Uuid;
-use wasm_bindgen::prelude::wasm_bindgen;
+use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 
 #[wasm_bindgen(getter_with_clone)]
 pub struct Game {
@@ -104,8 +105,10 @@ impl Game {
         self.schedule.new_entities.push(entity);
     }
 
-    pub fn serialize_entities(&self) -> Vec<SerializedEntity> {
-        self.entity_holder.serialize()
+    pub fn serialize_entities_wasm(&self) -> Result<JsValue, Error> {
+        let serialized_entities = self.entity_holder.serialize();
+        let serialized_entities_js = serde_wasm_bindgen::to_value(&serialized_entities).unwrap();
+        Ok(serialized_entities_js)
     }
 }
 
@@ -387,18 +390,6 @@ pub mod wasm {
             let block = self.world.get_block(&world_pos);
             let block_js = serde_wasm_bindgen::to_value(&block).unwrap();
             Ok(block_js)
-        }
-
-        pub fn serialize_entities_wasm(&self) -> Result<JsValue, Error> {
-            let entities: Vec<SerializedEntity> = self
-                .entity_holder
-                .get_all()
-                .iter()
-                .map(|entity| entity.serialize())
-                .collect();
-
-            let entities_js = serde_wasm_bindgen::to_value(&entities).unwrap();
-            Ok(entities_js)
         }
     }
 

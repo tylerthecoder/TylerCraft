@@ -52,6 +52,7 @@ export function run() {
 
   // add sandbox
   const sandbox = new SandBoxGScript(1, chunkGetter.getWasmRequestChunk());
+  const serializedSandbox = sandbox.serialize();
   game.game.add_sandbox_wasm(sandbox);
 
   const main_player_uid = getMyUid();
@@ -101,7 +102,11 @@ export function run() {
   setInterval(update, 1000 / 60);
 
   const saveGame = async () => {
-    await spGameService.saveGame(game, chunkGetter.terrianGen, sandbox);
+    await spGameService.saveGame(
+      game,
+      chunkGetter.terrianGen,
+      serializedSandbox
+    );
   };
 
   setInterval(saveGame, 1000);

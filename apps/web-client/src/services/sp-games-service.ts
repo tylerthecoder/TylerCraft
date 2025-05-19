@@ -113,7 +113,7 @@ export class ClientDbGamesService {
   async saveGame(
     data: GameWrapper,
     terrainGen: TerrainGenerator,
-    sandbox: SandBoxGScript
+    sandbox: any
   ) {
     const transaction = this.db.transaction(
       [ClientDbGamesService.WORLDS_OBS],
@@ -130,15 +130,12 @@ export class ClientDbGamesService {
     };
     const objStore = transaction.objectStore("worlds");
 
-    const serializedWorldData = data.game.world.serialize_wasm();
-    const serializedEntities = data.game.serialize_entities();
-
     const serializedGame = {
       gameId: data.game.id,
       name: data.game.name,
-      entities: serializedEntities,
-      world: serializedWorldData,
-      terrainGen: terrainGen,
+      entities: data.game.serialize_entities_wasm(),
+      world: data.game.world.serialize_wasm(),
+      terrainGen: terrainGen.serialize(),
       sandbox: sandbox,
     };
 
