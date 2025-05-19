@@ -80,17 +80,22 @@ impl World {
     pub fn get_chunk_mesh_wasm(&self, chunk_id: ChunkId) -> Result<JsValue, Error> {
         let chunk_pos = ChunkPos::from_id(chunk_id);
 
-        web_sys::console::log_1(&JsValue::from_str(&format!("Rust Getting chunk mesh: {}", chunk_id)));
+        web_sys::console::log_1(&JsValue::from_str(&format!(
+            "Rust Getting chunk mesh: {}",
+            chunk_id
+        )));
 
-        let mesh = self.get_chunk_mesh(&chunk_pos).map_err(Self::convert_error)?;
+        let mesh = self
+            .get_chunk_mesh(&chunk_pos)
+            .map_err(Self::convert_error)?;
 
         let wasm_chunk_mesh = mesh
-                .into_iter()
-                .map(|(world_pos, directions)| {
-                    let block = self.get_block(&world_pos);
-                    (block, directions.to_owned())
-                })
-                .collect::<Vec<(WorldBlock, Directions)>>();
+            .into_iter()
+            .map(|(world_pos, directions)| {
+                let block = self.get_block(&world_pos);
+                (block, directions.to_owned())
+            })
+            .collect::<Vec<(WorldBlock, Directions)>>();
 
         to_value(&wasm_chunk_mesh)
     }

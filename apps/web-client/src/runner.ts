@@ -4,8 +4,40 @@ import { WebGlGScript } from "./game-scripts/webgl-gscript";
 import { MobileController } from "./controllers/playerControllers/mobileController";
 import { KeyboardPlayerEntityController } from "./controllers/playerControllers/keyboardPlayerController";
 import { getMyUid, IS_MOBILE } from "./utils";
-import { SandBoxGScript, TerrainGenerator } from "@craft/rust-world";
+import {
+  Chunk,
+  SandBoxGScript,
+  TerrainGenerator,
+  WasmRequestChunk,
+} from "@craft/rust-world";
 // import { eStartMenu } from "./elements";
+
+class SinglePlayerTerrainChunkGetter {
+  private chunks_to_insert: Chunk[] = [];
+  private terratinGen: TerrainGenerator;
+
+  constructor(private game: GameWrapper) {
+    this.terratinGen = new TerrainGenerator(0, true, false);
+  }
+
+  getChunk(chunkPos: { x: number; y: number }) {
+    console.log("REQUEST CHUNK", chunkPos);
+    const chunk = this.terratinGen.get_chunk(chunkPos.x, chunkPos.y);
+    console.log("CHUNK", chunk);
+    this.chunks_to_insert.push(chunk);
+  }
+
+  update() {
+    for (const chunk of this.chunks_to_insert) {
+      this.game.game.schedule_chunk_insert_wasm(chunk);
+    }
+    this.chunks_to_insert = [];
+  }
+
+  getWasmRequestChunk() {
+    return new WasmRequestChunk(this.getChunk.bind(this));
+  }
+}
 
 export function run() {
   // Start the game
@@ -15,8 +47,10 @@ export function run() {
 
   const game = GameWrapper.makeGame();
 
+  const chunkGetter = new SinglePlayerTerrainChunkGetter(game);
+
   // add sandbox
-  const sandbox = new SandBoxGScript(1, new TerrainGenerator(0, true, false));
+  const sandbox = new SandBoxGScript(1, chunkGetter.getWasmRequestChunk());
   game.game.add_sandbox_wasm(sandbox);
 
   const main_player_uid = getMyUid();
@@ -59,6 +93,7 @@ export function run() {
     game.update();
     playerController.update();
     canvasGameScript.update();
+    chunkGetter.update();
     canvasGameScript.renderLoop(0);
   };
 
