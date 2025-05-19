@@ -32,7 +32,7 @@ fn default_block_data() -> BlockDataArray {
     [BlockData::None; CHUNK_MEM_SIZE]
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 #[wasm_bindgen]
 pub struct Chunk {
     #[serde(with = "BigArray")]

@@ -10,12 +10,14 @@ use wasm_bindgen::prelude::*;
 pub type EntityId = u32;
 
 #[derive(Debug)]
+#[wasm_bindgen(getter_with_clone)]
 pub struct Entity {
     pub id: EntityId,
     components: Vec<Box<dyn Component>>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[wasm_bindgen(getter_with_clone)]
 pub struct SerializedEntity {
     pub id: EntityId,
     pub components: Vec<String>,
@@ -142,6 +144,8 @@ impl<'a> EntityQueryResults<'a> {
     }
 }
 
+#[wasm_bindgen]
+#[derive(Debug)]
 pub struct EntityHolder {
     entities: Vec<Entity>,
 }
@@ -186,5 +190,19 @@ impl EntityHolder {
             .collect();
 
         EntityQueryResults::new(filtered_entities)
+    }
+
+    pub fn serialize(&self) -> Vec<SerializedEntity> {
+        self.entities
+            .iter()
+            .map(|entity| entity.serialize())
+            .collect()
+    }
+
+    pub fn deserialize(&mut self, serialized_entities: Vec<SerializedEntity>) {
+        self.entities = serialized_entities
+            .iter()
+            .map(|serialized| Entity::deserialize(serialized.clone()))
+            .collect();
     }
 }

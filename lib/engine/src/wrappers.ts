@@ -25,10 +25,14 @@ export interface ISerializedWorld {
   chunks: ISerializedChunkHolder;
 }
 
-export type SerializedGame = {
-  world: ISerializedWorld;
-  players: PlayerWrapper[];
-};
+export interface SerializedEntity {
+  id: number;
+  components: string[];
+}
+
+export interface SerializedEntities {
+  entities: SerializedEntity[];
+}
 
 export type GameDiff = {
   updated_entities: number[];
@@ -123,16 +127,16 @@ export class GameWrapper {
   constructor(public game: WorldWasm.Game) { }
 
   static makeGame(): GameWrapper {
-    const game = WorldWasm.Game.new_wasm();
+    const game = new WorldWasm.Game();
     return new GameWrapper(game);
-  }
-
-  update() {
-    this.game.update_wasm();
   }
 
   makeAndAddPlayer(uid: number) {
     this.game.make_and_add_player_wasm(uid);
+  }
+
+  serializeEntities(): SerializedEntity[] {
+    return this.game.serialize_entities_wasm();
   }
 
   makeJumpAction(entityId: number): WorldWasm.EntityActionDto {

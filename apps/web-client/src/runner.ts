@@ -10,19 +10,20 @@ import {
   TerrainGenerator,
   WasmRequestChunk,
 } from "@craft/rust-world";
+import { ClientDbGamesService } from "./services/sp-games-service";
 // import { eStartMenu } from "./elements";
 
 class SinglePlayerTerrainChunkGetter {
   private chunks_to_insert: Chunk[] = [];
-  private terratinGen: TerrainGenerator;
+  public terrianGen: TerrainGenerator;
 
   constructor(private game: GameWrapper) {
-    this.terratinGen = new TerrainGenerator(0, true, false);
+    this.terrianGen = new TerrainGenerator(0, true, false);
   }
 
   getChunk(chunkPos: { x: number; y: number }) {
     console.log("REQUEST CHUNK", chunkPos);
-    const chunk = this.terratinGen.get_chunk(chunkPos.x, chunkPos.y);
+    const chunk = this.terrianGen.get_chunk(chunkPos.x, chunkPos.y);
     console.log("CHUNK", chunk);
     this.chunks_to_insert.push(chunk);
   }
@@ -38,17 +39,7 @@ class SinglePlayerTerrainChunkGetter {
     return new WasmRequestChunk(this.getChunk.bind(this));
   }
 }
-
-class GameSaver {
-  constructor(private game: GameWrapper) {
-    this.game = game;
-  }
-
-  saveChunk() {
-    this.game.game.save_game_wasm();
-  }
-}
-
+const spGameService = await ClientDbGamesService.factory();
 export function run() {
   // Start the game
   console.log("RUNNING Starting game");
@@ -66,7 +57,7 @@ export function run() {
   const main_player_uid = getMyUid();
 
   game.makeAndAddPlayer(main_player_uid);
-  game.update();
+  game.game.update();
 
   const ents = game.getEntities();
   console.log("Ents", ents);
@@ -100,7 +91,7 @@ export function run() {
   // make the camera
 
   const update = () => {
-    game.update();
+    game.game.update();
     playerController.update();
     canvasGameScript.update();
     chunkGetter.update();
@@ -108,6 +99,12 @@ export function run() {
   };
 
   setInterval(update, 1000 / 60);
+
+  const saveGame = async () => {
+    await spGameService.saveGame(game, chunkGetter.terrianGen, sandbox);
+  };
+
+  setInterval(saveGame, 1000);
 
   console.log("Starting");
 

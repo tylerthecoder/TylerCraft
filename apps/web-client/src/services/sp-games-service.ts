@@ -2,22 +2,15 @@ import { ISerializedEntities } from "@craft/engine/entities/entityHolder";
 import { ICreateGameOptions, IGameMetadata } from "@craft/engine/game";
 import { IConfig } from "@craft/engine/src/config";
 import { GameWrapper, ISerializedWorld } from "@craft/engine/src/wrappers";
-import { Game } from "@craft/rust-world";
-
-export interface SerializedEntity {
-  id: number;
-  components: string[];
-}
-
-export interface SerializedEntities {
-  entities: SerializedEntity[];
-}
+import { Game, SandBoxGScript, TerrainGenerator } from "@craft/rust-world";
 
 export interface ISerializedGame {
   gameId: string;
   name: string;
   entities?: ISerializedEntities;
   world?: ISerializedWorld;
+  terrainGen?: TerrainGenerator;
+  sandbox?: SandBoxGScript;
 }
 
 export class ClientDbGamesService {
@@ -117,7 +110,11 @@ export class ClientDbGamesService {
     return this.createGame(foundGame);
   }
 
-  async saveGame(data: Game) {
+  async saveGame(
+    data: GameWrapper,
+    terrainGen: TerrainGenerator,
+    sandbox: SandBoxGScript
+  ) {
     const transaction = this.db.transaction(
       [ClientDbGamesService.WORLDS_OBS],
       "readwrite"
@@ -133,7 +130,21 @@ export class ClientDbGamesService {
     };
     const objStore = transaction.objectStore("worlds");
 
-    objStore.put(data.serialize());
+    const serializedWorldData = data.game.world.serialize_wasm();
+    const serializedEntities = data.game.serialize_entities();
+
+    const serializedGame = {
+      gameId: data.game.id,
+      name: data.game.name,
+      entities: serializedEntities,
+      world: serializedWorldData,
+      terrainGen: terrainGen,
+      sandbox: sandbox,
+    };
+
+    console.log("Serialized game", serializedGame);
+
+    objStore.put(serializedGame);
   }
 
   async deleteGame(gameId: string) {

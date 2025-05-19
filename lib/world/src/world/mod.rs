@@ -3,7 +3,7 @@ use crate::chunk::chunk_mesh::ChunkMesh;
 use crate::chunk::Chunk;
 use crate::components::world_pos::WorldPos;
 use crate::direction::{Direction, DirectionVectorExtension, Directions};
-use crate::positions::{ChunkPos};
+use crate::positions::ChunkPos;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::{self, fmt};
@@ -50,7 +50,7 @@ pub struct WorldStateDiff {
     pub chunk_ids: HashSet<u64>,
 }
 
-#[derive(Default, Serialize, Deserialize)]
+#[derive(Default, Serialize, Deserialize, Clone)]
 #[wasm_bindgen]
 pub struct World {
     chunks: HashMap<i32, Chunk>,
@@ -125,7 +125,10 @@ impl World {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{block::{BlockData, BlockType}, vec::Vector3Ops};
+    use crate::{
+        block::{BlockData, BlockType},
+        vec::Vector3Ops,
+    };
 
     #[test]
     fn get_adjacent_blocks() {

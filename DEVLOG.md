@@ -5,6 +5,8 @@ UI to begin with that uses the rust code and attempts to render everything inste
 
 I got the actions to work in the UI. They are saved and updated. But the chunk rendering is a mess and isn't working.
 
+Did a lot of work today making everything work with the UI. The wrapper isn't really needed as much anymore. I was half way through getting serializing to work but it isn't really done yet, some values aren't being saved to the DB.
+
 ## 07_11_24
 
 Spent a while trying to figure out why cargo randomly rebuilt dependencies. Figured out it was turbo's issue? So I removed turbo and moved to just using yarn.

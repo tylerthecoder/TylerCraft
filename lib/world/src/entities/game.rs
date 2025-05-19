@@ -1,45 +1,60 @@
 use super::{
-    entity::{Entity, EntityHolder, EntityId},
+    entity::{Entity, EntityHolder, EntityId, SerializedEntity},
     entity_action::EntityActionHolder,
     game_script::{EntityScriptHolder, GameScript},
 };
 use crate::{
     chunk::{Chunk, ChunkId},
+    entities::{
+        entity_action::EntityActionDtoMaker,
+        player_jump_script::JumpAction,
+        player_move_script::{MoveAction, MoveScript},
+        player_rot_script::RotateAction,
+        velocity_script::VelocityScript,
+    },
     world::{world_block::WorldBlock, World},
 };
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 use wasm_bindgen::prelude::wasm_bindgen;
 
-#[wasm_bindgen]
+#[wasm_bindgen(getter_with_clone)]
 pub struct Game {
-    world: World,
+    pub name: String,
+    pub id: String,
+    pub world: World,
+    entity_holder: EntityHolder,
     scripts: EntityScriptHolder,
     schedule: GameSchedule,
-    entity_holder: EntityHolder,
     action_holder: EntityActionHolder,
 }
 
+#[wasm_bindgen]
 impl Game {
+    #[wasm_bindgen(constructor)]
     pub fn new() -> Game {
-        Game {
+        console_error_panic_hook::set_once();
+        let mut g = Game {
+            name: "".to_string(),
+            id: Uuid::new_v4().to_string(),
             world: World::default(),
             entity_holder: EntityHolder::new(),
             scripts: EntityScriptHolder::default(),
             schedule: GameSchedule::empty(),
             action_holder: EntityActionHolder::default(),
-        }
-    }
+        };
 
-    pub fn add_script(&mut self, script: Box<dyn GameScript>) {
-        self.scripts.add_script(script);
-    }
+        g.add_script(Box::new(MoveScript::default()));
+        g.add_script(Box::new(VelocityScript::default()));
+        g.update();
 
-    // pub fn get_entity_script<T>(&self, entity_id: EntityId) -> Option<&T>
-    // where
-    //     T: EntityScript + Any,
-    // {
-    //     self.entity_scripts.get_script::<T>(entity_id)
-    // }
+        // Add basic action handlers
+        g.action_holder.add_handler(MoveAction::make_handler());
+        g.action_holder.add_handler(JumpAction::make_handler());
+        g.action_holder.add_handler(RotateAction::make_handler());
+
+        g
+    }
 
     pub fn update(&mut self) {
         let world = &self.world;
@@ -87,6 +102,16 @@ impl Game {
 
     pub fn schedule_entity_insert(&mut self, entity: Entity) {
         self.schedule.new_entities.push(entity);
+    }
+
+    pub fn serialize_entities(&self) -> Vec<SerializedEntity> {
+        self.entity_holder.serialize()
+    }
+}
+
+impl Game {
+    pub fn add_script(&mut self, script: Box<dyn GameScript>) {
+        self.scripts.add_script(script);
     }
 }
 
@@ -258,7 +283,7 @@ pub mod wasm {
         chunk::{chunk_mesh::ChunkMesh, Chunk, ChunkId},
         components::world_pos::WorldPos,
         entities::{
-            entity::{Entity, EntityId, EntityQueryResults},
+            entity::{Entity, EntityId, EntityQueryResults, SerializedEntity},
             entity_action::{EntityActionDto, EntityActionDtoMaker},
             player::{make_player, wasm::WasmPlayer},
             player_jump_script::JumpAction,
@@ -276,26 +301,6 @@ pub mod wasm {
 
     #[wasm_bindgen]
     impl Game {
-        pub fn new_wasm() -> Game {
-            console_error_panic_hook::set_once();
-            let mut g = Game::new();
-
-            g.add_script(Box::new(MoveScript::default()));
-            g.add_script(Box::new(VelocityScript::default()));
-            g.update();
-
-            // Add basic action handlers
-            g.action_holder.add_handler(MoveAction::make_handler());
-            g.action_holder.add_handler(JumpAction::make_handler());
-            g.action_holder.add_handler(RotateAction::make_handler());
-
-            g
-        }
-
-        pub fn update_wasm(&mut self) {
-            self.update();
-        }
-
         pub fn make_and_add_player_wasm(&mut self, uid: EntityId) -> () {
             let player = make_player(uid);
             self.schedule_entity_insert(player);
@@ -382,6 +387,18 @@ pub mod wasm {
             let block = self.world.get_block(&world_pos);
             let block_js = serde_wasm_bindgen::to_value(&block).unwrap();
             Ok(block_js)
+        }
+
+        pub fn serialize_entities_wasm(&self) -> Result<JsValue, Error> {
+            let entities: Vec<SerializedEntity> = self
+                .entity_holder
+                .get_all()
+                .iter()
+                .map(|entity| entity.serialize())
+                .collect();
+
+            let entities_js = serde_wasm_bindgen::to_value(&entities).unwrap();
+            Ok(entities_js)
         }
     }
 
