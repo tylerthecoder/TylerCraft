@@ -16,12 +16,8 @@ export class MobileController extends PlayerController {
   private eUseItemButton = getEleOrError("useItemButton");
   private eUseItemButton2 = getEleOrError("useItemButton2");
 
-  constructor(
-    playerActionService: PlayerActionService,
-    game: GameWrapper,
-    playerId: number
-  ) {
-    super(playerActionService, game, playerId);
+  constructor(game: GameWrapper, playerId: number) {
+    super(game.makeJumpAction, playerId);
 
     let lastWindowTouch: Touch;
     const lastTouchStartPos = new Vector2D([0, 0]);

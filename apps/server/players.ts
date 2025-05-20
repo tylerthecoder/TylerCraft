@@ -37,7 +37,7 @@ export default class Players {
     // send a welcoming message to the new player
     const welcomeMessage = new SocketMessage(ISocketMessageType.welcome, {
       uid,
-      game: this.game.serialize(),
+      // game: this.game.serialize(),
     });
     this.socketInterface.send(ws, welcomeMessage);
 
@@ -73,8 +73,7 @@ export default class Players {
     ws.on("close", this.removePlayer.bind(this, ws));
 
     console.log(
-      `New player! ${uid} ${
-        this.game.entities.getActivePlayers().length
+      `New player! ${uid} ${this.game.entities.getActivePlayers().length
       } players`
     );
   }

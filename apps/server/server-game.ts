@@ -1,9 +1,6 @@
 import Players from "./players.js";
 import WebSocket from "ws";
 import {
-  Game,
-  GameAction,
-  GameStateDiff,
   ISocketMessageType,
   MapArray,
   Vector2D,
@@ -13,6 +10,7 @@ import {
   GameScript,
 } from "@craft/engine";
 import SocketServer from "./socket.js";
+import { Game, GameDiff } from "@craft/rust-world";
 
 export class ServerGameScript extends GameScript {
   name = "server";
@@ -30,7 +28,9 @@ export class ServerGameScript extends GameScript {
     this.clients = new Players(game, socketInterface);
   }
 
-  onGameStateDiff(diff: GameStateDiff): void {
+  scriptsToSendToClients: string[] = [];
+
+  onGameStateDiff(diff: GameDiff): void {
     const stateDiff = diff.copy();
 
     // Set the config for the game (This is a hack since the config is global)

@@ -1,131 +1,36 @@
-import { BlockType, Direction, EntityActionDto } from "@craft/rust-world";
-import { GameWrapper } from "./wrappers.js";
-
-// export enum PlayerActionType {
-//   Jump = "jump",
-//   PlaceBlock = "placeBlock",
-//   RemoveBlock = "removeBlock",
-//   ToggleCreative = "toggleCreative",
-//   Move = "move",
-//   Rotate = "rotate",
-//   SetPos = "setPlayerPos",
-//   BeltLeft = "playerBeltLeft",
-//   BeltRight = "playerBeltRight",
-//   SetBeltIndex = "playerSetBeltIndex",
-//   PlaceDebugBlock = "placeDebugBlock",
-// }
-
-// interface BasePlayerAction {
-//   playerUid: string;
-// }
-
-// export interface PlayerActionData
-//   extends Record<PlayerActionType, BasePlayerAction> {
-//   [PlayerActionType.Rotate]: {
-//     playerUid: string;
-//     playerRot: IDim;
-//   };
-//   [PlayerActionType.Move]: {
-//     playerUid: string;
-//     playerRot: IDim;
-//     directions: Direction[];
-//   };
-//   [PlayerActionType.SetBeltIndex]: {
-//     playerUid: string;
-//     index: number;
-//   };
-//   [PlayerActionType.BeltLeft]: {
-//     playerUid: string;
-//   };
-//   [PlayerActionType.BeltRight]: {
-//     playerUid: string;
-//   };
-//   [PlayerActionType.Jump]: {
-//     playerUid: string;
-//   };
-//   [PlayerActionType.SetPos]: {
-//     playerUid: string;
-//     pos: IDim;
-//   };
-//   [PlayerActionType.PlaceBlock]: {
-//     playerUid: string;
-//     playerPos: IDim;
-//     playerRot: IDim;
-//   };
-//   [PlayerActionType.RemoveBlock]: {
-//     playerUid: string;
-//     playerPos: IDim;
-//     playerRot: IDim;
-//   };
-//   [PlayerActionType.PlaceDebugBlock]: {
-//     playerUid: string;
-//   };
-// }
-
-// export type PlayerActionDto = MessageDto<PlayerActionType, PlayerActionData>;
-
-// export class PlayerAction extends MessageHolder<
-//   PlayerActionType,
-//   PlayerActionData
-// > {
-//   static make<T extends PlayerActionType>(type: T, data: PlayerActionData[T]) {
-//     return new PlayerAction(type, data);
-//   }
-// }
-
-export class PlayerActionService {
-  constructor(private game: GameWrapper) { }
-
-  private playerActions = new Map<
-    number,
-    Array<(action: EntityActionDto) => void>
-  >();
-
-  addActionListener(
-    playerId: number,
-    listener: (action: EntityActionDto) => void
-  ) {
-    this.playerActions.set(playerId, [
-      ...(this.playerActions.get(playerId) || []),
-      listener,
-    ]);
-  }
-
-  performAction(action: EntityActionDto) {
-    const entityId = action.entity_id;
-    this.game.handleAction(action);
-
-    const listeners = this.playerActions.get(entityId);
-    if (!listeners) {
-      return;
-    }
-
-    for (const listener of listeners) {
-      listener(action);
-    }
-  }
-}
-
+import {
+  Direction,
+  EntityActionDto,
+  JumpAction,
+  MoveAction,
+  RotateAction,
+  SphericalRotation,
+} from "@craft/rust-world";
 export abstract class PlayerController {
   constructor(
-    protected playerActionService: PlayerActionService,
-    protected game: GameWrapper,
+    protected handleAction: (action: EntityActionDto) => void,
     protected playerId: number
   ) { }
 
   jump() {
-    const action = this.game.makeJumpAction(this.playerId);
-    this.playerActionService.performAction(action);
+    const action = JumpAction.make_wasm(this.playerId);
+    this.handleAction(action);
   }
 
   rotate(x: number, y: number) {
-    const action = this.game.makeRotateAction(this.playerId, x, y);
-    this.playerActionService.performAction(action);
+    const rotDiff = SphericalRotation.new_wasm(x, y);
+    const action = RotateAction.make_wasm(this.playerId, rotDiff);
+    this.handleAction(action);
   }
 
   move(direction: Direction | "None") {
-    const action = this.game.makeMoveAction(this.playerId, direction);
-    this.playerActionService.performAction(action);
+    let action: EntityActionDto;
+    if (direction === "None") {
+      action = MoveAction.make_wasm(this.playerId, undefined);
+    } else {
+      action = MoveAction.make_wasm(this.playerId, direction);
+    }
+    this.handleAction(action);
   }
 
   beltRight() {
@@ -173,73 +78,3 @@ export abstract class PlayerController {
     // this.playerActionService.performAction(action);
   }
 }
-
-// const handlePlayerAction = (
-//   game: Game,
-//   player: Player,
-//   action: PlayerAction
-// ) => {
-//   // console.log("Handling player action", player, action);
-//   if (action.isType(PlayerActionType.Rotate)) {
-//     const { playerRot } = action.data;
-//     player.rot = new Vector3D(playerRot);
-//     return;
-//   }
-
-//   if (action.isType(PlayerActionType.Jump)) {
-//     player.tryJump();
-//     return;
-//   }
-
-//   if (action.isType(PlayerActionType.PlaceBlock)) {
-//     const { playerPos, playerRot } = action.data;
-//     player.pos = new Vector3D(playerPos);
-//     player.rot = new Vector3D(playerRot);
-//     player.doPrimaryAction(game);
-//     return;
-//   }
-
-//   if (action.isType(PlayerActionType.RemoveBlock)) {
-//     const { playerPos, playerRot } = action.data;
-//     player.pos = new Vector3D(playerPos);
-//     player.rot = new Vector3D(playerRot);
-//     player.doSecondaryAction(game);
-//     return;
-//   }
-
-//   if (action.isType(PlayerActionType.SetPos)) {
-//     const { pos } = action.data;
-//     player.pos = new Vector3D(pos);
-//     return;
-//   }
-
-//   if (action.isType(PlayerActionType.Move)) {
-//     const { directions, playerRot } = action.data;
-//     // TODO this might be unnecessary
-//     player.rot = new Vector3D(playerRot);
-//     player.moveDirections = directions;
-//   }
-
-//   if (action.isType(PlayerActionType.BeltLeft)) {
-//     player.belt.moveLeft();
-//   }
-
-//   if (action.isType(PlayerActionType.BeltRight)) {
-//     player.belt.moveRight();
-//   }
-
-//   if (action.isType(PlayerActionType.SetBeltIndex)) {
-//     const { index } = action.data;
-//     player.belt.setIndex(index);
-//   }
-
-//   if (action.isType(PlayerActionType.PlaceDebugBlock)) {
-//     const pos = player.pos.floor();
-//     const cube = CubeHelpers.createCube(BlockType.Gold, pos);
-//     game.placeBlock(cube);
-//   }
-
-//   if (action.isType(PlayerActionType.ToggleCreative)) {
-//     player.setCreative(!player.creative);
-//   }
-// };

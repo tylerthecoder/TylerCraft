@@ -1,4 +1,8 @@
-import { IConfig } from "./config.js";
+import {
+  EntityActionDto,
+  GameDiff,
+  SerializedEntityHolder,
+} from "@craft/rust-world";
 
 export interface MessageDto<
   MESSAGE extends string,
@@ -9,7 +13,7 @@ export interface MessageDto<
 }
 
 export class MessageHolder<T extends string, DATA extends Record<T, unknown>> {
-  constructor(public type: T, public data: DATA[T]) {}
+  constructor(public type: T, public data: DATA[T]) { }
 
   getDto() {
     return {
@@ -25,21 +29,19 @@ export class MessageHolder<T extends string, DATA extends Record<T, unknown>> {
 
 export enum ISocketMessageType {
   // from client
-  getChunk = "getChunk", // server sends setChunk
-  newWorld = "newWorld", // server sends welcome
-  saveWorld = "saveWorld",
-  // this could be for joining an existing world or starting up an old one
-  joinWorld = "joinWorld", // server sends welcome or worldNotFound
+  joinWorld = "joinWorld",
+
   // from server
   welcome = "welcome",
-  worldNotFound = "worldNotFound",
   gameDiff = "gameDiff",
-  setChunk = "setChunk",
-  newPlayer = "newPlayer",
-  playerLeave = "playerLeave",
-  // both
+
+  // from both
   actions = "actions",
-  playerActions = "playerActions",
+}
+
+export interface WelcomeMessage {
+  uid: string;
+  entities: SerializedEntityHolder;
 }
 
 export interface SocketMessageData extends Record<ISocketMessageType, unknown> {
@@ -47,38 +49,10 @@ export interface SocketMessageData extends Record<ISocketMessageType, unknown> {
     myUid: string;
     worldId: string;
   };
-  [ISocketMessageType.newWorld]: {
-    myUid: string;
-    config: IConfig;
-    name: string;
-  };
-  [ISocketMessageType.saveWorld]: {
-    worldId: string;
-  };
-  [ISocketMessageType.getChunk]: {
-    pos: string;
-  };
-  // [ISocketMessageType.welcome]: ISocketWelcomePayload;
-  // [ISocketMessageType.worldNotFound]: {};
-  // [ISocketMessageType.setChunk]: {
-  //   pos: string;
-  //   data: ISerializedChunk;
-  // };
-  // [ISocketMessageType.newPlayer]: {
-  //   uid: string;
-  // };
-  // [ISocketMessageType.playerLeave]: {
-  //   uid: string;
-  // };
-  // [ISocketMessageType.gameDiff]: GameDiffDto;
-  // [ISocketMessageType.actions]: GameActionDto;
-  // [ISocketMessageType.playerActions]: PlayerActionDto;
+  [ISocketMessageType.actions]: EntityActionDto;
+  [ISocketMessageType.gameDiff]: GameDiff;
+  [ISocketMessageType.welcome]: WelcomeMessage;
 }
-
-// export interface ISocketWelcomePayload {
-//   uid: string;
-//   game: ISerializedGame;
-// }
 
 export type SocketMessageDto = MessageDto<
   ISocketMessageType,

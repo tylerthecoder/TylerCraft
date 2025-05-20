@@ -142,6 +142,7 @@ impl Game {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
+#[wasm_bindgen(getter_with_clone)]
 pub struct GameDiff {
     pub updated_entities: Vec<EntityId>,
     pub updated_chunks: Vec<ChunkId>,

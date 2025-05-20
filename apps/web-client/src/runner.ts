@@ -1,4 +1,4 @@
-import { GameWrapper, PlayerActionService } from "@craft/engine";
+import { GameWrapper } from "@craft/engine";
 import { CanvasGameScript } from "./game-scripts/canvas-gscript";
 import { WebGlGScript } from "./game-scripts/webgl-gscript";
 import { MobileController } from "./controllers/playerControllers/mobileController";
@@ -6,6 +6,7 @@ import { KeyboardPlayerEntityController } from "./controllers/playerControllers/
 import { getMyUid, IS_MOBILE } from "./utils";
 import {
   Chunk,
+  EntityActionDto,
   SandBoxGScript,
   TerrainGenerator,
   WasmRequestChunk,
@@ -22,9 +23,7 @@ class SinglePlayerTerrainChunkGetter {
   }
 
   getChunk(chunkPos: { x: number; y: number }) {
-    console.log("REQUEST CHUNK", chunkPos);
     const chunk = this.terrianGen.get_chunk(chunkPos.x, chunkPos.y);
-    console.log("CHUNK", chunk);
     this.chunks_to_insert.push(chunk);
   }
 
@@ -39,6 +38,7 @@ class SinglePlayerTerrainChunkGetter {
     return new WasmRequestChunk(this.getChunk.bind(this));
   }
 }
+
 const spGameService = await ClientDbGamesService.factory();
 export async function run(id?: string) {
   // Start the game
@@ -68,8 +68,6 @@ export async function run(id?: string) {
   const ents = game.getEntities();
   console.log("Ents", ents);
 
-  const playerActionService = new PlayerActionService(game);
-
   const webglGameScript = new WebGlGScript(game);
 
   const canvasGameScript = new CanvasGameScript(
@@ -80,13 +78,17 @@ export async function run(id?: string) {
 
   game.makeAndAddGameScript(canvasGameScript);
 
+  const onAction = (action: EntityActionDto) => {
+    console.log("ACTION", action);
+    game.game.handle_action_wasm(action);
+  };
+
   const playerController = (() => {
     if (IS_MOBILE) {
-      return new MobileController(playerActionService, game, main_player_uid);
+      return new MobileController(onAction, main_player_uid);
     } else {
       return new KeyboardPlayerEntityController(
-        playerActionService,
-        game,
+        onAction,
         main_player_uid,
         canvasGameScript,
         webglGameScript

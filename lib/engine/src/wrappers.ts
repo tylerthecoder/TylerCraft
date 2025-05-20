@@ -164,11 +164,6 @@ export class GameWrapper {
     return WorldWasm.MoveAction.make_wasm(entityId, direction);
   }
 
-  handleAction(action: WorldWasm.EntityActionDto) {
-    console.log("Handling action", action);
-    this.game.handle_action_wasm(action);
-  }
-
   getChunkPosFromChunkId(chunkId: number): Vector2D {
     const data: { x: number; y: number } = this.game.get_chunk_pos_from_id_wasm(
       BigInt(chunkId)
