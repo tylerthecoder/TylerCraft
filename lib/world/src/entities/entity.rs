@@ -1,10 +1,12 @@
-use super::entity_component::Component;
+use super::{entity_component::Component, player::wasm::Player};
+use crate::{geometry::rotation::SphericalRotation, utils::js_log};
 use serde::{Deserialize, Serialize};
-use serde_json;
+use serde_wasm_bindgen::from_value;
 use std::{
     any::{Any, TypeId},
     fmt::Debug,
 };
+use tsify::Tsify;
 use wasm_bindgen::prelude::*;
 
 pub type EntityId = u32;
@@ -14,13 +16,6 @@ pub type EntityId = u32;
 pub struct Entity {
     pub id: EntityId,
     components: Vec<Box<dyn Component>>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[wasm_bindgen(getter_with_clone)]
-pub struct SerializedEntity {
-    pub id: EntityId,
-    pub components: Vec<String>,
 }
 
 impl Entity {
@@ -59,28 +54,6 @@ impl Entity {
             .any(|c| c.as_any().type_id() == type_id)
     }
 
-    pub fn serialize(&self) -> SerializedEntity {
-        let components = self
-            .components
-            .iter()
-            .map(|c| serde_json::to_string(c).unwrap())
-            .collect();
-        SerializedEntity {
-            id: self.id,
-            components,
-        }
-    }
-
-    pub fn deserialize(serialized: SerializedEntity) -> Entity {
-        let mut entity = Entity::new(serialized.id);
-        entity.components = serialized
-            .components
-            .iter()
-            .map(|c| serde_json::from_str(c).unwrap())
-            .collect();
-        entity
-    }
-
     pub fn print_components(&self) {
         println!("Entity ID: {:?}", self.id);
         for component in &self.components {
@@ -96,21 +69,30 @@ mod tests {
 
     use super::*;
 
-    #[test]
-    fn test_serialize_deserialize() {
-        let mut entity = Entity::new(1);
-        let world_pos = WorldPos { x: 1, y: 2, z: 3 };
-        entity.add(world_pos);
-        let serialized = entity.serialize();
-        let deserialized = Entity::deserialize(serialized);
-        assert_eq!(entity.id, deserialized.id);
-        assert_eq!(entity.components.len(), deserialized.components.len());
+    // #[test]
+    // fn test_serialize_deserialize() {
+    //     let mut entity = Entity::new(1);
+    //     let world_pos = WorldPos { x: 1, y: 2, z: 3 };
+    //     let spherical_rotation = SphericalRotation::new(0.0, 0.0);
+    //     entity.add(world_pos);
+    //     entity.add(spherical_rotation);
+    //     let serialized = entity.serialize();
+    //     let deserialized = Entity::deserialize(serialized);
+    //     assert_eq!(entity.id, deserialized.id);
+    //     assert_eq!(entity.components.len(), deserialized.components.len());
 
-        let deserialized_world_pos = deserialized.get::<WorldPos>().unwrap();
-        assert_eq!(world_pos.x, deserialized_world_pos.x);
-        assert_eq!(world_pos.y, deserialized_world_pos.y);
-        assert_eq!(world_pos.z, deserialized_world_pos.z);
-    }
+    //     let deserialized_world_pos = deserialized.get::<WorldPos>().unwrap();
+    //     assert_eq!(world_pos.x, deserialized_world_pos.x);
+    //     assert_eq!(world_pos.y, deserialized_world_pos.y);
+    //     assert_eq!(world_pos.z, deserialized_world_pos.z);
+
+    //     let deserialized_spherical_rotation = deserialized.get::<SphericalRotation>().unwrap();
+    //     assert_eq!(
+    //         spherical_rotation.theta,
+    //         deserialized_spherical_rotation.theta
+    //     );
+    //     assert_eq!(spherical_rotation.phi, deserialized_spherical_rotation.phi);
+    // }
 }
 
 #[derive(Debug)]
@@ -148,6 +130,11 @@ impl<'a> EntityQueryResults<'a> {
 #[derive(Debug)]
 pub struct EntityHolder {
     entities: Vec<Entity>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Tsify)]
+pub struct SerializedEntityHolder {
+    pub entities: Vec<Player>,
 }
 
 impl EntityHolder {
@@ -192,17 +179,31 @@ impl EntityHolder {
         EntityQueryResults::new(filtered_entities)
     }
 
-    pub fn serialize(&self) -> Vec<SerializedEntity> {
-        self.entities
-            .iter()
-            .map(|entity| entity.serialize())
-            .collect()
+    pub fn serialize(&self) -> SerializedEntityHolder {
+        SerializedEntityHolder {
+            entities: self
+                .entities
+                .iter()
+                .map(|entity| Player::make_from_entity(entity))
+                .collect(),
+        }
     }
 
-    pub fn deserialize(&mut self, serialized_entities: Vec<SerializedEntity>) {
-        self.entities = serialized_entities
+    pub fn deserialize(serialized_entities: SerializedEntityHolder) -> EntityHolder {
+        let mut entity_holder = EntityHolder::new();
+        entity_holder.entities = serialized_entities
+            .entities
             .iter()
-            .map(|serialized| Entity::deserialize(serialized.clone()))
+            .map(|serialized| Player::make_entity(serialized))
             .collect();
+        entity_holder
+    }
+}
+
+#[wasm_bindgen]
+impl EntityHolder {
+    pub fn deserialize_wasm(value: JsValue) -> Result<EntityHolder, serde_wasm_bindgen::Error> {
+        let entity_holder: SerializedEntityHolder = from_value(value)?;
+        Ok(EntityHolder::deserialize(entity_holder))
     }
 }

@@ -7,8 +7,8 @@ use crate::positions::ChunkPos;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use std::{self, fmt};
+use tsify::Tsify;
 use wasm_bindgen::prelude::*;
-
 pub mod world_block;
 mod world_chunk;
 mod world_duct;
@@ -50,11 +50,11 @@ pub struct WorldStateDiff {
     pub chunk_ids: HashSet<u64>,
 }
 
-#[derive(Default, Serialize, Deserialize, Clone)]
+#[derive(Default, Tsify, Serialize, Deserialize, Clone)]
 #[wasm_bindgen]
 pub struct World {
     chunks: HashMap<i32, Chunk>,
-    #[serde(skip)]
+    // #[serde(skip)]
     chunk_meshes: HashMap<i32, ChunkMesh>,
 }
 

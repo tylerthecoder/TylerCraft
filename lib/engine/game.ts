@@ -28,8 +28,6 @@ export interface IGameMetadata {
   name: string;
 }
 
-export type ICreateGameOptions = Pick<ISerializedGame, "config" | "name">;
-
 export type IContructGameOptions = Omit<ISerializedGame, "gameId"> & {
   gameId?: string;
 };

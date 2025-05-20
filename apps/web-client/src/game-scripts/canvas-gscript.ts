@@ -308,6 +308,7 @@ export class CanvasGameScript extends GameScript<Config> {
   }
 
   onChunkUpdate(chunkId: number): void {
+    console.log("CanvasGameScript: Updating chunk", chunkId);
     const chunkPos = this.game.getChunkPosFromChunkId(chunkId);
     const chunkMesh = this.game.getChunkMeshFromChunkPos(chunkId);
     const chunkRenderer = new ChunkRenderer(
@@ -317,6 +318,5 @@ export class CanvasGameScript extends GameScript<Config> {
     );
     chunkRenderer.getBufferData();
     this.chunkRenderers.set(chunkId, chunkRenderer);
-    console.log(this.chunkRenderers);
   }
 }

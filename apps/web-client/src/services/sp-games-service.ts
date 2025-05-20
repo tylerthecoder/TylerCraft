@@ -2,15 +2,22 @@ import { ISerializedEntities } from "@craft/engine/entities/entityHolder";
 import { ICreateGameOptions, IGameMetadata } from "@craft/engine/game";
 import { IConfig } from "@craft/engine/src/config";
 import { GameWrapper, ISerializedWorld } from "@craft/engine/src/wrappers";
-import { Game, SandBoxGScript, TerrainGenerator } from "@craft/rust-world";
+import {
+  EntityHolder,
+  Game,
+  SandBoxGScript,
+  SerializedEntityHolder,
+  TerrainGenerator,
+  World,
+} from "@craft/rust-world";
 
 export interface ISerializedGame {
   gameId: string;
   name: string;
-  entities?: ISerializedEntities;
-  world?: ISerializedWorld;
-  terrainGen?: TerrainGenerator;
-  sandbox?: SandBoxGScript;
+  entities: SerializedEntityHolder;
+  world: World;
+  terrainGen: TerrainGenerator;
+  sandbox: SandBoxGScript;
 }
 
 export class ClientDbGamesService {
@@ -51,11 +58,26 @@ export class ClientDbGamesService {
 
   private constructor(private db: IDBDatabase) { }
 
-  async createGame(
-    createGameOptions: ICreateGameOptions | ISerializedGame
-  ): Promise<GameWrapper> {
-    const game = GameWrapper.makeGame();
-    return game;
+  newGame(): GameWrapper {
+    return GameWrapper.makeGame();
+  }
+
+  createGame(createGameOptions: ISerializedGame): GameWrapper {
+    console.log("createGameOptions", createGameOptions);
+    const world = World.deserialize_wasm(createGameOptions.world);
+    console.log("world", world);
+    const entityHolder = EntityHolder.deserialize_wasm(
+      createGameOptions.entities
+    );
+    console.log("entityHolder", entityHolder);
+    const game = Game.build(
+      createGameOptions.gameId,
+      createGameOptions.name,
+      world,
+      entityHolder
+    );
+
+    return new GameWrapper(game);
   }
 
   getAllGames(): Promise<IGameMetadata[]> {
@@ -115,33 +137,34 @@ export class ClientDbGamesService {
     terrainGen: TerrainGenerator,
     sandbox: any
   ) {
-    const transaction = this.db.transaction(
-      [ClientDbGamesService.WORLDS_OBS],
-      "readwrite"
-    );
+    return new Promise<void>((resolve, reject) => {
+      const transaction = this.db.transaction(
+        [ClientDbGamesService.WORLDS_OBS],
+        "readwrite"
+      );
+      const serializedGame = {
+        gameId: data.game.id,
+        name: data.game.name,
+        entities: data.game.serialize_entities_wasm(),
+        world: data.game.world.serialize_wasm(),
+        terrainGen: terrainGen.serialize(),
+        sandbox: sandbox,
+      };
 
-    console.log("Saving game", data);
+      console.log("Saving game", serializedGame);
 
-    transaction.oncomplete = () => {
-      console.log("All done!");
-    };
-    transaction.onerror = () => {
-      console.log("There was an error", event);
-    };
-    const objStore = transaction.objectStore("worlds");
+      transaction.oncomplete = async () => {
+        console.log("Saving game complete");
+        resolve();
+      };
+      transaction.onerror = () => {
+        console.log("There was an error", event);
+        reject(event);
+      };
+      const objStore = transaction.objectStore(ClientDbGamesService.WORLDS_OBS);
 
-    const serializedGame = {
-      gameId: data.game.id,
-      name: data.game.name,
-      entities: data.game.serialize_entities_wasm(),
-      world: data.game.world.serialize_wasm(),
-      terrainGen: terrainGen.serialize(),
-      sandbox: sandbox,
-    };
-
-    console.log("Serialized game", serializedGame);
-
-    objStore.put(serializedGame);
+      const result = objStore.put(serializedGame);
+    });
   }
 
   async deleteGame(gameId: string) {

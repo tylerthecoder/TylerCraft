@@ -37,6 +37,7 @@ pub mod wasm {
         components::{fine_world_pos::FineWorldPos, velocity::Velocity},
         entities::{
             entity::{Entity, EntityId},
+            player_jump_script::JumpData,
             player_move_script::MovingDirection,
         },
         geometry::rotation::SphericalRotation,
@@ -44,25 +45,37 @@ pub mod wasm {
     use serde::{Deserialize, Serialize};
     use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize, Debug)]
     #[wasm_bindgen]
-    pub struct WasmPlayer {
+    pub struct Player {
         pub id: EntityId,
         pub pos: FineWorldPos,
         pub vel: Velocity,
         pub rot: SphericalRotation,
+        pub jump_data: JumpData,
         pub moving_direction: MovingDirection,
     }
 
-    impl WasmPlayer {
-        pub fn make_from_entity(entity: &Entity) -> WasmPlayer {
-            WasmPlayer {
+    impl Player {
+        pub fn make_from_entity(entity: &Entity) -> Player {
+            Player {
                 id: entity.id,
                 pos: entity.get::<FineWorldPos>().unwrap().clone(),
                 vel: entity.get::<Velocity>().unwrap().clone(),
                 rot: entity.get::<SphericalRotation>().unwrap().clone(),
                 moving_direction: entity.get::<MovingDirection>().unwrap().to_owned(),
+                jump_data: entity.get::<JumpData>().unwrap().to_owned(),
             }
+        }
+
+        pub fn make_entity(&self) -> Entity {
+            let mut ent = Entity::new(self.id);
+            ent.add::<FineWorldPos>(self.pos);
+            ent.add::<Velocity>(self.vel);
+            ent.add::<SphericalRotation>(self.rot);
+            ent.add::<MovingDirection>(self.moving_direction);
+            ent.add::<JumpData>(self.jump_data);
+            ent
         }
     }
 }

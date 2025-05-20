@@ -65,7 +65,7 @@ impl EntityActionHandler for JumpAction {
 }
 
 #[wasm_bindgen]
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub struct JumpData {
     jump_speed: f32,
     is_jumping: bool,

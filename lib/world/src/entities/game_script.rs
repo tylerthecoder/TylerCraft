@@ -31,6 +31,7 @@ macro_rules! impl_script {
     };
 }
 pub(crate) use impl_script;
+use wasm_bindgen::prelude::wasm_bindgen;
 
 impl std::error::Error for ScriptNotFoundError {}
 
@@ -51,6 +52,7 @@ impl std::fmt::Display for ScriptNotFoundError {
 }
 
 #[derive(Debug, Default)]
+#[wasm_bindgen]
 pub struct EntityScriptHolder {
     scripts: Vec<Box<dyn GameScript>>,
 }

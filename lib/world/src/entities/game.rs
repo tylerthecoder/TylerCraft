@@ -1,5 +1,5 @@
 use super::{
-    entity::{Entity, EntityHolder, EntityId, SerializedEntity},
+    entity::{Entity, EntityHolder, EntityId},
     entity_action::EntityActionHolder,
     game_script::{EntityScriptHolder, GameScript},
 };
@@ -40,6 +40,29 @@ impl Game {
             id: Uuid::new_v4().to_string(),
             world: World::default(),
             entity_holder: EntityHolder::new(),
+            scripts: EntityScriptHolder::default(),
+            schedule: GameSchedule::empty(),
+            action_holder: EntityActionHolder::default(),
+        };
+
+        g.add_script(Box::new(MoveScript::default()));
+        g.add_script(Box::new(VelocityScript::default()));
+        g.update();
+
+        // Add basic action handlers
+        g.action_holder.add_handler(MoveAction::make_handler());
+        g.action_holder.add_handler(JumpAction::make_handler());
+        g.action_holder.add_handler(RotateAction::make_handler());
+
+        g
+    }
+
+    pub fn build(id: String, name: String, world: World, entity_holder: EntityHolder) -> Game {
+        let mut g = Game {
+            id,
+            name,
+            world,
+            entity_holder,
             scripts: EntityScriptHolder::default(),
             schedule: GameSchedule::empty(),
             action_holder: EntityActionHolder::default(),
@@ -286,9 +309,9 @@ pub mod wasm {
         chunk::{chunk_mesh::ChunkMesh, Chunk, ChunkId},
         components::world_pos::WorldPos,
         entities::{
-            entity::{Entity, EntityId, EntityQueryResults, SerializedEntity},
+            entity::{Entity, EntityId, EntityQueryResults},
             entity_action::{EntityActionDto, EntityActionDtoMaker},
-            player::{make_player, wasm::WasmPlayer},
+            player::{make_player, wasm::Player},
             player_jump_script::JumpAction,
             player_move_script::{MoveAction, MoveScript},
             player_rot_script::RotateAction,
@@ -305,6 +328,10 @@ pub mod wasm {
     #[wasm_bindgen]
     impl Game {
         pub fn make_and_add_player_wasm(&mut self, uid: EntityId) -> () {
+            // skip if player already exists
+            if self.entity_holder.get_entity_by_id(uid).is_some() {
+                return;
+            }
             let player = make_player(uid);
             self.schedule_entity_insert(player);
             self.update();
@@ -363,7 +390,7 @@ pub mod wasm {
         pub fn get_player_wasm(&self, player_id: EntityId) -> Result<JsValue, Error> {
             let maybe_player = self.entity_holder.get_entity_by_id(player_id);
             if let Some(player) = maybe_player {
-                let wasm_player = WasmPlayer::make_from_entity(player);
+                let wasm_player = Player::make_from_entity(player);
                 let player_js = serde_wasm_bindgen::to_value(&wasm_player).unwrap();
                 Ok(player_js)
             } else {
@@ -373,9 +400,9 @@ pub mod wasm {
 
         pub fn get_players_wasm(&self) -> Result<JsValue, Error> {
             let players = self.entity_holder.get_all();
-            let players_wasm: Vec<WasmPlayer> = players
+            let players_wasm: Vec<Player> = players
                 .iter()
-                .map(|player| WasmPlayer::make_from_entity(player))
+                .map(|player| Player::make_from_entity(player))
                 .collect();
             let players_js = serde_wasm_bindgen::to_value(&players_wasm).unwrap();
             Ok(players_js)

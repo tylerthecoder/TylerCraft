@@ -40,13 +40,18 @@ class SinglePlayerTerrainChunkGetter {
   }
 }
 const spGameService = await ClientDbGamesService.factory();
-export function run() {
+export async function run(id?: string) {
   // Start the game
   console.log("RUNNING Starting game");
 
   // hideElement(eStartMenu);
 
-  const game = GameWrapper.makeGame();
+  const game = id ? await spGameService.getGame(id) : spGameService.newGame();
+
+  if (!game) {
+    console.error("Game not found");
+    return;
+  }
 
   const chunkGetter = new SinglePlayerTerrainChunkGetter(game);
 
@@ -107,9 +112,10 @@ export function run() {
       chunkGetter.terrianGen,
       serializedSandbox
     );
+    setTimeout(saveGame, 1000);
   };
 
-  setInterval(saveGame, 1000);
+  saveGame();
 
   console.log("Starting");
 
@@ -118,4 +124,4 @@ export function run() {
   canvasGameScript.renderLoop(0);
 }
 
-run();
+run("f27fa11d-bf9e-4f82-8a3e-9e87a02c3870");

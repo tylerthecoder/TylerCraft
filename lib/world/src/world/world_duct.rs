@@ -124,6 +124,10 @@ impl World {
         })
     }
 
+    pub fn deserialize_wasm(value: JsValue) -> Result<World, Error> {
+        from_value(value)
+    }
+
     pub fn has_chunk_wasm(&self, value: JsValue) -> bool {
         from_value(value)
             .map(|pos: ChunkPos| self.has_chunk(&pos))
