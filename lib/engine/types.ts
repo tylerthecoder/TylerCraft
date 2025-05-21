@@ -112,7 +112,6 @@ export interface SocketMessageData extends Record<ISocketMessageType, unknown> {
 
 export interface ISocketWelcomePayload {
   uid: string;
-  game: ISerializedGame;
 }
 
 export type SocketMessageDto = MessageDto<

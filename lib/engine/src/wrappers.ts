@@ -2,8 +2,52 @@ import * as WorldWasm from "@craft/rust-world";
 import { Vector2D, Vector3D } from "./vector.js";
 import { Camera } from "./camera.js";
 import { GameScript } from "./game-script.js";
-import { World } from "@craft/rust-world";
+import {
+  SandBoxGScript,
+  TerrainGenerator,
+  SerializedEntityHolder,
+  World,
+  Game,
+  EntityHolder,
+} from "@craft/rust-world";
 export * as WorldModuleTypes from "@craft/rust-world";
+
+export interface IServerGameMetadata {
+  gameId: string;
+  name: string;
+  isRunning: boolean;
+  onlinePlayers: number;
+}
+
+export interface ISerializedGame {
+  gameId: string;
+  name: string;
+  entities: SerializedEntityHolder;
+  world: World;
+  terrainGen: TerrainGenerator;
+  sandbox: SandBoxGScript;
+}
+
+export interface IGameMetadata {
+  gameId: string;
+  name: string;
+}
+
+export const serializedGameToGame = (serializedGame: ISerializedGame): Game => {
+  const world = World.deserialize_wasm(serializedGame.world);
+  const entityHolder = EntityHolder.deserialize_wasm(serializedGame.entities);
+  const game = Game.build(
+    serializedGame.gameId,
+    serializedGame.name,
+    world,
+    entityHolder
+  );
+  return game;
+};
+
+export const deserializeChunk = (chunk: ISerializedChunk): WorldWasm.Chunk => {
+  return WorldWasm.Chunk.deserialize(chunk);
+};
 
 export interface ISerializedChunk {
   position: {
@@ -125,7 +169,7 @@ export class BlockWrapper {
 }
 
 export class GameWrapper {
-  constructor(public game: WorldWasm.Game) { }
+  constructor(public game: WorldWasm.Game) {}
 
   static makeGame(): GameWrapper {
     const game = new WorldWasm.Game();

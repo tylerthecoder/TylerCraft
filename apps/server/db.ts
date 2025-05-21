@@ -54,6 +54,17 @@ export class GameDb {
     return game;
   }
 
+  async getSerializedGame(gameId: string): Promise<ISerializedGame | null> {
+    return await this.gameCollection.findOne<ISerializedGame>({ gameId });
+  }
+
+  async getGameMetadata(gameId: string): Promise<{ name: string } | null> {
+    return await this.gameCollection.findOne<{ name: string }>(
+      { gameId },
+      { projection: { name: 1 } }
+    );
+  }
+
   async saveGame(game: Game) {
     const serializedGame = {
       gameId: game.id,

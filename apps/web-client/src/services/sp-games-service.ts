@@ -1,24 +1,10 @@
-import { ISerializedEntities } from "@craft/engine/entities/entityHolder";
-import { ICreateGameOptions, IGameMetadata } from "@craft/engine/game";
-import { IConfig } from "@craft/engine/src/config";
-import { GameWrapper, ISerializedWorld } from "@craft/engine/src/wrappers";
+import { IGameMetadata } from "@craft/engine/game";
 import {
-  EntityHolder,
-  Game,
-  SandBoxGScript,
-  SerializedEntityHolder,
-  TerrainGenerator,
-  World,
-} from "@craft/rust-world";
-
-export interface ISerializedGame {
-  gameId: string;
-  name: string;
-  entities: SerializedEntityHolder;
-  world: World;
-  terrainGen: TerrainGenerator;
-  sandbox: SandBoxGScript;
-}
+  GameWrapper,
+  ISerializedGame,
+  serializedGameToGame,
+} from "@craft/engine/src/wrappers";
+import { TerrainGenerator } from "@craft/rust-world";
 
 export class ClientDbGamesService {
   private static WORLDS_OBS = "worlds";
@@ -56,27 +42,14 @@ export class ClientDbGamesService {
     return new ClientDbGamesService(db);
   }
 
-  private constructor(private db: IDBDatabase) { }
+  private constructor(private db: IDBDatabase) {}
 
   newGame(): GameWrapper {
     return GameWrapper.makeGame();
   }
 
   createGame(createGameOptions: ISerializedGame): GameWrapper {
-    console.log("createGameOptions", createGameOptions);
-    const world = World.deserialize_wasm(createGameOptions.world);
-    console.log("world", world);
-    const entityHolder = EntityHolder.deserialize_wasm(
-      createGameOptions.entities
-    );
-    console.log("entityHolder", entityHolder);
-    const game = Game.build(
-      createGameOptions.gameId,
-      createGameOptions.name,
-      world,
-      entityHolder
-    );
-
+    const game = serializedGameToGame(createGameOptions);
     return new GameWrapper(game);
   }
 
@@ -163,7 +136,7 @@ export class ClientDbGamesService {
       };
       const objStore = transaction.objectStore(ClientDbGamesService.WORLDS_OBS);
 
-      const result = objStore.put(serializedGame);
+      objStore.put(serializedGame);
     });
   }
 

@@ -138,4 +138,8 @@ export class ServerGameManager {
   getChunk(chunkPos: { x: number; y: number }): Chunk | ChunkNotLoaded {
     return this.game.get_chunk(chunkPos);
   }
+
+  getOnlinePlayers(): number {
+    return this.clients.size;
+  }
 }

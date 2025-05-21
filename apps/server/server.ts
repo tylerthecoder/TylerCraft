@@ -5,6 +5,7 @@ import cors from "cors";
 import SocketServer from "./socket.js";
 import { ServerGameManager } from "./server-game-manager.js";
 import { GameDb } from "./db.js";
+import { IGameMetadata } from "@craft/engine";
 
 const PORT = process.env.PORT ?? 3000;
 const webClientPath = new URL("../../web-client/dist", import.meta.url)
@@ -31,7 +32,20 @@ app.use(express.static(webClientPath));
 
 app.get("/games", async (_req: Request, res: Response) => {
   const gamesMetadata = await gameDb.getAllGameMetadata();
-  res.send(gamesMetadata);
+
+  const gameInfos: (IGameMetadata & {
+    isRunning: boolean;
+    onlinePlayers: number;
+  })[] = gamesMetadata.map((gameMetadata) => {
+    const game = games.get(gameMetadata.gameId);
+    return {
+      ...gameMetadata,
+      isRunning: game ? game.is_running : false,
+      onlinePlayers: game ? game.getOnlinePlayers() : 0,
+    };
+  });
+
+  res.send(gameInfos);
 });
 
 app.post("/game", async (req: Request, res: Response) => {

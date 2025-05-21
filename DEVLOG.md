@@ -1,3 +1,13 @@
+# 05_21_25
+
+I've worked on making the server runner. I'm relizing it doesn't make a lot of sense to serpatate out the sp-game-serivce and the runner. The cut between them isn't that clean. I will just make two different runners and then see what logic I need to abstract to make a good UI.
+
+I've been thinking about the chunk flow. The server will be loading chunks with its sandbox game script, the client will also being doing this, but the client requests the chunks from the server instead of the terrain gen. This means the client could request a chunk too soon, but I shoudl probalby just load all the chunks around a player before they join? Maybe I can send them updates via sockets about what the server is doing.
+
+I need to bring back fun loading spinners
+
+Also the game shoudl have the property of chunkRequestor, not the client. The sandbox script shoudl be renamed to "loadchunksaroundentity" script and returns load requests to the game. The game then calls the request function on all chunks that the scripts returned, then the client will get from the server and give them to the local game and it will insert the chunks one by one.
+
 ## 05_19_25
 
 We now can serialize the game state and save it to indexdb. It took a while to figure out how to serialize the entities. I went down a rabbit hole trying to get <https://github.com/dtolnay/typetag?tab=readme-ov-file> to work, but it doesn't support wasm-bindgen. I ended up just assuming everything was a player for now.

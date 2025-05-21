@@ -13,7 +13,7 @@ export interface MessageDto<
 }
 
 export class MessageHolder<T extends string, DATA extends Record<T, unknown>> {
-  constructor(public type: T, public data: DATA[T]) { }
+  constructor(public type: T, public data: DATA[T]) {}
 
   getDto() {
     return {
@@ -32,6 +32,7 @@ export enum ISocketMessageType {
   joinWorld = "joinWorld",
 
   // from server
+  failedToJoin = "failedToJoin",
   welcome = "welcome",
   gameDiff = "gameDiff",
 
@@ -45,10 +46,8 @@ export interface WelcomeMessage {
 }
 
 export interface SocketMessageData extends Record<ISocketMessageType, unknown> {
-  [ISocketMessageType.joinWorld]: {
-    myUid: string;
-    worldId: string;
-  };
+  [ISocketMessageType.joinWorld]: void;
+  [ISocketMessageType.failedToJoin]: void;
   [ISocketMessageType.actions]: EntityActionDto;
   [ISocketMessageType.gameDiff]: GameDiff;
   [ISocketMessageType.welcome]: WelcomeMessage;
