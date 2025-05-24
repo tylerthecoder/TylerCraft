@@ -2,6 +2,7 @@ import {
   EntityActionDto,
   EntityActionJson,
   GameDiff,
+  Player,
   SerializedEntityHolder,
 } from "@craft/rust-world";
 import { ISerializedAction } from "./wrappers.js";
@@ -37,6 +38,7 @@ export enum ISocketMessageType {
   failedToJoin = "failedToJoin",
   welcome = "welcome",
   gameDiff = "gameDiff",
+  newPlayer = "newPlayer",
 
   // from both
   actions = "actions",
@@ -56,6 +58,7 @@ export interface SocketMessageData extends Record<ISocketMessageType, unknown> {
   [ISocketMessageType.actions]: ISerializedAction;
   [ISocketMessageType.gameDiff]: GameDiff;
   [ISocketMessageType.welcome]: WelcomeMessage;
+  [ISocketMessageType.newPlayer]: Player;
 }
 
 export type SocketMessageDto = MessageDto<

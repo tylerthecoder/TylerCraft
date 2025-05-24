@@ -65,7 +65,7 @@ app.post("/game/:id/start", async (req: Request, res: Response) => {
     res.status(404).send("Game not found");
     return;
   }
-  const gameManager = new ServerGameManager(game, socketService);
+  const gameManager = new ServerGameManager(game, socketService, gameDb);
   games.set(id, gameManager);
   gameManager.start();
   res.send("Game started");

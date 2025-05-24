@@ -181,12 +181,12 @@ export class CanvasGameScript extends GameScript<Config> {
       // Skip rendering the player if we aren't supposed to
       if (
         entityRenderer instanceof PlayerRenderer &&
-        entityRenderer.player.uid === this.mainPlayerId &&
+        entityRenderer.entityId === this.mainPlayerId &&
         !shouldRenderMainPlayer
       ) {
         continue;
       }
-      // entityRenderer.render(camera);
+      entityRenderer.render(camera);
     }
 
     // loop through all of the chunks that I would be able to see.
@@ -297,7 +297,11 @@ export class CanvasGameScript extends GameScript<Config> {
   onNewEntity(entity: PlayerWrapper): void {
     console.log("CanvasGameScript: Adding entity", entity);
     // if (entity instanceof PlayerWrapper) {
-    const renderer = new PlayerRenderer(this.webGlGScript, entity);
+    const renderer = new PlayerRenderer(
+      this.game,
+      this.webGlGScript,
+      entity.uid
+    );
     this.entityRenderers.set(entity.uid, renderer);
     // } else if (entity instanceof Projectile) {
     //   const renderer = new SphereRenderer(this.webGlGScript, entity);

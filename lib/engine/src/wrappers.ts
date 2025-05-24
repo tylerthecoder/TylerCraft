@@ -148,6 +148,7 @@ export class PlayerWrapper {
   moving_direction: WorldWasm.Direction | undefined;
 
   constructor(player: WorldWasm.Player) {
+    this.uid = player.id;
     this.pos = new Vector3D([player.pos.x, player.pos.y, player.pos.z]);
     this.dim = new Vector3D([1, 1, 1]);
     this.rot = new Vector3D([0, player.rot.phi, player.rot.theta]);

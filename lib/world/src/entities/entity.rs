@@ -199,6 +199,17 @@ impl EntityHolder {
             .collect();
         entity_holder
     }
+
+    pub fn deserialize_entity(&mut self, entity: JsValue) {
+        let player: Player = from_value(entity).unwrap();
+        let entity = Player::make_entity(&player);
+        // add or update entity
+        if let Some(existing_entity) = self.get_entity_by_id_mut(entity.id) {
+            existing_entity.components = entity.components;
+        } else {
+            self.add_entity(entity);
+        }
+    }
 }
 
 #[wasm_bindgen]

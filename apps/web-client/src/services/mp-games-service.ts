@@ -92,6 +92,8 @@ export async function serverRunner(gameId: string) {
 
   const myUid = getMyUid();
 
+  console.log("My UID", myUid);
+
   const game = new Game();
   (window as any).game = game;
 
@@ -120,6 +122,23 @@ export async function serverRunner(gameId: string) {
       })
     );
   };
+
+  SocketInterface.addListener((message) => {
+    console.log("Got actions message from server", message);
+    if (message.isType(ISocketMessageType.actions)) {
+      const action = message.data;
+      const actionDto = EntityActionJson.deserialize_wasm(
+        action.entity_id,
+        action.name,
+        action.data
+      );
+      game.handle_action_wasm(actionDto);
+    }
+    if (message.isType(ISocketMessageType.newPlayer)) {
+      const player = message.data;
+      game.deserialize_entity_wasm(player);
+    }
+  });
 
   const playerController = new KeyboardPlayerEntityController(
     onAction,

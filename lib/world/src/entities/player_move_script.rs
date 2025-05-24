@@ -4,6 +4,7 @@ use crate::{
     geometry::rotation::SphericalRotation,
     utils::js_log,
 };
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
 use super::{
@@ -15,7 +16,7 @@ use super::{
 };
 
 #[wasm_bindgen]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct MoveActionData {
     pub direction: Option<Direction>,
 }

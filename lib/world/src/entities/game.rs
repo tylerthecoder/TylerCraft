@@ -7,6 +7,7 @@ use crate::{
     chunk::{Chunk, ChunkId},
     entities::{
         entity_action::EntityActionDtoMaker,
+        player::wasm::Player,
         player_jump_script::JumpAction,
         player_move_script::{MoveAction, MoveScript},
         player_rot_script::RotateAction,
@@ -15,7 +16,7 @@ use crate::{
     world::{world_block::WorldBlock, World},
 };
 use serde::{Deserialize, Serialize};
-use serde_wasm_bindgen::Error;
+use serde_wasm_bindgen::{from_value, Error};
 use uuid::Uuid;
 use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 
@@ -140,6 +141,12 @@ impl Game {
 
         let entity_holder = EntityHolder::deserialize(serialized_entities);
         self.entity_holder = entity_holder;
+    }
+
+    pub fn deserialize_entity_wasm(&mut self, entity: JsValue) {
+        let player: Player = from_value(entity).unwrap();
+        let entity = Player::make_entity(&player);
+        self.schedule_entity_insert(entity);
     }
 }
 
@@ -403,7 +410,7 @@ pub mod wasm {
                 let player_js = serde_wasm_bindgen::to_value(&wasm_player).unwrap();
                 Ok(player_js)
             } else {
-                Err(Error::new("Player not found"))
+                Err(Error::new(format!("Player {} not found", player_id)))
             }
         }
 

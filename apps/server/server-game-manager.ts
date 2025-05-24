@@ -12,6 +12,7 @@ import {
 import SocketServer from "./socket";
 import WebSocket from "ws";
 import { ISocketMessageType, SocketMessage } from "@craft/engine";
+import { GameDb } from "./db";
 
 type ClientId = number;
 
@@ -53,7 +54,11 @@ export class ServerGameManager {
   timer: NodeJS.Timeout | null = null;
   chunkGetter: TerrainChunkGetter;
 
-  constructor(private game: Game, private socketInterface: SocketServer) {
+  constructor(
+    private game: Game,
+    private socketInterface: SocketServer,
+    private gameDb: GameDb
+  ) {
     this.chunkGetter = new TerrainChunkGetter(game);
     const sandbox = new SandBoxGScript(
       1,
@@ -87,6 +92,16 @@ export class ServerGameManager {
           entities: this.game.serialize_entities_wasm(),
         })
       );
+
+      this.clients.forEach((client, _) => {
+        this.socketInterface.send(
+          client,
+          new SocketMessage(
+            ISocketMessageType.newPlayer,
+            this.game.get_player_wasm(myUid)
+          )
+        );
+      });
 
       this.listenForPlayerActions(ws, myUid);
 
@@ -151,6 +166,11 @@ export class ServerGameManager {
     this.timer = setInterval(() => {
       this.update();
     }, 1000 / 60);
+
+    setInterval(() => {
+      console.log("Saving game", this.game.id);
+      this.save();
+    }, 5000);
   }
 
   stop() {
@@ -170,5 +190,14 @@ export class ServerGameManager {
 
   getOnlinePlayers(): number {
     return this.clients.size;
+  }
+
+  save() {
+    const serializedGame = {
+      gameId: this.game.id,
+      name: this.game.name,
+      entities: this.game.serialize_entities_wasm(),
+      world: this.game.world.serialize_wasm(),
+    };
   }
 }

@@ -1,3 +1,4 @@
+use crate::entities::player_move_script::MoveActionData;
 use crate::entities::player_rot_script::RotateActionData;
 use crate::utils::js_log;
 
@@ -129,6 +130,10 @@ impl EntityActionJson {
                 let data = dto.get_data::<RotateActionData>().unwrap();
                 serde_wasm_bindgen::to_value(&data).unwrap()
             }
+            "Move" => {
+                let data = dto.get_data::<MoveActionData>().unwrap();
+                serde_wasm_bindgen::to_value(&data).unwrap()
+            }
             _ => JsValue::null(),
         }
     }
@@ -141,6 +146,14 @@ impl EntityActionJson {
                 EntityActionDto {
                     entity_id,
                     name: "Player-Rotate",
+                    data: Box::new(data),
+                }
+            }
+            "Move" => {
+                let data = serde_wasm_bindgen::from_value::<MoveActionData>(data).unwrap();
+                EntityActionDto {
+                    entity_id,
+                    name: "Move",
                     data: Box::new(data),
                 }
             }

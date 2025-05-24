@@ -26,6 +26,13 @@ if (!localStorage.getItem(UID_KEY)) {
 }
 
 export function getMyUid() {
+  // check url for uid override
+  const urlParams = new URLSearchParams(window.location.search);
+  const uidOverride = urlParams.get("uid");
+  if (uidOverride) {
+    return Number(uidOverride);
+  }
+
   const uid = Number(localStorage.getItem(UID_KEY));
   if (!uid) throw new Error("UID not defined");
   return uid;
