@@ -133,6 +133,7 @@ pub struct EntityHolder {
 }
 
 #[derive(Debug, Serialize, Deserialize, Tsify)]
+#[wasm_bindgen(getter_with_clone)]
 pub struct SerializedEntityHolder {
     pub entities: Vec<Player>,
 }

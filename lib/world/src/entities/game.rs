@@ -1,5 +1,5 @@
 use super::{
-    entity::{Entity, EntityHolder, EntityId},
+    entity::{Entity, EntityHolder, EntityId, SerializedEntityHolder},
     entity_action::EntityActionHolder,
     game_script::{EntityScriptHolder, GameScript},
 };
@@ -132,6 +132,14 @@ impl Game {
         let serialized_entities = self.entity_holder.serialize();
         let serialized_entities_js = serde_wasm_bindgen::to_value(&serialized_entities).unwrap();
         Ok(serialized_entities_js)
+    }
+
+    pub fn deserialize_entities_wasm(&mut self, entities: JsValue) {
+        let serialized_entities: SerializedEntityHolder =
+            serde_wasm_bindgen::from_value(entities).unwrap();
+
+        let entity_holder = EntityHolder::deserialize(serialized_entities);
+        self.entity_holder = entity_holder;
     }
 }
 
@@ -419,6 +427,12 @@ pub mod wasm {
             let block_js = serde_wasm_bindgen::to_value(&block).unwrap();
             Ok(block_js)
         }
+
+        pub fn get_chunk_wasm(&self, chunk_pos: ChunkPos) -> Result<JsValue, Error> {
+            let chunk = self.world.get_chunk(&chunk_pos);
+            let chunk_js = serde_wasm_bindgen::to_value(&chunk);
+            chunk_js
+        }
     }
 
     #[wasm_bindgen]
@@ -430,6 +444,7 @@ pub mod wasm {
 
     #[wasm_bindgen]
     impl WasmGameScript {
+        #[wasm_bindgen(constructor)]
         pub fn make(val: JsValue) -> WasmGameScript {
             let on_diff_jsfn = js_sys::Reflect::get(&val, &JsValue::from("onDiff")).unwrap();
             WasmGameScript {

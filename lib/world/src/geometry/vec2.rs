@@ -1,8 +1,11 @@
+use crate::vec::{AsF32, Vec3i16};
 use num::{integer::Roots, traits::real::Real, Num, One, Zero};
 use serde::{Deserialize, Serialize};
-use std::{fmt::Display, ops::{Add, AddAssign, Div, Mul, Neg, Sub, SubAssign}};
-use crate::vec::{AsF32, Vec3i16};
-
+use std::{
+    fmt::Display,
+    ops::{Add, AddAssign, Div, Mul, Neg, Sub, SubAssign},
+};
+use wasm_bindgen::prelude::wasm_bindgen;
 
 pub trait Vec2Ops: Sized {
     type Scalar: Copy
@@ -15,7 +18,6 @@ pub trait Vec2Ops: Sized {
         + One
         + AsF32
         + Display;
-
 
     fn new(x: Self::Scalar, y: Self::Scalar) -> Self;
 
@@ -30,40 +32,39 @@ pub trait Vec2Ops: Sized {
     }
 
     fn add(&self, other: Self) -> Self {
-        return Self::new(self.x() + other.x(), self.y() + other.y())
+        return Self::new(self.x() + other.x(), self.y() + other.y());
     }
 
     fn sub(&self, other: &Self) -> Self {
-        return Self::new(self.x() - other.x(), self.y() - other.y())
+        return Self::new(self.x() - other.x(), self.y() - other.y());
     }
 
     fn scalar_mul(&self, other: Self::Scalar) -> Self {
-        return Self::new(self.x() * other, self.y() * other)
+        return Self::new(self.x() * other, self.y() * other);
     }
 
     fn mul(&self, other: Self::Scalar) -> Self {
-        return Self::new(self.x() * other, self.y() * other)
+        return Self::new(self.x() * other, self.y() * other);
     }
 
     fn div(&self, other: Self::Scalar) -> Self {
-        return Self::new(self.x() / other, self.y() / other)
+        return Self::new(self.x() / other, self.y() / other);
     }
 
     fn sqr(&self) -> Self {
-        return Self::new(self.x() * self.x(), self.y() * self.y())
+        return Self::new(self.x() * self.x(), self.y() * self.y());
     }
 
     fn sum(&self) -> Self::Scalar {
-        return self.x() + self.y()
+        return self.x() + self.y();
     }
 
     fn distance_to(&self, other: &Self) -> f32 {
-        return self.sub(other).sqr().sum().as_f32().sqrt()
+        return self.sub(other).sqr().sum().as_f32().sqrt();
     }
 
-
     fn move_to_3d(&self, y_val: Self::Scalar) -> Self {
-        return Self::new(self.x(), y_val)
+        return Self::new(self.x(), y_val);
     }
 }
 
@@ -89,7 +90,7 @@ macro_rules! impl_vec2_ops {
                 self.y = val
             }
         }
-    }
+    };
 }
 pub(crate) use impl_vec2_ops;
 
@@ -101,9 +102,18 @@ pub struct Vec2f32 {
 impl_vec2_ops!(Vec2f32, f32);
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[wasm_bindgen]
 pub struct Vec2i16 {
     pub x: i16,
     pub y: i16,
+}
+
+#[wasm_bindgen]
+impl Vec2i16 {
+    #[wasm_bindgen(constructor)]
+    pub fn new_wasm(x: i16, y: i16) -> Self {
+        Vec2i16 { x, y }
+    }
 }
 
 impl_vec2_ops!(Vec2i16, i16);
@@ -138,18 +148,10 @@ impl Vec2i16 {
     pub fn get_adjacent_vecs(&self) -> Vec<Self> {
         let mut vecs = Vec::new();
         vecs.push(self.clone());
-        vecs.push(self.add(
-            Vec2i16 { x: 0, y: 1 }
-        ));
-        vecs.push(self.add(
-            Vec2i16 { x: 1, y: 0 }
-        ));
-        vecs.push(self.add(
-            Vec2i16 { x: -1, y: 0 }
-        ));
-        vecs.push(self.add(
-            Vec2i16 { x: 0, y: -1 }
-        ));
+        vecs.push(self.add(Vec2i16 { x: 0, y: 1 }));
+        vecs.push(self.add(Vec2i16 { x: 1, y: 0 }));
+        vecs.push(self.add(Vec2i16 { x: -1, y: 0 }));
+        vecs.push(self.add(Vec2i16 { x: 0, y: -1 }));
         vecs
     }
 }

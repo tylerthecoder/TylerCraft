@@ -9,8 +9,15 @@ import {
   World,
   Game,
   EntityHolder,
+  RotateActionData,
 } from "@craft/rust-world";
 export * as WorldModuleTypes from "@craft/rust-world";
+
+export interface ISerializedAction {
+  entity_id: number;
+  name: string;
+  data: any;
+}
 
 export interface IServerGameMetadata {
   gameId: string;
@@ -140,7 +147,7 @@ export class PlayerWrapper {
   distanceMoved = 0;
   moving_direction: WorldWasm.Direction | undefined;
 
-  constructor(player: WorldWasm.WasmPlayer) {
+  constructor(player: WorldWasm.Player) {
     this.pos = new Vector3D([player.pos.x, player.pos.y, player.pos.z]);
     this.dim = new Vector3D([1, 1, 1]);
     this.rot = new Vector3D([0, player.rot.phi, player.rot.theta]);
@@ -224,7 +231,7 @@ export class GameWrapper {
   }
 
   makeAndAddGameScript(script: GameScript) {
-    const wasmScript = WorldWasm.WasmGameScript.make(script);
+    const wasmScript = new WorldWasm.WasmGameScript(script);
     this.game.add_game_script_wasm(wasmScript);
   }
 
@@ -237,7 +244,7 @@ export class GameWrapper {
   }
 
   getPlayer(uid: number): PlayerWrapper {
-    const player: WorldWasm.WasmPlayer = this.game.get_player_wasm(uid);
+    const player: WorldWasm.Player = this.game.get_player_wasm(uid);
     return new PlayerWrapper(player);
   }
 
@@ -247,7 +254,7 @@ export class GameWrapper {
   }
 
   getEntities(): PlayerWrapper[] {
-    const entities: WorldWasm.WasmPlayer[] = this.game.get_players_wasm();
+    const entities: WorldWasm.Player[] = this.game.get_players_wasm();
     return entities.map((entity) => this.getPlayer(entity.id));
   }
 

@@ -1,4 +1,9 @@
-import { Game, World } from "@craft/rust-world";
+import {
+  IGameMetadata,
+  ISerializedGame,
+  serializedGameToGame,
+} from "@craft/engine";
+import { Game } from "@craft/rust-world";
 import { Collection, Document, MongoClient } from "mongodb";
 
 export class GameDb {
@@ -16,7 +21,7 @@ export class GameDb {
   private gameCollection: Collection<Document & ISerializedGame>;
 
   private constructor(private client: MongoClient) {
-    this.gameCollection = this.client.db("games").collection("games");
+    this.gameCollection = this.client.db("tylercraft").collection("games");
   }
 
   getAllGameMetadata(): Promise<IGameMetadata[]> {
@@ -39,18 +44,7 @@ export class GameDb {
     if (!data) {
       return null;
     }
-    const world = World.deserialize_wasm(createGameOptions.world);
-    console.log("world", world);
-    const entityHolder = EntityHolder.deserialize_wasm(
-      createGameOptions.entities
-    );
-    console.log("entityHolder", entityHolder);
-    const game = Game.build(
-      createGameOptions.gameId,
-      createGameOptions.name,
-      world,
-      entityHolder
-    );
+    const game = serializedGameToGame(data);
     return game;
   }
 
@@ -71,8 +65,8 @@ export class GameDb {
       name: game.name,
       entities: game.serialize_entities_wasm(),
       world: game.world.serialize_wasm(),
-      terrainGen: game.terrainGen.serialize(),
-      sandbox: game.sandbox,
+      // terrainGen: game.terrainGen.serialize(),
+      // sandbox: game.sandbox,
     };
     await this.gameCollection.updateOne(
       { gameId: game.id },
@@ -82,7 +76,7 @@ export class GameDb {
   }
 
   async createGame(): Promise<Game> {
-    const game = Game.new();
+    const game = new Game();
     await this.saveGame(game);
     return game;
   }

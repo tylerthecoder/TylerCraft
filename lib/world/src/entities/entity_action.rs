@@ -1,6 +1,8 @@
+use crate::entities::player_rot_script::RotateActionData;
 use crate::utils::js_log;
 
 use super::entity::{Entity, EntityHolder, EntityId};
+use serde::Serialize;
 use std::any::Any;
 use std::fmt::Debug;
 use wasm_bindgen::prelude::*;
@@ -24,7 +26,7 @@ where
     }
 }
 
-#[wasm_bindgen]
+#[wasm_bindgen(getter_with_clone)]
 #[derive(Debug)]
 pub struct EntityActionDto {
     pub entity_id: super::entity::EntityId,
@@ -37,6 +39,13 @@ pub struct EntityActionDto {
 impl EntityActionDto {
     pub fn get_data<T: ActionData>(&self) -> Option<&T> {
         self.data.as_any().downcast_ref::<T>()
+    }
+}
+
+#[wasm_bindgen]
+impl EntityActionDto {
+    pub fn get_name(&self) -> String {
+        self.name.to_string()
     }
 }
 
@@ -102,5 +111,40 @@ impl EntityActionHolder {
 
         // clear actions
         self.actions.clear();
+    }
+}
+
+#[wasm_bindgen]
+struct EntityActionJson {
+    entity_id: EntityId,
+    name: String,
+    data: JsValue,
+}
+
+#[wasm_bindgen]
+impl EntityActionJson {
+    pub fn from_entity_action_dto(dto: &EntityActionDto) -> JsValue {
+        match dto.name {
+            "Player-Rotate" => {
+                let data = dto.get_data::<RotateActionData>().unwrap();
+                serde_wasm_bindgen::to_value(&data).unwrap()
+            }
+            _ => JsValue::null(),
+        }
+    }
+
+    pub fn deserialize_wasm(entity_id: EntityId, name: String, data: JsValue) -> EntityActionDto {
+        js_log(&format!("Deserializing action: {:?}", name));
+        match name.as_str() {
+            "Player-Rotate" => {
+                let data = serde_wasm_bindgen::from_value::<RotateActionData>(data).unwrap();
+                EntityActionDto {
+                    entity_id,
+                    name: "Player-Rotate",
+                    data: Box::new(data),
+                }
+            }
+            _ => panic!("Unknown action: {}", name),
+        }
     }
 }

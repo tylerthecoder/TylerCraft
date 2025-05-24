@@ -1,3 +1,4 @@
+import { Game } from "@craft/rust-world";
 import { GameWrapper } from "./wrappers.js";
 
 export type GameScriptConfig = Record<string, any> | undefined;
@@ -10,7 +11,7 @@ export abstract class GameScript<
 
   config?: Config;
 
-  constructor(protected game: GameWrapper, ..._args: unknown[]) {}
+  constructor(protected game: Game, ..._args: unknown[]) {}
 
   setConfig?(config: Config): void;
 

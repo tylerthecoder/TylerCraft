@@ -1,16 +1,19 @@
 import {
   Chunk,
+  ChunkNotLoadedError,
+  EntityActionJson,
   Game,
   GameDiff,
   SandBoxGScript,
   TerrainGenerator,
+  Vec2i16,
   WasmRequestChunk,
 } from "@craft/rust-world";
 import SocketServer from "./socket";
 import WebSocket from "ws";
 import { ISocketMessageType, SocketMessage } from "@craft/engine";
 
-type ClientId = string;
+type ClientId = number;
 
 interface ScriptDiff {
   scriptName: string;
@@ -26,6 +29,7 @@ class TerrainChunkGetter {
   }
 
   getChunk(chunkPos: { x: number; y: number }) {
+    console.log("Getting chunk", chunkPos);
     const chunk = this.terrianGen.get_chunk(chunkPos.x, chunkPos.y);
     this.chunks_to_insert.push(chunk);
   }
@@ -47,22 +51,33 @@ export class ServerGameManager {
   clients: Map<ClientId, WebSocket> = new Map();
   scriptsToSendToClients: string[] = [];
   timer: NodeJS.Timeout | null = null;
+  chunkGetter: TerrainChunkGetter;
 
   constructor(private game: Game, private socketInterface: SocketServer) {
-    const chunkGetter = new TerrainChunkGetter(game);
-    const sandbox = new SandBoxGScript(1, chunkGetter.getWasmRequestChunk());
+    this.chunkGetter = new TerrainChunkGetter(game);
+    const sandbox = new SandBoxGScript(
+      1,
+      this.chunkGetter.getWasmRequestChunk()
+    );
     game.add_sandbox_wasm(sandbox);
+
+    this.socketInterface.listenForConnection((ws) => {
+      this.listenForJoinRequests(ws);
+    });
   }
 
   listenForJoinRequests(ws: WebSocket) {
     this.socketInterface.listenTo(ws, (message) => {
+      console.log("Socket message from client", message);
       if (!message.isType(ISocketMessageType.joinWorld)) {
         return;
       }
-      const { worldId, myUid } = message.data;
-      if (worldId !== this.game.id) {
+      const { gameId, myUid } = message.data;
+      if (gameId !== this.game.id) {
         return;
       }
+
+      this.game.make_and_add_player_wasm(myUid);
 
       // send welcome message
       this.socketInterface.send(
@@ -81,12 +96,19 @@ export class ServerGameManager {
 
   listenForPlayerActions(ws: WebSocket, clientId: ClientId) {
     this.socketInterface.listenTo(ws, (message) => {
+      console.log("Socket message from client", JSON.stringify(message));
       if (!message.isType(ISocketMessageType.actions)) {
         return;
       }
       const action = message.data;
 
-      this.game.handle_action_wasm(action);
+      const actionDto = EntityActionJson.deserialize_wasm(
+        action.entity_id,
+        action.name,
+        action.data
+      );
+
+      this.game.handle_action_wasm(actionDto);
 
       // send action to all clients (except the one that sent it)
       this.clients.forEach((client, uid) => {
@@ -112,14 +134,17 @@ export class ServerGameManager {
   }
 
   update() {
-    const scriptDiffs: ScriptDiff[] = this.game.update();
+    this.game.update();
+    this.chunkGetter.update();
 
-    for (const scriptDiff of scriptDiffs) {
-      this.onGameUpdate(scriptDiff.diff, scriptDiff.scriptName);
-    }
+    // const scriptDiffs: ScriptDiff[] = this.game.update();
+    // for (const scriptDiff of scriptDiffs) {
+    //   this.onGameUpdate(scriptDiff.diff, scriptDiff.scriptName);
+    // }
   }
 
   start() {
+    console.log("Starting game", this.game.id);
     if (this.timer) {
       clearInterval(this.timer);
     }
@@ -135,8 +160,12 @@ export class ServerGameManager {
     }
   }
 
-  getChunk(chunkPos: { x: number; y: number }): Chunk | ChunkNotLoaded {
-    return this.game.get_chunk(chunkPos);
+  getChunk(chunkPos: { x: number; y: number }): {
+    Ok: Chunk;
+    Err: ChunkNotLoadedError;
+  } {
+    const chunkPosWasm = new Vec2i16(chunkPos.x, chunkPos.y);
+    return this.game.get_chunk_wasm(chunkPosWasm);
   }
 
   getOnlinePlayers(): number {

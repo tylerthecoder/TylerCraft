@@ -9,6 +9,7 @@ import type {
 import { mat4 } from "gl-matrix";
 import VertexShader from "../../shaders/vertex.glsl?raw";
 import FragmentShader from "../../shaders/fragment.glsl?raw";
+import { Game } from "@craft/rust-world";
 
 const WebGlLayer = (window as any).XRWebGLLayer as typeof XRWebGLLayer;
 
@@ -43,8 +44,10 @@ export class WebGlGScript extends GameScript<Conifg> {
     glFov: (45 * Math.PI) / 180,
   };
 
-  constructor(game: GameWrapper) {
+  constructor(game: Game) {
     super(game);
+
+    this.eCanvas.style.display = "block";
 
     // init gl eCanvas
     const gl = this.eCanvas.getContext("webgl2", {
@@ -53,7 +56,7 @@ export class WebGlGScript extends GameScript<Conifg> {
     });
     if (gl === null) throw new Error("WebGL failed to load"); // Only continue if WebGL is available and working
 
-    this.textureAtlas = this.loadTextureFromUrl("./img/texture_map.png", gl);
+    this.textureAtlas = this.loadTextureFromUrl("/img/texture_map.png", gl);
 
     this.galleryImagesPaths.forEach((path) => {
       const img = new Image();

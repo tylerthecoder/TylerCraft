@@ -110,10 +110,6 @@ export interface SocketMessageData extends Record<ISocketMessageType, unknown> {
   [ISocketMessageType.playerActions]: PlayerActionDto;
 }
 
-export interface ISocketWelcomePayload {
-  uid: string;
-}
-
 export type SocketMessageDto = MessageDto<
   ISocketMessageType,
   SocketMessageData

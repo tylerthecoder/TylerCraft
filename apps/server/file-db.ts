@@ -1,5 +1,4 @@
 import { IGameMetadata, ISerializedGame } from "@craft/engine";
-import { IDbManager } from "./db";
 import fs from "fs";
 
 const DATA_DIR = process.env.DATA_DIR || "./game-data/";
@@ -7,7 +6,7 @@ if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR);
 }
 
-export class FileDb implements IDbManager {
+export class FileDb {
   getAllGameMetadata(): Promise<IGameMetadata[]> {
     const gameFiles = fs.readdirSync(DATA_DIR);
     return Promise.resolve(

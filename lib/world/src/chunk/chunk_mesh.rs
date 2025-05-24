@@ -1,11 +1,14 @@
 use crate::{
-    components::world_pos::WorldPos, direction::Directions, plane::WorldPlane, positions::{ChunkPos, InnerChunkPos}
+    components::world_pos::WorldPos,
+    direction::Directions,
+    plane::WorldPlane,
+    positions::{ChunkPos, InnerChunkPos},
 };
-use js_sys::wasm_bindgen;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use tsify::Tsify;
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Tsify, Serialize, Deserialize, Clone)]
 pub struct ChunkMesh {
     face_map: HashMap<usize, Directions>,
     chunk_pos: ChunkPos,
@@ -78,7 +81,11 @@ impl IntoIterator for &ChunkMesh {
 #[cfg(test)]
 mod tests {
     use crate::{
-        chunk::chunk_mesh::{BlockMesh, ChunkMesh}, components::world_pos::WorldPos, direction::Directions, positions::ChunkPos, vec::Vector3Ops
+        chunk::chunk_mesh::{BlockMesh, ChunkMesh},
+        components::world_pos::WorldPos,
+        direction::Directions,
+        positions::ChunkPos,
+        vec::Vector3Ops,
     };
 
     #[test]

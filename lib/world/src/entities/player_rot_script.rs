@@ -2,10 +2,11 @@ use super::entity::{Entity, EntityId};
 use super::entity_action::{EntityActionDto, EntityActionDtoMaker, EntityActionHandler};
 use crate::geometry::rotation::SphericalRotation;
 use crate::utils::js_log;
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::wasm_bindgen;
 
 #[wasm_bindgen]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RotateActionData {
     pub rot_diff: SphericalRotation,
 }
@@ -36,6 +37,8 @@ impl EntityActionHandler for RotateAction {
 }
 
 pub mod wasm {
+    use wasm_bindgen::JsValue;
+
     use super::*;
 
     #[wasm_bindgen]
@@ -43,6 +46,11 @@ pub mod wasm {
         pub fn make_wasm(entity_id: EntityId, rot_diff: SphericalRotation) -> EntityActionDto {
             let data = RotateActionData { rot_diff };
             RotateAction::make_dto(entity_id, data)
+        }
+
+        pub fn serialize_wasm(action: EntityActionDto) -> JsValue {
+            let data = action.get_data::<RotateActionData>().unwrap();
+            serde_wasm_bindgen::to_value(&data).unwrap()
         }
     }
 }

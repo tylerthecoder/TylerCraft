@@ -1,6 +1,6 @@
-import { IGameMetadata } from "@craft/engine/game";
 import {
   GameWrapper,
+  IGameMetadata,
   ISerializedGame,
   serializedGameToGame,
 } from "@craft/engine/src/wrappers";

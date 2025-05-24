@@ -14,7 +14,7 @@ import {
 import { WebGlGScript } from "./webgl-gscript";
 import { Renderer } from "../renders/renderer";
 import { ChunkRenderer } from "../renders/chunkRender";
-import { BlockType } from "@craft/rust-world";
+import { BlockType, Game } from "@craft/rust-world";
 import { PlayerRenderer } from "../renders/playerRender";
 
 type Config = {
@@ -52,8 +52,10 @@ export class CanvasGameScript extends GameScript<Config> {
   totTime = 0;
   pastDeltas: number[] = [];
 
+  gameWrapper: GameWrapper = new GameWrapper(this.game);
+
   constructor(
-    game: GameWrapper,
+    game: Game,
     private webGlGScript: WebGlGScript,
     private mainPlayerId: number
   ) {
@@ -66,12 +68,12 @@ export class CanvasGameScript extends GameScript<Config> {
     });
 
     // Create renderers for initial entities
-    for (const entity of this.game.getEntities()) {
+    for (const entity of this.gameWrapper.getEntities()) {
       this.onNewEntity(entity);
     }
 
     // Create renderers for initial chunks
-    for (const chunkId of this.game.getLoadedChunkIds()) {
+    for (const chunkId of this.gameWrapper.getLoadedChunkIds()) {
       this.onChunkUpdate(chunkId);
     }
 
@@ -79,7 +81,7 @@ export class CanvasGameScript extends GameScript<Config> {
   }
 
   getCamera(): Camera {
-    const player = this.game.getPlayer(this.mainPlayerId);
+    const player = this.gameWrapper.getPlayer(this.mainPlayerId);
     if (this.webGlGScript.isXr) {
       return makeXRCamera(player);
     } else {
@@ -105,7 +107,7 @@ export class CanvasGameScript extends GameScript<Config> {
     }
 
     for (const entityId of this.lastDiff.updated_entities) {
-      const entity = this.game.getPlayer(entityId);
+      const entity = this.gameWrapper.getPlayer(entityId);
       this.onNewEntity(entity);
     }
 
@@ -116,7 +118,7 @@ export class CanvasGameScript extends GameScript<Config> {
 
   getFilter(camera: Camera): Vector3D {
     const shiftedDown = camera.pos.sub(new Vector3D([0, 0.5, 0]));
-    const block = this.game.getBlock(shiftedDown);
+    const block = this.gameWrapper.getBlock(shiftedDown);
 
     if (block?.type === BlockType.Water) {
       return new Vector3D([0, 0.3, 1]);
@@ -140,8 +142,8 @@ export class CanvasGameScript extends GameScript<Config> {
       this.perspective === PlayerPerspective.FirstPerson
         ? PlayerPerspective.ThirdPersonBack
         : this.perspective === PlayerPerspective.ThirdPersonBack
-          ? PlayerPerspective.ThirdPersonFront
-          : PlayerPerspective.FirstPerson;
+        ? PlayerPerspective.ThirdPersonFront
+        : PlayerPerspective.FirstPerson;
 
     return this.perspective !== PlayerPerspective.FirstPerson;
   }
@@ -192,12 +194,12 @@ export class CanvasGameScript extends GameScript<Config> {
 
     const realRenderDistance =
       this.config.chunkSize * this.config.renderDistance;
-    const cameraChunkPos = this.game.getChunkPosFromWorldPos(camera.pos);
+    const cameraChunkPos = this.gameWrapper.getChunkPosFromWorldPos(camera.pos);
 
     // const cameraRotNorm = camera.rot.toCartesianCoords().normalize();
 
     const renderChunk = (chunkPos: Vector2D) => {
-      const chunkId = this.game.getChunkIdFromChunkPos(chunkPos);
+      const chunkId = this.gameWrapper.getChunkIdFromChunkPos(chunkPos);
       const chunkRenderer = this.chunkRenderers.get(chunkId);
       if (!chunkRenderer) {
         return;
@@ -220,7 +222,8 @@ export class CanvasGameScript extends GameScript<Config> {
       ) {
         const indexVec = new Vector2D([i, j]);
         const chunkPos = cameraChunkPos.add(indexVec);
-        const chunkWorldPos = this.game.getWorldPosFromChunkPos(chunkPos);
+        const chunkWorldPos =
+          this.gameWrapper.getWorldPosFromChunkPos(chunkPos);
         const chunkXYPos = new Vector2D([
           chunkWorldPos.get(0),
           chunkWorldPos.get(2),
@@ -309,8 +312,8 @@ export class CanvasGameScript extends GameScript<Config> {
 
   onChunkUpdate(chunkId: number): void {
     console.log("CanvasGameScript: Updating chunk", chunkId);
-    const chunkPos = this.game.getChunkPosFromChunkId(chunkId);
-    const chunkMesh = this.game.getChunkMeshFromChunkPos(chunkId);
+    const chunkPos = this.gameWrapper.getChunkPosFromChunkId(chunkId);
+    const chunkMesh = this.gameWrapper.getChunkMeshFromChunkPos(chunkId);
     const chunkRenderer = new ChunkRenderer(
       this.webGlGScript,
       chunkPos,

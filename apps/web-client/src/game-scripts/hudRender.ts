@@ -42,7 +42,7 @@ export class HudGScript extends GameScript {
     this.eHud.style.visibility = "visible";
 
     this.textureImg = document.createElement("img");
-    this.textureImg.src = "./img/texture_map.png";
+    this.textureImg.src = "/img/texture_map.png";
     document.body.appendChild(this.textureImg);
 
     const getCanvasDimensions = () => {

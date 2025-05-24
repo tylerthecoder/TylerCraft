@@ -1,4 +1,7 @@
-use crate::{geometry::{rotation::SphericalRotation, vec2::Vec2Ops}, vec::Vector3Ops};
+use crate::{
+    geometry::{rotation::SphericalRotation, vec2::Vec2Ops},
+    vec::Vector3Ops,
+};
 use num::One;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -63,6 +66,7 @@ pub const EVERY_DIRECTION: [Direction; 6] = [
 ];
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[wasm_bindgen]
 pub struct Directions {
     data: [bool; 6],
 }
@@ -197,7 +201,6 @@ impl Into<SphericalRotation> for Direction {
     }
 }
 
-
 pub trait DirectionVectorExtension: Vector3Ops {
     fn get_component_from_direction(&self, direction: Direction) -> Self::Scalar {
         match direction {
@@ -210,7 +213,10 @@ pub trait DirectionVectorExtension: Vector3Ops {
         }
     }
 
-    fn get_opposite_components_from_direction(&self, direction: Direction) -> (Self::Scalar, Self::Scalar) {
+    fn get_opposite_components_from_direction(
+        &self,
+        direction: Direction,
+    ) -> (Self::Scalar, Self::Scalar) {
         match direction {
             Direction::North => (self.x(), self.y()),
             Direction::South => (self.x(), self.y()),
@@ -256,11 +262,10 @@ pub trait DirectionVectorExtension: Vector3Ops {
             FlatDirection::North => new_vec.set_y(new_vec.y() + One::one()),
             FlatDirection::South => new_vec.set_y(new_vec.y() - One::one()),
             FlatDirection::East => new_vec.set_x(new_vec.x() + One::one()),
-            FlatDirection::West => new_vec.set_x(new_vec.x() - One::one())
+            FlatDirection::West => new_vec.set_x(new_vec.x() - One::one()),
         }
         new_vec
     }
-
 }
 
 impl<V: Vector3Ops> DirectionVectorExtension for V {}
@@ -272,7 +277,7 @@ pub trait DirectionVectorExtension2: Vec2Ops {
             FlatDirection::North => new_vec.set_y(new_vec.y() + One::one()),
             FlatDirection::South => new_vec.set_y(new_vec.y() - One::one()),
             FlatDirection::East => new_vec.set_x(new_vec.x() + One::one()),
-            FlatDirection::West => new_vec.set_x(new_vec.x() - One::one())
+            FlatDirection::West => new_vec.set_x(new_vec.x() - One::one()),
         }
         new_vec
     }

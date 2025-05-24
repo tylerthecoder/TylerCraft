@@ -50,7 +50,7 @@ app.get("/games", async (_req: Request, res: Response) => {
 
 app.post("/game", async (req: Request, res: Response) => {
   const game = await gameDb.createGame();
-  res.send(game);
+  res.send(game.id);
 });
 
 app.post("/game/:id/start", async (req: Request, res: Response) => {

@@ -41,8 +41,6 @@ const LoadingScreen = {
 ePlayLocalButton.addEventListener("click", showLocalWorldPicker);
 ePlayOnlineButton.addEventListener("click", showOnlineWorldPicker);
 
-export const SocketInterface = new SocketHandler();
-
 // Screens:
 
 // Start

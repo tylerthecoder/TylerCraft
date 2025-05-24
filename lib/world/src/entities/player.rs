@@ -45,7 +45,7 @@ pub mod wasm {
     use serde::{Deserialize, Serialize};
     use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 
-    #[derive(Serialize, Deserialize, Debug)]
+    #[derive(Serialize, Deserialize, Debug, Clone)]
     #[wasm_bindgen]
     pub struct Player {
         pub id: EntityId,

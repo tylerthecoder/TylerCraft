@@ -23,6 +23,7 @@ pub struct WorldPosWasm {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[wasm_bindgen]
 pub struct ChunkNotLoadedError;
 
 impl std::error::Error for ChunkNotLoadedError {}

@@ -68,10 +68,10 @@ export async function run(id?: string) {
   const ents = game.getEntities();
   console.log("Ents", ents);
 
-  const webglGameScript = new WebGlGScript(game);
+  const webglGameScript = new WebGlGScript(game.game);
 
   const canvasGameScript = new CanvasGameScript(
-    game,
+    game.game,
     webglGameScript,
     main_player_uid
   );

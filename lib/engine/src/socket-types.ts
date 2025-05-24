@@ -1,8 +1,10 @@
 import {
   EntityActionDto,
+  EntityActionJson,
   GameDiff,
   SerializedEntityHolder,
 } from "@craft/rust-world";
+import { ISerializedAction } from "./wrappers.js";
 
 export interface MessageDto<
   MESSAGE extends string,
@@ -41,14 +43,17 @@ export enum ISocketMessageType {
 }
 
 export interface WelcomeMessage {
-  uid: string;
+  uid: number;
   entities: SerializedEntityHolder;
 }
 
 export interface SocketMessageData extends Record<ISocketMessageType, unknown> {
-  [ISocketMessageType.joinWorld]: void;
+  [ISocketMessageType.joinWorld]: {
+    gameId: string;
+    myUid: number;
+  };
   [ISocketMessageType.failedToJoin]: void;
-  [ISocketMessageType.actions]: EntityActionDto;
+  [ISocketMessageType.actions]: ISerializedAction;
   [ISocketMessageType.gameDiff]: GameDiff;
   [ISocketMessageType.welcome]: WelcomeMessage;
 }

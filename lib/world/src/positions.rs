@@ -1,3 +1,6 @@
+use tsify::declare;
+use wasm_bindgen::prelude::wasm_bindgen;
+
 use crate::{
     chunk::CHUNK_WIDTH,
     components::world_pos::WorldPos,
@@ -11,6 +14,7 @@ use crate::{
 mod unit_tests;
 
 pub type InnerChunkPos = Vec3u8;
+#[declare]
 pub type ChunkPos = Vec2i16;
 
 impl_component!(ChunkPos);
