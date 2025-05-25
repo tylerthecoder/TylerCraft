@@ -27,10 +27,11 @@ export class KeyboardPlayerEntityController extends PlayerController {
   ) {
     super(handleAction, playerId);
 
-    const webGlCanvas = webGlGScript.eCanvas;
+    const webGlCanvas = document.getElementById("hud") as HTMLCanvasElement;
 
     // Pointer lock to the canvas
     webGlCanvas.addEventListener("mousedown", (e: MouseEvent) => {
+      console.log("mousedown", e.target);
       if (e.target !== webGlCanvas) {
         return;
       }
@@ -44,10 +45,12 @@ export class KeyboardPlayerEntityController extends PlayerController {
         return;
       }
 
+      console.log("mousedown", e.button);
+
       if (e.button === 2) {
         this.primaryAction();
       } else if (e.button === 0) {
-        this.secondaryAction();
+        this.primaryAction();
       }
       e.preventDefault();
     });
@@ -216,5 +219,7 @@ export class KeyboardPlayerEntityController extends PlayerController {
     }
   }
 
-  update() { }
+  update() {
+    // NO-OP
+  }
 }

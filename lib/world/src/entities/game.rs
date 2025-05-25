@@ -8,6 +8,7 @@ use crate::{
     entities::{
         entity_action::EntityActionDtoMaker,
         player::wasm::Player,
+        player_belt_script::UsePrimaryItemAction,
         player_jump_script::JumpAction,
         player_move_script::{MoveAction, MoveScript},
         player_rot_script::RotateAction,
@@ -54,6 +55,8 @@ impl Game {
         g.action_holder.add_handler(MoveAction::make_handler());
         g.action_holder.add_handler(JumpAction::make_handler());
         g.action_holder.add_handler(RotateAction::make_handler());
+        g.action_holder
+            .add_handler(UsePrimaryItemAction::make_handler());
 
         g
     }
@@ -77,6 +80,8 @@ impl Game {
         g.action_holder.add_handler(MoveAction::make_handler());
         g.action_holder.add_handler(JumpAction::make_handler());
         g.action_holder.add_handler(RotateAction::make_handler());
+        g.action_holder
+            .add_handler(UsePrimaryItemAction::make_handler());
 
         g
     }
@@ -85,7 +90,10 @@ impl Game {
         let world = &self.world;
         // apply actions
 
-        self.action_holder.handle_actions(&mut self.entity_holder);
+        let schedule = self
+            .action_holder
+            .handle_actions(&self.world, &mut self.entity_holder);
+        self.schedule.combine(schedule);
 
         for script in self.scripts.get_scripts_mut() {
             let query = script.get_query();
@@ -119,6 +127,14 @@ impl Game {
         for chunk in new_chunks {
             self.world.insert_chunk(chunk);
         }
+
+        // add blocks to world
+        let new_blocks = std::mem::take(&mut self.schedule.new_blocks);
+        for block in new_blocks {
+            self.world.add_block(&block);
+        }
+
+        self.schedule.clear();
     }
 
     pub fn schedule_chunk_insert(&mut self, chunk: Chunk) {
@@ -182,11 +198,32 @@ impl GameSchedule {
         }
     }
 
+    pub fn clear(&mut self) {
+        self.new_entities.clear();
+        self.new_blocks.clear();
+        self.new_chunks.clear();
+        self.removed_entities.clear();
+        self.removed_blocks.clear();
+    }
+
     pub fn to_game_diff(&self) -> GameDiff {
         let mut updated_entities: Vec<EntityId> =
             self.new_entities.iter().map(|entity| entity.id).collect();
         updated_entities.extend(self.removed_entities.iter().map(|entity_id| entity_id));
-        let updated_chunks = self.new_chunks.iter().map(|chunk| chunk.get_id()).collect();
+
+        let mut updated_chunks: Vec<ChunkId> = Vec::new();
+        for block in self.new_blocks.iter() {
+            let chunk_pos = block.world_pos.to_chunk_pos();
+            if !updated_chunks.contains(&chunk_pos.to_id()) {
+                updated_chunks.push(chunk_pos.to_id());
+            }
+        }
+        for new_chunk in self.new_chunks.iter() {
+            if !updated_chunks.contains(&new_chunk.get_id()) {
+                updated_chunks.push(new_chunk.get_id());
+            }
+        }
+
         GameDiff {
             updated_entities,
             updated_chunks,

@@ -1,7 +1,9 @@
 use super::entity::{Entity, EntityId};
 use super::entity_action::{EntityActionDto, EntityActionDtoMaker, EntityActionHandler};
+use super::game::GameSchedule;
 use crate::geometry::rotation::SphericalRotation;
 use crate::utils::js_log;
+use crate::world::World;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::wasm_bindgen;
 
@@ -25,7 +27,12 @@ impl EntityActionHandler for RotateAction {
         "Player-Rotate"
     }
 
-    fn handle_dto(&self, entity: &mut Entity, data: &EntityActionDto) {
+    fn handle_dto(
+        &self,
+        _world: &World,
+        entity: &mut Entity,
+        data: &EntityActionDto,
+    ) -> GameSchedule {
         let data = data.get_data::<RotateActionData>().unwrap();
 
         let new_rot = entity.get::<SphericalRotation>().unwrap().to_owned() + data.rot_diff;
@@ -33,6 +40,8 @@ impl EntityActionHandler for RotateAction {
         js_log(&format!("New rot: {:?}", new_rot));
 
         entity.set::<SphericalRotation>(new_rot);
+
+        GameSchedule::empty()
     }
 }
 

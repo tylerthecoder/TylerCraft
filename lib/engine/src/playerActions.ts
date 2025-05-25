@@ -5,12 +5,13 @@ import {
   MoveAction,
   RotateAction,
   SphericalRotation,
+  UsePrimaryItemAction,
 } from "@craft/rust-world";
 export abstract class PlayerController {
   constructor(
     protected handleAction: (action: EntityActionDto) => void,
     protected playerId: number
-  ) { }
+  ) {}
 
   jump() {
     const action = JumpAction.make_wasm(this.playerId);
@@ -46,6 +47,9 @@ export abstract class PlayerController {
   }
 
   primaryAction() {
+    const action = UsePrimaryItemAction.make_wasm(this.playerId);
+    console.log("primaryAction", action);
+    this.handleAction(action);
     // const action = PlayerAction.make(PlayerActionType.PlaceBlock, {
     //   playerUid: this.player.uid,
     //   playerPos: this.player.pos.data as IDim,

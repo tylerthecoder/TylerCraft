@@ -114,6 +114,8 @@ export class CanvasGameScript extends GameScript<Config> {
     for (const chunkId of this.lastDiff.updated_chunks) {
       this.onChunkUpdate(chunkId);
     }
+
+    this.lastDiff = null;
   }
 
   getFilter(camera: Camera): Vector3D {

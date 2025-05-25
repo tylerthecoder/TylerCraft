@@ -2,7 +2,7 @@ import ReactDOM from "react-dom";
 import React, { useEffect } from "react";
 import styles from "./gameMenu.module.css";
 import { getEleOrError } from "../utils";
-import { Game } from "@craft/engine/game";
+import { Game } from "@craft/rust-world";
 
 // make section button with same props as normal button
 const SectionButton = (
@@ -18,10 +18,10 @@ export const GameMenu = (props: { game: Game }) => {
   const [gameName, setGameName] = React.useState(game.name);
 
   const changeGameName = (event: React.ChangeEvent<HTMLInputElement>) => {
-    game.handleAction(
-      GameAction.create(GameActionType.ChangeName, { name: gameName })
-    );
-    setGameName(event.target.value);
+    //   game.handleAction(
+    //     GameAction.create(GameActionType.ChangeName, { name: gameName })
+    //   );
+    //   setGameName(event.target.value);
   };
 
   const toggleFullScreen = () => {
@@ -34,7 +34,7 @@ export const GameMenu = (props: { game: Game }) => {
   };
 
   const saveGame = () => {
-    game.handleAction(GameAction.create(GameActionType.Save, undefined));
+    // game.handleAction(GameAction.create(GameActionType.Save, undefined));
   };
 
   useEffect(() => {
@@ -66,30 +66,34 @@ export const GameMenu = (props: { game: Game }) => {
     </>
   );
 
-  const gameScriptSections = game.getScriptActions().map((s, i) => {
-    const actions = s.actions;
+  // const gameScriptSections = game
+  //   .getScriptActions()
+  //   .map((s: any, i: number) => {
+  //     const actions = s.actions;
 
-    return (
-      openSection === "script-" + i && (
-        <div>
-          {actions &&
-            Object.keys(actions).map((name) => {
-              return <button onClick={() => actions[name]()}>{name}</button>;
-            })}
+  //     return (
+  //       openSection === "script-" + i && (
+  //         <div>
+  //           {actions &&
+  //             Object.keys(actions).map((name) => {
+  //               return <button onClick={() => actions[name]()}>{name}</button>;
+  //             })}
 
-          {s.config && <pre>{JSON.stringify(s.config, null, 2)}</pre>}
-        </div>
-      )
-    );
-  });
+  //           {s.config && <pre>{JSON.stringify(s.config, null, 2)}</pre>}
+  //         </div>
+  //       )
+  //     );
+  //   });
 
-  const gameScriptButtons = game.getScriptActions().map((_s, i) => {
-    return (
-      <SectionButton onClick={() => setOpenSection("script-" + i)} key={i}>
-        {"GameScript " + (i + 1)}
-      </SectionButton>
-    );
-  });
+  // const gameScriptButtons = game
+  //   .getScriptActions()
+  //   .map((_s: any, i: number) => {
+  //     return (
+  //       <SectionButton onClick={() => setOpenSection("script-" + i)} key={i}>
+  //         {"GameScript " + (i + 1)}
+  //       </SectionButton>
+  //     );
+  //   });
 
   return (
     <>
@@ -110,14 +114,14 @@ export const GameMenu = (props: { game: Game }) => {
               Config
             </SectionButton>
 
-            {gameScriptButtons}
+            {/* {gameScriptButtons} */}
           </div>
 
           <div className={styles.container}>
             {openSection === "main" && mainSection}
             {openSection === "about" && <AboutSection />}
             {openSection === "config" && <ConfigSection game={game} />}
-            {gameScriptSections}
+            {/* {gameScriptSections} */}
           </div>
         </div>
       )}

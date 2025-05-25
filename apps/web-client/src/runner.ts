@@ -12,6 +12,7 @@ import {
   WasmRequestChunk,
 } from "@craft/rust-world";
 import { ClientDbGamesService } from "./services/sp-games-service";
+import { HudGScript } from "./game-scripts/hudRender";
 // import { eStartMenu } from "./elements";
 
 class SinglePlayerTerrainChunkGetter {
@@ -78,6 +79,12 @@ export async function run(id?: string) {
 
   game.makeAndAddGameScript(canvasGameScript);
 
+  const hudRender = new HudGScript(
+    game.game,
+    canvasGameScript,
+    main_player_uid
+  );
+
   const onAction = (action: EntityActionDto) => {
     console.log("ACTION", action);
     game.game.handle_action_wasm(action);
@@ -108,16 +115,14 @@ export async function run(id?: string) {
 
   setInterval(update, 1000 / 60);
 
-  const saveGame = async () => {
+  setInterval(async () => {
+    console.log("Saving game");
     await spGameService.saveGame(
       game,
       chunkGetter.terrianGen,
       serializedSandbox
     );
-    setTimeout(saveGame, 1000);
-  };
-
-  saveGame();
+  }, 3000);
 
   console.log("Starting");
 

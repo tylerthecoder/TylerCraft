@@ -1,11 +1,10 @@
 use serde::{Deserialize, Serialize};
 
 use super::{
-    entity::{Entity, EntityId, EntityQuery, EntityQueryResults},
-    entity_action::{ActionData, EntityActionDto, EntityActionDtoMaker, EntityActionHandler},
+    entity::{Entity, EntityId},
+    entity_action::{EntityActionDto, EntityActionDtoMaker, EntityActionHandler},
     entity_component::impl_component,
     game::GameSchedule,
-    game_script::GameScript,
     player::Flying,
 };
 use crate::{components::velocity::Velocity, vec::Vector3Ops, world::World};
@@ -28,7 +27,12 @@ impl EntityActionHandler for JumpAction {
         "Jump-Action"
     }
 
-    fn handle_dto(&self, entity: &mut Entity, data: &EntityActionDto) {
+    fn handle_dto(
+        &self,
+        _world: &World,
+        entity: &mut Entity,
+        data: &EntityActionDto,
+    ) -> GameSchedule {
         let _data = data.get_data::<JumpActionData>().unwrap();
         let jump_data = entity.get::<JumpData>().unwrap().to_owned();
         let vel = entity.get::<Velocity>().unwrap().to_owned();
@@ -38,11 +42,11 @@ impl EntityActionHandler for JumpAction {
         let flying = entity.get::<Flying>();
 
         if flying.is_some() && flying.unwrap().is_flying {
-            return;
+            return GameSchedule::empty();
         }
 
         if jump_data.is_jumping {
-            return;
+            return GameSchedule::empty();
         }
 
         let new_jump_data = jump_data.stop_jumping();
@@ -61,6 +65,8 @@ impl EntityActionHandler for JumpAction {
 
         entity.set::<Velocity>(new_vel);
         entity.set::<JumpData>(new_jump_data);
+
+        GameSchedule::empty()
     }
 }
 

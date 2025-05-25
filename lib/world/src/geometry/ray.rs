@@ -1,6 +1,11 @@
 use super::{line_segment::LineSegment, rotation::SphericalRotation};
 use crate::{
-    chunk::chunk_mesh::BlockMesh, components::fine_world_pos::FineWorldPos, direction::{Direction, DirectionVectorExtension}, plane::WorldPlane, vec::Vector3Ops, world::{world_block::WorldBlock, World}
+    chunk::chunk_mesh::BlockMesh,
+    components::fine_world_pos::FineWorldPos,
+    direction::{Direction, DirectionVectorExtension},
+    plane::WorldPlane,
+    vec::Vector3Ops,
+    world::{world_block::WorldBlock, World},
 };
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
@@ -20,19 +25,18 @@ pub struct LookingAt {
     /**
      * The block a camera is pointing at
     	*/
-    block: WorldBlock,
+    pub block: WorldBlock,
     /**
      * The face of the block that is being looked at
      */
-    face: Direction,
+    pub face: Direction,
     /**
      * How far the face is away from the camera
      */
-    distance: f32,
+    pub distance: f32,
 }
 
 impl Ray {
-
     pub fn move_forward_mut(&mut self, amount: f32) {
         let rot_vec = self.rot.get_unit_vector();
         self.pos = FineWorldPos::from_vec3(rot_vec.scalar_mult(amount));
@@ -102,7 +106,14 @@ impl World {
 mod tests {
     use super::{LookingAt, Ray};
     use crate::{
-        block::{BlockData, BlockType}, chunk::{chunk_mesh::BlockMesh, Chunk}, components::{fine_world_pos::FineWorldPos, world_pos::WorldPos}, direction::{Direction, Directions}, geometry::rotation::SphericalRotation, plane::WorldPlane, vec::Vector3Ops, world::{world_block::WorldBlock, World}
+        block::{BlockData, BlockType},
+        chunk::{chunk_mesh::BlockMesh, Chunk},
+        components::{fine_world_pos::FineWorldPos, world_pos::WorldPos},
+        direction::{Direction, Directions},
+        geometry::rotation::SphericalRotation,
+        plane::WorldPlane,
+        vec::Vector3Ops,
+        world::{world_block::WorldBlock, World},
     };
 
     #[test]

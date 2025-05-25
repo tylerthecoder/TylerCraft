@@ -3,6 +3,7 @@ use crate::{
     direction::Direction,
     geometry::rotation::SphericalRotation,
     utils::js_log,
+    world::World,
 };
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
@@ -34,10 +35,15 @@ impl EntityActionHandler for MoveAction {
         "Move"
     }
 
-    fn handle_dto(&self, entity: &mut Entity, data: &EntityActionDto) {
+    fn handle_dto(
+        &self,
+        _world: &World,
+        entity: &mut Entity,
+        data: &EntityActionDto,
+    ) -> GameSchedule {
         let data = data.get_data::<MoveActionData>().unwrap();
-        js_log(&format!("MoveAction: {:?}", data.direction));
         entity.set::<MovingDirection>(data.direction);
+        GameSchedule::empty()
     }
 }
 
@@ -64,8 +70,6 @@ impl GameScript for MoveScript {
         for entity in query_results.entities {
             let rot = entity.get::<SphericalRotation>().unwrap().to_owned();
             let moving_dir = entity.get::<MovingDirection>().unwrap().to_owned();
-
-            println!("moving dir: {:?}", moving_dir);
 
             if moving_dir.is_some() {
                 let direction_rot: SphericalRotation = moving_dir.unwrap().into();

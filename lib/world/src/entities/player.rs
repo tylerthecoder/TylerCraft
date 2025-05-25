@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use super::{
     entity::{Entity, EntityId},
     entity_component::impl_component,
+    player_belt_script::Belt,
     player_jump_script::JumpData,
     player_move_script::MovingDirection,
 };
@@ -29,6 +30,7 @@ pub fn make_player(uid: EntityId) -> Entity {
     ent.add::<SphericalRotation>(SphericalRotation::new(0.0, 0.0));
     ent.add::<MovingDirection>(None);
     ent.add::<JumpData>(JumpData::new(2.0));
+    ent.add::<Belt>(Belt::default());
     ent
 }
 
@@ -37,6 +39,7 @@ pub mod wasm {
         components::{fine_world_pos::FineWorldPos, velocity::Velocity},
         entities::{
             entity::{Entity, EntityId},
+            player_belt_script::Belt,
             player_jump_script::JumpData,
             player_move_script::MovingDirection,
         },
@@ -75,6 +78,7 @@ pub mod wasm {
             ent.add::<SphericalRotation>(self.rot);
             ent.add::<MovingDirection>(self.moving_direction);
             ent.add::<JumpData>(self.jump_data);
+            ent.add::<Belt>(Belt::default());
             ent
         }
     }

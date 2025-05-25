@@ -1,8 +1,11 @@
+use crate::entities::player_belt_script::UsePrimaryItemActionData;
 use crate::entities::player_move_script::MoveActionData;
 use crate::entities::player_rot_script::RotateActionData;
 use crate::utils::js_log;
+use crate::world::World;
 
 use super::entity::{Entity, EntityHolder, EntityId};
+use super::game::GameSchedule;
 use serde::Serialize;
 use std::any::Any;
 use std::fmt::Debug;
@@ -52,7 +55,12 @@ impl EntityActionDto {
 
 pub trait EntityActionHandler {
     fn get_action_type(&self) -> &'static str;
-    fn handle_dto(&self, entity: &mut Entity, data: &EntityActionDto);
+    fn handle_dto(
+        &self,
+        world: &World,
+        entity: &mut Entity,
+        data: &EntityActionDto,
+    ) -> GameSchedule;
 }
 
 pub trait EntityActionDtoMaker<T: ActionData>: EntityActionHandler {
@@ -89,18 +97,26 @@ impl EntityActionHolder {
         self.handlers.push(handler);
     }
 
-    pub fn handle_actions(&mut self, entity_holder: &mut EntityHolder) {
+    pub fn handle_actions(
+        &mut self,
+        world: &World,
+        entity_holder: &mut EntityHolder,
+    ) -> GameSchedule {
+        let mut schedule = GameSchedule::empty();
         for action in &self.actions {
             js_log(&format!("Handling action: {:?}", action));
-            js_log(&format!("Num handlers: {:?}", self.handlers.len()));
-            println!("Handling action: {:?}", action);
+            js_log(&format!("Action handlers: {:?}", self.handlers.len()));
             let entity = entity_holder.get_entity_by_id_mut(action.entity_id);
-            println!("Entity: {:?}", entity);
             let mut action_handled = false;
             if let Some(entity) = entity {
                 for handler in &self.handlers {
                     if handler.get_action_type() == action.name {
-                        handler.handle_dto(entity, action);
+                        let new_schedule = handler.handle_dto(world, entity, action);
+                        js_log(&format!(
+                            "New schedule blocks: {:?}",
+                            new_schedule.new_blocks
+                        ));
+                        schedule.combine(new_schedule);
                         action_handled = true;
                     }
                 }
@@ -112,6 +128,8 @@ impl EntityActionHolder {
 
         // clear actions
         self.actions.clear();
+
+        schedule
     }
 }
 
@@ -134,6 +152,10 @@ impl EntityActionJson {
                 let data = dto.get_data::<MoveActionData>().unwrap();
                 serde_wasm_bindgen::to_value(&data).unwrap()
             }
+            "UseItemAction" => {
+                let data = dto.get_data::<UsePrimaryItemActionData>().unwrap();
+                serde_wasm_bindgen::to_value(&data).unwrap()
+            }
             _ => JsValue::null(),
         }
     }
@@ -154,6 +176,15 @@ impl EntityActionJson {
                 EntityActionDto {
                     entity_id,
                     name: "Move",
+                    data: Box::new(data),
+                }
+            }
+            "UseItemAction" => {
+                let data =
+                    serde_wasm_bindgen::from_value::<UsePrimaryItemActionData>(data).unwrap();
+                EntityActionDto {
+                    entity_id,
+                    name: "UseItemAction",
                     data: Box::new(data),
                 }
             }

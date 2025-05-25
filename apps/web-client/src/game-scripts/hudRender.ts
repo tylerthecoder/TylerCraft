@@ -4,6 +4,7 @@ import { getEleOrError, hideElement, IS_MOBILE } from "../utils";
 import { GameMenu } from "../renders/gameMenuRender";
 import React from "react";
 import ReactDOM from "react-dom";
+import { Game } from "@craft/rust-world";
 
 export class HudGScript extends GameScript {
   name = "hud";
@@ -27,7 +28,7 @@ export class HudGScript extends GameScript {
   private lastSelected = -1;
 
   constructor(
-    game: GameWrapper,
+    game: Game,
     private canvasGScript: CanvasGameScript,
     private mainPlayerUid: number
   ) {
@@ -90,12 +91,14 @@ export class HudGScript extends GameScript {
 
   private lastStats = "";
   drawStats() {
-    const mainPlayer = this.game.getPlayer(this.mainPlayerUid);
+    const mainPlayer = this.game.get_player_wasm(this.mainPlayerUid);
     if (!mainPlayer) {
       return;
     }
 
-    const cameraPos = mainPlayer.pos.data.map((d) => d.toFixed(2)).join(",");
+    const cameraPos = mainPlayer.pos.data
+      .map((d: number) => d.toFixed(2))
+      .join(",");
     // const numChunks = this.game.world.getLoadedChunkIds().length;
 
     const statsString = `
