@@ -15,8 +15,6 @@ export class KeyboardPlayerEntityController extends PlayerController {
   private keysPressed = new Set();
   private currentMoveDirection: Direction | "None" = "None";
 
-  private numOfUpdates = 0;
-
   private hasJumped = false;
 
   constructor(
@@ -66,7 +64,7 @@ export class KeyboardPlayerEntityController extends PlayerController {
           moveX += Math.PI;
           this.rotate(moveX, moveY);
         } else {
-          this.rotate(-moveX, moveY);
+          this.rotate(moveX, moveY);
         }
       }
     });

@@ -15,7 +15,7 @@ export class RenderData implements IRenderData {
 
   indexOffset = 0;
 
-  constructor(private shouldLog = false) { }
+  constructor(private shouldLog = false) {}
 
   public pushData(renData: Partial<RenderData>) {
     if (this.shouldLog) {
@@ -50,7 +50,7 @@ export abstract class Renderer {
   amount = 0;
   transAmount = 0;
 
-  constructor(protected webGlGScript: WebGlGScript) { }
+  constructor(protected webGlGScript: WebGlGScript) {}
 
   protected setBuffers(renData: IRenderData, transRenData?: IRenderData) {
     const gl = this.webGlGScript.gl;
@@ -251,10 +251,14 @@ export abstract class Renderer {
     const phi = camera.rot.get(1);
     const modelViewMatrix = mat4.create();
 
+    // Flip the image across the Y-axis by scaling X by -1
+    mat4.scale(modelViewMatrix, modelViewMatrix, [-1, 1, 1]);
+
     mat4.rotate(modelViewMatrix, modelViewMatrix, phi, [1, 0, 0]);
     mat4.rotate(modelViewMatrix, modelViewMatrix, theta, [0, 1, 0]);
 
     const move_pos = pos.sub(camera.pos).data;
+
     // Now move the drawing position to where we want to start drawing the square.
     mat4.translate(
       modelViewMatrix, // destination matrix

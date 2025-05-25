@@ -4,7 +4,7 @@ import { getEleOrError, hideElement, IS_MOBILE } from "../utils";
 import { GameMenu } from "../renders/gameMenuRender";
 import React from "react";
 import ReactDOM from "react-dom";
-import { Game } from "@craft/rust-world";
+import { Game, Player } from "@craft/rust-world";
 
 export class HudGScript extends GameScript {
   name = "hud";
@@ -92,18 +92,29 @@ export class HudGScript extends GameScript {
 
   private lastStats = "";
   drawStats() {
-    const mainPlayer = this.game.get_player_wasm(this.mainPlayerUid);
+    const mainPlayer: Player = this.game.get_player_wasm(this.mainPlayerUid);
     if (!mainPlayer) {
       return;
     }
 
-    const cameraPos = mainPlayer.pos.data
-      .map((d: number) => d.toFixed(2))
-      .join(",");
+    const cameraPos =
+      "X: " +
+      mainPlayer.pos.x.toFixed(2) +
+      ", Y: " +
+      mainPlayer.pos.y.toFixed(2) +
+      ", Z: " +
+      mainPlayer.pos.z.toFixed(2);
+
+    const cameraRot =
+      "Theta: " +
+      mainPlayer.rot.theta.toFixed(2) +
+      ", Phi: " +
+      mainPlayer.rot.phi.toFixed(2);
     // const numChunks = this.game.world.getLoadedChunkIds().length;
 
     const statsString = `
       playerPos: ${cameraPos} <br />
+      playerRot: ${cameraRot} <br />
       fps: ${this.canvasGScript.frameRate.toFixed(0)} <br />
     `;
 

@@ -114,6 +114,7 @@ export async function run(id?: string) {
     game.game.update();
     playerController.update();
     canvasGameScript.update();
+    hudRender.update(0);
     chunkGetter.update();
     canvasGameScript.renderLoop(0);
   };
