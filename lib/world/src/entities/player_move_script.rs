@@ -61,7 +61,7 @@ pub struct MoveScript {
 
 impl Default for MoveScript {
     fn default() -> Self {
-        Self { max_speed: 1.0 }
+        Self { max_speed: 0.5 }
     }
 }
 
@@ -84,15 +84,12 @@ impl GameScript for MoveScript {
             let rot = entity.get::<SphericalRotation>().unwrap().to_owned();
             let moving_dir = entity.get::<MovingDirection>().unwrap().to_owned();
             let vel = entity.get::<Velocity>().unwrap().to_owned();
-            let forces = entity.get::<Forces>().unwrap().to_owned();
+            let mut forces = entity.get::<Forces>().unwrap().to_owned();
 
             if moving_dir.is_some() {
                 let direction_rot: SphericalRotation = moving_dir.unwrap().into();
                 let move_rot = rot + direction_rot;
                 let mut move_force: Velocity = move_rot.into();
-
-                // don't allow the player to move up or down
-                move_force.y = 0.0;
 
                 // check if this move force would make the player exceed the max speed, if so, scale the force down so it would make us reach the max speed once applied
                 let final_vel = vel.add(&move_force);
@@ -101,9 +98,11 @@ impl GameScript for MoveScript {
                     move_force = max_vel.sub(&vel);
                 }
 
-                let mut new_forces = forces.forces.clone();
-                new_forces.push(move_force);
-                entity.set::<Forces>(Forces { forces: new_forces });
+                // don't allow the player to move up or down
+                move_force.y = 0.0;
+
+                forces.add_force(move_force);
+                entity.set::<Forces>(forces);
             } else {
                 // If the player is moving, then slow them down by applying a force in the opposite direction of their velocity until they reach 0 velocity
                 let mut new_forces = forces.forces.clone();

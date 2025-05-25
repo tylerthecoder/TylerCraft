@@ -11,7 +11,7 @@ pub struct LineSegment {
     pub end_pos: FineWorldPos,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct LineSegmentIntersectionInfo {
     pub intersection_point: FineWorldPos,
     pub world_plane: WorldPlane,
@@ -130,11 +130,15 @@ impl World {
         // println!("Length: {}", line_segment.length());
         // println!("Length: {}", (line_segment.length() + 1.0) as i32);
 
-        for n in 0..(line_segment.length() + 2.0) as i32 {
+        // Use smaller step size to catch more intersections, especially near block boundaries
+        let step_size = 0.25;
+        let num_steps = ((line_segment.length() / step_size) + 2.0) as i32;
+
+        for n in 0..num_steps {
             let slope = line_segment
                 .end_pos
                 .sub(&line_segment.start_pos)
-                .set_mag(1.0);
+                .set_mag(step_size);
             let marched_pos = line_segment.start_pos.add(&slope.scalar_mult(n as f32));
 
             // println!("Marched Pos: {:?}", marched_pos);
@@ -182,7 +186,11 @@ impl World {
 #[cfg(test)]
 pub mod tests {
     use crate::{
-        chunk::{chunk_mesh::BlockMesh, Chunk}, components::{fine_world_pos::FineWorldPos, world_pos::WorldPos}, direction::{Direction, Directions}, plane::WorldPlane, vec::Vector3Ops
+        chunk::{chunk_mesh::BlockMesh, Chunk},
+        components::{fine_world_pos::FineWorldPos, world_pos::WorldPos},
+        direction::{Direction, Directions},
+        plane::WorldPlane,
+        vec::Vector3Ops,
     };
 
     use super::{LineSegment, LineSegmentIntersectionInfo};

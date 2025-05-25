@@ -44,6 +44,7 @@ export class HudGScript extends GameScript {
 
     this.textureImg = document.createElement("img");
     this.textureImg.src = "/img/texture_map.png";
+    this.textureImg.style.display = "none";
     document.body.appendChild(this.textureImg);
 
     const getCanvasDimensions = () => {

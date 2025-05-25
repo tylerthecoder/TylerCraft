@@ -31,7 +31,7 @@ pub fn make_player(uid: EntityId) -> Entity {
     ent.add::<Velocity>(Velocity::default());
     ent.add::<SphericalRotation>(SphericalRotation::new(0.0, 0.0));
     ent.add::<MovingDirection>(None);
-    ent.add::<JumpData>(JumpData::new(2.0));
+    ent.add::<JumpData>(JumpData::default());
     ent.add::<Belt>(Belt::default());
     ent.add::<GravityData>(GravityData { has_gravity: true });
     ent.add::<Forces>(Forces::default());
@@ -83,7 +83,7 @@ pub mod wasm {
             ent.add::<Velocity>(self.vel);
             ent.add::<SphericalRotation>(self.rot);
             ent.add::<MovingDirection>(self.moving_direction);
-            ent.add::<JumpData>(self.jump_data);
+            ent.add::<JumpData>(JumpData::default());
             ent.add::<Belt>(Belt::default());
             ent.add::<GravityData>(GravityData { has_gravity: true });
             ent.add::<Forces>(Forces::default());

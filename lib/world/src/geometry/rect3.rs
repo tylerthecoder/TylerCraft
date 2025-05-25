@@ -2,6 +2,7 @@ use crate::components::fine_world_pos::FineWorldPos;
 use crate::components::size3::Size3;
 use crate::components::world_pos::WorldPos;
 use crate::direction::DirectionVectorExtension;
+use crate::utils::js_log;
 use crate::vec::Vector3Ops;
 use crate::world::World;
 
@@ -136,49 +137,40 @@ impl World {
     }
 
     pub fn move_rect3(&self, rect: &Rect3, end_pos: FineWorldPos) -> FineWorldPos {
-        let new_pos_from_info = |info: LineSegmentIntersectionInfo, end_pos: FineWorldPos| {
-            let hit_axis = info.world_plane.direction.to_axis();
-            let mut new_pos = end_pos.clone();
-            let outward = info.world_plane.direction.is_outward();
-            let rect_dim_dir = rect.dim.get_component_from_axis(hit_axis);
-
-            let eplison_diff = if outward {
-                DISTANCE_EPSILON
-            } else {
-                -(rect_dim_dir + DISTANCE_EPSILON)
-            };
-
-            let hit_plane_pos = info.world_plane.get_relative_y() as f32;
-
-            let new_axis_pos = eplison_diff + hit_plane_pos;
-
-            // println!(
-            //     "outward: {}, eplison_diff: {}, hit_plane_pos: {}, new_axis_pos: {}",
-            //     outward, eplison_diff, hit_plane_pos, new_axis_pos
-            // );
-
-            new_pos.set_component_from_axis(hit_axis, new_axis_pos);
-            new_pos
-        };
-
+        // Handle multiple sequential collisions (e.g., hitting a wall then the ground)
         let mut current_end_pos = end_pos;
+        let mut current_rect = *rect;
 
-        for _ in 0..3 {
-            let intersection = self.get_moving_rect3_intersection_info(rect, current_end_pos);
+        // loop 3 times to handle multiple collisions one for each axis
+        for iteration in 0..3 {
+            // Check for collisions from current position to target
+            let intersection =
+                self.get_moving_rect3_intersection_info(&current_rect, current_end_pos);
 
             if let Some(info) = intersection {
-                // unsafe {
-                //     web_sys::console::log_2(&"intersection".into(), &to_value(&info).unwrap())
-                // }
-                println!("intersection: {:?}", info);
+                // Only adjust the axis that was hit, leave other axes unchanged
+                let hit_axis = info.world_plane.direction.to_axis();
+                let outward = info.world_plane.direction.is_outward();
+                let hit_plane_pos = info.world_plane.get_relative_y() as f32;
 
-                current_end_pos = new_pos_from_info(info, current_end_pos);
-                // unsafe {
-                //     web_sys::console::log_2(&"new_pos".into(), &to_value(&current_end_pos).unwrap())
-                // }
-                println!("new_pos: {:?}", current_end_pos);
+                let new_axis_pos = if outward {
+                    hit_plane_pos + DISTANCE_EPSILON
+                } else {
+                    let rect_dim_dir = current_rect.dim.get_component_from_axis(hit_axis);
+                    hit_plane_pos - (rect_dim_dir + DISTANCE_EPSILON)
+                };
+
+                // Only update the hit axis, preserve movement on other axes
+                current_end_pos.set_component_from_axis(hit_axis, new_axis_pos);
+                current_rect
+                    .pos
+                    .set_component_from_axis(hit_axis, new_axis_pos);
+
+                js_log(&format!(
+                    "intersection (iteration {}): {:?}, new_pos: {:?}",
+                    iteration, info, current_end_pos
+                ));
             } else {
-                // If no intersection is found, break the loop
                 break;
             }
         }
@@ -667,6 +659,52 @@ pub mod tests {
                 z: -0.3,
             },
         );
+    }
+
+    #[test]
+    fn test_cursed_movement() {
+        // test_try_moving_blocks(
+        //     vec![
+        //         WorldBlock {
+        //             block_type: BlockType::Leaf,
+        //             extra_data: BlockData::None,
+        //             world_pos: WorldPos::new(-15, 0, -24),
+        //         },
+        //         WorldBlock {
+        //             block_type: BlockType::Leaf,
+        //             extra_data: BlockData::None,
+        //             world_pos: WorldPos::new(-15, 0, -25),
+        //         },
+        //         WorldBlock {
+        //             block_type: BlockType::Leaf,
+        //             extra_data: BlockData::None,
+        //             world_pos: WorldPos::new(-14, 0, -24),
+        //         },
+        //         WorldBlock {
+        //             block_type: BlockType::Leaf,
+        //             extra_data: BlockData::None,
+        //             world_pos: WorldPos::new(-14, 0, -25),
+        //         },
+        //     ],
+        //     Rect3 {
+        //         pos: FineWorldPos {
+        //             x: -14.833749,
+        //             y: 1.03,
+        //             z: -25.27446,
+        //         },
+        //         dim: Size3::new(1.0, 1.0, 1.0),
+        //     },
+        //     FineWorldPos {
+        //         x: -15.493927,
+        //         y: 0.92999995,
+        //         z: -24.523352,
+        //     },
+        //     FineWorldPos {
+        //         x: -15.493927,
+        //         y: 1.03,
+        //         z: -24.523352,
+        //     },
+        // );
     }
 
     fn test_get_rect3_intersecting_blocks(

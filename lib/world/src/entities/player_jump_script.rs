@@ -7,7 +7,9 @@ use super::{
     game::GameSchedule,
     player::Flying,
 };
-use crate::{components::velocity::Velocity, vec::Vector3Ops, world::World};
+use crate::{
+    components::velocity::Velocity, entities::velocity_script::Forces, utils::js_log, world::World,
+};
 use wasm_bindgen::prelude::wasm_bindgen;
 
 #[derive(Clone, Debug)]
@@ -31,40 +33,22 @@ impl EntityActionHandler for JumpAction {
         &self,
         _world: &World,
         entity: &mut Entity,
-        data: &EntityActionDto,
+        _data: &EntityActionDto,
     ) -> GameSchedule {
-        let _data = data.get_data::<JumpActionData>().unwrap();
         let jump_data = entity.get::<JumpData>().unwrap().to_owned();
-        let vel = entity.get::<Velocity>().unwrap().to_owned();
-
-        println!("jump_data: {:?}", jump_data);
-
-        let flying = entity.get::<Flying>();
-
-        if flying.is_some() && flying.unwrap().is_flying {
-            return GameSchedule::empty();
-        }
-
-        if jump_data.is_jumping {
-            return GameSchedule::empty();
-        }
-
-        let new_jump_data = jump_data.stop_jumping();
-
-        let diff_y_vel = jump_data.jump_speed - vel.y;
+        let mut forces = entity.get::<Forces>().unwrap().to_owned();
 
         let jump_force = Velocity {
             x: 0.0,
-            y: diff_y_vel,
+            y: jump_data.jump_speed,
             z: 0.0,
         };
 
-        let new_vel = vel.add(&jump_force);
+        forces.add_force(jump_force);
 
-        println!("new_vel: {:?}", new_vel);
+        js_log(&format!("jump_force: {:?}", jump_force));
 
-        entity.set::<Velocity>(new_vel);
-        entity.set::<JumpData>(new_jump_data);
+        entity.set::<Forces>(forces);
 
         GameSchedule::empty()
     }
@@ -77,6 +61,12 @@ pub struct JumpData {
     is_jumping: bool,
     have_db_jumped: bool,
     jump_count: u8,
+}
+
+impl Default for JumpData {
+    fn default() -> Self {
+        Self::new(0.5)
+    }
 }
 
 impl JumpData {

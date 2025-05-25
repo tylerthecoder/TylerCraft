@@ -8,6 +8,10 @@ List of things to do for single player:
 - Fix movement controls
 - Add back third person view
 
+Claude found a bug that let the player fall through the world and came up with a good fix. That is crazy.
+
+There are still times where the player can go through the world a little and I'm not sure why it happens. It is very rare. But now jumping and gravity works well.
+
 # 05_21_25
 
 I've worked on making the server runner. I'm relizing it doesn't make a lot of sense to serpatate out the sp-game-serivce and the runner. The cut between them isn't that clean. I will just make two different runners and then see what logic I need to abstract to make a good UI.

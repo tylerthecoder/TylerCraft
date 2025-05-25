@@ -24,7 +24,7 @@ pub struct GravityScript {
 
 impl Default for GravityScript {
     fn default() -> Self {
-        Self { gravity: 0.1 }
+        Self { gravity: 0.05 }
     }
 }
 
@@ -55,10 +55,9 @@ impl GameScript for GravityScript {
                 z: 0.0,
             };
 
-            let forces = entity.get::<Forces>().unwrap().to_owned();
-            let mut new_forces = forces.forces.clone();
-            new_forces.push(gravity_force);
-            entity.set::<Forces>(Forces { forces: new_forces });
+            let mut forces = entity.get::<Forces>().unwrap().to_owned();
+            forces.add_force(gravity_force);
+            entity.set::<Forces>(forces);
         }
 
         None

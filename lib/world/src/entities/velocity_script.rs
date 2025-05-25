@@ -19,6 +19,12 @@ pub struct Forces {
     pub forces: Vec<Velocity>,
 }
 
+impl Forces {
+    pub fn add_force(&mut self, force: Velocity) {
+        self.forces.push(force);
+    }
+}
+
 impl_component!(Forces);
 
 #[derive(Debug, Default)]
@@ -55,24 +61,32 @@ impl GameScript for VelocityScript {
                 },
             };
 
-            let new_pos = world.move_rect3(&player_rect, pos + vel);
-            let intersection_info =
-                world.get_moving_rect3_intersection_info(&player_rect, pos + vel);
+            let end_pos = pos + vel;
 
-            js_log(&format!(
-                "entity_id: {:?} pos: {:?}, vel: {:?}, new_pos: {:?}, intersection_info: {:?}",
-                entity.id, pos, vel, new_pos, intersection_info,
-            ));
-            for force in forces.forces.iter() {
-                js_log(&format!("force: {:?}", force));
-            }
+            let new_pos = world.move_rect3(&player_rect, end_pos);
 
             if new_pos.y < 1.0 {
+                let intersection_info =
+                    world.get_moving_rect3_intersection_info(&player_rect, end_pos);
+                js_log(&format!(
+                    "entity_id: {:?} \npos: {:?} \nvel: {:?} \nnew_pos: {:?} \nintersection_info: {:?} \nend_pos: {:?}",
+                    entity.id, pos, vel, new_pos, intersection_info, end_pos,
+                ));
+                for force in forces.forces.iter() {
+                    js_log(&format!("force: {:?}", force));
+                }
                 panic!("player fell through the world");
             }
 
+            let pos_diff = new_pos.sub(&pos);
+            let real_vel = Velocity {
+                x: pos_diff.x,
+                y: pos_diff.y,
+                z: pos_diff.z,
+            };
+
             entity.set::<FineWorldPos>(new_pos);
-            entity.set::<Velocity>(vel);
+            entity.set::<Velocity>(real_vel);
             entity.set::<Forces>(Forces { forces: vec![] });
         }
 
