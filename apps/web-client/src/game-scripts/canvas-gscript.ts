@@ -29,15 +29,15 @@ export enum PlayerPerspective {
   ThirdPersonFront,
 }
 
+const DEFAULT_CONFIG: Config = {
+  renderDistance: 5,
+  fovFactor: 0.5,
+  chunkSize: 16,
+};
+
 // This class should only read game and not write.
 export class CanvasGameScript extends GameScript<Config> {
   name = "world-renderer";
-
-  config = {
-    renderDistance: 5,
-    fovFactor: 0.5,
-    chunkSize: 16,
-  };
 
   private renderers: Renderer[] = [];
   private entityRenderers: Map<number, Renderer> = new Map();
@@ -57,7 +57,8 @@ export class CanvasGameScript extends GameScript<Config> {
   constructor(
     game: Game,
     private webGlGScript: WebGlGScript,
-    private mainPlayerId: number
+    private mainPlayerId: number,
+    public config: Config = DEFAULT_CONFIG
   ) {
     super(game);
 

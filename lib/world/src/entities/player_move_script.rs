@@ -1,8 +1,11 @@
+use std::cmp::min;
+
 use crate::{
     components::{fine_world_pos::FineWorldPos, velocity::Velocity},
     direction::Direction,
     geometry::rotation::SphericalRotation,
     utils::js_log,
+    vec::Vector3Ops,
     world::World,
 };
 use serde::{Deserialize, Serialize};
@@ -14,6 +17,7 @@ use super::{
     entity_component::impl_component,
     game::GameSchedule,
     game_script::GameScript,
+    velocity_script::Forces,
 };
 
 #[wasm_bindgen]
@@ -50,8 +54,16 @@ impl EntityActionHandler for MoveAction {
 pub type MovingDirection = Option<Direction>;
 impl_component!(MovingDirection);
 
-#[derive(Debug, Default)]
-pub struct MoveScript {}
+#[derive(Debug)]
+pub struct MoveScript {
+    pub max_speed: f32,
+}
+
+impl Default for MoveScript {
+    fn default() -> Self {
+        Self { max_speed: 1.0 }
+    }
+}
 
 impl GameScript for MoveScript {
     fn get_query(&self) -> EntityQuery {
@@ -59,6 +71,7 @@ impl GameScript for MoveScript {
         query.add::<Velocity>();
         query.add::<SphericalRotation>();
         query.add::<MovingDirection>();
+        query.add::<Forces>();
         query
     }
 
@@ -70,19 +83,38 @@ impl GameScript for MoveScript {
         for entity in query_results.entities {
             let rot = entity.get::<SphericalRotation>().unwrap().to_owned();
             let moving_dir = entity.get::<MovingDirection>().unwrap().to_owned();
+            let vel = entity.get::<Velocity>().unwrap().to_owned();
+            let forces = entity.get::<Forces>().unwrap().to_owned();
 
             if moving_dir.is_some() {
                 let direction_rot: SphericalRotation = moving_dir.unwrap().into();
                 let move_rot = rot + direction_rot;
-                let new_vel: Velocity = move_rot.into();
-                entity.set::<Velocity>(new_vel);
+                let mut move_force: Velocity = move_rot.into();
+
+                // don't allow the player to move up or down
+                move_force.y = 0.0;
+
+                // check if this move force would make the player exceed the max speed, if so, scale the force down so it would make us reach the max speed once applied
+                let final_vel = vel.add(&move_force);
+                let max_vel = move_force.set_mag(self.max_speed);
+                if final_vel.get_mag() > max_vel.get_mag() {
+                    move_force = max_vel.sub(&vel);
+                }
+
+                let mut new_forces = forces.forces.clone();
+                new_forces.push(move_force);
+                entity.set::<Forces>(Forces { forces: new_forces });
             } else {
-                let new_vel: Velocity = Velocity {
-                    x: 0.0,
-                    y: 0.0,
-                    z: 0.0,
-                };
-                entity.set::<Velocity>(new_vel);
+                // If the player is moving, then slow them down by applying a force in the opposite direction of their velocity until they reach 0 velocity
+                let mut new_forces = forces.forces.clone();
+                let vel_mag = vel.get_mag();
+                if vel_mag > 0.0 {
+                    let slow_force_mag = f32::min(vel_mag, 0.1);
+                    let mut slow_force = vel.set_mag(-slow_force_mag);
+                    slow_force.y = 0.0;
+                    new_forces.push(slow_force);
+                }
+                entity.set::<Forces>(Forces { forces: new_forces });
             }
         }
 

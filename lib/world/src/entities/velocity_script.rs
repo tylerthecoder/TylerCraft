@@ -1,13 +1,25 @@
+use serde::{Deserialize, Serialize};
+
 use crate::{
     components::{fine_world_pos::FineWorldPos, size3::Size3, velocity::Velocity},
     geometry::rect3::Rect3,
+    utils::js_log,
+    vec::Vector3Ops,
 };
 
 use super::{
     entity::{EntityQuery, EntityQueryResults},
+    entity_component::impl_component,
     game::GameSchedule,
     game_script::GameScript,
 };
+
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
+pub struct Forces {
+    pub forces: Vec<Velocity>,
+}
+
+impl_component!(Forces);
 
 #[derive(Debug, Default)]
 pub struct VelocityScript {}
@@ -26,10 +38,13 @@ impl GameScript for VelocityScript {
         query_results: EntityQueryResults,
     ) -> Option<GameSchedule> {
         for entity in query_results.entities {
-            let vel = entity.get::<Velocity>().unwrap().to_owned();
+            let mut vel = entity.get::<Velocity>().unwrap().to_owned();
             let pos = entity.get::<FineWorldPos>().unwrap().to_owned();
+            let forces = entity.get::<Forces>().unwrap().to_owned();
 
-            println!("entity_id: {:?} pos: {:?}, vel: {:?}", entity.id, pos, vel);
+            for force in forces.forces.iter() {
+                vel = vel.add(force);
+            }
 
             let player_rect = Rect3 {
                 pos,
@@ -41,8 +56,24 @@ impl GameScript for VelocityScript {
             };
 
             let new_pos = world.move_rect3(&player_rect, pos + vel);
+            let intersection_info =
+                world.get_moving_rect3_intersection_info(&player_rect, pos + vel);
+
+            js_log(&format!(
+                "entity_id: {:?} pos: {:?}, vel: {:?}, new_pos: {:?}, intersection_info: {:?}",
+                entity.id, pos, vel, new_pos, intersection_info,
+            ));
+            for force in forces.forces.iter() {
+                js_log(&format!("force: {:?}", force));
+            }
+
+            if new_pos.y < 1.0 {
+                panic!("player fell through the world");
+            }
 
             entity.set::<FineWorldPos>(new_pos);
+            entity.set::<Velocity>(vel);
+            entity.set::<Forces>(Forces { forces: vec![] });
         }
 
         None

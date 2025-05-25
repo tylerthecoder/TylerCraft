@@ -1,3 +1,13 @@
+# 05_25_25
+
+I've fixed up the server now and multiplayer seems to work. I can now also add blocks to the game again. I don't know what is left for things that I'm confused about, maybe I should just start cleaning everything up now. Could work on mobile development as well.
+
+List of things to do for single player:
+
+- Add gravity and creative mode
+- Fix movement controls
+- Add back third person view
+
 # 05_21_25
 
 I've worked on making the server runner. I'm relizing it doesn't make a lot of sense to serpatate out the sp-game-serivce and the runner. The cut between them isn't that clean. I will just make two different runners and then see what logic I need to abstract to make a good UI.

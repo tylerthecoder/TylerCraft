@@ -49,6 +49,8 @@ export async function run(id?: string) {
 
   const game = id ? await spGameService.getGame(id) : spGameService.newGame();
 
+  (window as any).game = game;
+
   if (!game) {
     console.error("Game not found");
     return;
@@ -74,7 +76,12 @@ export async function run(id?: string) {
   const canvasGameScript = new CanvasGameScript(
     game.game,
     webglGameScript,
-    main_player_uid
+    main_player_uid,
+    {
+      renderDistance: 10,
+      fovFactor: 0.5,
+      chunkSize: 16,
+    }
   );
 
   game.makeAndAddGameScript(canvasGameScript);
@@ -103,8 +110,6 @@ export async function run(id?: string) {
     }
   })();
 
-  // make the camera
-
   const update = () => {
     game.game.update();
     playerController.update();
@@ -115,14 +120,14 @@ export async function run(id?: string) {
 
   setInterval(update, 1000 / 60);
 
-  setInterval(async () => {
-    console.log("Saving game");
-    await spGameService.saveGame(
-      game,
-      chunkGetter.terrianGen,
-      serializedSandbox
-    );
-  }, 3000);
+  // setInterval(async () => {
+  //   console.log("Saving game");
+  //   await spGameService.saveGame(
+  //     game,
+  //     chunkGetter.terrianGen,
+  //     serializedSandbox
+  //   );
+  // }, 3000);
 
   console.log("Starting");
 

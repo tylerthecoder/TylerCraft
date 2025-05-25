@@ -1,30 +1,66 @@
-struct PlayerGravityScript {
-    player: Player,
+use serde::{Deserialize, Serialize};
+
+use crate::{components::velocity::Velocity, utils::js_log, vec::Vector3Ops, world::World};
+
+use super::{
+    entity::{EntityQuery, EntityQueryResults},
+    entity_component::impl_component,
+    game::GameSchedule,
+    game_script::GameScript,
+    velocity_script::Forces,
+};
+
+#[derive(Debug, Serialize, Deserialize, Default)]
+pub struct GravityData {
+    pub has_gravity: bool,
 }
 
-impl PlayerGravityScript {
-    pub fn gravity_force(&self) -> Option<Velocity> {
-        if self.player.is_flying {
-            return None;
-        }
+impl_component!(GravityData);
 
-        if self.player.on_ground {
-            return None;
-        }
+#[derive(Debug)]
+pub struct GravityScript {
+    gravity: f32,
+}
 
-        Some(Velocity {
-            x: 0.0,
-            y: self.player.gravity,
-            z: 0.0,
-        })
+impl Default for GravityScript {
+    fn default() -> Self {
+        Self { gravity: 0.1 }
+    }
+}
+
+impl GameScript for GravityScript {
+    fn get_query(&self) -> EntityQuery {
+        let mut query = EntityQuery::new();
+        query.add::<Velocity>();
+        query.add::<Forces>();
+        query.add::<GravityData>();
+        query
     }
 
-    fn update(&mut self, world: &World) {
-        let gravity_force = self.gravity_force();
-        if let Some(gravity_force) = gravity_force {
-            self.player.vel = gravity_force + self.player.vel;
+    fn update(
+        &mut self,
+        _world: &World,
+        query_results: EntityQueryResults,
+    ) -> Option<GameSchedule> {
+        for entity in query_results.entities {
+            let data = entity.get::<GravityData>().unwrap();
+
+            if !data.has_gravity {
+                continue;
+            }
+
+            let gravity_force = Velocity {
+                x: 0.0,
+                y: -self.gravity,
+                z: 0.0,
+            };
+
+            let forces = entity.get::<Forces>().unwrap().to_owned();
+            let mut new_forces = forces.forces.clone();
+            new_forces.push(gravity_force);
+            entity.set::<Forces>(Forces { forces: new_forces });
         }
 
-        // loop through scripts and update
+        None
     }
 }

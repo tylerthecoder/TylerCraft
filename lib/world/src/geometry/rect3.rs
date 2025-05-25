@@ -101,7 +101,7 @@ impl Rect3 {
 }
 
 impl World {
-    fn get_moving_rect3_intersection_info(
+    pub fn get_moving_rect3_intersection_info(
         &self,
         rect: &Rect3,
         end_pos: FineWorldPos,
@@ -230,7 +230,12 @@ impl World {
 #[cfg(test)]
 pub mod tests {
     use crate::{
-        block::{BlockData, BlockType}, chunk::Chunk, components::{fine_world_pos::FineWorldPos, size3::Size3, world_pos::WorldPos}, geometry::rect3::Rect3, vec::Vector3Ops, world::{world_block::WorldBlock, World}
+        block::{BlockData, BlockType},
+        chunk::Chunk,
+        components::{fine_world_pos::FineWorldPos, size3::Size3, world_pos::WorldPos},
+        geometry::rect3::Rect3,
+        vec::Vector3Ops,
+        world::{world_block::WorldBlock, World},
     };
 
     use super::DISTANCE_EPSILON;

@@ -9,6 +9,7 @@ use crate::{
         entity_action::EntityActionDtoMaker,
         player::wasm::Player,
         player_belt_script::UsePrimaryItemAction,
+        player_gravity_script::GravityScript,
         player_jump_script::JumpAction,
         player_move_script::{MoveAction, MoveScript},
         player_rot_script::RotateAction,
@@ -34,6 +35,20 @@ pub struct Game {
 
 #[wasm_bindgen]
 impl Game {
+    fn add_default_scripts(&mut self) {
+        self.add_script(Box::new(MoveScript::default()));
+        self.add_script(Box::new(VelocityScript::default()));
+        self.add_script(Box::new(GravityScript::default()));
+
+        self.action_holder.add_handler(MoveAction::make_handler());
+        self.action_holder.add_handler(JumpAction::make_handler());
+        self.action_holder.add_handler(RotateAction::make_handler());
+        self.action_holder
+            .add_handler(UsePrimaryItemAction::make_handler());
+
+        self.update();
+    }
+
     #[wasm_bindgen(constructor)]
     pub fn new() -> Game {
         console_error_panic_hook::set_once();
@@ -46,18 +61,7 @@ impl Game {
             schedule: GameSchedule::empty(),
             action_holder: EntityActionHolder::default(),
         };
-
-        g.add_script(Box::new(MoveScript::default()));
-        g.add_script(Box::new(VelocityScript::default()));
-        g.update();
-
-        // Add basic action handlers
-        g.action_holder.add_handler(MoveAction::make_handler());
-        g.action_holder.add_handler(JumpAction::make_handler());
-        g.action_holder.add_handler(RotateAction::make_handler());
-        g.action_holder
-            .add_handler(UsePrimaryItemAction::make_handler());
-
+        g.add_default_scripts();
         g
     }
 
@@ -71,18 +75,7 @@ impl Game {
             schedule: GameSchedule::empty(),
             action_holder: EntityActionHolder::default(),
         };
-
-        g.add_script(Box::new(MoveScript::default()));
-        g.add_script(Box::new(VelocityScript::default()));
-        g.update();
-
-        // Add basic action handlers
-        g.action_holder.add_handler(MoveAction::make_handler());
-        g.action_holder.add_handler(JumpAction::make_handler());
-        g.action_holder.add_handler(RotateAction::make_handler());
-        g.action_holder
-            .add_handler(UsePrimaryItemAction::make_handler());
-
+        g.add_default_scripts();
         g
     }
 

@@ -4,8 +4,10 @@ use super::{
     entity::{Entity, EntityId},
     entity_component::impl_component,
     player_belt_script::Belt,
+    player_gravity_script::GravityData,
     player_jump_script::JumpData,
     player_move_script::MovingDirection,
+    velocity_script::Forces,
 };
 use crate::{
     components::{fine_world_pos::FineWorldPos, velocity::Velocity},
@@ -31,6 +33,8 @@ pub fn make_player(uid: EntityId) -> Entity {
     ent.add::<MovingDirection>(None);
     ent.add::<JumpData>(JumpData::new(2.0));
     ent.add::<Belt>(Belt::default());
+    ent.add::<GravityData>(GravityData { has_gravity: true });
+    ent.add::<Forces>(Forces::default());
     ent
 }
 
@@ -40,8 +44,10 @@ pub mod wasm {
         entities::{
             entity::{Entity, EntityId},
             player_belt_script::Belt,
+            player_gravity_script::GravityData,
             player_jump_script::JumpData,
             player_move_script::MovingDirection,
+            velocity_script::Forces,
         },
         geometry::rotation::SphericalRotation,
     };
@@ -79,6 +85,8 @@ pub mod wasm {
             ent.add::<MovingDirection>(self.moving_direction);
             ent.add::<JumpData>(self.jump_data);
             ent.add::<Belt>(Belt::default());
+            ent.add::<GravityData>(GravityData { has_gravity: true });
+            ent.add::<Forces>(Forces::default());
             ent
         }
     }
