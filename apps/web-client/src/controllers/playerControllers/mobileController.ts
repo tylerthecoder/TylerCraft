@@ -1,11 +1,6 @@
-import {
-  MetaAction,
-  Vector2D,
-  PlayerController,
-  PlayerActionService,
-} from "@craft/engine";
-import { GameWrapper } from "@craft/engine/modules";
+import { EntityActionDto } from "@craft/rust-world";
 import { getEleOrError } from "../../utils";
+import { Vector2D, PlayerController, GameWrapper } from "@craft/engine";
 
 export class MobileController extends PlayerController {
   private eForwardButton = getEleOrError("forwardButton");
@@ -16,8 +11,8 @@ export class MobileController extends PlayerController {
   private eUseItemButton = getEleOrError("useItemButton");
   private eUseItemButton2 = getEleOrError("useItemButton2");
 
-  constructor(game: GameWrapper, playerId: number) {
-    super(game.makeJumpAction, playerId);
+  constructor(onAction: (action: EntityActionDto) => void, playerId: number) {
+    super(onAction, playerId);
 
     let lastWindowTouch: Touch;
     const lastTouchStartPos = new Vector2D([0, 0]);

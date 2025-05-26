@@ -5,10 +5,11 @@ use super::{
 };
 use crate::{
     chunk::{Chunk, ChunkId},
+    components::world_pos::WorldPos,
     entities::{
         entity_action::EntityActionDtoMaker,
         player::wasm::Player,
-        player_belt_script::UsePrimaryItemAction,
+        player_belt_script::{SecondaryBeltAction, UsePrimaryItemAction},
         player_gravity_script::GravityScript,
         player_jump_script::JumpAction,
         player_move_script::{MoveAction, MoveScript},
@@ -45,6 +46,8 @@ impl Game {
         self.action_holder.add_handler(RotateAction::make_handler());
         self.action_holder
             .add_handler(UsePrimaryItemAction::make_handler());
+        self.action_holder
+            .add_handler(SecondaryBeltAction::make_handler());
 
         self.update();
     }
@@ -127,6 +130,12 @@ impl Game {
             self.world.add_block(&block);
         }
 
+        // remove blocks from world
+        let removed_blocks = std::mem::take(&mut self.schedule.removed_blocks);
+        for block_pos in removed_blocks {
+            self.world.remove_block(&block_pos);
+        }
+
         self.schedule.clear();
     }
 
@@ -177,7 +186,7 @@ pub struct GameSchedule {
     pub new_blocks: Vec<WorldBlock>,
     pub new_chunks: Vec<Chunk>,
     pub removed_entities: Vec<EntityId>,
-    pub removed_blocks: Vec<WorldBlock>,
+    pub removed_blocks: Vec<WorldPos>,
 }
 
 impl GameSchedule {
@@ -211,6 +220,12 @@ impl GameSchedule {
                 updated_chunks.push(chunk_pos.to_id());
             }
         }
+        for block_pos in self.removed_blocks.iter() {
+            let chunk_pos = block_pos.to_chunk_pos();
+            if !updated_chunks.contains(&chunk_pos.to_id()) {
+                updated_chunks.push(chunk_pos.to_id());
+            }
+        }
         for new_chunk in self.new_chunks.iter() {
             if !updated_chunks.contains(&new_chunk.get_id()) {
                 updated_chunks.push(new_chunk.get_id());
@@ -237,6 +252,10 @@ impl GameSchedule {
 
     pub fn add_block(&mut self, block: WorldBlock) {
         self.new_blocks.push(block);
+    }
+
+    pub fn remove_block(&mut self, block_pos: WorldPos) {
+        self.removed_blocks.push(block_pos);
     }
 
     pub fn add_chunk(&mut self, chunk: Chunk) {
@@ -396,10 +415,6 @@ pub mod wasm {
         }
 
         pub fn get_chunk_mesh_by_chunkid_wasm(&self, chunk_id: ChunkId) -> Result<JsValue, Error> {
-            web_sys::console::log_1(&JsValue::from_str(&format!(
-                "Rust Getting chunk mesh: {}",
-                chunk_id
-            )));
             self.world.get_chunk_mesh_wasm(chunk_id)
         }
 

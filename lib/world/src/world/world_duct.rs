@@ -80,11 +80,6 @@ impl World {
     pub fn get_chunk_mesh_wasm(&self, chunk_id: ChunkId) -> Result<JsValue, Error> {
         let chunk_pos = ChunkPos::from_id(chunk_id);
 
-        web_sys::console::log_1(&JsValue::from_str(&format!(
-            "Rust Getting chunk mesh: {}",
-            chunk_id
-        )));
-
         let mesh = self
             .get_chunk_mesh(&chunk_pos)
             .map_err(Self::convert_error)?;

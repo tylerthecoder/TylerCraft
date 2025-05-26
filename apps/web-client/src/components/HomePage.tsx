@@ -1,70 +1,18 @@
-import { IServerGameMetadata } from "@craft/engine";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import { createGame, getAllGames } from "../services/mp-games-service";
 
 function HomePage() {
-  const [games, setGames] = useState<IServerGameMetadata[]>([]);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const createGameWrapper = async (gameId: string) => {
-    console.log("Starting game", gameId);
-    const game = await createGame(gameId);
-    navigate(`/game/${game}`);
-  };
-
-  useEffect(() => {
-    getAllGames().then((games) => {
-      setGames(games);
-      setLoading(false);
-    });
-  }, []);
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
   return (
-    <div>
-      <h1>TylerCraft Games</h1>
+    <div className="flex flex-col items-center justify-center h-full">
+      <h1 className="text-4xl font-bold mb-16">TylerCraft</h1>
+      <h2 id="subtitle" className="text-sm">
+        A 3D sandbox by Tyler Tracy
+      </h2>
       <div>
-        <h2>Existing Games</h2>
-        {games.length > 0 ? (
-          <div>
-            {games.map((game) => (
-              <div
-                key={game.gameId}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: "10px",
-                  border: "1px solid #ccc",
-                  margin: "5px 0",
-                  borderRadius: "4px",
-                }}
-              >
-                <span>{game.name}</span>
-                <button onClick={() => navigate(`/game/${game.gameId}`)}>
-                  View Game
-                </button>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p>No games available</p>
-        )}
-      </div>
-      <div style={{ marginTop: "20px" }}>
-        <h2>Create New Game</h2>
-        <button
-          onClick={() => {
-            createGameWrapper("test");
-          }}
-        >
-          Create Game
-        </button>
+        <button onClick={() => navigate("/client")}>Play Local</button>
+        <button onClick={() => navigate("/server")}>Play Online</button>
       </div>
     </div>
   );

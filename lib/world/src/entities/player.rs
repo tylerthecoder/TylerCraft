@@ -53,7 +53,7 @@ pub mod wasm {
         geometry::rotation::SphericalRotation,
     };
     use serde::{Deserialize, Serialize};
-    use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
+    use wasm_bindgen::prelude::wasm_bindgen;
 
     #[derive(Serialize, Deserialize, Debug, Clone)]
     #[wasm_bindgen]

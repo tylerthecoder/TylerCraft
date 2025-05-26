@@ -13,7 +13,6 @@ import {
 } from "@craft/rust-world";
 import { ClientDbGamesService } from "./services/sp-games-service";
 import { HudGScript } from "./game-scripts/hudRender";
-// import { eStartMenu } from "./elements";
 
 class SinglePlayerTerrainChunkGetter {
   private chunks_to_insert: Chunk[] = [];
@@ -40,14 +39,13 @@ class SinglePlayerTerrainChunkGetter {
   }
 }
 
-const spGameService = await ClientDbGamesService.factory();
+export const spGameService = await ClientDbGamesService.factory();
 export async function run(id?: string) {
-  // Start the game
-  console.log("RUNNING Starting game");
-
-  // hideElement(eStartMenu);
+  console.log("Starting game", id);
 
   const game = id ? await spGameService.getGame(id) : spGameService.newGame();
+
+  console.log("Game", game);
 
   (window as any).game = game;
 
@@ -130,11 +128,5 @@ export async function run(id?: string) {
   //   );
   // }, 3000);
 
-  console.log("Starting");
-
-  console.log(canvasGameScript);
-
   canvasGameScript.renderLoop(0);
 }
-
-run("f27fa11d-bf9e-4f82-8a3e-9e87a02c3870");

@@ -238,9 +238,10 @@ export class GameWrapper {
 
   getChunkMeshFromChunkPos(chunkId: number): ChunkMeshWrapper {
     const id = BigInt(chunkId);
-    console.log("Getting chunk mesh", chunkId);
+    const start = performance.now();
     const val = this.game.get_chunk_mesh_by_chunkid_wasm(id);
-    console.log("Got chunk mesh", val);
+    const end = performance.now();
+    console.log("Time taken to get chunk mesh", end - start, " ms");
     return new ChunkMeshWrapper(val);
   }
 

@@ -45,7 +45,7 @@ export class KeyboardPlayerEntityController extends PlayerController {
       if (e.button === 2) {
         this.primaryAction();
       } else if (e.button === 0) {
-        this.primaryAction();
+        this.secondaryAction();
       }
       e.preventDefault();
     });

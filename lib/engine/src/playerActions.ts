@@ -4,6 +4,7 @@ import {
   JumpAction,
   MoveAction,
   RotateAction,
+  SecondaryBeltAction,
   SphericalRotation,
   UsePrimaryItemAction,
 } from "@craft/rust-world";
@@ -48,23 +49,12 @@ export abstract class PlayerController {
 
   primaryAction() {
     const action = UsePrimaryItemAction.make_wasm(this.playerId);
-    console.log("primaryAction", action);
     this.handleAction(action);
-    // const action = PlayerAction.make(PlayerActionType.PlaceBlock, {
-    //   playerUid: this.player.uid,
-    //   playerPos: this.player.pos.data as IDim,
-    //   playerRot: this.player.rot.data as IDim,
-    // });
-    // this.playerActionService.performAction(action);
   }
 
   secondaryAction() {
-    // const action = PlayerAction.make(PlayerActionType.RemoveBlock, {
-    //   playerUid: this.player.uid,
-    //   playerPos: this.player.pos.data as IDim,
-    //   playerRot: this.player.rot.data as IDim,
-    // });
-    // this.playerActionService.performAction(action);
+    const action = SecondaryBeltAction.make_wasm(this.playerId);
+    this.handleAction(action);
   }
 
   selectBelt(pos: number) {

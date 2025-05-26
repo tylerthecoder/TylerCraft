@@ -207,34 +207,34 @@ impl World {
                 .pos
                 .set_component_from_axis(*hit_axis, *new_axis_pos);
 
-            let intersections_string = intersections
-                .iter()
-                .map(|info| format!("\n   {:?}", info))
-                .collect::<Vec<String>>()
-                .join(", ");
+            // let intersections_string = intersections
+            //     .iter()
+            //     .map(|info| format!("\n   {:?}", info))
+            //     .collect::<Vec<String>>()
+            //     .join(", ");
 
-            let axises_diff_string = axis_diffs
-                .iter()
-                .map(|(axis, diff, new_axis_pos)| {
-                    format!(
-                        "\n   axis: {:?}, diff: {:?}, new_axis_pos: {:?}",
-                        axis, diff, new_axis_pos
-                    )
-                })
-                .collect::<Vec<String>>()
-                .join(", ");
+            // let axises_diff_string = axis_diffs
+            //     .iter()
+            //     .map(|(axis, diff, new_axis_pos)| {
+            //         format!(
+            //             "\n   axis: {:?}, diff: {:?}, new_axis_pos: {:?}",
+            //             axis, diff, new_axis_pos
+            //         )
+            //     })
+            //     .collect::<Vec<String>>()
+            //     .join(", ");
 
-            js_log(&format!(
-                "({:?}) hit_axis: {:?}, \naxises_diff: {}, \nintersections: {}, \nstart_pos: {:?}, \ntrying_to_go_to: {:?}, \ncurrent_rect_pos: {:?}, \ncurrent_end_pos: {:?}",
-                iteration,
-                hit_axis,
-                axises_diff_string,
-                intersections_string,
-                rect.pos,
-                end_pos,
-                current_rect.pos,
-                current_end_pos
-            ));
+            // js_log(&format!(
+            //     "({:?}) hit_axis: {:?}, \naxises_diff: {}, \nintersections: {}, \nstart_pos: {:?}, \ntrying_to_go_to: {:?}, \ncurrent_rect_pos: {:?}, \ncurrent_end_pos: {:?}",
+            //     iteration,
+            //     hit_axis,
+            //     axises_diff_string,
+            //     intersections_string,
+            //     rect.pos,
+            //     end_pos,
+            //     current_rect.pos,
+            //     current_end_pos
+            // ));
         }
 
         current_end_pos

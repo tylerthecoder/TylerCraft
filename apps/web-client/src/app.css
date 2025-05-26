@@ -1,3 +1,6 @@
+@import "tailwindcss";
+
+
 @keyframes lift {
   0% {
     box-shadow: 8px 8px 10px grey;
@@ -24,6 +27,7 @@ body {
   margin: 0px;
   padding: 0px;
   font-family: "Roboto", sans-serif;
+  background-color: #00ccff;
 }
 
 /* ========================
@@ -234,12 +238,13 @@ h1 {
 button {
   border: none;
   padding: 10px 100px;
-  margin-bottom: 30px;
+  margin: 30px;
   font-size: 3em;
   font-family: "Roboto", sans-serif;
   cursor: pointer;
   box-shadow: 8px 8px 10px grey;
   border-radius: 10px;
+  background-color: white;
 }
 
 button:hover {
@@ -247,13 +252,12 @@ button:hover {
   animation: lift 0.1s linear;
 }
 
-#backButton {
+.backButton {
   font-size: 6em;
   position: absolute;
-  top: -30px;
+  top: -40px;
   cursor: pointer;
-  left: 0px;
-  display: none;
+  left: 10px;
 }
 
 #backButton.shown {

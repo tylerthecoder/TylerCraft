@@ -1,6 +1,6 @@
 use crate::{
     block::{BlockData, BlockType},
-    components::{fine_world_pos::FineWorldPos, size3::Size3},
+    components::fine_world_pos::FineWorldPos,
     geometry::{ray::Ray, rotation::SphericalRotation},
     utils::js_log,
     world::world_block::WorldBlock,
@@ -13,10 +13,9 @@ use super::{
     entity::{Entity, EntityId},
     entity_action::{EntityActionDto, EntityActionDtoMaker},
     entity_component::impl_component,
-    player::Flying,
 };
 use crate::direction::DirectionVectorExtension;
-use crate::{components::velocity::Velocity, vec::Vector3Ops, world::World};
+use crate::{vec::Vector3Ops, world::World};
 use wasm_bindgen::prelude::wasm_bindgen;
 
 #[wasm_bindgen]
@@ -85,7 +84,59 @@ impl EntityActionHandler for UsePrimaryItemAction {
     }
 }
 
+#[wasm_bindgen]
+#[derive(Clone, Debug, Default)]
 pub struct SecondaryBeltAction {}
+
+#[wasm_bindgen]
+impl SecondaryBeltAction {
+    pub fn make_wasm(entity_id: EntityId) -> EntityActionDto {
+        let data = SecondaryBeltActionData {};
+        SecondaryBeltAction::make_dto(entity_id, data)
+    }
+}
+
+#[wasm_bindgen]
+#[derive(Clone, Debug, Default)]
+pub struct SecondaryBeltActionData {}
+
+impl EntityActionDtoMaker<SecondaryBeltActionData> for SecondaryBeltAction {
+    fn get_action_type_static() -> &'static str {
+        "SecondaryBeltAction"
+    }
+}
+
+impl EntityActionHandler for SecondaryBeltAction {
+    fn get_action_type(&self) -> &'static str {
+        "SecondaryBeltAction"
+    }
+
+    fn handle_dto(
+        &self,
+        world: &World,
+        entity: &mut Entity,
+        _data: &EntityActionDto,
+    ) -> GameSchedule {
+        let mut schedule = GameSchedule::empty();
+        let pos = entity.get::<FineWorldPos>().unwrap();
+        let rot = entity.get::<SphericalRotation>().unwrap();
+        let eye_pos_offset = FineWorldPos::new(0.4, 1.5, 0.4);
+
+        let camera_ray = Ray {
+            pos: pos.add(&eye_pos_offset),
+            rot: *rot,
+        };
+
+        let pointed_at = world.get_pointed_at_block(camera_ray);
+
+        if let Some(pointed_at) = pointed_at {
+            let looking_at_pos = pointed_at.block.world_pos;
+            schedule.remove_block(looking_at_pos);
+        }
+
+        schedule
+    }
+}
 
 pub struct SelectItemAction {}
 

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { startGame, serverRunner } from "../services/mp-games-service";
 
-function GameView() {
+export function ServerGameView() {
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
   const [isJoined, setIsJoined] = useState(false);
@@ -45,5 +45,3 @@ function GameView() {
     </div>
   );
 }
-
-export default GameView;

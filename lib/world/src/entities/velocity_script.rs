@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 use crate::{
     components::{fine_world_pos::FineWorldPos, size3::Size3, velocity::Velocity},
     geometry::rect3::Rect3,
-    utils::js_log,
     vec::Vector3Ops,
 };
 
@@ -59,19 +58,6 @@ impl GameScript for VelocityScript {
             let end_pos = pos + vel;
 
             let new_pos = world.move_rect3(&player_rect, end_pos);
-
-            if new_pos.y < 1.0 {
-                let intersection_info =
-                    world.get_moving_rect3_intersection_info(&player_rect, end_pos);
-                js_log(&format!(
-                    "entity_id: {:?} \npos: {:?} \nvel: {:?} \nnew_pos: {:?} \nintersection_info: {:?} \nend_pos: {:?}",
-                    entity.id, pos, vel, new_pos, intersection_info, end_pos,
-                ));
-                for force in forces.forces.iter() {
-                    js_log(&format!("force: {:?}", force));
-                }
-                panic!("player fell through the world");
-            }
 
             let pos_diff = new_pos.sub(&pos);
             let real_vel = Velocity {
