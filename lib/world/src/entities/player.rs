@@ -66,6 +66,8 @@ pub mod wasm {
         pub moving_direction: MovingDirection,
         #[serde(default = "Player::default_size")]
         pub size: Size3,
+        #[serde(default = "Belt::default")]
+        pub belt: Belt,
     }
 
     impl Player {
@@ -84,6 +86,7 @@ pub mod wasm {
                 moving_direction: entity.get::<MovingDirection>().unwrap().to_owned(),
                 jump_data: entity.get::<JumpData>().unwrap().to_owned(),
                 size: entity.get::<Size3>().unwrap().to_owned(),
+                belt: entity.get::<Belt>().unwrap().to_owned(),
             }
         }
 
@@ -93,8 +96,8 @@ pub mod wasm {
             ent.add::<Velocity>(self.vel);
             ent.add::<SphericalRotation>(self.rot);
             ent.add::<MovingDirection>(self.moving_direction);
-            ent.add::<JumpData>(JumpData::default());
             ent.add::<Belt>(Belt::default());
+            ent.add::<JumpData>(JumpData::default());
             ent.add::<GravityData>(GravityData { has_gravity: true });
             ent.add::<Forces>(Forces::default());
             ent.add::<Size3>(Size3::new(0.8, 1.8, 0.8));

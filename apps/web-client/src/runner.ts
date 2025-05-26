@@ -91,7 +91,6 @@ export async function run(id?: string) {
   );
 
   const onAction = (action: EntityActionDto) => {
-    // console.log("ACTION", action);
     game.game.handle_action_wasm(action);
   };
 
@@ -100,10 +99,10 @@ export async function run(id?: string) {
       return new MobileController(onAction, main_player_uid);
     } else {
       return new KeyboardPlayerEntityController(
+        game.game,
         onAction,
         main_player_uid,
-        canvasGameScript,
-        webglGameScript
+        canvasGameScript
       );
     }
   })();

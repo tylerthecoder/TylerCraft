@@ -1,15 +1,18 @@
 import {
   Direction,
   EntityActionDto,
+  Game,
   JumpAction,
   MoveAction,
   RotateAction,
   SecondaryBeltAction,
+  SelectItemAction,
   SphericalRotation,
   UsePrimaryItemAction,
 } from "@craft/rust-world";
 export abstract class PlayerController {
   constructor(
+    protected game: Game,
     protected handleAction: (action: EntityActionDto) => void,
     protected playerId: number
   ) {}
@@ -36,11 +39,28 @@ export abstract class PlayerController {
   }
 
   beltRight() {
-    // TO-DO
+    const index = this.game.get_player_no_copy_wasm(this.playerId).belt
+      .selected_item;
+    if (index === 9) {
+      return;
+    }
+    const action = SelectItemAction.make_wasm(this.playerId, index + 1);
+    this.handleAction(action);
   }
 
   beltLeft() {
-    // TO-DO
+    const index = this.game.get_player_no_copy_wasm(this.playerId).belt
+      .selected_item;
+    if (index === 0) {
+      return;
+    }
+    const action = SelectItemAction.make_wasm(this.playerId, index - 1);
+    this.handleAction(action);
+  }
+
+  selectBelt(pos: number) {
+    const action = SelectItemAction.make_wasm(this.playerId, pos);
+    this.handleAction(action);
   }
 
   debugBlock() {
@@ -55,14 +75,6 @@ export abstract class PlayerController {
   secondaryAction() {
     const action = SecondaryBeltAction.make_wasm(this.playerId);
     this.handleAction(action);
-  }
-
-  selectBelt(pos: number) {
-    // const action = PlayerAction.make(PlayerActionType.SetBeltIndex, {
-    //   playerUid: this.player.uid,
-    //   index: pos,
-    // });
-    // this.playerActionService.performAction(action);
   }
 
   toggleCreative() {

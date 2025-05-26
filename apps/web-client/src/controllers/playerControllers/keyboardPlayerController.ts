@@ -1,6 +1,5 @@
 import { CONFIG, PlayerController } from "@craft/engine";
-import { WebGlGScript } from "../../game-scripts/webgl-gscript";
-import { Direction, EntityActionDto } from "@craft/rust-world";
+import { Direction, EntityActionDto, Game } from "@craft/rust-world";
 import {
   CanvasGameScript,
   PlayerPerspective,
@@ -18,12 +17,12 @@ export class KeyboardPlayerEntityController extends PlayerController {
   private hasJumped = false;
 
   constructor(
+    game: Game,
     handleAction: (action: EntityActionDto) => void,
     playerId: number,
-    private canvasGScript: CanvasGameScript,
-    webGlGScript: WebGlGScript
+    private canvasGScript: CanvasGameScript
   ) {
-    super(handleAction, playerId);
+    super(game, handleAction, playerId);
 
     const webGlCanvas = document.getElementById("hud") as HTMLCanvasElement;
 

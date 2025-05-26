@@ -5,6 +5,7 @@ import { GameMenu } from "../renders/gameMenuRender";
 import React from "react";
 import ReactDOM from "react-dom";
 import { Game, Player } from "@craft/rust-world";
+import TextureMapper from "../textureMapper";
 
 export class HudGScript extends GameScript {
   name = "hud";
@@ -91,25 +92,20 @@ export class HudGScript extends GameScript {
   }
 
   private lastStats = "";
-  drawStats() {
-    const mainPlayer: Player = this.game.get_player_wasm(this.mainPlayerUid);
-    if (!mainPlayer) {
-      return;
-    }
-
+  drawStats(player: Player) {
     const cameraPos =
       "X: " +
-      mainPlayer.pos.x.toFixed(2) +
+      player.pos.x.toFixed(2) +
       ", Y: " +
-      mainPlayer.pos.y.toFixed(2) +
+      player.pos.y.toFixed(2) +
       ", Z: " +
-      mainPlayer.pos.z.toFixed(2);
+      player.pos.z.toFixed(2);
 
     const cameraRot =
       "Theta: " +
-      mainPlayer.rot.theta.toFixed(2) +
+      player.rot.theta.toFixed(2) +
       ", Phi: " +
-      mainPlayer.rot.phi.toFixed(2);
+      player.rot.phi.toFixed(2);
     // const numChunks = this.game.world.getLoadedChunkIds().length;
 
     const statsString = `
@@ -131,74 +127,75 @@ export class HudGScript extends GameScript {
   }
 
   update(_delta: number): void {
+    const player = this.game.get_player_no_copy_wasm(this.mainPlayerUid);
+
     this.clearScreen();
 
-    this.drawStats();
+    this.drawStats(player);
 
-    // if (this.lastSelected !== this.basicGScript.mainPlayer.belt.selectedIndex) {
-    //   this.drawBelt();
-    //   this.lastSelected = this.basicGScript.mainPlayer.belt.selectedIndex;
-    // }
+    this.drawBelt(player);
 
     // this.drawHealthBar();
   }
 
-  // drawBelt() {
-  //   this.eToolbeltItems.forEach((item, index) => {
-  //     if (index === this.basicGScript.mainPlayer.belt.selectedIndex) {
-  //       item.classList.add("selected");
-  //     } else {
-  //       item.classList.remove("selected");
-  //     }
-  //   });
+  drawBelt(player: Player) {
+    const belt = player.belt;
 
-  //   const itemDim = this.eToolbeltItems[0].clientHeight;
+    if (belt.selected_item === this.lastSelected) {
+      return;
+    }
 
-  //   const belt = this.basicGScript.mainPlayer.belt;
+    this.lastSelected = belt.selected_item;
 
-  //   if (!belt) {
-  //     return;
-  //   }
+    this.eToolbeltItems.forEach((item, index) => {
+      if (index === belt.selected_item) {
+        item.classList.add("selected");
+      } else {
+        item.classList.remove("selected");
+      }
+    });
 
-  //   // draw the icons
-  //   for (let i = 0; i < belt.length; i++) {
-  //     const item = belt.getItem(i);
-  //     if (!item) {
-  //       continue;
-  //     }
+    const itemDim = this.eToolbeltItems[0].clientHeight;
 
-  //     const cords = TextureMapper.getBlockPreviewCords(
-  //       item,
-  //       this.textureImg.width,
-  //       this.textureImg.height
-  //     );
-  //     // Clip the textImage to the cords
-  //     const img = this.textureImg;
-  //     const croppedImg = document.createElement("canvas");
-  //     croppedImg.width = itemDim;
-  //     croppedImg.height = itemDim;
-  //     const ctx = croppedImg.getContext("2d");
-  //     if (!ctx) {
-  //       throw new Error("Could not get 2d context");
-  //     }
-  //     ctx.imageSmoothingEnabled = false;
-  //     ctx.drawImage(
-  //       img,
-  //       cords.x1,
-  //       cords.y1,
-  //       cords.x2 - cords.x1,
-  //       cords.y2 - cords.y1,
-  //       0,
-  //       0,
-  //       croppedImg.width,
-  //       croppedImg.height
-  //     );
-  //     this.eToolbeltItems[
-  //       i
-  //     ].style.backgroundImage = `url(${croppedImg.toDataURL()})`;
-  //     this.eToolbeltItems[i].style.backgroundSize = "contain";
-  //   }
-  // }
+    // draw the icons
+    for (let i = 0; i < belt.get_num_items(); i++) {
+      const item = belt.get_item(i);
+      if (!item) {
+        continue;
+      }
+
+      const cords = TextureMapper.getBlockPreviewCords(
+        item,
+        this.textureImg.width,
+        this.textureImg.height
+      );
+      // Clip the textImage to the cords
+      const img = this.textureImg;
+      const croppedImg = document.createElement("canvas");
+      croppedImg.width = itemDim;
+      croppedImg.height = itemDim;
+      const ctx = croppedImg.getContext("2d");
+      if (!ctx) {
+        throw new Error("Could not get 2d context");
+      }
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(
+        img,
+        cords.x1,
+        cords.y1,
+        cords.x2 - cords.x1,
+        cords.y2 - cords.y1,
+        0,
+        0,
+        croppedImg.width,
+        croppedImg.height
+      );
+      this.eToolbeltItems[
+        i
+      ].style.backgroundImage = `url(${croppedImg.toDataURL()})`;
+      this.eToolbeltItems[i].style.backgroundSize = "contain";
+    }
+  }
 
   // drawHealthBar() {
   //   if (!this.basicGScript.mainPlayer) return;

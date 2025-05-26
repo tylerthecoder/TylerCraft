@@ -1,3 +1,10 @@
+# 05_26_25
+
+I made the UI yesterday and it is coming along. I need to figure out what to do next. I think making the belt work seems good.
+I also want to add back the fireball entity that breaks a block or injures a player. Then the players have health and they can get more health by eating a food item.
+
+I also need to test the terrain generation and make that work better.I also need to add a button for saving while in single player mode.
+
 # 05_25_25
 
 I've fixed up the server now and multiplayer seems to work. I can now also add blocks to the game again. I don't know what is left for things that I'm confused about, maybe I should just start cleaning everything up now. Could work on mobile development as well.

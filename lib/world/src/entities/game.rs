@@ -9,7 +9,7 @@ use crate::{
     entities::{
         entity_action::EntityActionDtoMaker,
         player::wasm::Player,
-        player_belt_script::{SecondaryBeltAction, UsePrimaryItemAction},
+        player_belt_script::{SecondaryBeltAction, SelectItemAction, UsePrimaryItemAction},
         player_gravity_script::GravityScript,
         player_jump_script::JumpAction,
         player_move_script::{MoveAction, MoveScript},
@@ -48,6 +48,8 @@ impl Game {
             .add_handler(UsePrimaryItemAction::make_handler());
         self.action_holder
             .add_handler(SecondaryBeltAction::make_handler());
+        self.action_holder
+            .add_handler(SelectItemAction::make_handler());
 
         self.update();
     }
@@ -446,6 +448,15 @@ pub mod wasm {
             let chunk_pos: ChunkPos = world_pos.to_chunk_pos();
             let chunk_pos_js = serde_wasm_bindgen::to_value(&chunk_pos).unwrap();
             Ok(chunk_pos_js)
+        }
+
+        pub fn get_player_no_copy_wasm(&self, player_id: EntityId) -> Player {
+            let maybe_player = self.entity_holder.get_entity_by_id(player_id);
+            if let Some(player) = maybe_player {
+                Player::make_from_entity(player)
+            } else {
+                panic!("Player {} not found", player_id)
+            }
         }
 
         pub fn get_player_wasm(&self, player_id: EntityId) -> Result<JsValue, Error> {

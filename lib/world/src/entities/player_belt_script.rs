@@ -138,18 +138,83 @@ impl EntityActionHandler for SecondaryBeltAction {
     }
 }
 
+#[wasm_bindgen]
+#[derive(Clone, Debug, Default)]
 pub struct SelectItemAction {}
 
-#[derive(Debug, Serialize, Deserialize)]
+#[wasm_bindgen]
+impl SelectItemAction {
+    pub fn make_wasm(entity_id: EntityId, item_index: usize) -> EntityActionDto {
+        let data = SelectItemActionData { item_index };
+        SelectItemAction::make_dto(entity_id, data)
+    }
+}
+
+#[wasm_bindgen]
+#[derive(Clone, Debug, Default)]
+pub struct SelectItemActionData {
+    pub item_index: usize,
+}
+
+impl EntityActionDtoMaker<SelectItemActionData> for SelectItemAction {
+    fn get_action_type_static() -> &'static str {
+        "SelectItemAction"
+    }
+}
+
+impl EntityActionHandler for SelectItemAction {
+    fn get_action_type(&self) -> &'static str {
+        "SelectItemAction"
+    }
+
+    fn handle_dto(
+        &self,
+        _world: &World,
+        entity: &mut Entity,
+        data: &EntityActionDto,
+    ) -> GameSchedule {
+        let mut belt = entity.get::<Belt>().unwrap().to_owned();
+        let data = data.get_data::<SelectItemActionData>().unwrap();
+        belt.selected_item = data.item_index;
+        entity.set::<Belt>(belt);
+        GameSchedule::empty()
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+#[wasm_bindgen]
 pub struct Belt {
     belt_items: [BlockType; 10],
-    selected_item: usize,
+    pub selected_item: usize,
+}
+
+#[wasm_bindgen]
+impl Belt {
+    pub fn get_item(&self, index: usize) -> BlockType {
+        self.belt_items[index]
+    }
+
+    pub fn get_num_items(&self) -> usize {
+        self.belt_items.len()
+    }
 }
 
 impl Default for Belt {
     fn default() -> Self {
+        let belt_items = [
+            BlockType::Gold,
+            BlockType::Stone,
+            BlockType::Grass,
+            BlockType::Water,
+            BlockType::Planks,
+            BlockType::Red,
+            BlockType::RedFlower,
+            BlockType::Wood,
+            BlockType::Leaf,
+            BlockType::Cloud,
+        ];
         Belt {
-            belt_items: [BlockType::Gold; 10],
+            belt_items,
             selected_item: 0,
         }
     }
