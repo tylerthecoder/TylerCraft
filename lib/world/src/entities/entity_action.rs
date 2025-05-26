@@ -104,18 +104,14 @@ impl EntityActionHolder {
     ) -> GameSchedule {
         let mut schedule = GameSchedule::empty();
         for action in &self.actions {
-            js_log(&format!("Handling action: {:?}", action));
-            js_log(&format!("Action handlers: {:?}", self.handlers.len()));
+            // js_log(&format!("Handling action: {:?}", action));
+            // js_log(&format!("Action handlers: {:?}", self.handlers.len()));
             let entity = entity_holder.get_entity_by_id_mut(action.entity_id);
             let mut action_handled = false;
             if let Some(entity) = entity {
                 for handler in &self.handlers {
                     if handler.get_action_type() == action.name {
                         let new_schedule = handler.handle_dto(world, entity, action);
-                        js_log(&format!(
-                            "New schedule blocks: {:?}",
-                            new_schedule.new_blocks
-                        ));
                         schedule.combine(new_schedule);
                         action_handled = true;
                     }

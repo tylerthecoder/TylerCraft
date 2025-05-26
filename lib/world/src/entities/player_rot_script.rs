@@ -37,8 +37,6 @@ impl EntityActionHandler for RotateAction {
 
         let new_rot = entity.get::<SphericalRotation>().unwrap().to_owned() + data.rot_diff;
 
-        js_log(&format!("New rot: {:?}", new_rot));
-
         entity.set::<SphericalRotation>(new_rot);
 
         GameSchedule::empty()

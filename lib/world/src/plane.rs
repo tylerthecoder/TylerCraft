@@ -1,13 +1,16 @@
-use serde::{Deserialize, Serialize};
 use crate::{
-    components::{fine_world_pos::FineWorldPos, world_pos::WorldPos}, direction::{Direction, DirectionVectorExtension}
+    components::{fine_world_pos::FineWorldPos, world_pos::WorldPos},
+    direction::{Direction, DirectionVectorExtension},
 };
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Copy)]
 pub struct WorldPlane {
     pub world_pos: WorldPos,
     pub direction: Direction,
 }
+
+const DISTANCE_EPSILON: f32 = 0.0001;
 
 impl WorldPlane {
     pub fn new(world_pos: WorldPos, direction: Direction) -> WorldPlane {
@@ -55,9 +58,11 @@ impl WorldPlane {
         //     their_x, their_y, their_z
         // );
 
-        let contains_y = (my_y as f32 - their_y).abs() < 0.01;
-        let contains_x = (my_x as f32) - 0.01 <= their_x && my_x as f32 + 1.01 >= their_x;
-        let contains_z = (my_z as f32) - 0.01 <= their_z && my_z as f32 + 1.01 >= their_z;
+        let contains_y = (my_y as f32 - their_y).abs() < DISTANCE_EPSILON;
+        let contains_x = (my_x as f32) - DISTANCE_EPSILON <= their_x
+            && my_x as f32 + 1.0 + DISTANCE_EPSILON >= their_x;
+        let contains_z = (my_z as f32) - DISTANCE_EPSILON <= their_z
+            && my_z as f32 + 1.0 + DISTANCE_EPSILON >= their_z;
 
         // println!(
         //     "Contains x: {}, Contains y: {}, Contains z: {}",
@@ -71,7 +76,9 @@ impl WorldPlane {
 #[cfg(test)]
 mod tests {
     use crate::{
-        components::{fine_world_pos::FineWorldPos, world_pos::WorldPos}, direction::Direction, vec::Vector3Ops
+        components::{fine_world_pos::FineWorldPos, world_pos::WorldPos},
+        direction::Direction,
+        vec::Vector3Ops,
     };
 
     use super::WorldPlane;

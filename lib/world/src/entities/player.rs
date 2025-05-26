@@ -10,7 +10,7 @@ use super::{
     velocity_script::Forces,
 };
 use crate::{
-    components::{fine_world_pos::FineWorldPos, velocity::Velocity},
+    components::{fine_world_pos::FineWorldPos, size3::Size3, velocity::Velocity},
     geometry::rotation::SphericalRotation,
 };
 
@@ -28,6 +28,7 @@ pub fn make_player(uid: EntityId) -> Entity {
         y: 10.0,
         z: 0.0,
     });
+    ent.add::<Size3>(Size3::new(0.8, 1.8, 0.8));
     ent.add::<Velocity>(Velocity::default());
     ent.add::<SphericalRotation>(SphericalRotation::new(0.0, 0.0));
     ent.add::<MovingDirection>(None);
@@ -40,7 +41,7 @@ pub fn make_player(uid: EntityId) -> Entity {
 
 pub mod wasm {
     use crate::{
-        components::{fine_world_pos::FineWorldPos, velocity::Velocity},
+        components::{fine_world_pos::FineWorldPos, size3::Size3, velocity::Velocity},
         entities::{
             entity::{Entity, EntityId},
             player_belt_script::Belt,
@@ -63,6 +64,14 @@ pub mod wasm {
         pub rot: SphericalRotation,
         pub jump_data: JumpData,
         pub moving_direction: MovingDirection,
+        #[serde(default = "Player::default_size")]
+        pub size: Size3,
+    }
+
+    impl Player {
+        fn default_size() -> Size3 {
+            Size3::new(0.8, 1.8, 0.8)
+        }
     }
 
     impl Player {
@@ -74,6 +83,7 @@ pub mod wasm {
                 rot: entity.get::<SphericalRotation>().unwrap().clone(),
                 moving_direction: entity.get::<MovingDirection>().unwrap().to_owned(),
                 jump_data: entity.get::<JumpData>().unwrap().to_owned(),
+                size: entity.get::<Size3>().unwrap().to_owned(),
             }
         }
 
@@ -87,6 +97,7 @@ pub mod wasm {
             ent.add::<Belt>(Belt::default());
             ent.add::<GravityData>(GravityData { has_gravity: true });
             ent.add::<Forces>(Forces::default());
+            ent.add::<Size3>(Size3::new(0.8, 1.8, 0.8));
             ent
         }
     }

@@ -61,7 +61,7 @@ pub struct MoveScript {
 
 impl Default for MoveScript {
     fn default() -> Self {
-        Self { max_speed: 0.5 }
+        Self { max_speed: 0.2 }
     }
 }
 

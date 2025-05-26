@@ -35,6 +35,7 @@ impl GameScript for VelocityScript {
         let mut query = EntityQuery::new();
         query.add::<Velocity>();
         query.add::<FineWorldPos>();
+        query.add::<Size3>();
         query
     }
 
@@ -46,20 +47,14 @@ impl GameScript for VelocityScript {
         for entity in query_results.entities {
             let mut vel = entity.get::<Velocity>().unwrap().to_owned();
             let pos = entity.get::<FineWorldPos>().unwrap().to_owned();
+            let size = entity.get::<Size3>().unwrap().to_owned();
             let forces = entity.get::<Forces>().unwrap().to_owned();
 
             for force in forces.forces.iter() {
                 vel = vel.add(force);
             }
 
-            let player_rect = Rect3 {
-                pos,
-                dim: Size3 {
-                    x: 1.0,
-                    y: 1.0,
-                    z: 1.0,
-                },
-            };
+            let player_rect = Rect3 { pos, dim: size };
 
             let end_pos = pos + vel;
 

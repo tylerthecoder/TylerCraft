@@ -19,7 +19,7 @@ pub struct Rect3 {
     pub dim: Size3,
 }
 
-static DISTANCE_EPSILON: f32 = 0.03;
+static DISTANCE_EPSILON: f32 = 0.01;
 
 impl Rect3 {
     pub fn get_all_points(&self) -> [FineWorldPos; 8] {
@@ -102,6 +102,24 @@ impl Rect3 {
 }
 
 impl World {
+    pub fn get_rect3_intersection_infos(
+        &self,
+        rect: &Rect3,
+        end_pos: FineWorldPos,
+    ) -> Vec<LineSegmentIntersectionInfo> {
+        let diff = end_pos.sub(&rect.pos);
+
+        let line_segments = rect.get_all_points().map(|point| LineSegment {
+            start_pos: point,
+            end_pos: point.add(&diff),
+        });
+
+        line_segments
+            .iter()
+            .filter_map(|seg| self.get_line_segment_intersection_info(*seg))
+            .collect()
+    }
+
     pub fn get_moving_rect3_intersection_info(
         &self,
         rect: &Rect3,
@@ -144,14 +162,18 @@ impl World {
         // loop 3 times to handle multiple collisions one for each axis
         for iteration in 0..3 {
             // Check for collisions from current position to target
-            let intersection =
-                self.get_moving_rect3_intersection_info(&current_rect, current_end_pos);
+            let intersections = self.get_rect3_intersection_infos(&current_rect, current_end_pos);
 
-            if let Some(info) = intersection {
-                // Only adjust the axis that was hit, leave other axes unchanged
-                let hit_axis = info.world_plane.direction.to_axis();
-                let outward = info.world_plane.direction.is_outward();
-                let hit_plane_pos = info.world_plane.get_relative_y() as f32;
+            if intersections.is_empty() {
+                break;
+            }
+
+            // Calculate the intersection that would push the rect the least
+            let mut axis_diffs = Vec::new();
+            for intersection in &intersections {
+                let hit_axis = intersection.world_plane.direction.to_axis();
+                let outward = intersection.world_plane.direction.is_outward();
+                let hit_plane_pos = intersection.world_plane.get_relative_y() as f32;
 
                 let new_axis_pos = if outward {
                     hit_plane_pos + DISTANCE_EPSILON
@@ -160,19 +182,59 @@ impl World {
                     hit_plane_pos - (rect_dim_dir + DISTANCE_EPSILON)
                 };
 
-                // Only update the hit axis, preserve movement on other axes
-                current_end_pos.set_component_from_axis(hit_axis, new_axis_pos);
-                current_rect
-                    .pos
-                    .set_component_from_axis(hit_axis, new_axis_pos);
+                let current_end_pos_intersection_axis_val =
+                    current_end_pos.get_component_from_axis(hit_axis);
 
-                js_log(&format!(
-                    "intersection (iteration {}): {:?}, new_pos: {:?}",
-                    iteration, info, current_end_pos
-                ));
-            } else {
+                let diff = new_axis_pos - current_end_pos_intersection_axis_val;
+
+                axis_diffs.push((hit_axis, diff, new_axis_pos));
+            }
+
+            let min_diff = axis_diffs
+                .iter()
+                .min_by(|a, b| a.1.abs().partial_cmp(&b.1.abs()).unwrap_or(Ordering::Equal));
+
+            if min_diff.is_none() {
+                // No valid intersection found, break out of the loop
                 break;
             }
+
+            let (hit_axis, _, new_axis_pos) = min_diff.unwrap();
+
+            // Push the rect!
+            current_end_pos.set_component_from_axis(*hit_axis, *new_axis_pos);
+            current_rect
+                .pos
+                .set_component_from_axis(*hit_axis, *new_axis_pos);
+
+            let intersections_string = intersections
+                .iter()
+                .map(|info| format!("\n   {:?}", info))
+                .collect::<Vec<String>>()
+                .join(", ");
+
+            let axises_diff_string = axis_diffs
+                .iter()
+                .map(|(axis, diff, new_axis_pos)| {
+                    format!(
+                        "\n   axis: {:?}, diff: {:?}, new_axis_pos: {:?}",
+                        axis, diff, new_axis_pos
+                    )
+                })
+                .collect::<Vec<String>>()
+                .join(", ");
+
+            js_log(&format!(
+                "({:?}) hit_axis: {:?}, \naxises_diff: {}, \nintersections: {}, \nstart_pos: {:?}, \ntrying_to_go_to: {:?}, \ncurrent_rect_pos: {:?}, \ncurrent_end_pos: {:?}",
+                iteration,
+                hit_axis,
+                axises_diff_string,
+                intersections_string,
+                rect.pos,
+                end_pos,
+                current_rect.pos,
+                current_end_pos
+            ));
         }
 
         current_end_pos

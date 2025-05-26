@@ -65,7 +65,7 @@ pub struct JumpData {
 
 impl Default for JumpData {
     fn default() -> Self {
-        Self::new(0.5)
+        Self::new(0.25)
     }
 }
 

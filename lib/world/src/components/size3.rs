@@ -1,6 +1,10 @@
+use crate::{
+    entities::entity_component::impl_component,
+    positions::{ChunkPos, InnerChunkPos},
+    vec::{impl_vector_ops, Vector3Ops},
+};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
-use crate::{entities::entity_component::impl_component, positions::{ChunkPos, InnerChunkPos}, vec::{impl_vector_ops, Vector3Ops}};
 
 #[derive(Clone, Copy, Debug, Default, Serialize, Deserialize, PartialEq)]
 #[wasm_bindgen]
@@ -8,6 +12,12 @@ pub struct Size3 {
     pub x: f32,
     pub y: f32,
     pub z: f32,
+}
+
+impl Size3 {
+    pub fn new(x: f32, y: f32, z: f32) -> Self {
+        Self { x, y, z }
+    }
 }
 
 impl_component!(Size3);

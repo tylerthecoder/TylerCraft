@@ -1,7 +1,8 @@
 use crate::{
     block::{BlockData, BlockType},
-    components::fine_world_pos::FineWorldPos,
+    components::{fine_world_pos::FineWorldPos, size3::Size3},
     geometry::{ray::Ray, rotation::SphericalRotation},
+    utils::js_log,
     world::world_block::WorldBlock,
 };
 
@@ -58,8 +59,10 @@ impl EntityActionHandler for UsePrimaryItemAction {
         let selected_item = belt.selected_item;
         let belt_item = belt.belt_items[selected_item];
 
+        let eye_pos_offset = FineWorldPos::new(0.4, 1.5, 0.4);
+
         let camera_ray = Ray {
-            pos: *pos,
+            pos: pos.add(&eye_pos_offset),
             rot: *rot,
         };
 
@@ -67,6 +70,7 @@ impl EntityActionHandler for UsePrimaryItemAction {
 
         if let Some(pointed_at) = pointed_at {
             let looking_at_pos = pointed_at.block.world_pos;
+            js_log(&format!("looking_at_pos: {:?}", looking_at_pos));
             let new_pos = looking_at_pos.move_direction(&pointed_at.face);
             let block = WorldBlock {
                 block_type: belt_item,

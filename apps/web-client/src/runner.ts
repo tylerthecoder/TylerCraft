@@ -93,7 +93,7 @@ export async function run(id?: string) {
   );
 
   const onAction = (action: EntityActionDto) => {
-    console.log("ACTION", action);
+    // console.log("ACTION", action);
     game.game.handle_action_wasm(action);
   };
 

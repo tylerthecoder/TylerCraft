@@ -29,7 +29,6 @@ export class KeyboardPlayerEntityController extends PlayerController {
 
     // Pointer lock to the canvas
     webGlCanvas.addEventListener("mousedown", (e: MouseEvent) => {
-      console.log("mousedown", e.target);
       if (e.target !== webGlCanvas) {
         return;
       }
@@ -43,8 +42,6 @@ export class KeyboardPlayerEntityController extends PlayerController {
         return;
       }
 
-      console.log("mousedown", e.button);
-
       if (e.button === 2) {
         this.primaryAction();
       } else if (e.button === 0) {
@@ -53,19 +50,24 @@ export class KeyboardPlayerEntityController extends PlayerController {
       e.preventDefault();
     });
 
-    window.addEventListener("mousemove", (e: MouseEvent) => {
-      if (document.pointerLockElement === webGlCanvas) {
-        let moveX = e.movementX * CONFIG.player.mouseRotSpeed;
-        const moveY = e.movementY * CONFIG.player.mouseRotSpeed;
+    webGlCanvas.addEventListener("mousemove", async (e: MouseEvent) => {
+      // When you press esc, the pointer lock is released, but the mousemove event is still triggered. This is a hack to let the document.pointerLockElement be updated.
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
-        if (
-          this.canvasGScript.perspective === PlayerPerspective.ThirdPersonFront
-        ) {
-          moveX += Math.PI;
-          this.rotate(moveX, moveY);
-        } else {
-          this.rotate(moveX, moveY);
-        }
+      if (document.pointerLockElement !== webGlCanvas) {
+        return;
+      }
+
+      let moveX = e.movementX * CONFIG.player.mouseRotSpeed;
+      const moveY = e.movementY * CONFIG.player.mouseRotSpeed;
+
+      if (
+        this.canvasGScript.perspective === PlayerPerspective.ThirdPersonFront
+      ) {
+        moveX += Math.PI;
+        this.rotate(moveX, moveY);
+      } else {
+        this.rotate(moveX, moveY);
       }
     });
 

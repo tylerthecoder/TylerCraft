@@ -12,6 +12,8 @@ Claude found a bug that let the player fall through the world and came up with a
 
 There are still times where the player can go through the world a little and I'm not sure why it happens. It is very rare. But now jumping and gravity works well.
 
+Okay, I have fixed the movement. This is the best I have ever had it. I can run around complicated block structures and not clip through them or teleport. I had to do a better sorting system where I sorted by the amount a collision would move me, not how close one of my faces was to the collision.
+
 # 05_21_25
 
 I've worked on making the server runner. I'm relizing it doesn't make a lot of sense to serpatate out the sp-game-serivce and the runner. The cut between them isn't that clean. I will just make two different runners and then see what logic I need to abstract to make a good UI.

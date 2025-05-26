@@ -24,7 +24,7 @@ pub struct GravityScript {
 
 impl Default for GravityScript {
     fn default() -> Self {
-        Self { gravity: 0.05 }
+        Self { gravity: 0.025 }
     }
 }
 
