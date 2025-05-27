@@ -14,7 +14,7 @@ import {
 import { ClientDbGamesService } from "./services/sp-games-service";
 import { HudGScript } from "./game-scripts/hudRender";
 
-class SinglePlayerTerrainChunkGetter {
+export class SinglePlayerTerrainChunkGetter {
   private chunks_to_insert: Chunk[] = [];
   public terrianGen: TerrainGenerator;
 
@@ -66,7 +66,7 @@ export async function run(id?: string) {
   game.makeAndAddPlayer(main_player_uid);
   game.game.update();
 
-  const ents = game.getEntities();
+  const ents = game.game.entities.get_all_clone();
   console.log("Ents", ents);
 
   const webglGameScript = new WebGlGScript(game.game);
@@ -101,6 +101,13 @@ export async function run(id?: string) {
       return new KeyboardPlayerEntityController(
         game.game,
         onAction,
+        () => {
+          spGameService.saveGame(
+            game,
+            chunkGetter.terrianGen,
+            serializedSandbox
+          );
+        },
         main_player_uid,
         canvasGameScript
       );

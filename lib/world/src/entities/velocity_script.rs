@@ -1,17 +1,15 @@
-use serde::{Deserialize, Serialize};
-
+use super::{
+    entities::{EntityQuery, EntityQueryResults},
+    entity_component::impl_component,
+    game::GameSchedule,
+    game_script::GameScript,
+};
 use crate::{
     components::{fine_world_pos::FineWorldPos, size3::Size3, velocity::Velocity},
     geometry::rect3::Rect3,
     vec::Vector3Ops,
 };
-
-use super::{
-    entity::{EntityQuery, EntityQueryResults},
-    entity_component::impl_component,
-    game::GameSchedule,
-    game_script::GameScript,
-};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct Forces {

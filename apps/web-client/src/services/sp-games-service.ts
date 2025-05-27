@@ -118,7 +118,7 @@ export class ClientDbGamesService {
       const serializedGame = {
         gameId: data.game.id,
         name: data.game.name,
-        entities: data.game.serialize_entities_wasm(),
+        entities: data.game.entities.to_js(),
         world: data.game.world.serialize_wasm(),
         terrainGen: terrainGen.serialize(),
         sandbox: sandbox,

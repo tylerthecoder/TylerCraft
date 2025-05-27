@@ -1,8 +1,7 @@
-use serde::{Deserialize, Serialize};
+use wasm_bindgen::prelude::wasm_bindgen;
 
 use super::{
     entity::{Entity, EntityId},
-    entity_component::impl_component,
     player_belt_script::Belt,
     player_gravity_script::GravityData,
     player_jump_script::JumpData,
@@ -14,15 +13,8 @@ use crate::{
     geometry::rotation::SphericalRotation,
 };
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Flying {
-    pub is_flying: bool,
-    pub on_ground: bool,
-}
-impl_component!(Flying);
-
 pub fn make_player(uid: EntityId) -> Entity {
-    let mut ent = Entity::new(uid);
+    let mut ent = Entity::new(uid, "player".to_string());
     ent.add::<FineWorldPos>(FineWorldPos {
         x: 0.0,
         y: 10.0,
@@ -39,69 +31,48 @@ pub fn make_player(uid: EntityId) -> Entity {
     ent
 }
 
-pub mod wasm {
-    use crate::{
-        components::{fine_world_pos::FineWorldPos, size3::Size3, velocity::Velocity},
-        entities::{
-            entity::{Entity, EntityId},
-            player_belt_script::Belt,
-            player_gravity_script::GravityData,
-            player_jump_script::JumpData,
-            player_move_script::MovingDirection,
-            velocity_script::Forces,
-        },
-        geometry::rotation::SphericalRotation,
-    };
-    use serde::{Deserialize, Serialize};
-    use wasm_bindgen::prelude::wasm_bindgen;
+#[wasm_bindgen]
+pub struct Player {
+    entity: Entity,
+}
 
-    #[derive(Serialize, Deserialize, Debug, Clone)]
-    #[wasm_bindgen]
-    pub struct Player {
-        pub id: EntityId,
-        pub pos: FineWorldPos,
-        pub vel: Velocity,
-        pub rot: SphericalRotation,
-        pub jump_data: JumpData,
-        pub moving_direction: MovingDirection,
-        #[serde(default = "Player::default_size")]
-        pub size: Size3,
-        #[serde(default = "Belt::default")]
-        pub belt: Belt,
+#[wasm_bindgen]
+impl Player {
+    pub fn new(entity: Entity) -> Player {
+        Player { entity }
     }
 
-    impl Player {
-        fn default_size() -> Size3 {
-            Size3::new(0.8, 1.8, 0.8)
-        }
+    pub fn is_player(entity: &Entity) -> bool {
+        entity.name == "player"
     }
 
-    impl Player {
-        pub fn make_from_entity(entity: &Entity) -> Player {
-            Player {
-                id: entity.id,
-                pos: entity.get::<FineWorldPos>().unwrap().clone(),
-                vel: entity.get::<Velocity>().unwrap().clone(),
-                rot: entity.get::<SphericalRotation>().unwrap().clone(),
-                moving_direction: entity.get::<MovingDirection>().unwrap().to_owned(),
-                jump_data: entity.get::<JumpData>().unwrap().to_owned(),
-                size: entity.get::<Size3>().unwrap().to_owned(),
-                belt: entity.get::<Belt>().unwrap().to_owned(),
-            }
-        }
+    #[wasm_bindgen(getter)]
+    pub fn dim(&self) -> Size3 {
+        self.entity.get::<Size3>().unwrap().clone()
+    }
 
-        pub fn make_entity(&self) -> Entity {
-            let mut ent = Entity::new(self.id);
-            ent.add::<FineWorldPos>(self.pos);
-            ent.add::<Velocity>(self.vel);
-            ent.add::<SphericalRotation>(self.rot);
-            ent.add::<MovingDirection>(self.moving_direction);
-            ent.add::<Belt>(Belt::default());
-            ent.add::<JumpData>(JumpData::default());
-            ent.add::<GravityData>(GravityData { has_gravity: true });
-            ent.add::<Forces>(Forces::default());
-            ent.add::<Size3>(Size3::new(0.8, 1.8, 0.8));
-            ent
-        }
+    #[wasm_bindgen(getter)]
+    pub fn pos(&self) -> FineWorldPos {
+        self.entity.get::<FineWorldPos>().unwrap().clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn vel(&self) -> Velocity {
+        self.entity.get::<Velocity>().unwrap().clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn rot(&self) -> SphericalRotation {
+        self.entity.get::<SphericalRotation>().unwrap().clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn belt(&self) -> Belt {
+        self.entity.get::<Belt>().unwrap().clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn moving_direction(&self) -> MovingDirection {
+        self.entity.get::<MovingDirection>().unwrap().clone()
     }
 }

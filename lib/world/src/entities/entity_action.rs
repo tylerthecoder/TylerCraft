@@ -1,12 +1,11 @@
+use super::entities::Entities;
+use super::entity::{Entity, EntityId};
+use super::game::GameSchedule;
 use crate::entities::player_belt_script::UsePrimaryItemActionData;
 use crate::entities::player_move_script::MoveActionData;
 use crate::entities::player_rot_script::RotateActionData;
 use crate::utils::js_log;
 use crate::world::World;
-
-use super::entity::{Entity, EntityHolder, EntityId};
-use super::game::GameSchedule;
-use serde::Serialize;
 use std::any::Any;
 use std::fmt::Debug;
 use wasm_bindgen::prelude::*;
@@ -97,11 +96,7 @@ impl EntityActionHolder {
         self.handlers.push(handler);
     }
 
-    pub fn handle_actions(
-        &mut self,
-        world: &World,
-        entity_holder: &mut EntityHolder,
-    ) -> GameSchedule {
+    pub fn handle_actions(&mut self, world: &World, entity_holder: &mut Entities) -> GameSchedule {
         let mut schedule = GameSchedule::empty();
         for action in &self.actions {
             // js_log(&format!("Handling action: {:?}", action));

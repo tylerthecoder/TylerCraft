@@ -1,8 +1,4 @@
-use crate::{
-    entities::entity_component::impl_component,
-    positions::{ChunkPos, InnerChunkPos},
-    vec::{impl_vector_ops, Vector3Ops},
-};
+use crate::{entities::entity_component::impl_component, vec::impl_vector_ops};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 

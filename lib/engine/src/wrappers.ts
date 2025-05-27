@@ -1,17 +1,22 @@
-import * as WorldWasm from "@craft/rust-world";
 import { Vector2D, Vector3D } from "./vector.js";
-import { Camera } from "./camera.js";
 import { GameScript } from "./game-script.js";
 import {
   SandBoxGScript,
   TerrainGenerator,
-  SerializedEntityHolder,
   World,
   Game,
-  EntityHolder,
-  RotateActionData,
+  Entities,
+  Chunk,
+  BlockType,
+  Direction,
+  Player,
+  EntityActionDto,
+  JumpAction,
+  SphericalRotation,
+  RotateAction,
+  MoveAction,
+  WasmGameScript,
 } from "@craft/rust-world";
-export * as WorldModuleTypes from "@craft/rust-world";
 
 export interface ISerializedAction {
   entity_id: number;
@@ -29,7 +34,7 @@ export interface IServerGameMetadata {
 export interface ISerializedGame {
   gameId: string;
   name: string;
-  entities: SerializedEntityHolder;
+  entities: Entities;
   world: World;
   terrainGen: TerrainGenerator;
   sandbox: SandBoxGScript;
@@ -42,7 +47,7 @@ export interface IGameMetadata {
 
 export const serializedGameToGame = (serializedGame: ISerializedGame): Game => {
   const world = World.deserialize_wasm(serializedGame.world);
-  const entityHolder = EntityHolder.deserialize_wasm(serializedGame.entities);
+  const entityHolder = Entities.from_js(serializedGame.entities);
   const game = Game.build(
     serializedGame.gameId,
     serializedGame.name,
@@ -52,8 +57,8 @@ export const serializedGameToGame = (serializedGame: ISerializedGame): Game => {
   return game;
 };
 
-export const deserializeChunk = (chunk: ISerializedChunk): WorldWasm.Chunk => {
-  return WorldWasm.Chunk.deserialize(chunk);
+export const deserializeChunk = (chunk: ISerializedChunk): Chunk => {
+  return Chunk.deserialize(chunk);
 };
 
 export interface ISerializedChunk {
@@ -61,7 +66,7 @@ export interface ISerializedChunk {
     x: number;
     y: number;
   };
-  blocks: WorldWasm.BlockType[];
+  blocks: BlockType[];
   block_data: ("None" | { Image: string })[];
 }
 
@@ -91,12 +96,6 @@ export type GameDiff = {
   updated_chunks: number[];
 };
 
-export interface ILookingAtData {
-  cube: Cube;
-  face: WorldWasm.Direction;
-  dist: number;
-}
-
 export type ISerializedVisibleFaces = Array<{
   world_pos: RustPos;
   faces: [boolean, boolean, boolean, boolean, boolean, boolean];
@@ -107,64 +106,33 @@ export type GameDiffWrapper = {
   updated_chunks: number[];
 };
 
-// export type GameScript = {
-//   onDiff: (diff: GameDiff) => void;
-// };
-
 export type Cube = {
-  type: WorldWasm.BlockType;
+  type: BlockType;
   pos: Vector3D;
 };
-
-// export type ChunkMesh = {
-//   mesh: Array<{ block: Cube; faces: WorldWasm.Direction[] }>;
-//   chunkPos: { x: number; y: number };
-// };
 
 type RustChunkMesh = Array<[RustBlock, { data: boolean[] }]>;
 
 export class ChunkMeshWrapper {
-  mesh: Array<[BlockWrapper, WorldWasm.Direction[]]>;
+  mesh: Array<[BlockWrapper, Direction[]]>;
 
   constructor(mesh: RustChunkMesh) {
     this.mesh = mesh.map(([block, faces]) => [
       new BlockWrapper(block),
-      faces.data.map((_, i) => i as WorldWasm.Direction),
+      faces.data.map((_, i) => i as Direction),
     ]);
   }
 }
 
-export class PlayerWrapper {
-  speed = 0;
-  max_speed = 0;
-  gravity = 0;
-  uid = 0;
-  pos: Vector3D = new Vector3D([0, 0, 0]);
-  dim: Vector3D = new Vector3D([0, 0, 0]);
-  rot: Vector3D = new Vector3D([0, 0, 0]);
-  is_flying = false;
-  on_ground = false;
-  distanceMoved = 0;
-  moving_direction: WorldWasm.Direction | undefined;
-
-  constructor(player: WorldWasm.Player) {
-    this.uid = player.id;
-    this.pos = new Vector3D([player.pos.x, player.pos.y, player.pos.z]);
-    this.dim = new Vector3D([player.size.x, player.size.y, player.size.z]);
-    this.rot = new Vector3D([0, player.rot.phi, player.rot.theta]);
-    this.moving_direction = player.moving_direction;
-  }
-}
-
 type RustBlock = {
-  block_type: WorldWasm.BlockType;
+  block_type: BlockType;
   extra_data: string;
   world_pos: RustPos;
 };
 
 export class BlockWrapper {
   pos: Vector3D;
-  type: WorldWasm.BlockType;
+  type: BlockType;
 
   constructor(block: RustBlock) {
     this.pos = new Vector3D([
@@ -177,10 +145,10 @@ export class BlockWrapper {
 }
 
 export class GameWrapper {
-  constructor(public game: WorldWasm.Game) {}
+  constructor(public game: Game) {}
 
   static makeGame(): GameWrapper {
-    const game = new WorldWasm.Game();
+    const game = new Game();
     return new GameWrapper(game);
   }
 
@@ -189,31 +157,31 @@ export class GameWrapper {
   }
 
   serializeEntities(): SerializedEntity[] {
-    return this.game.serialize_entities_wasm();
+    return this.game.entities.to_js();
   }
 
-  makeJumpAction(entityId: number): WorldWasm.EntityActionDto {
-    return WorldWasm.JumpAction.make_wasm(entityId);
+  makeJumpAction(entityId: number): EntityActionDto {
+    return JumpAction.make_wasm(entityId);
   }
 
   makeRotateAction(
     entityId: number,
     theta: number,
     phi: number
-  ): WorldWasm.EntityActionDto {
-    const rotDiff = WorldWasm.SphericalRotation.new_wasm(theta, phi);
-    return WorldWasm.RotateAction.make_wasm(entityId, rotDiff);
+  ): EntityActionDto {
+    const rotDiff = SphericalRotation.new_wasm(theta, phi);
+    return RotateAction.make_wasm(entityId, rotDiff);
   }
 
   makeMoveAction(
     entityId: number,
-    direction: WorldWasm.Direction | "None"
-  ): WorldWasm.EntityActionDto {
+    direction: Direction | "None"
+  ): EntityActionDto {
     console.log("Making move action", entityId, direction);
     if (direction === "None") {
-      return WorldWasm.MoveAction.make_wasm(entityId, undefined);
+      return MoveAction.make_wasm(entityId, undefined);
     }
-    return WorldWasm.MoveAction.make_wasm(entityId, direction);
+    return MoveAction.make_wasm(entityId, direction);
   }
 
   getChunkPosFromChunkId(chunkId: number): Vector2D {
@@ -232,7 +200,7 @@ export class GameWrapper {
   }
 
   makeAndAddGameScript(script: GameScript) {
-    const wasmScript = new WorldWasm.WasmGameScript(script);
+    const wasmScript = new WasmGameScript(script);
     this.game.add_game_script_wasm(wasmScript);
   }
 
@@ -245,9 +213,12 @@ export class GameWrapper {
     return new ChunkMeshWrapper(val);
   }
 
-  getPlayer(uid: number): PlayerWrapper {
-    const player: WorldWasm.Player = this.game.get_player_wasm(uid);
-    return new PlayerWrapper(player);
+  getPlayer(uid: number): Player {
+    const player = this.game.entities.get_entity_as_player(uid);
+    if (!player) {
+      throw new Error("Player not found");
+    }
+    return player;
   }
 
   getBlock(pos: Vector3D): BlockWrapper {
@@ -255,19 +226,9 @@ export class GameWrapper {
     return new BlockWrapper(block);
   }
 
-  getEntities(): PlayerWrapper[] {
-    const entities: WorldWasm.Player[] = this.game.get_players_wasm();
-    return entities.map((entity) => this.getPlayer(entity.id));
-  }
-
   getLoadedChunkIds(): number[] {
     const chunkIds = this.game.get_loaded_chunk_ids_wasm();
     return Array.from(chunkIds).map(Number);
-  }
-
-  getPointedAtBlock(camera: Camera): ILookingAtData {
-    // todo
-    throw new Error("Not implemented");
   }
 
   getWorldPosFromChunkPos(chunkPos: Vector2D): Vector3D {

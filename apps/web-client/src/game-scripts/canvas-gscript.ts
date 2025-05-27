@@ -7,14 +7,13 @@ import {
   makeThirdPersonBackCamera,
   makeThirdPersonFrontCamera,
   makeXRCamera,
-  PlayerWrapper,
   Vector2D,
   Vector3D,
 } from "@craft/engine";
 import { WebGlGScript } from "./webgl-gscript";
 import { Renderer } from "../renders/renderer";
 import { ChunkRenderer } from "../renders/chunkRender";
-import { BlockType, Game } from "@craft/rust-world";
+import { BlockType, Entity, Game, Player } from "@craft/rust-world";
 import { PlayerRenderer } from "../renders/playerRender";
 
 type Config = {
@@ -69,7 +68,7 @@ export class CanvasGameScript extends GameScript<Config> {
     });
 
     // Create renderers for initial entities
-    for (const entity of this.gameWrapper.getEntities()) {
+    for (const entity of this.gameWrapper.game.entities.get_all_clone()) {
       this.onNewEntity(entity);
     }
 
@@ -108,7 +107,12 @@ export class CanvasGameScript extends GameScript<Config> {
     }
 
     for (const entityId of this.lastDiff.updated_entities) {
-      const entity = this.gameWrapper.getPlayer(entityId);
+      const entity =
+        this.gameWrapper.game.entities.get_entity_by_id_clone(entityId);
+      if (!entity) {
+        console.log("CanvasGameScript: Entity not found", entityId);
+        continue;
+      }
       this.onNewEntity(entity);
     }
 
@@ -297,24 +301,26 @@ export class CanvasGameScript extends GameScript<Config> {
     this.totTime = time;
   }
 
-  onNewEntity(entity: PlayerWrapper): void {
+  onNewEntity(entity: Entity): void {
     console.log("CanvasGameScript: Adding entity", entity);
     // if (entity instanceof PlayerWrapper) {
-    const renderer = new PlayerRenderer(
-      this.game,
-      this.webGlGScript,
-      entity.uid
-    );
-    this.entityRenderers.set(entity.uid, renderer);
+    if (Player.is_player(entity)) {
+      const renderer = new PlayerRenderer(
+        this.game,
+        this.webGlGScript,
+        entity.id
+      );
+      this.entityRenderers.set(entity.id, renderer);
+    }
     // } else if (entity instanceof Projectile) {
     //   const renderer = new SphereRenderer(this.webGlGScript, entity);
     //   this.entityRenderers.set(entity.uid, renderer);
     // }
   }
 
-  onRemovedEntity(entity: PlayerWrapper): void {
+  onRemovedEntity(entity: Entity): void {
     console.log("CanvasGameScript: Removing entity", entity);
-    this.entityRenderers.delete(entity.uid);
+    this.entityRenderers.delete(entity.id);
   }
 
   onChunkUpdate(chunkId: number): void {

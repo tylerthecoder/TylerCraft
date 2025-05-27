@@ -19,6 +19,7 @@ export class KeyboardPlayerEntityController extends PlayerController {
   constructor(
     game: Game,
     handleAction: (action: EntityActionDto) => void,
+    private save: () => void,
     playerId: number,
     private canvasGScript: CanvasGameScript
   ) {
@@ -139,6 +140,9 @@ export class KeyboardPlayerEntityController extends PlayerController {
         break;
       case "j":
         this.debugBlock();
+        break;
+      case "p":
+        this.save();
         break;
       case " ":
         if (this.hasJumped) {

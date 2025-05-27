@@ -1,13 +1,11 @@
-use serde::Serialize;
-use wasm_bindgen::prelude::wasm_bindgen;
-
 use super::{
-    entity::{EntityQuery, EntityQueryResults},
-    game::{Game, GameDiff, GameSchedule},
+    entities::{EntityQuery, EntityQueryResults},
+    game::{Game, GameSchedule},
     game_script::GameScript,
-    terrain_gen::TerrainGenerator,
 };
 use crate::{components::fine_world_pos::FineWorldPos, positions::ChunkPos, world::World};
+use serde::Serialize;
+use wasm_bindgen::prelude::wasm_bindgen;
 
 pub trait RequestChunk: std::fmt::Debug {
     fn request_chunk(&self, chunk_pos: ChunkPos);

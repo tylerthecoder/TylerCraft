@@ -5,7 +5,6 @@ use super::{
     entity_action::{EntityActionDto, EntityActionDtoMaker, EntityActionHandler},
     entity_component::impl_component,
     game::GameSchedule,
-    player::Flying,
 };
 use crate::{
     components::velocity::Velocity, entities::velocity_script::Forces, utils::js_log, world::World,

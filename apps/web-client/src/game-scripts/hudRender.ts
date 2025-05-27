@@ -1,4 +1,4 @@
-import { GameScript, GameWrapper } from "@craft/engine";
+import { GameScript } from "@craft/engine";
 import { CanvasGameScript } from "../game-scripts/canvas-gscript";
 import { getEleOrError, hideElement, IS_MOBILE } from "../utils";
 import { GameMenu } from "../renders/gameMenuRender";
@@ -127,7 +127,11 @@ export class HudGScript extends GameScript {
   }
 
   update(_delta: number): void {
-    const player = this.game.get_player_no_copy_wasm(this.mainPlayerUid);
+    const player = this.game.entities.get_entity_as_player(this.mainPlayerUid);
+    if (!player) {
+      console.log("HudGScript: Player not found", this.mainPlayerUid);
+      return;
+    }
 
     this.clearScreen();
 

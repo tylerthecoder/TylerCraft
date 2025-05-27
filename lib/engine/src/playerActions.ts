@@ -39,8 +39,11 @@ export abstract class PlayerController {
   }
 
   beltRight() {
-    const index = this.game.get_player_no_copy_wasm(this.playerId).belt
-      .selected_item;
+    const player = this.game.entities.get_entity_as_player(this.playerId);
+    if (!player) {
+      return;
+    }
+    const index = player.belt.selected_item;
     if (index === 9) {
       return;
     }
@@ -49,8 +52,11 @@ export abstract class PlayerController {
   }
 
   beltLeft() {
-    const index = this.game.get_player_no_copy_wasm(this.playerId).belt
-      .selected_item;
+    const player = this.game.entities.get_entity_as_player(this.playerId);
+    if (!player) {
+      return;
+    }
+    const index = player.belt.selected_item;
     if (index === 0) {
       return;
     }

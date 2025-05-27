@@ -1,6 +1,6 @@
 import { CONFIG } from "./config.js";
-import { PlayerWrapper } from "./wrappers.js";
 import { Vector3D } from "./vector.js";
+import { Player } from "@craft/rust-world";
 
 export type Camera = {
   // (x, y, z)
@@ -9,33 +9,34 @@ export type Camera = {
   rot: Vector3D;
 };
 
-const getPlayerOffset = (player: PlayerWrapper) => {
-  return new Vector3D([
-    player.dim.get(0) / 2,
-    player.dim.get(1) * (9 / 10),
-    player.dim.get(2) / 2,
-  ]);
+const getPlayerOffset = (player: Player) => {
+  const dim = player.dim;
+  return new Vector3D([dim.x / 2, dim.y * (9 / 10), dim.z / 2]);
 };
 
-export const makeCameraForPlayer = (player: PlayerWrapper) => {
-  const adjustedRot = player.rot.add(new Vector3D([0, 0, 0]));
+export const makeCameraForPlayer = (player: Player) => {
+  const pos = new Vector3D([player.pos.x, player.pos.y, player.pos.z]);
+  const rot = new Vector3D([0, player.rot.phi, player.rot.theta]);
+  const adjustedRot = rot.add(new Vector3D([0, 0, 0]));
   return {
-    pos: player.pos.add(getPlayerOffset(player)),
+    pos: pos.add(getPlayerOffset(player)),
     rot: adjustedRot,
   };
 };
 
 export const makeThirdPersonBackCamera = (
-  player: PlayerWrapper,
+  player: Player,
   dist = CONFIG.player.thirdPersonCamDist
 ) => {
-  const rot = player.rot;
-  const pos = player.rot
+  const rot = new Vector3D([0, player.rot.phi, player.rot.theta]);
+  const player_pos = new Vector3D([player.pos.x, player.pos.y, player.pos.z]);
+
+  const pos = rot
     .add(new Vector3D([dist, 0, 0]))
     .toCartesianCoords()
     .multiply(new Vector3D([1, -1, 1]))
     .add(getPlayerOffset(player))
-    .add(player.pos);
+    .add(player_pos);
   return {
     pos,
     rot,
@@ -43,16 +44,19 @@ export const makeThirdPersonBackCamera = (
 };
 
 export const makeThirdPersonFrontCamera = (
-  player: PlayerWrapper,
+  player: Player,
   dist = CONFIG.player.thirdPersonCamDist
 ) => {
-  const rot = player.rot.add(new Vector3D([0, Math.PI, 0]));
-  const pos = player.rot
+  const player_rot = new Vector3D([0, player.rot.phi, player.rot.theta]);
+  const player_pos = new Vector3D([player.pos.x, player.pos.y, player.pos.z]);
+
+  const rot = player_rot.add(new Vector3D([0, Math.PI, 0]));
+  const pos = player_rot
     .add(new Vector3D([dist, Math.PI, 0]))
     .toCartesianCoords()
     .multiply(new Vector3D([1, -1, 1]))
     .add(getPlayerOffset(player))
-    .add(player.pos);
+    .add(player_pos);
 
   return {
     pos,
@@ -60,9 +64,10 @@ export const makeThirdPersonFrontCamera = (
   };
 };
 
-export const makeXRCamera = (player: PlayerWrapper): Camera => {
-  const pos = getPlayerOffset(player).add(player.pos);
-  const rot = player.rot;
+export const makeXRCamera = (player: Player): Camera => {
+  const player_pos = new Vector3D([player.pos.x, player.pos.y, player.pos.z]);
+  const pos = getPlayerOffset(player).add(player_pos);
+  const rot = new Vector3D([0, player.rot.phi, player.rot.theta]);
   return {
     pos,
     rot,

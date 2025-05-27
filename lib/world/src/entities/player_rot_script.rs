@@ -2,7 +2,6 @@ use super::entity::{Entity, EntityId};
 use super::entity_action::{EntityActionDto, EntityActionDtoMaker, EntityActionHandler};
 use super::game::GameSchedule;
 use crate::geometry::rotation::SphericalRotation;
-use crate::utils::js_log;
 use crate::world::World;
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::wasm_bindgen;

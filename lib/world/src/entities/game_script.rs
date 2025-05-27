@@ -1,11 +1,18 @@
-use super::entity::{EntityId, EntityQuery, EntityQueryResults};
+use super::entities::{EntityQuery, EntityQueryResults};
+use super::entity::EntityId;
 use super::game::{GameDiff, GameSchedule};
 use crate::world::World;
 use std::any::Any;
 use std::fmt::Debug;
+use wasm_bindgen::prelude::wasm_bindgen;
+use wasm_bindgen::JsValue;
 
 pub trait GameScript: Any + Debug {
-    fn update(&mut self, world: &World, query_results: EntityQueryResults) -> Option<GameSchedule> {
+    fn update(
+        &mut self,
+        _world: &World,
+        _query_results: EntityQueryResults,
+    ) -> Option<GameSchedule> {
         None
     }
 
@@ -13,25 +20,10 @@ pub trait GameScript: Any + Debug {
         EntityQuery::new()
     }
 
-    fn on_diff(&self, diff: GameDiff) {
+    fn on_diff(&self, _diff: GameDiff) {
         // Default implementation does nothing
     }
 }
-
-macro_rules! impl_script {
-    ($type:ty) => {
-        impl Component for $type {
-            fn as_any(&self) -> &dyn std::any::Any {
-                self
-            }
-            fn as_any_mut(&mut self) -> &mut dyn std::any::Any {
-                self
-            }
-        }
-    };
-}
-pub(crate) use impl_script;
-use wasm_bindgen::prelude::wasm_bindgen;
 
 impl std::error::Error for ScriptNotFoundError {}
 
@@ -69,27 +61,39 @@ impl EntityScriptHolder {
     pub fn iter_mut(&mut self) -> std::slice::IterMut<Box<dyn GameScript>> {
         self.scripts.iter_mut()
     }
+}
 
-    // pub fn get_script<T>(&self, entity_id: EntityId) -> Option<&T>
-    // where
-    //     T: EntityScript + Any,
-    // {
-    //     let ent_scripts = self.get_scripts_for_entity(entity_id);
+#[wasm_bindgen]
+#[derive(Debug)]
+pub struct WasmGameScript {
+    context: JsValue,
+    on_diff_jsfn: js_sys::Function,
+}
 
-    //     let script = ent_scripts
-    //         .iter()
-    //         .find_map(|script| script.as_any().downcast_ref::<T>());
+#[wasm_bindgen]
+impl WasmGameScript {
+    #[wasm_bindgen(constructor)]
+    pub fn make(val: JsValue) -> WasmGameScript {
+        let on_diff_jsfn = js_sys::Reflect::get(&val, &JsValue::from("onDiff")).unwrap();
+        WasmGameScript {
+            on_diff_jsfn: on_diff_jsfn.into(),
+            context: val,
+        }
+    }
+}
 
-    //     script
-    // }
+impl GameScript for WasmGameScript {
+    fn update(
+        &mut self,
+        _world: &World,
+        _query_results: EntityQueryResults,
+    ) -> Option<GameSchedule> {
+        None
+    }
 
-    // pub fn copy(&self) -> EntityScriptHolder {
-    //     EntityScriptHolder {
-    //         scripts: self
-    //             .scripts
-    //             .into_iter()
-    //             .map(|(id, script)| (id, script.clone()))
-    //             .collect(),
-    //     }
-    // }
+    fn on_diff(&self, diff: GameDiff) -> () {
+        // console log diff
+        let val = serde_wasm_bindgen::to_value(&diff).unwrap();
+        self.on_diff_jsfn.call1(&self.context, &val).unwrap();
+    }
 }

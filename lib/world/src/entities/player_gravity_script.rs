@@ -1,16 +1,14 @@
-use serde::{Deserialize, Serialize};
-
-use crate::{components::velocity::Velocity, utils::js_log, vec::Vector3Ops, world::World};
-
 use super::{
-    entity::{EntityQuery, EntityQueryResults},
+    entities::{EntityQuery, EntityQueryResults},
     entity_component::impl_component,
     game::GameSchedule,
     game_script::GameScript,
     velocity_script::Forces,
 };
+use crate::{components::velocity::Velocity, world::World};
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize, Default)]
+#[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct GravityData {
     pub has_gravity: bool,
 }
