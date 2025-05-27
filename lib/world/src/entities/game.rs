@@ -18,6 +18,7 @@ use crate::{
         velocity_script::VelocityScript,
     },
     positions::ChunkPos,
+    utils::js_log,
     world::{world_block::WorldBlock, World},
 };
 use serde::{Deserialize, Serialize};

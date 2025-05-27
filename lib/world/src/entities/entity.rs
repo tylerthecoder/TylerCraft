@@ -1,12 +1,17 @@
 use super::entity_component::{Component, COMPONENT_REGISTRY};
 use super::fireball::Fireball;
 use super::player::Player;
+use rand::Rng;
 use serde::{de, ser::SerializeStruct, Deserializer};
 use serde::{Deserialize, Serialize, Serializer};
 use std::{any::TypeId, fmt::Debug};
 use wasm_bindgen::prelude::*;
 
 pub type EntityId = u32;
+
+pub fn make_entity_id() -> EntityId {
+    rand::thread_rng().gen_range(0..=u32::MAX)
+}
 
 #[derive(Debug)]
 #[wasm_bindgen(getter_with_clone)]

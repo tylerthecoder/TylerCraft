@@ -1,13 +1,12 @@
-use wasm_bindgen::prelude::wasm_bindgen;
-
-use crate::components::{fine_world_pos::FineWorldPos, size3::Size3, velocity::Velocity};
-
 use super::{
-    entity::{Entity, EntityId},
+    entity::{make_entity_id, Entity},
     velocity_script::Forces,
 };
+use crate::components::{fine_world_pos::FineWorldPos, size3::Size3, velocity::Velocity};
+use wasm_bindgen::prelude::wasm_bindgen;
 
-pub fn make_fireball(uid: EntityId, vel: Velocity) -> Entity {
+pub fn make_fireball(vel: Velocity) -> Entity {
+    let uid = make_entity_id();
     let mut ent = Entity::new(uid, "fireball".to_string());
     ent.add::<FineWorldPos>(FineWorldPos {
         x: 5.0,

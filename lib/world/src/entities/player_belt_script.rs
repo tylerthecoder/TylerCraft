@@ -61,7 +61,7 @@ impl EntityActionHandler for UsePrimaryItemAction {
         let belt_item = belt.belt_items[selected_item];
 
         if let Item::Fireball = belt_item {
-            let fireball = make_fireball(entity.id, Velocity::new(0.0, 0.0, 0.0));
+            let fireball = make_fireball(Velocity::new(0.1, 0.0, 0.0));
             schedule.add_entity(fireball);
         } else if let Item::Block(block_type) = belt_item {
             let eye_pos_offset = FineWorldPos::new(0.4, 1.5, 0.4);
