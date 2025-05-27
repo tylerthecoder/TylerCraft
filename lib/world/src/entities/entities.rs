@@ -1,5 +1,6 @@
 use super::entity::{Entity, EntityId};
 use super::entity_component::Component;
+use super::fireball::Fireball;
 use super::player::Player;
 use serde::{Deserialize, Serialize};
 use serde_wasm_bindgen::{from_value, to_value};
@@ -107,6 +108,10 @@ impl Entities {
 
     pub fn get_entity_as_player(&self, id: EntityId) -> Option<Player> {
         self.get_entity_by_id(id).map(|entity| entity.as_player())
+    }
+
+    pub fn get_entity_as_fireball(&self, id: EntityId) -> Option<Fireball> {
+        self.get_entity_by_id(id).map(|entity| entity.as_fireball())
     }
 
     pub fn get_all_clone(&self) -> Vec<Entity> {

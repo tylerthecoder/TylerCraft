@@ -4,7 +4,7 @@ import { getEleOrError, hideElement, IS_MOBILE } from "../utils";
 import { GameMenu } from "../renders/gameMenuRender";
 import React from "react";
 import ReactDOM from "react-dom";
-import { Game, Player } from "@craft/rust-world";
+import { Game, Item, Player } from "@craft/rust-world";
 import TextureMapper from "../textureMapper";
 
 export class HudGScript extends GameScript {
@@ -163,7 +163,7 @@ export class HudGScript extends GameScript {
 
     // draw the icons
     for (let i = 0; i < belt.get_num_items(); i++) {
-      const item = belt.get_item(i);
+      const item: Item = belt.get_item_js(i);
       if (!item) {
         continue;
       }

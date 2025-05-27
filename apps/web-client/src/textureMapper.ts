@@ -1,5 +1,4 @@
-import { Item, ThrowableItem } from "@craft/engine/item";
-import { BlockType } from "@craft/rust-world";
+import { BlockType, Item } from "@craft/rust-world";
 
 const TEXTURE_ATLAS_WIDTH = 4;
 const TEXTURE_ATLAS_HEIGHT = 4;
@@ -7,8 +6,10 @@ const TEXTURE_ATLAS_HEIGHT = 4;
 const xStepVal = 1 / TEXTURE_ATLAS_WIDTH;
 const yStepVal = 1 / TEXTURE_ATLAS_HEIGHT;
 
+type ItemKey = BlockType | "Fireball";
+
 const textureData = new Map<
-  Item,
+  ItemKey,
   { offsetX: number; offsetY: number } | null
 >();
 textureData.set(BlockType.Grass, { offsetX: 0, offsetY: 0 });
@@ -21,7 +22,7 @@ textureData.set(BlockType.RedFlower, { offsetX: 0, offsetY: 2 });
 textureData.set(BlockType.Water, { offsetX: 2, offsetY: 2 });
 textureData.set(BlockType.Planks, { offsetX: 3, offsetY: 0 });
 textureData.set(BlockType.Red, { offsetX: 3, offsetY: 2 });
-textureData.set(ThrowableItem.Fireball, { offsetX: 3, offsetY: 1 });
+textureData.set("Fireball", { offsetX: 3, offsetY: 1 });
 
 class Textures {
   private getTextureData(type: BlockType) {
@@ -68,7 +69,17 @@ class Textures {
   }
 
   public getBlockPreviewCords(type: Item, width: number, height: number) {
-    const { offsetX, offsetY } = textureData.get(type)!;
+    const itemKey =
+      typeof type === "object" && "Block" in type ? type.Block : type;
+    const data = textureData.get(itemKey);
+    if (!data) {
+      console.log(textureData);
+      throw new Error(
+        `Texture data for texture ${JSON.stringify(type)} was not found`
+      );
+    }
+
+    const { offsetX, offsetY } = data;
 
     return {
       x1: offsetX * xStepVal * width,

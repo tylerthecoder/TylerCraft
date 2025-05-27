@@ -1,4 +1,5 @@
 use super::entity_component::{Component, COMPONENT_REGISTRY};
+use super::fireball::Fireball;
 use super::player::Player;
 use serde::{de, ser::SerializeStruct, Deserializer};
 use serde::{Deserialize, Serialize, Serializer};
@@ -134,6 +135,10 @@ impl Entity {
 impl Entity {
     pub fn as_player(&self) -> Player {
         Player::new(self.clone())
+    }
+
+    pub fn as_fireball(&self) -> Fireball {
+        Fireball::from_entity(self.clone())
     }
 
     pub fn to_js(&self) -> JsValue {

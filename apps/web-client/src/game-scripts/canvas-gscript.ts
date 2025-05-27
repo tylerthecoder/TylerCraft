@@ -13,8 +13,9 @@ import {
 import { WebGlGScript } from "./webgl-gscript";
 import { Renderer } from "../renders/renderer";
 import { ChunkRenderer } from "../renders/chunkRender";
-import { BlockType, Entity, Game, Player } from "@craft/rust-world";
+import { BlockType, Entity, Fireball, Game, Player } from "@craft/rust-world";
 import { PlayerRenderer } from "../renders/playerRender";
+import { SphereRenderer } from "../renders/sphereRender";
 
 type Config = {
   renderDistance: number;
@@ -107,6 +108,7 @@ export class CanvasGameScript extends GameScript<Config> {
     }
 
     for (const entityId of this.lastDiff.updated_entities) {
+      console.log("CanvasGameScript: Updating entity", entityId);
       const entity =
         this.gameWrapper.game.entities.get_entity_by_id_clone(entityId);
       if (!entity) {
@@ -305,17 +307,22 @@ export class CanvasGameScript extends GameScript<Config> {
     console.log("CanvasGameScript: Adding entity", entity);
     // if (entity instanceof PlayerWrapper) {
     if (Player.is_player(entity)) {
+      console.log("CanvasGameScript: Adding player");
       const renderer = new PlayerRenderer(
         this.game,
         this.webGlGScript,
         entity.id
       );
       this.entityRenderers.set(entity.id, renderer);
+    } else if (Fireball.is_fireball(entity)) {
+      console.log("CanvasGameScript: Adding fireball");
+      const renderer = new SphereRenderer(
+        this.game,
+        this.webGlGScript,
+        entity.id
+      );
+      this.entityRenderers.set(entity.id, renderer);
     }
-    // } else if (entity instanceof Projectile) {
-    //   const renderer = new SphereRenderer(this.webGlGScript, entity);
-    //   this.entityRenderers.set(entity.uid, renderer);
-    // }
   }
 
   onRemovedEntity(entity: Entity): void {

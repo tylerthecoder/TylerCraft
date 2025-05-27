@@ -1,13 +1,14 @@
 use crate::{
     block::{BlockData, BlockType},
-    components::fine_world_pos::FineWorldPos,
+    components::{fine_world_pos::FineWorldPos, velocity::Velocity},
     geometry::{ray::Ray, rotation::SphericalRotation},
     utils::js_log,
     world::world_block::WorldBlock,
 };
 
-use super::{entity_action::EntityActionHandler, game::GameSchedule};
+use super::{entity_action::EntityActionHandler, fireball::make_fireball, game::GameSchedule};
 use serde::{Deserialize, Serialize};
+use tsify::Tsify;
 
 use super::{
     entity::{Entity, EntityId},
@@ -16,8 +17,9 @@ use super::{
 };
 use crate::direction::DirectionVectorExtension;
 use crate::{vec::Vector3Ops, world::World};
-use wasm_bindgen::prelude::wasm_bindgen;
+use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 
+// ================== Primary Action ==================
 #[wasm_bindgen]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct UsePrimaryItemActionData {}
@@ -58,32 +60,38 @@ impl EntityActionHandler for UsePrimaryItemAction {
         let selected_item = belt.selected_item;
         let belt_item = belt.belt_items[selected_item];
 
-        let eye_pos_offset = FineWorldPos::new(0.4, 1.5, 0.4);
+        if let Item::Fireball = belt_item {
+            let fireball = make_fireball(entity.id, Velocity::new(0.0, 0.0, 0.0));
+            schedule.add_entity(fireball);
+        } else if let Item::Block(block_type) = belt_item {
+            let eye_pos_offset = FineWorldPos::new(0.4, 1.5, 0.4);
 
-        let camera_ray = Ray {
-            pos: pos.add(&eye_pos_offset),
-            rot: *rot,
-        };
-
-        let pointed_at = world.get_pointed_at_block(camera_ray);
-
-        if let Some(pointed_at) = pointed_at {
-            let looking_at_pos = pointed_at.block.world_pos;
-            js_log(&format!("looking_at_pos: {:?}", looking_at_pos));
-            let new_pos = looking_at_pos.move_direction(&pointed_at.face);
-            let block = WorldBlock {
-                block_type: belt_item,
-                extra_data: BlockData::None,
-                world_pos: new_pos,
+            let camera_ray = Ray {
+                pos: pos.add(&eye_pos_offset),
+                rot: *rot,
             };
 
-            schedule.add_block(block);
+            let pointed_at = world.get_pointed_at_block(camera_ray);
+
+            if let Some(pointed_at) = pointed_at {
+                let looking_at_pos = pointed_at.block.world_pos;
+                js_log(&format!("looking_at_pos: {:?}", looking_at_pos));
+                let new_pos = looking_at_pos.move_direction(&pointed_at.face);
+                let block = WorldBlock {
+                    block_type,
+                    extra_data: BlockData::None,
+                    world_pos: new_pos,
+                };
+
+                schedule.add_block(block);
+            }
         }
 
         schedule
     }
 }
 
+// ================== Secondary Action ==================
 #[wasm_bindgen]
 #[derive(Clone, Debug, Default)]
 pub struct SecondaryBeltAction {}
@@ -138,6 +146,8 @@ impl EntityActionHandler for SecondaryBeltAction {
     }
 }
 
+// ================== Select Item Action ==================
+
 #[wasm_bindgen]
 #[derive(Clone, Debug, Default)]
 pub struct SelectItemAction {}
@@ -181,17 +191,27 @@ impl EntityActionHandler for SelectItemAction {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
+// ================== Items ==================
+
+#[derive(Clone, Debug, Serialize, Deserialize, Tsify, Copy)]
+pub enum Item {
+    Fireball,
+    Block(BlockType),
+}
+
+// ================== Belt ==================
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[wasm_bindgen]
 pub struct Belt {
-    belt_items: [BlockType; 10],
+    belt_items: [Item; 10],
     pub selected_item: usize,
 }
 
 #[wasm_bindgen]
 impl Belt {
-    pub fn get_item(&self, index: usize) -> BlockType {
-        self.belt_items[index]
+    pub fn get_item_js(&self, index: usize) -> JsValue {
+        serde_wasm_bindgen::to_value(&self.belt_items[index]).unwrap()
     }
 
     pub fn get_num_items(&self) -> usize {
@@ -202,16 +222,16 @@ impl Belt {
 impl Default for Belt {
     fn default() -> Self {
         let belt_items = [
-            BlockType::Gold,
-            BlockType::Stone,
-            BlockType::Grass,
-            BlockType::Water,
-            BlockType::Planks,
-            BlockType::Red,
-            BlockType::RedFlower,
-            BlockType::Wood,
-            BlockType::Leaf,
-            BlockType::Cloud,
+            Item::Block(BlockType::Gold),
+            Item::Block(BlockType::Stone),
+            Item::Block(BlockType::Grass),
+            Item::Block(BlockType::Water),
+            Item::Block(BlockType::Planks),
+            Item::Block(BlockType::Red),
+            Item::Block(BlockType::RedFlower),
+            Item::Block(BlockType::Wood),
+            Item::Block(BlockType::Leaf),
+            Item::Fireball,
         ];
         Belt {
             belt_items,

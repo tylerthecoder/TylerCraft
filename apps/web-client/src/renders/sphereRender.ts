@@ -1,20 +1,40 @@
 import { WebGlGScript } from "../game-scripts/webgl-gscript";
 import { RenderData, Renderer } from "./renderer";
-import { Camera, Entity, IDim } from "@craft/engine";
+import { Camera, IDim, Vector3D } from "@craft/engine";
+import { Entity, Game } from "@craft/rust-world";
 
 export class SphereRenderer extends Renderer {
   radius = 1;
 
-  constructor(webGlGScript: WebGlGScript, public entity: Entity) {
+  constructor(
+    public game: Game,
+    webGlGScript: WebGlGScript,
+    public entityId: number
+  ) {
     super(webGlGScript);
 
-    this.radius = entity.dim[0];
+    const fireball = game.entities.get_entity_as_fireball(entityId);
+    if (!fireball) {
+      throw new Error("Fireball not found");
+    }
+
+    this.radius = fireball.dim.x;
 
     this.setup();
   }
 
   render(camera: Camera) {
-    this.renderObject(this.entity.pos.data as IDim, camera);
+    const fireball = this.game.entities.get_entity_as_fireball(this.entityId);
+    if (!fireball) {
+      throw new Error("Fireball not found");
+    }
+
+    console.log("SphereRenderer: Rendering fireball", fireball);
+
+    this.renderObject(
+      new Vector3D([fireball.pos.x, fireball.pos.y, fireball.pos.z]),
+      camera
+    );
   }
 
   setup() {
