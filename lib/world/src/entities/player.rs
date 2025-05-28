@@ -1,7 +1,9 @@
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::wasm_bindgen;
 
 use super::{
     entity::{Entity, EntityId},
+    entity_component::impl_component,
     player_belt_script::Belt,
     player_gravity_script::GravityData,
     player_jump_script::JumpData,
@@ -12,6 +14,15 @@ use crate::{
     components::{fine_world_pos::FineWorldPos, size3::Size3, velocity::Velocity},
     geometry::rotation::SphericalRotation,
 };
+
+#[derive(Debug, PartialEq, Serialize, Deserialize, Clone, Copy)]
+#[wasm_bindgen]
+pub struct Health {
+    pub health: u32,
+    pub max_health: u32,
+}
+
+impl_component!(Health);
 
 pub fn make_player(uid: EntityId) -> Entity {
     let mut ent = Entity::new(uid, "player".to_string());
@@ -28,6 +39,10 @@ pub fn make_player(uid: EntityId) -> Entity {
     ent.add::<Belt>(Belt::default());
     ent.add::<GravityData>(GravityData { has_gravity: true });
     ent.add::<Forces>(Forces::default());
+    ent.add::<Health>(Health {
+        health: 100,
+        max_health: 100,
+    });
     ent
 }
 
@@ -74,5 +89,10 @@ impl Player {
     #[wasm_bindgen(getter)]
     pub fn moving_direction(&self) -> MovingDirection {
         self.entity.get::<MovingDirection>().unwrap().clone()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn health(&self) -> Health {
+        self.entity.get::<Health>().unwrap().clone()
     }
 }

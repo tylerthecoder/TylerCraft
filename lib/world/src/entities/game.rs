@@ -9,6 +9,7 @@ use crate::{
     components::world_pos::WorldPos,
     entities::{
         entity_action::EntityActionDtoMaker,
+        fireball::FireballScript,
         player::make_player,
         player_belt_script::{SecondaryBeltAction, SelectItemAction, UsePrimaryItemAction},
         player_gravity_script::GravityScript,
@@ -18,7 +19,6 @@ use crate::{
         velocity_script::VelocityScript,
     },
     positions::ChunkPos,
-    utils::js_log,
     world::{world_block::WorldBlock, World},
 };
 use serde::{Deserialize, Serialize};
@@ -43,6 +43,7 @@ impl Game {
         self.add_script(Box::new(MoveScript::default()));
         self.add_script(Box::new(VelocityScript::default()));
         self.add_script(Box::new(GravityScript::default()));
+        self.add_script(Box::new(FireballScript::default()));
 
         self.action_holder.add_handler(MoveAction::make_handler());
         self.action_holder.add_handler(JumpAction::make_handler());
@@ -107,10 +108,6 @@ impl Game {
 
         let game_diff = self.schedule.to_game_diff();
 
-        self.scripts.iter_mut().for_each(|script| {
-            script.on_diff(game_diff.clone());
-        });
-
         // Apply diff to game
         // Add all new entities
         let new_ents = std::mem::take(&mut self.schedule.new_entities);
@@ -140,6 +137,10 @@ impl Game {
         for block_pos in removed_blocks {
             self.world.remove_block(&block_pos).unwrap();
         }
+
+        self.scripts.iter_mut().for_each(|script| {
+            script.on_diff(game_diff.clone());
+        });
 
         self.schedule.clear();
     }

@@ -1,3 +1,9 @@
+# 05_27_25
+
+I reworked the entity serialiaztion yesterday and I'm so happy with it now. Now I'm working on adding the fireballs back. They are working but they don't destory anything yet, I need to make them destroy blocks and hurt players.
+
+What happens if you die? Maybe you just teleport back to the spawn.
+
 # 05_26_25
 
 I made the UI yesterday and it is coming along. I need to figure out what to do next. I think making the belt work seems good.

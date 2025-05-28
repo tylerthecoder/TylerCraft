@@ -113,6 +113,7 @@ export class CanvasGameScript extends GameScript<Config> {
         this.gameWrapper.game.entities.get_entity_by_id_clone(entityId);
       if (!entity) {
         console.log("CanvasGameScript: Entity not found", entityId);
+        this.onRemovedEntity(entityId);
         continue;
       }
       this.onNewEntity(entity);
@@ -325,9 +326,9 @@ export class CanvasGameScript extends GameScript<Config> {
     }
   }
 
-  onRemovedEntity(entity: Entity): void {
-    console.log("CanvasGameScript: Removing entity", entity);
-    this.entityRenderers.delete(entity.id);
+  onRemovedEntity(entityId: number): void {
+    console.log("CanvasGameScript: Removing entity", entityId);
+    this.entityRenderers.delete(entityId);
   }
 
   onChunkUpdate(chunkId: number): void {

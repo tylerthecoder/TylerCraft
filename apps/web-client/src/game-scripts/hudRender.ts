@@ -139,7 +139,7 @@ export class HudGScript extends GameScript {
 
     this.drawBelt(player);
 
-    // this.drawHealthBar();
+    this.drawHealthBar(player);
   }
 
   drawBelt(player: Player) {
@@ -201,12 +201,11 @@ export class HudGScript extends GameScript {
     }
   }
 
-  // drawHealthBar() {
-  //   if (!this.basicGScript.mainPlayer) return;
-  //   const { current, max } = this.basicGScript.mainPlayer.health;
-  //   const healthPercent = current / max;
-  //   this.eHealthBar.style.width = `${healthPercent * 100}%`;
-  // }
+  drawHealthBar(player: Player) {
+    const { health, max_health } = player.health;
+    const healthPercent = health / max_health;
+    this.eHealthBar.style.width = `${healthPercent * 100}%`;
+  }
 
   hideControls() {
     hideElement(this.eForwardButton);

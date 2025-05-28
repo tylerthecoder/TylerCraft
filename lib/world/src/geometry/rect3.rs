@@ -22,6 +22,31 @@ pub struct Rect3 {
 static DISTANCE_EPSILON: f32 = 0.01;
 
 impl Rect3 {
+    pub fn does_intersect(&self, other: &Rect3) -> bool {
+        // Axis-Aligned Bounding Box (AABB) intersection test
+        let self_min_x = self.pos.x;
+        let self_max_x = self.pos.x + self.dim.x;
+        let self_min_y = self.pos.y;
+        let self_max_y = self.pos.y + self.dim.y;
+        let self_min_z = self.pos.z;
+        let self_max_z = self.pos.z + self.dim.z;
+
+        let other_min_x = other.pos.x;
+        let other_max_x = other.pos.x + other.dim.x;
+        let other_min_y = other.pos.y;
+        let other_max_y = other.pos.y + other.dim.y;
+        let other_min_z = other.pos.z;
+        let other_max_z = other.pos.z + other.dim.z;
+
+        // Check for separation along each axis
+        !(self_max_x <= other_min_x
+            || self_min_x >= other_max_x
+            || self_max_y <= other_min_y
+            || self_min_y >= other_max_y
+            || self_max_z <= other_min_z
+            || self_min_z >= other_max_z)
+    }
+
     pub fn get_all_points(&self) -> [FineWorldPos; 8] {
         let x = self.pos.x;
         let y = self.pos.y;
