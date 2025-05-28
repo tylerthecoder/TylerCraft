@@ -4,6 +4,8 @@ I reworked the entity serialiaztion yesterday and I'm so happy with it now. Now 
 
 What happens if you die? Maybe you just teleport back to the spawn.
 
+Okay, now I'm testing the server again. I've found a couple errors and a lot fo files that didn't build. Now I'm getting an issue with the entity serialization, the components are not being serialized when being saved to the db. Idk what is going on.
+
 # 05_26_25
 
 I made the UI yesterday and it is coming along. I need to figure out what to do next. I think making the belt work seems good.

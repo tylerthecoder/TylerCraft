@@ -63,11 +63,12 @@ export class GameDb {
     const serializedGame = {
       gameId: game.id,
       name: game.name,
-      entities: game.serialize_entities_wasm(),
+      entities: game.entities.to_js(),
       world: game.world.serialize_wasm(),
       // terrainGen: game.terrainGen.serialize(),
       // sandbox: game.sandbox,
     };
+    console.log("Saving game", JSON.stringify(serializedGame, null, 2));
     await this.gameCollection.updateOne(
       { gameId: game.id },
       { $set: serializedGame },

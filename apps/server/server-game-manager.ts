@@ -16,10 +16,10 @@ import { GameDb } from "./db";
 
 type ClientId = number;
 
-interface ScriptDiff {
-  scriptName: string;
-  diff: GameDiff;
-}
+// interface ScriptDiff {
+//   scriptName: string;
+//   diff: GameDiff;
+// }
 
 class TerrainChunkGetter {
   private chunks_to_insert: Chunk[] = [];
@@ -84,22 +84,29 @@ export class ServerGameManager {
 
       this.game.make_and_add_player_wasm(myUid);
 
+      const entities = this.game.entities.to_js();
+
+      console.log("Entities", JSON.stringify(entities, null, 2));
+
       // send welcome message
       this.socketInterface.send(
         ws,
         new SocketMessage(ISocketMessageType.welcome, {
           uid: myUid,
-          entities: this.game.serialize_entities_wasm(),
+          entities: entities,
         })
       );
+
+      const entity = this.game.entities.get_entity(myUid);
+      if (!entity) {
+        console.error("Player not found in join request", myUid);
+        return;
+      }
 
       this.clients.forEach((client, _) => {
         this.socketInterface.send(
           client,
-          new SocketMessage(
-            ISocketMessageType.newPlayer,
-            this.game.get_player_wasm(myUid)
-          )
+          new SocketMessage(ISocketMessageType.newPlayer, entity.to_js())
         );
       });
 
@@ -193,11 +200,6 @@ export class ServerGameManager {
   }
 
   save() {
-    const serializedGame = {
-      gameId: this.game.id,
-      name: this.game.name,
-      entities: this.game.serialize_entities_wasm(),
-      world: this.game.world.serialize_wasm(),
-    };
+    this.gameDb.saveGame(this.game);
   }
 }

@@ -59,10 +59,6 @@ impl Entities {
         }
     }
 
-    pub fn add_entity(&mut self, entity: Entity) {
-        self.entities.push(entity);
-    }
-
     pub fn get_entity_by_id(&self, id: EntityId) -> Option<&Entity> {
         self.entities.iter().find(|entity| entity.id == id)
     }
@@ -97,6 +93,14 @@ impl Entities {
 
 #[wasm_bindgen]
 impl Entities {
+    pub fn add_entity(&mut self, entity: Entity) {
+        self.entities.push(entity);
+    }
+
+    pub fn get_entity(&self, id: EntityId) -> Option<Entity> {
+        self.entities.iter().find(|entity| entity.id == id).cloned()
+    }
+
     pub fn to_js(&self) -> JsValue {
         to_value(self).unwrap()
     }

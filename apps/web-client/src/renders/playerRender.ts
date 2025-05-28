@@ -1,4 +1,4 @@
-import { Camera, Vector3D, PlayerWrapper } from "@craft/engine";
+import { Camera, Vector3D } from "@craft/engine";
 import { RenderData, Renderer } from "./renderer";
 import ShapeBuilder from "../services/shape-builder";
 import TextureMapper from "../textureMapper";
@@ -38,10 +38,12 @@ export class PlayerRenderer extends Renderer {
   }
 
   render(camera: Camera) {
-    const player = new PlayerRenderWrapper(
-      this.game.get_player_wasm(this.entityId)
-    );
-    this.calculateBuffers(player);
+    const player = this.game.entities.get_entity_as_player(this.entityId);
+    if (!player) {
+      throw new Error("Player not found");
+    }
+    const player_render_wrapper = new PlayerRenderWrapper(player);
+    this.calculateBuffers(player_render_wrapper);
     this.renderObject(
       new Vector3D([player.pos.x, player.pos.y, player.pos.z]),
       camera

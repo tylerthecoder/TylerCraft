@@ -9,6 +9,8 @@ import {
 import { SocketHandler, SocketListener } from "../socket";
 import { AppConfig } from "../appConfig";
 import {
+  Entities,
+  Entity,
   EntityActionDto,
   EntityActionJson,
   Game,
@@ -97,9 +99,9 @@ export async function serverRunner(gameId: string) {
   const game = new Game();
   (window as any).game = game;
 
-  game.deserialize_entities_wasm(welcomeMessage.entities);
+  game.entities = Entities.from_js(welcomeMessage.entities);
 
-  console.log(game.serialize_entities_wasm());
+  console.log(game.entities.to_js());
 
   const webglGameScript = new WebGlGScript(game);
 
@@ -136,15 +138,18 @@ export async function serverRunner(gameId: string) {
     }
     if (message.isType(ISocketMessageType.newPlayer)) {
       const player = message.data;
-      game.deserialize_entity_wasm(player);
+      game.entities.add_entity(Entity.from_js(player));
     }
   });
 
   const playerController = new KeyboardPlayerEntityController(
+    game,
     onAction,
+    () => {
+      // NO-OP
+    },
     myUid,
-    canvasGameScript,
-    webglGameScript
+    canvasGameScript
   );
 
   const getChunk = async (chunkPos: { x: number; y: number }) => {
@@ -161,8 +166,6 @@ export async function serverRunner(gameId: string) {
   // add sandbox
   const sandbox = new SandBoxGScript(1, chunkRequester);
   game.add_sandbox_wasm(sandbox);
-
-  console.log(game.serialize_entities_wasm());
 
   const gameLoop = async () => {
     const chunkToInsert = chunksToInsert.pop();

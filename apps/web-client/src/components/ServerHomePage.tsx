@@ -11,7 +11,7 @@ export function ServerHomePage() {
   const createGameWrapper = async (gameId: string) => {
     console.log("Starting game", gameId);
     const game = await createGame(gameId);
-    navigate(`/game/${game}`);
+    navigate(`/server-game/${game}`);
   };
 
   useEffect(() => {
