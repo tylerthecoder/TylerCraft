@@ -1,7 +1,7 @@
 import {
   Chunk,
   ChunkNotLoadedError,
-  EntityActionJson,
+  EntityActionDto,
   Game,
   GameDiff,
   SandBoxGScript,
@@ -123,12 +123,9 @@ export class ServerGameManager {
         return;
       }
       const action = message.data;
+      console.log("Received Action", JSON.stringify(action, null, 2));
 
-      const actionDto = EntityActionJson.deserialize_wasm(
-        action.entity_id,
-        action.name,
-        action.data
-      );
+      const actionDto = EntityActionDto.from_js(action);
 
       this.game.handle_action_wasm(actionDto);
 

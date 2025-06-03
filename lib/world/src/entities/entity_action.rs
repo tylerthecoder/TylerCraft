@@ -1,13 +1,19 @@
 use super::entities::Entities;
 use super::entity::{Entity, EntityId};
 use super::game::GameSchedule;
-use crate::entities::player_belt_script::UsePrimaryItemActionData;
+use crate::entities::player_belt_script::{
+    SecondaryBeltActionData, SelectItemActionData, UsePrimaryItemActionData,
+};
+use crate::entities::player_jump_script::JumpActionData;
 use crate::entities::player_move_script::MoveActionData;
 use crate::entities::player_rot_script::RotateActionData;
 use crate::utils::js_log;
 use crate::world::World;
+use lazy_static::lazy_static;
 use std::any::Any;
+use std::collections::HashMap;
 use std::fmt::Debug;
+use std::sync::Mutex;
 use wasm_bindgen::prelude::*;
 
 pub trait ActionData: Any + Debug {
@@ -27,6 +33,54 @@ where
     fn as_any(&self) -> &dyn Any {
         self
     }
+}
+
+type ActionSerializer = Box<dyn Fn(&EntityActionDto) -> JsValue + Send + Sync>;
+type ActionDeserializer = Box<dyn Fn(EntityId, JsValue) -> EntityActionDto + Send + Sync>;
+
+lazy_static! {
+    pub static ref ACTION_REGISTRY: Mutex<HashMap<&'static str, (ActionSerializer, ActionDeserializer)>> = {
+        let mut map = HashMap::new();
+
+        fn register_action<T: ActionData + serde::Serialize + serde::de::DeserializeOwned + 'static>(
+            map: &mut HashMap<&'static str, (ActionSerializer, ActionDeserializer)>,
+            action_name: &'static str,
+        ) {
+            let serialize = Box::new(|dto: &EntityActionDto| -> JsValue {
+                let action_data = dto.get_data::<T>().unwrap();
+                let serialized_data = serde_wasm_bindgen::to_value(action_data).unwrap();
+
+                // Create a JS object with entity_id, name, and data
+                let obj = js_sys::Object::new();
+                js_sys::Reflect::set(&obj, &"entity_id".into(), &dto.entity_id.into()).unwrap();
+                js_sys::Reflect::set(&obj, &"name".into(), &dto.name.into()).unwrap();
+                js_sys::Reflect::set(&obj, &"data".into(), &serialized_data).unwrap();
+                obj.into()
+            });
+
+            let deserialize = Box::new(move |entity_id: EntityId, value: JsValue| -> EntityActionDto {
+                js_log(&format!("Deserializing action id: {:?} data: {:?}", entity_id, value));
+                let typed_action: T = serde_wasm_bindgen::from_value(value).unwrap();
+                EntityActionDto {
+                    entity_id,
+                    name: action_name,
+                    data: Box::new(typed_action),
+                }
+            });
+
+            map.insert(action_name, (serialize, deserialize));
+        }
+
+        // Register all actions in one place!
+        register_action::<RotateActionData>(&mut map, "Player-Rotate");
+        register_action::<MoveActionData>(&mut map, "Move");
+        register_action::<UsePrimaryItemActionData>(&mut map, "UseItemAction");
+        register_action::<SecondaryBeltActionData>(&mut map, "SecondaryBeltAction");
+        register_action::<SelectItemActionData>(&mut map, "SelectItemAction");
+        register_action::<JumpActionData>(&mut map, "Jump-Action");
+
+        Mutex::new(map)
+    };
 }
 
 #[wasm_bindgen(getter_with_clone)]
@@ -49,6 +103,44 @@ impl EntityActionDto {
 impl EntityActionDto {
     pub fn get_name(&self) -> String {
         self.name.to_string()
+    }
+
+    pub fn to_js(&self) -> JsValue {
+        let registry = ACTION_REGISTRY
+            .lock()
+            .expect("Failed to lock action registry");
+        let (serializer, _) = registry.get(self.name).unwrap_or_else(|| {
+            panic!("Action type '{}' not found in registry", self.name);
+        });
+        serializer(self)
+    }
+
+    pub fn from_js(js_value: JsValue) -> EntityActionDto {
+        let obj = js_sys::Object::from(js_value);
+
+        // Extract fields from the JS object
+        let entity_id: EntityId = js_sys::Reflect::get(&obj, &"entity_id".into())
+            .unwrap()
+            .as_f64()
+            .unwrap() as u32;
+
+        let name: String = js_sys::Reflect::get(&obj, &"name".into())
+            .unwrap()
+            .as_string()
+            .unwrap();
+
+        let data = js_sys::Reflect::get(&obj, &"data".into()).unwrap();
+
+        js_log(&format!("Deserializing action: {:?}", name));
+
+        let registry = ACTION_REGISTRY
+            .lock()
+            .expect("Failed to lock action registry");
+        let (_, deserializer) = registry.get(name.as_str()).unwrap_or_else(|| {
+            panic!("Action type '{}' not found in registry", name);
+        });
+
+        deserializer(entity_id, data)
     }
 }
 
@@ -121,65 +213,5 @@ impl EntityActionHolder {
         self.actions.clear();
 
         schedule
-    }
-}
-
-#[wasm_bindgen]
-struct EntityActionJson {
-    entity_id: EntityId,
-    name: String,
-    data: JsValue,
-}
-
-#[wasm_bindgen]
-impl EntityActionJson {
-    pub fn from_entity_action_dto(dto: &EntityActionDto) -> JsValue {
-        match dto.name {
-            "Player-Rotate" => {
-                let data = dto.get_data::<RotateActionData>().unwrap();
-                serde_wasm_bindgen::to_value(&data).unwrap()
-            }
-            "Move" => {
-                let data = dto.get_data::<MoveActionData>().unwrap();
-                serde_wasm_bindgen::to_value(&data).unwrap()
-            }
-            "UseItemAction" => {
-                let data = dto.get_data::<UsePrimaryItemActionData>().unwrap();
-                serde_wasm_bindgen::to_value(&data).unwrap()
-            }
-            _ => JsValue::null(),
-        }
-    }
-
-    pub fn deserialize_wasm(entity_id: EntityId, name: String, data: JsValue) -> EntityActionDto {
-        js_log(&format!("Deserializing action: {:?}", name));
-        match name.as_str() {
-            "Player-Rotate" => {
-                let data = serde_wasm_bindgen::from_value::<RotateActionData>(data).unwrap();
-                EntityActionDto {
-                    entity_id,
-                    name: "Player-Rotate",
-                    data: Box::new(data),
-                }
-            }
-            "Move" => {
-                let data = serde_wasm_bindgen::from_value::<MoveActionData>(data).unwrap();
-                EntityActionDto {
-                    entity_id,
-                    name: "Move",
-                    data: Box::new(data),
-                }
-            }
-            "UseItemAction" => {
-                let data =
-                    serde_wasm_bindgen::from_value::<UsePrimaryItemActionData>(data).unwrap();
-                EntityActionDto {
-                    entity_id,
-                    name: "UseItemAction",
-                    data: Box::new(data),
-                }
-            }
-            _ => panic!("Unknown action: {}", name),
-        }
     }
 }

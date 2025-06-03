@@ -1,9 +1,10 @@
+use crate::utils::js_log;
+
 use super::entity_component::{Component, COMPONENT_REGISTRY};
 use super::fireball::Fireball;
 use super::player::Player;
 use rand::Rng;
-use serde::{de, ser::SerializeStruct, Deserializer};
-use serde::{Deserialize, Serialize, Serializer};
+use serde::{de, ser::SerializeStruct, Deserialize, Deserializer, Serialize, Serializer};
 use std::{any::TypeId, fmt::Debug};
 use wasm_bindgen::prelude::*;
 
@@ -31,8 +32,15 @@ impl Serialize for Entity {
         let comps: Vec<_> = self
             .components
             .iter()
-            .map(|c| serde_json::to_value(&(c.type_name(), c.to_json())).unwrap())
+            .map(|c| {
+                let type_name = c.type_name();
+                let value = c.to_json().to_string();
+
+                return (type_name, value);
+            })
             .collect();
+
+        js_log(&format!("Components: {:?}", comps));
 
         s.serialize_field("components", &comps)?;
         s.end()
@@ -45,7 +53,7 @@ impl<'de> Deserialize<'de> for Entity {
         struct EntityHelper {
             id: EntityId,
             name: String,
-            components: Vec<serde_json::Value>,
+            components: Vec<(String, String)>,
         }
 
         let EntityHelper {
@@ -57,15 +65,15 @@ impl<'de> Deserialize<'de> for Entity {
 
         let registry = COMPONENT_REGISTRY.lock().unwrap();
         for item in components {
-            let pair: (String, serde_json::Value) =
-                serde_json::from_value(item).map_err(de::Error::custom)?;
-            let (type_name, value) = pair;
+            let (type_name, value) = item;
+
+            let parsed_value = serde_json::from_str(&value).map_err(de::Error::custom)?;
 
             let deser = registry
                 .get(type_name.as_str())
                 .ok_or_else(|| de::Error::custom(format!("Unknown component: {}", type_name)))?;
 
-            entity.components.push(deser(value));
+            entity.components.push(deser(parsed_value));
         }
 
         Ok(entity)

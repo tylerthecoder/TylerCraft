@@ -20,8 +20,9 @@ pub struct SandBoxGScript {
     // pub terrain_gen: TerrainGenerator,
 }
 
+#[wasm_bindgen]
 impl SandBoxGScript {
-    fn get_chunks_around_player(&self, pos: &FineWorldPos) -> Vec<ChunkPos> {
+    pub fn get_chunks_around_player(&self, pos: &FineWorldPos) -> Vec<ChunkPos> {
         let mut poses = vec![];
 
         let player_chunk_pos: ChunkPos = pos.to_world_pos().to_chunk_pos();

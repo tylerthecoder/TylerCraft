@@ -57,6 +57,23 @@ export const serializedGameToGame = (serializedGame: ISerializedGame): Game => {
   return game;
 };
 
+export const getEntities = (game: Game) => {
+  const entities = game.entities.to_js();
+  // convert all the maps to objects
+  const newEntities = entities.entities.map((entity: any) => {
+    const components = entity.components.map((component: any) => {
+      const componentKey = component[0];
+      let componentValue = component[1];
+      if (componentValue instanceof Map) {
+        componentValue = Object.fromEntries(componentValue);
+      }
+      return [componentKey, componentValue];
+    });
+    return { ...entity, components };
+  });
+  return { entities: newEntities };
+};
+
 export const deserializeChunk = (chunk: ISerializedChunk): Chunk => {
   return Chunk.deserialize(chunk);
 };

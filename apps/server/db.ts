@@ -68,10 +68,13 @@ export class GameDb {
       // terrainGen: game.terrainGen.serialize(),
       // sandbox: game.sandbox,
     };
-    console.log("Saving game", JSON.stringify(serializedGame, null, 2));
+    const json = JSON.stringify(serializedGame, null, 2);
+    const parsedGame = JSON.parse(json);
+    console.log("Saving game parsed", parsedGame);
+    console.log("Saving game json", json);
     await this.gameCollection.updateOne(
       { gameId: game.id },
-      { $set: serializedGame },
+      { $set: parsedGame },
       { upsert: true }
     );
   }

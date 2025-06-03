@@ -115,6 +115,7 @@ export class ClientDbGamesService {
         [ClientDbGamesService.WORLDS_OBS],
         "readwrite"
       );
+      console.log("Entities", data.game.entities.to_js());
       const serializedGame = {
         gameId: data.game.id,
         name: data.game.name,

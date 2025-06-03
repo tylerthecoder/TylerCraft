@@ -11,7 +11,7 @@ use crate::{
 };
 use wasm_bindgen::prelude::wasm_bindgen;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct JumpActionData {}
 
 #[derive(Clone, Debug, Default)]

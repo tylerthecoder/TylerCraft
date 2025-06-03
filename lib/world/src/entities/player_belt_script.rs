@@ -113,7 +113,7 @@ impl SecondaryBeltAction {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct SecondaryBeltActionData {}
 
 impl EntityActionDtoMaker<SecondaryBeltActionData> for SecondaryBeltAction {
@@ -169,7 +169,7 @@ impl SelectItemAction {
 }
 
 #[wasm_bindgen]
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct SelectItemActionData {
     pub item_index: usize,
 }

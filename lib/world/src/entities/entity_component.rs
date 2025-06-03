@@ -1,4 +1,5 @@
 use lazy_static::lazy_static;
+use serde::Serializer;
 use serde_json::Value;
 use std::{any::Any, collections::HashMap, fmt::Debug, sync::Mutex};
 use wasm_bindgen::JsValue;
@@ -8,8 +9,8 @@ use crate::{
         fine_world_pos::FineWorldPos, size3::Size3, velocity::Velocity, world_pos::WorldPos,
     },
     entities::{
-        player_belt_script::Belt, player_gravity_script::GravityData, player_jump_script::JumpData,
-        player_move_script::MovingDirection, velocity_script::Forces,
+        player::Health, player_belt_script::Belt, player_gravity_script::GravityData,
+        player_jump_script::JumpData, player_move_script::MovingDirection, velocity_script::Forces,
     },
     geometry::rotation::SphericalRotation,
 };
@@ -88,19 +89,8 @@ lazy_static! {
         register::<Forces>(&mut map);
         register::<Belt>(&mut map);
         register::<WorldPos>(&mut map);
+        register::<Health>(&mut map);
 
         Mutex::new(map)
     };
-}
-
-fn deserialize_component(type_name: &str, data: &Value) -> Box<dyn Component> {
-    let registry = COMPONENT_REGISTRY
-        .lock()
-        .expect("Failed to lock component registry");
-
-    let deser = registry.get(type_name).unwrap_or_else(|| {
-        panic!("Component type '{}' not found in registry", type_name);
-    });
-
-    deser(data.clone())
 }
