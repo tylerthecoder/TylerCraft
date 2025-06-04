@@ -1,6 +1,5 @@
 import {
   Camera,
-  GameDiffWrapper,
   GameScript,
   GameWrapper,
   makeCameraForPlayer,
@@ -54,6 +53,9 @@ export class CanvasGameScript extends GameScript<Config> {
 
   gameWrapper: GameWrapper = new GameWrapper(this.game);
 
+  updatedChunks: Set<number> = new Set();
+  updatedEntities: Set<number> = new Set();
+
   constructor(
     game: Game,
     private webGlGScript: WebGlGScript,
@@ -75,10 +77,22 @@ export class CanvasGameScript extends GameScript<Config> {
 
     // Create renderers for initial chunks
     for (const chunkId of this.gameWrapper.getLoadedChunkIds()) {
-      this.onChunkUpdate(chunkId);
+      this.createChunkRender(chunkId);
     }
 
     this.isSpectating = false;
+  }
+
+  // This is called by the rust side when a chunk is updated
+  onChunkUpdate(chunkId: number): void {
+    console.log("CanvasGameScript: onChunkUpdate", chunkId);
+    this.updatedChunks.add(chunkId);
+  }
+
+  // This is called by the rust side when an entity is updated
+  onEntityUpdate(entityId: number): void {
+    console.log("CanvasGameScript: onEntityUpdate", entityId);
+    this.updatedEntities.add(entityId);
   }
 
   getCamera(): Camera {
@@ -96,18 +110,8 @@ export class CanvasGameScript extends GameScript<Config> {
     }
   }
 
-  private lastDiff: GameDiffWrapper | null = null;
-
-  onDiff(diff: GameDiffWrapper) {
-    this.lastDiff = diff;
-  }
-
   update() {
-    if (!this.lastDiff) {
-      return;
-    }
-
-    for (const entityId of this.lastDiff.updated_entities) {
+    for (const entityId of this.updatedEntities) {
       console.log("CanvasGameScript: Updating entity", entityId);
       const entity =
         this.gameWrapper.game.entities.get_entity_by_id_clone(entityId);
@@ -119,11 +123,12 @@ export class CanvasGameScript extends GameScript<Config> {
       this.onNewEntity(entity);
     }
 
-    for (const chunkId of this.lastDiff.updated_chunks) {
-      this.onChunkUpdate(chunkId);
+    for (const chunkId of this.updatedChunks) {
+      this.createChunkRender(chunkId);
     }
 
-    this.lastDiff = null;
+    this.updatedChunks.clear();
+    this.updatedEntities.clear();
   }
 
   getFilter(camera: Camera): Vector3D {
@@ -331,8 +336,8 @@ export class CanvasGameScript extends GameScript<Config> {
     this.entityRenderers.delete(entityId);
   }
 
-  onChunkUpdate(chunkId: number): void {
-    console.log("CanvasGameScript: Updating chunk", chunkId);
+  createChunkRender(chunkId: number): void {
+    console.log("CanvasGameScript: Creating chunk render", chunkId);
     const chunkPos = this.gameWrapper.getChunkPosFromChunkId(chunkId);
     const chunkMesh = this.gameWrapper.getChunkMeshFromChunkPos(chunkId);
     const chunkRenderer = new ChunkRenderer(

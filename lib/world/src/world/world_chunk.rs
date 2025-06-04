@@ -1,9 +1,10 @@
-use std::collections::HashSet;
 use super::{ChunkNotLoadedError, World, WorldStateDiff};
 use crate::{
-    chunk::{chunk_mesh::ChunkMesh, Chunk}, components::world_pos::WorldPos, positions::ChunkPos
+    chunk::{chunk_mesh::ChunkMesh, Chunk},
+    components::world_pos::WorldPos,
+    positions::ChunkPos,
 };
-use crate::vec::Vector3Ops;
+use std::collections::HashSet;
 
 impl World {
     pub fn get_chunk(&self, chunk_pos: &ChunkPos) -> Result<&Chunk, ChunkNotLoadedError> {
@@ -77,8 +78,16 @@ impl World {
 
 #[cfg(test)]
 mod tests {
+    use std::time::{Duration, Instant};
+
     use crate::{
-        block::{BlockData, BlockType, ChunkBlock}, chunk::Chunk, components::world_pos::WorldPos, positions::{ChunkPos, InnerChunkPos}, vec::Vector3Ops, world::{world_block::WorldBlock, World}
+        block::{BlockData, BlockType, ChunkBlock},
+        chunk::Chunk,
+        components::world_pos::WorldPos,
+        entities::terrain_gen::TerrainGenerator,
+        positions::{ChunkPos, InnerChunkPos},
+        vec::Vector3Ops,
+        world::{world_block::WorldBlock, World},
     };
 
     #[test]
@@ -149,5 +158,33 @@ mod tests {
 
         assert_eq!(block.block_type, BlockType::Gold);
         assert_eq!(block.extra_data, BlockData::None);
+    }
+
+    #[test]
+    fn profile_chunk_insertion() {
+        // Average time: 32.633088ms
+        // Max time: 50.154277ms
+
+        // New
+        // Average time: 20.878063ms
+        // Max time: 31.049449ms
+
+        let terrain_gen = TerrainGenerator::new(0, false, false);
+
+        let mut times = Vec::new();
+        for i in 0..500 {
+            let start_time = Instant::now();
+            let mut world = World::default();
+            let chunk_pos = ChunkPos::new(0, 0);
+            let chunk = terrain_gen.get_chunk(chunk_pos.x, chunk_pos.y);
+            world.insert_chunk(chunk);
+            times.push(start_time.elapsed());
+        }
+
+        println!(
+            "Average time: {:?}",
+            times.iter().sum::<Duration>() / times.len() as u32
+        );
+        println!("Max time: {:?}", times.iter().max().unwrap());
     }
 }

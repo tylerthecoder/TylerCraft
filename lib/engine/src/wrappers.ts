@@ -118,11 +118,6 @@ export type ISerializedVisibleFaces = Array<{
   faces: [boolean, boolean, boolean, boolean, boolean, boolean];
 }>;
 
-export type GameDiffWrapper = {
-  updated_entities: number[];
-  updated_chunks: number[];
-};
-
 export type Cube = {
   type: BlockType;
   pos: Vector3D;

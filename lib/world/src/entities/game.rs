@@ -88,15 +88,15 @@ impl Game {
         g
     }
 
-    pub fn update(&mut self) {
-        let world = &self.world;
-        // apply actions
-
+    pub fn handle_actions(&mut self) {
         let schedule = self
             .action_holder
             .handle_actions(&self.world, &mut self.entities);
         self.schedule.combine(schedule);
+    }
 
+    pub fn run_scripts(&mut self) {
+        let world = &self.world;
         for script in self.scripts.get_scripts_mut() {
             let query = script.get_query();
             let query_results = self.entities.query(&query);
@@ -105,44 +105,77 @@ impl Game {
                 self.schedule.combine(diff);
             }
         }
+    }
 
-        let game_diff = self.schedule.to_game_diff();
-
-        // Apply diff to game
-        // Add all new entities
+    pub fn add_new_entities(&mut self) {
         let new_ents = std::mem::take(&mut self.schedule.new_entities);
-        self.entities.get_all_mut().extend(new_ents);
 
-        // Remove entities
+        // Tell the scripts about the new entities
+        self.scripts.iter_mut().for_each(|script| {
+            for entity in new_ents.iter() {
+                script.on_entity_update(entity.id);
+            }
+        });
+
+        self.entities.get_all_mut().extend(new_ents);
+        self.schedule.new_entities.clear();
+    }
+
+    pub fn remove_entities(&mut self) {
         for entity_id in self.schedule.removed_entities.clone() {
             self.entities
                 .get_all_mut()
                 .retain(|entity| entity.id != entity_id);
-        }
 
-        // add chunks to world
-        let new_chunks = std::mem::take(&mut self.schedule.new_chunks);
-        for chunk in new_chunks {
+            self.scripts.iter_mut().for_each(|script| {
+                script.on_entity_update(entity_id);
+            });
+        }
+        self.schedule.removed_entities.clear();
+    }
+
+    pub fn add_single_chunk(&mut self) {
+        if let Some(chunk) = self.schedule.consume_single_chunk() {
+            let chunk_id = chunk.get_id();
             self.world.insert_chunk(chunk);
+            self.scripts.iter_mut().for_each(|script| {
+                script.on_chunk_update(chunk_id);
+            });
         }
+    }
 
-        // add blocks to world
+    pub fn add_blocks(&mut self) {
         let new_blocks = std::mem::take(&mut self.schedule.new_blocks);
         for block in new_blocks {
             self.world.add_block(&block).unwrap();
+            self.scripts.iter_mut().for_each(|script| {
+                let chunk_id = block.world_pos.to_chunk_pos().to_id();
+                script.on_chunk_update(chunk_id);
+            });
         }
+        self.schedule.new_blocks.clear();
+    }
 
-        // remove blocks from world
+    pub fn remove_blocks(&mut self) {
         let removed_blocks = std::mem::take(&mut self.schedule.removed_blocks);
         for block_pos in removed_blocks {
             self.world.remove_block(&block_pos).unwrap();
+            self.scripts.iter_mut().for_each(|script| {
+                let chunk_id = block_pos.to_chunk_pos().to_id();
+                script.on_chunk_update(chunk_id);
+            });
         }
+        self.schedule.removed_blocks.clear();
+    }
 
-        self.scripts.iter_mut().for_each(|script| {
-            script.on_diff(game_diff.clone());
-        });
-
-        self.schedule.clear();
+    pub fn update(&mut self) {
+        self.handle_actions();
+        self.run_scripts();
+        self.add_new_entities();
+        self.remove_entities();
+        self.add_single_chunk();
+        self.add_blocks();
+        self.remove_blocks();
     }
 
     pub fn schedule_chunk_insert(&mut self, chunk: Chunk) {
@@ -265,6 +298,10 @@ impl GameSchedule {
         self.new_chunks.clear();
         self.removed_entities.clear();
         self.removed_blocks.clear();
+    }
+
+    pub fn consume_single_chunk(&mut self) -> Option<Chunk> {
+        self.new_chunks.pop()
     }
 
     pub fn to_game_diff(&self) -> GameDiff {

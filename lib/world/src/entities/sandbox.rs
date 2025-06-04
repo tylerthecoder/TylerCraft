@@ -27,8 +27,8 @@ impl SandBoxGScript {
 
         let player_chunk_pos: ChunkPos = pos.to_world_pos().to_chunk_pos();
 
-        for i in -(self.load_distance as i16)..self.load_distance as i16 {
-            for j in -(self.load_distance as i16)..self.load_distance as i16 {
+        for i in -(self.load_distance as i16)..=self.load_distance as i16 {
+            for j in -(self.load_distance as i16)..=self.load_distance as i16 {
                 let chunk_pos = player_chunk_pos + ChunkPos { x: i, y: j };
                 poses.push(chunk_pos);
             }

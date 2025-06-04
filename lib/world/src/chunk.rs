@@ -22,6 +22,7 @@ interface ITextStyle {
 pub type ChunkId = u64;
 
 pub const CHUNK_WIDTH: i16 = 16;
+
 pub const CHUNK_HEIGHT: i16 = 64;
 
 const CHUNK_MEM_SIZE: usize = (CHUNK_HEIGHT * CHUNK_WIDTH * CHUNK_WIDTH) as usize;
@@ -88,6 +89,15 @@ impl Chunk {
             .collect()
     }
 
+    pub fn get_all_world_blocks(&self) -> Vec<WorldBlock> {
+        self.blocks
+            .iter()
+            .enumerate()
+            .filter(|(_i, &b)| b != BlockType::Void)
+            .map(|(index, _block_type)| self.get_world_block_from_index(index))
+            .collect()
+    }
+
     /**
      * Returns dirty blocks plus all the visible blocks
      */
@@ -96,6 +106,14 @@ impl Chunk {
             .iter()
             .map(|pos| self.get_block(pos))
             .chain(self.get_all_blocks().into_iter())
+            .collect()
+    }
+
+    pub fn get_all_world_blocks_and_dirty(&self) -> Vec<WorldBlock> {
+        self.dirty_blocks
+            .iter()
+            .map(|pos| self.get_world_block(pos))
+            .chain(self.get_all_world_blocks().into_iter())
             .collect()
     }
 

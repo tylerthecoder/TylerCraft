@@ -3,10 +3,8 @@ use crate::{
     positions::{ChunkPos, InnerChunkPos},
     world::world_block::WorldBlock,
 };
-use lazy_static::lazy_static;
 use serde::{Deserialize, Serialize};
 use serde_repr::{Deserialize_repr, Serialize_repr};
-use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -102,153 +100,130 @@ impl Default for &BlockMetaData {
 
 impl BlockMetaData {
     pub fn get_for_type(block_type: BlockType) -> &'static BlockMetaData {
-        BLOCK_DATA.get(&block_type).unwrap_or_default()
+        let index = block_type as usize;
+        if index < BLOCK_DATA.len() {
+            &BLOCK_DATA[index]
+        } else {
+            &DEFAULT_BLOCK_DATA
+        }
     }
 }
 
 #[wasm_bindgen]
 impl BlockMetaData {
     pub fn get_for_type_wasm(block_type: BlockType) -> Option<BlockMetaData> {
-        BLOCK_DATA.get(&block_type).copied()
+        let index = block_type as usize;
+        if index < BLOCK_DATA.len() {
+            Some(BLOCK_DATA[index])
+        } else {
+            None
+        }
     }
 }
 
-lazy_static! {
-    static ref BLOCK_DATA: HashMap<BlockType, BlockMetaData> = {
-        let mut map: HashMap<BlockType, BlockMetaData> = HashMap::new();
-        map.insert(
-            BlockType::Void,
-            BlockMetaData {
-                gravitable: false,
-                intangible: true,
-                shape: BlockShape::Cube,
-                transparent: true,
-                fluid: false,
-            },
-        );
-        map.insert(
-            BlockType::Stone,
-            BlockMetaData {
-                gravitable: false,
-                intangible: false,
-                shape: BlockShape::Cube,
-                transparent: false,
-                fluid: false,
-            },
-        );
-        map.insert(
-            BlockType::Image,
-            BlockMetaData {
-                gravitable: false,
-                intangible: false,
-                shape: BlockShape::Flat,
-                transparent: true,
-                fluid: false,
-            },
-        );
-        map.insert(
-            BlockType::Grass,
-            BlockMetaData {
-                gravitable: false,
-                intangible: false,
-                shape: BlockShape::Cube,
-                transparent: false,
-                fluid: false,
-            },
-        );
-        map.insert(
-            BlockType::Wood,
-            BlockMetaData {
-                gravitable: false,
-                intangible: false,
-                shape: BlockShape::Cube,
-                fluid: false,
-                transparent: false,
-            },
-        );
-        map.insert(
-            BlockType::Leaf,
-            BlockMetaData {
-                gravitable: false,
-                intangible: false,
-                fluid: false,
-                shape: BlockShape::Cube,
-                transparent: true,
-            },
-        );
-        map.insert(
-            BlockType::Cloud,
-            BlockMetaData {
-                gravitable: false,
-                intangible: false,
-                fluid: false,
-                shape: BlockShape::Cube,
-                transparent: false,
-            },
-        );
-        map.insert(
-            BlockType::Gold,
-            BlockMetaData {
-                gravitable: false,
-                intangible: false,
-                fluid: false,
-                shape: BlockShape::Cube,
-                transparent: false,
-            },
-        );
-        map.insert(
-            BlockType::RedFlower,
-            BlockMetaData {
-                gravitable: false,
-                intangible: false,
-                fluid: false,
-                shape: BlockShape::X,
-                transparent: true,
-            },
-        );
-        map.insert(
-            BlockType::Water,
-            BlockMetaData {
-                gravitable: false,
-                intangible: true,
-                fluid: true,
-                shape: BlockShape::Cube,
-                transparent: false,
-            },
-        );
-        map.insert(
-            BlockType::RedFlower,
-            BlockMetaData {
-                gravitable: false,
-                intangible: false,
-                fluid: false,
-                shape: BlockShape::X,
-                transparent: true,
-            },
-        );
+const DEFAULT_BLOCK_DATA: BlockMetaData = BlockMetaData {
+    gravitable: false,
+    intangible: false,
+    fluid: false,
+    shape: BlockShape::Cube,
+    transparent: false,
+};
 
-        map.insert(
-            BlockType::Planks,
-            BlockMetaData {
-                gravitable: false,
-                intangible: false,
-                fluid: false,
-                shape: BlockShape::Cube,
-                transparent: false,
-            },
-        );
-
-        map.insert(
-            BlockType::Red,
-            BlockMetaData {
-                gravitable: false,
-                intangible: false,
-                fluid: false,
-                shape: BlockShape::Cube,
-                transparent: false,
-            },
-        );
-
-        map
-    };
-}
+const BLOCK_DATA: [BlockMetaData; 12] = [
+    // BlockType::Void = 0
+    BlockMetaData {
+        gravitable: false,
+        intangible: true,
+        shape: BlockShape::Cube,
+        transparent: true,
+        fluid: false,
+    },
+    // BlockType::Stone = 1
+    BlockMetaData {
+        gravitable: false,
+        intangible: false,
+        shape: BlockShape::Cube,
+        transparent: false,
+        fluid: false,
+    },
+    // BlockType::Wood = 2
+    BlockMetaData {
+        gravitable: false,
+        intangible: false,
+        shape: BlockShape::Cube,
+        fluid: false,
+        transparent: false,
+    },
+    // BlockType::Leaf = 3
+    BlockMetaData {
+        gravitable: false,
+        intangible: false,
+        fluid: false,
+        shape: BlockShape::Cube,
+        transparent: true,
+    },
+    // BlockType::Cloud = 4
+    BlockMetaData {
+        gravitable: false,
+        intangible: false,
+        fluid: false,
+        shape: BlockShape::Cube,
+        transparent: false,
+    },
+    // BlockType::Gold = 5
+    BlockMetaData {
+        gravitable: false,
+        intangible: false,
+        fluid: false,
+        shape: BlockShape::Cube,
+        transparent: false,
+    },
+    // BlockType::RedFlower = 6
+    BlockMetaData {
+        gravitable: false,
+        intangible: false,
+        fluid: false,
+        shape: BlockShape::X,
+        transparent: true,
+    },
+    // BlockType::Water = 7
+    BlockMetaData {
+        gravitable: false,
+        intangible: true,
+        fluid: true,
+        shape: BlockShape::Cube,
+        transparent: false,
+    },
+    // BlockType::Grass = 8
+    BlockMetaData {
+        gravitable: false,
+        intangible: false,
+        shape: BlockShape::Cube,
+        transparent: false,
+        fluid: false,
+    },
+    // BlockType::Image = 9
+    BlockMetaData {
+        gravitable: false,
+        intangible: false,
+        shape: BlockShape::Flat,
+        transparent: true,
+        fluid: false,
+    },
+    // BlockType::Planks = 10
+    BlockMetaData {
+        gravitable: false,
+        intangible: false,
+        fluid: false,
+        shape: BlockShape::Cube,
+        transparent: false,
+    },
+    // BlockType::Red = 11
+    BlockMetaData {
+        gravitable: false,
+        intangible: false,
+        fluid: false,
+        shape: BlockShape::Cube,
+        transparent: false,
+    },
+];

@@ -2,7 +2,12 @@ use std::collections::HashSet;
 
 use super::{ChunkNotLoadedError, World, WorldStateDiff};
 use crate::{
-    chunk::chunk_mesh::{BlockMesh, ChunkMesh}, components::world_pos::WorldPos, positions::ChunkPos, vec::Vector3Ops
+    chunk::chunk_mesh::{BlockMesh, ChunkMesh},
+    components::world_pos::WorldPos,
+    direction::{DirectionVectorExtension, Directions},
+    positions::ChunkPos,
+    vec::Vector3Ops,
+    world::{world_block::WorldBlock, AdjacentBlocks},
 };
 
 impl World {
@@ -11,7 +16,7 @@ impl World {
 
         let adj_blocks = self.get_adjacent_blocks(&world_pos);
 
-        let faces = world_block.get_visible_faces(adj_blocks);
+        let faces = world_block.get_visible_faces(&adj_blocks);
 
         let chunk_mesh = self.get_chunk_mesh_mut(&world_pos.to_chunk_pos())?;
 
@@ -41,11 +46,32 @@ impl World {
     }
 
     pub fn update_chunk_mesh(&mut self, chunk_pos: &ChunkPos) -> Result<(), ChunkNotLoadedError> {
+        let mut new_chunk_mesh = ChunkMesh::new(*chunk_pos);
         let chunk = self.get_chunk(chunk_pos)?;
-        for block in chunk.get_all_blocks_and_dirty() {
-            self.update_mesh_at_pos(block.pos.to_world_pos(chunk_pos))
-                .ok();
+        let all_world_blocks = chunk.get_all_world_blocks_and_dirty();
+
+        for world_block in all_world_blocks.iter() {
+            let world_pos = world_block.world_pos;
+            let mut adjacent_blocks = AdjacentBlocks::new();
+            for direction in Directions::all() {
+                let adjacent_pos = world_pos.move_direction(&direction);
+                if !adjacent_pos.is_valid() {
+                    continue;
+                }
+
+                let adjacent_block = if adjacent_pos.to_chunk_pos() == *chunk_pos {
+                    chunk.get_world_block(&adjacent_pos.to_inner_chunk_pos())
+                } else {
+                    self.get_block(&adjacent_pos)
+                };
+
+                adjacent_blocks.data[direction.to_index()] = adjacent_block;
+            }
+            let faces = world_block.get_visible_faces(&adjacent_blocks);
+            new_chunk_mesh.insert(world_pos, faces);
         }
+        self.chunk_meshes
+            .insert(chunk_pos.to_world_index(), new_chunk_mesh);
         Ok(())
     }
 
@@ -81,7 +107,13 @@ impl World {
 #[cfg(test)]
 mod tests {
     use crate::{
-        block::{BlockData, BlockType}, chunk::{chunk_mesh::BlockMesh, Chunk}, components::world_pos::WorldPos, direction::{Direction, Directions}, positions::ChunkPos, vec::Vector3Ops, world::{world_block::WorldBlock, World}
+        block::{BlockData, BlockType},
+        chunk::{chunk_mesh::BlockMesh, Chunk},
+        components::world_pos::WorldPos,
+        direction::{Direction, Directions},
+        positions::ChunkPos,
+        vec::Vector3Ops,
+        world::{world_block::WorldBlock, World},
     };
 
     #[test]

@@ -1,3 +1,17 @@
+# 06_03_25
+
+I've worked more on optimizing the chunk insertion code. The release build of the app is much faster now and I'm happy with it.
+
+I broke up the game updating code into a bunch of functions that I can run seperately and that is nice.
+
+# 06_02_25
+
+I got the server working again. I want to fix chunk loading now, the chunks around me load in such a strange way, I can walk up to chunks and not have them load and I don't know why.
+
+I've been profiling the code that inserts chunks, it isn't as optimal as it coudl be, but when I build in release mode it is pretty fast still on my computer when I have a full world generation. I think I shoudl maybe optimize the chunk insertion code a little bit still.
+
+Okay, I brought the chunk insertion time down from around 30ms to 12ms. The biggest thing was removing hash maps and using arrays instead. I hate how slow rust hashmaps are.
+
 # 05_27_25
 
 I reworked the entity serialiaztion yesterday and I'm so happy with it now. Now I'm working on adding the fireballs back. They are working but they don't destory anything yet, I need to make them destroy blocks and hurt players.

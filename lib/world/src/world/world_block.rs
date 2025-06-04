@@ -1,5 +1,8 @@
 use crate::{
-    block::{BlockData, BlockMetaData, BlockShape, BlockType, ChunkBlock}, components::world_pos::WorldPos, direction::{Direction, Directions}
+    block::{BlockData, BlockMetaData, BlockShape, BlockType, ChunkBlock},
+    components::world_pos::WorldPos,
+    direction::{Direction, Directions},
+    world::AdjacentBlocks,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -55,16 +58,15 @@ impl WorldBlock {
         return false;
     }
 
-    pub fn get_visible_faces(&self, adjacent_blocks: HashMap<Direction, WorldBlock>) -> Directions {
+    pub fn get_visible_faces(&self, adjacent_blocks: &AdjacentBlocks) -> Directions {
         if self.block_type == BlockType::Void {
             return Directions::empty();
         }
 
         self.get_faces()
             .into_iter()
-            .filter(|direction| match adjacent_blocks.get(direction) {
-                Some(adjacent_block) => self.is_block_face_visible(adjacent_block),
-                None => true,
+            .filter(|direction| {
+                self.is_block_face_visible(adjacent_blocks.get_for_direction(*direction))
             })
             .collect::<Directions>()
     }
@@ -88,7 +90,10 @@ impl WorldBlock {
 #[cfg(test)]
 mod tests {
     use crate::{
-        block::{BlockData, BlockType}, components::world_pos::WorldPos, direction::Direction, world::world_block::WorldBlock
+        block::{BlockData, BlockType},
+        components::world_pos::WorldPos,
+        direction::Direction,
+        world::{world_block::WorldBlock, AdjacentBlocks},
     };
     use std::collections::HashMap;
 
@@ -129,24 +134,21 @@ mod tests {
             world_pos: WorldPos { x: 0, y: 0, z: 0 },
         };
 
-        let adjacent_blocks = HashMap::new();
+        let adjacent_blocks = AdjacentBlocks::new();
 
-        let faces = world_block.get_visible_faces(adjacent_blocks);
+        let faces = world_block.get_visible_faces(&adjacent_blocks);
 
         assert_eq!(faces.into_iter().len(), 6);
 
-        let mut adjacent_blocks: HashMap<Direction, WorldBlock> = HashMap::new();
+        let mut adjacent_blocks = AdjacentBlocks::new();
 
-        adjacent_blocks.insert(
-            Direction::East,
-            WorldBlock {
-                block_type: BlockType::Cloud,
-                extra_data: BlockData::None,
-                world_pos: WorldPos { x: 0, y: 0, z: 0 },
-            },
-        );
+        adjacent_blocks.data[Direction::East.to_index()] = WorldBlock {
+            block_type: BlockType::Cloud,
+            extra_data: BlockData::None,
+            world_pos: WorldPos { x: 0, y: 0, z: 0 },
+        };
 
-        let faces = world_block.get_visible_faces(adjacent_blocks);
+        let faces = world_block.get_visible_faces(&adjacent_blocks);
 
         assert_eq!(faces.into_iter().len(), 5);
         assert_eq!(faces.has_direction(Direction::East), false);

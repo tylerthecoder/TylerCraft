@@ -1,6 +1,7 @@
 use super::entities::{EntityQuery, EntityQueryResults};
 use super::entity::EntityId;
 use super::game::{GameDiff, GameSchedule};
+use crate::chunk::ChunkId;
 use crate::world::World;
 use std::any::Any;
 use std::fmt::Debug;
@@ -20,7 +21,11 @@ pub trait GameScript: Any + Debug {
         EntityQuery::new()
     }
 
-    fn on_diff(&self, _diff: GameDiff) {
+    fn on_chunk_update(&self, _chunk_id: ChunkId) {
+        // Default implementation does nothing
+    }
+
+    fn on_entity_update(&self, _entity_id: EntityId) {
         // Default implementation does nothing
     }
 }
@@ -67,16 +72,21 @@ impl EntityScriptHolder {
 #[derive(Debug)]
 pub struct WasmGameScript {
     context: JsValue,
-    on_diff_jsfn: js_sys::Function,
+    on_chunk_update_jsfn: js_sys::Function,
+    on_entity_update_jsfn: js_sys::Function,
 }
 
 #[wasm_bindgen]
 impl WasmGameScript {
     #[wasm_bindgen(constructor)]
     pub fn make(val: JsValue) -> WasmGameScript {
-        let on_diff_jsfn = js_sys::Reflect::get(&val, &JsValue::from("onDiff")).unwrap();
+        let on_chunk_update_jsfn =
+            js_sys::Reflect::get(&val, &JsValue::from("onChunkUpdate")).unwrap();
+        let on_entity_update_jsfn =
+            js_sys::Reflect::get(&val, &JsValue::from("onEntityUpdate")).unwrap();
         WasmGameScript {
-            on_diff_jsfn: on_diff_jsfn.into(),
+            on_chunk_update_jsfn: on_chunk_update_jsfn.into(),
+            on_entity_update_jsfn: on_entity_update_jsfn.into(),
             context: val,
         }
     }
@@ -91,9 +101,17 @@ impl GameScript for WasmGameScript {
         None
     }
 
-    fn on_diff(&self, diff: GameDiff) -> () {
-        // console log diff
-        let val = serde_wasm_bindgen::to_value(&diff).unwrap();
-        self.on_diff_jsfn.call1(&self.context, &val).unwrap();
+    fn on_chunk_update(&self, chunk_id: ChunkId) {
+        let val = serde_wasm_bindgen::to_value(&chunk_id).unwrap();
+        self.on_chunk_update_jsfn
+            .call1(&self.context, &val)
+            .unwrap();
+    }
+
+    fn on_entity_update(&self, entity_id: EntityId) {
+        let val = serde_wasm_bindgen::to_value(&entity_id).unwrap();
+        self.on_entity_update_jsfn
+            .call1(&self.context, &val)
+            .unwrap();
     }
 }

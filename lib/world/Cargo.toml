@@ -31,8 +31,9 @@ noise = "0.8.2"
 rand = { version = "0.8.5" }
 rand_distr = "0.4.3"
 getrandom = { version = "0.2", features = ["js"] }
-typetag = "0.2"
 uuid = { version = "1.16.0", features = ["v4", "js"] }
+rustc-hash = { version = "2.1"}
+
 
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
