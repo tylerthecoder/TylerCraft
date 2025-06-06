@@ -83,6 +83,11 @@ export class CanvasGameScript extends GameScript<Config> {
     this.isSpectating = false;
   }
 
+  setConfig(config: Config): void {
+    this.config = { ...this.config, ...config };
+    console.log("CanvasGameScript config updated:", this.config);
+  }
+
   // This is called by the rust side when a chunk is updated
   onChunkUpdate(chunkId: number): void {
     console.log("CanvasGameScript: onChunkUpdate", chunkId);

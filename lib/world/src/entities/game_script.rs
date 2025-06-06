@@ -17,6 +17,18 @@ pub trait GameScript: Any + Debug {
         None
     }
 
+    fn get_name(&self) -> String {
+        "".to_string()
+    }
+
+    fn get_config(&self) -> JsValue {
+        JsValue::null()
+    }
+
+    fn set_config(&mut self, _config: JsValue) {
+        // Default implementation does nothing
+    }
+
     fn get_query(&self) -> EntityQuery {
         EntityQuery::new()
     }
@@ -50,11 +62,11 @@ impl std::fmt::Display for ScriptNotFoundError {
 
 #[derive(Debug, Default)]
 #[wasm_bindgen]
-pub struct EntityScriptHolder {
+pub struct GameScripts {
     scripts: Vec<Box<dyn GameScript>>,
 }
 
-impl EntityScriptHolder {
+impl GameScripts {
     pub fn add_script(&mut self, script: Box<dyn GameScript>) {
         self.scripts.push(script);
     }
@@ -65,6 +77,31 @@ impl EntityScriptHolder {
 
     pub fn iter_mut(&mut self) -> std::slice::IterMut<Box<dyn GameScript>> {
         self.scripts.iter_mut()
+    }
+
+    pub fn get_all_script_names(&self) -> Vec<String> {
+        self.scripts
+            .iter()
+            .map(|script| script.get_name())
+            .collect()
+    }
+
+    pub fn get_script_config(&self, script_name: String) -> JsValue {
+        for script in self.scripts.iter() {
+            if script.get_name() == script_name {
+                return script.get_config();
+            }
+        }
+        JsValue::null()
+    }
+
+    pub fn set_script_config(&mut self, script_name: String, config: JsValue) {
+        for script in self.scripts.iter_mut() {
+            if script.get_name() == script_name {
+                script.set_config(config);
+                break;
+            }
+        }
     }
 }
 

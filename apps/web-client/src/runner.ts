@@ -19,8 +19,12 @@ export class SinglePlayerTerrainChunkGetter {
   private chunks_to_insert: [{ x: number; y: number }, Chunk][] = [];
   private fetched_chunks: [{ x: number; y: number }][] = [];
 
-  constructor(private game: GameWrapper) {
-    this.terrianGen = new TerrainGenerator(0, false, false);
+  constructor(private game: GameWrapper, config: GameConfig) {
+    this.terrianGen = new TerrainGenerator(
+      config.seed,
+      config.flatWorld,
+      false
+    );
   }
 
   getChunk(chunkPos: { x: number; y: number }) {
@@ -64,8 +68,10 @@ export const DEFAULT_CONFIG = {
   flatWorld: true,
 };
 
-export async function run(id?: string) {
-  console.log("Starting game", id);
+export type GameConfig = typeof DEFAULT_CONFIG;
+
+export async function run(id?: string, config: GameConfig = DEFAULT_CONFIG) {
+  console.log("Starting game", id, config);
 
   const game = id ? await spGameService.getGame(id) : spGameService.newGame();
 
@@ -78,10 +84,13 @@ export async function run(id?: string) {
     return;
   }
 
-  const chunkGetter = new SinglePlayerTerrainChunkGetter(game);
+  const chunkGetter = new SinglePlayerTerrainChunkGetter(game, config);
 
   // add sandbox
-  const sandbox = new SandBoxGScript(2, chunkGetter.getWasmRequestChunk());
+  const sandbox = new SandBoxGScript(
+    config.loadDistance,
+    chunkGetter.getWasmRequestChunk()
+  );
   const serializedSandbox = sandbox.serialize();
   game.game.add_sandbox_wasm(sandbox);
 
@@ -100,9 +109,9 @@ export async function run(id?: string) {
     webglGameScript,
     main_player_uid,
     {
-      renderDistance: 10,
-      fovFactor: 0.5,
-      chunkSize: 16,
+      renderDistance: config.renderDistance,
+      fovFactor: config.fovFactor,
+      chunkSize: config.chunkSize,
     }
   );
 
@@ -174,15 +183,6 @@ export async function run(id?: string) {
   };
 
   requestAnimationFrame(update);
-
-  // setInterval(async () => {
-  //   console.log("Saving game");
-  //   await spGameService.saveGame(
-  //     game,
-  //     chunkGetter.terrianGen,
-  //     serializedSandbox
-  //   );
-  // }, 3000);
 
   canvasGameScript.renderLoop(0);
 }

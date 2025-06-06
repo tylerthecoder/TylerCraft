@@ -5,7 +5,10 @@ use super::{
 };
 use crate::{components::fine_world_pos::FineWorldPos, positions::ChunkPos, world::World};
 use serde::Serialize;
+use serde_json;
+use serde_wasm_bindgen;
 use wasm_bindgen::prelude::wasm_bindgen;
+use wasm_bindgen::JsValue;
 
 pub trait RequestChunk: std::fmt::Debug {
     fn request_chunk(&self, chunk_pos: ChunkPos);
@@ -39,6 +42,29 @@ impl SandBoxGScript {
 }
 
 impl GameScript for SandBoxGScript {
+    fn get_name(&self) -> String {
+        "sandbox".to_string()
+    }
+
+    fn get_config(&self) -> JsValue {
+        let config = serde_json::json!({
+            "load_distance": self.load_distance,
+            "enabled": true,
+            "auto_load_chunks": true
+        });
+        serde_wasm_bindgen::to_value(&config).unwrap()
+    }
+
+    fn set_config(&mut self, config: JsValue) {
+        if let Ok(config_obj) = serde_wasm_bindgen::from_value::<serde_json::Value>(config.clone())
+        {
+            if let Some(load_distance) = config_obj.get("load_distance").and_then(|v| v.as_u64()) {
+                self.load_distance = load_distance as u8;
+            }
+        }
+        web_sys::console::log_1(&format!("SandBoxGScript config updated: {:?}", config).into());
+    }
+
     fn get_query(&self) -> EntityQuery {
         let mut query = EntityQuery::new();
         query.add::<FineWorldPos>();

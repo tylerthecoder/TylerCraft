@@ -8,7 +8,15 @@ import { Game, Item, Player } from "@craft/rust-world";
 import TextureMapper from "../textureMapper";
 
 export class HudGScript extends GameScript {
-  name = "hud";
+  name = "hud-renderer";
+
+  public config = {
+    enabled: true,
+    showStats: true,
+    showBelt: true,
+    showHealthBar: true,
+    opacity: 1.0,
+  };
 
   textureImg: HTMLImageElement;
   private eHealthBar = getEleOrError<HTMLDivElement>("healthBar");
@@ -212,5 +220,10 @@ export class HudGScript extends GameScript {
     hideElement(this.eJumpButton);
     hideElement(this.eUseItemButton);
     hideElement(this.eUseItemButton2);
+  }
+
+  setConfig(config: typeof this.config): void {
+    this.config = { ...this.config, ...config };
+    console.log("HudGScript config updated:", this.config);
   }
 }

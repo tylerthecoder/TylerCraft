@@ -10,6 +10,9 @@ use crate::{
     vec::Vector3Ops,
 };
 use serde::{Deserialize, Serialize};
+use serde_json;
+use serde_wasm_bindgen;
+use wasm_bindgen::JsValue;
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone)]
 pub struct Forces {
@@ -28,6 +31,23 @@ impl_component!(Forces);
 pub struct VelocityScript {}
 
 impl GameScript for VelocityScript {
+    fn get_name(&self) -> String {
+        "velocity".to_string()
+    }
+
+    fn get_config(&self) -> JsValue {
+        let config = serde_json::json!({
+            "enabled": true,
+            "max_velocity": 10.0,
+            "damping_factor": 0.98
+        });
+        serde_wasm_bindgen::to_value(&config).unwrap()
+    }
+
+    fn set_config(&mut self, config: JsValue) {
+        web_sys::console::log_1(&format!("VelocityScript config updated: {:?}", config).into());
+    }
+
     fn get_query(&self) -> EntityQuery {
         let mut query = EntityQuery::new();
         query.add::<Velocity>();

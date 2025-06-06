@@ -2,7 +2,7 @@ use super::{
     entities::Entities,
     entity::{Entity, EntityId},
     entity_action::{EntityActionDto, EntityActionHolder},
-    game_script::{EntityScriptHolder, GameScript, WasmGameScript},
+    game_script::{GameScript, GameScripts, WasmGameScript},
 };
 use crate::{
     chunk::{Chunk, ChunkId},
@@ -32,7 +32,7 @@ pub struct Game {
     pub id: String,
     pub world: World,
     pub entities: Entities,
-    scripts: EntityScriptHolder,
+    scripts: GameScripts,
     schedule: GameSchedule,
     action_holder: EntityActionHolder,
 }
@@ -66,7 +66,7 @@ impl Game {
             id: Uuid::new_v4().to_string(),
             world: World::default(),
             entities: Entities::new(),
-            scripts: EntityScriptHolder::default(),
+            scripts: GameScripts::default(),
             schedule: GameSchedule::empty(),
             action_holder: EntityActionHolder::default(),
         };
@@ -80,7 +80,7 @@ impl Game {
             name,
             world,
             entities,
-            scripts: EntityScriptHolder::default(),
+            scripts: GameScripts::default(),
             schedule: GameSchedule::empty(),
             action_holder: EntityActionHolder::default(),
         };
@@ -204,10 +204,6 @@ impl Game {
         self.schedule_chunk_insert(chunk);
     }
 
-    pub fn add_game_script_wasm(&mut self, script: WasmGameScript) {
-        self.add_script(Box::new(script));
-    }
-
     pub fn get_chunk_mesh_by_chunkid_wasm(&self, chunk_id: ChunkId) -> Result<JsValue, Error> {
         self.world.get_chunk_mesh_wasm(chunk_id)
     }
@@ -257,6 +253,23 @@ impl Game {
         let chunk = self.world.get_chunk(&chunk_pos);
         let chunk_js = serde_wasm_bindgen::to_value(&chunk);
         chunk_js
+    }
+
+    // Scripts
+    pub fn add_game_script_wasm(&mut self, script: WasmGameScript) {
+        self.add_script(Box::new(script));
+    }
+
+    pub fn get_all_script_names_wasm(&self) -> Vec<String> {
+        self.scripts.get_all_script_names()
+    }
+
+    pub fn get_script_config_wasm(&self, script_name: String) -> JsValue {
+        self.scripts.get_script_config(script_name)
+    }
+
+    pub fn set_script_config_wasm(&mut self, script_name: String, config: JsValue) {
+        self.scripts.set_script_config(script_name, config);
     }
 }
 

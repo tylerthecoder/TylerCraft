@@ -366,4 +366,14 @@ export class WebGlGScript extends GameScript<Conifg> {
 
     return shader;
   }
+
+  setConfig(config: Conifg): void {
+    this.config = { ...this.config, ...config };
+    console.log("WebGlGScript config updated:", this.config);
+
+    // Recreate projection matrix if FOV changed
+    if (config.glFov && this.program) {
+      this.createProjectionMatrix();
+    }
+  }
 }

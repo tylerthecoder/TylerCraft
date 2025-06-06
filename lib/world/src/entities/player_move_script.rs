@@ -12,6 +12,8 @@ use crate::{
     vec::Vector3Ops, world::World,
 };
 use serde::{Deserialize, Serialize};
+use serde_json;
+use serde_wasm_bindgen;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -60,6 +62,29 @@ impl Default for MoveScript {
 }
 
 impl GameScript for MoveScript {
+    fn get_name(&self) -> String {
+        "move".to_string()
+    }
+
+    fn get_config(&self) -> JsValue {
+        let config = serde_json::json!({
+            "max_speed": self.max_speed,
+            "slow_force_magnitude": 0.1,
+            "enabled": true
+        });
+        serde_wasm_bindgen::to_value(&config).unwrap()
+    }
+
+    fn set_config(&mut self, config: JsValue) {
+        if let Ok(config_obj) = serde_wasm_bindgen::from_value::<serde_json::Value>(config.clone())
+        {
+            if let Some(max_speed) = config_obj.get("max_speed").and_then(|v| v.as_f64()) {
+                self.max_speed = max_speed as f32;
+            }
+        }
+        web_sys::console::log_1(&format!("MoveScript config updated: {:?}", config).into());
+    }
+
     fn get_query(&self) -> EntityQuery {
         let mut query = EntityQuery::new();
         query.add::<Velocity>();

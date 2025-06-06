@@ -4,6 +4,10 @@ I've worked more on optimizing the chunk insertion code. The release build of th
 
 I broke up the game updating code into a bunch of functions that I can run seperately and that is nice.
 
+Next I want to work on setting the options for the game when you start it.
+
+I think I can make it so options can be changed at run time.
+
 # 06_02_25
 
 I got the server working again. I want to fix chunk loading now, the chunks around me load in such a strange way, I can walk up to chunks and not have them load and I don't know why.

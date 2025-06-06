@@ -1,7 +1,11 @@
 import { IGameMetadata } from "@craft/engine";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { SinglePlayerTerrainChunkGetter, spGameService } from "../runner";
+import {
+  DEFAULT_CONFIG,
+  SinglePlayerTerrainChunkGetter,
+  spGameService,
+} from "../runner";
 import { SandBoxGScript, TerrainGenerator } from "@craft/rust-world";
 
 export function ClientHomePage() {
@@ -12,7 +16,10 @@ export function ClientHomePage() {
   const newGame = async () => {
     console.log("Starting game");
     const game = spGameService.newGame();
-    const chunkGetter = new SinglePlayerTerrainChunkGetter(game);
+    const chunkGetter = new SinglePlayerTerrainChunkGetter(
+      game,
+      DEFAULT_CONFIG
+    );
     spGameService.saveGame(
       game,
       new TerrainGenerator(0, false, false),

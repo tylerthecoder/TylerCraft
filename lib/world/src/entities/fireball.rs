@@ -11,7 +11,10 @@ use crate::{
     geometry::rect3::Rect3,
     utils::js_log,
 };
+use serde_json;
+use serde_wasm_bindgen;
 use wasm_bindgen::prelude::wasm_bindgen;
+use wasm_bindgen::JsValue;
 
 pub fn make_fireball(pos: FineWorldPos, vel: Velocity) -> Entity {
     let uid = make_entity_id();
@@ -55,6 +58,23 @@ impl Fireball {
 pub struct FireballScript {}
 
 impl GameScript for FireballScript {
+    fn get_name(&self) -> String {
+        "fireball".to_string()
+    }
+
+    fn get_config(&self) -> JsValue {
+        let config = serde_json::json!({
+            "enabled": true,
+            "damage": 10
+        });
+        serde_wasm_bindgen::to_value(&config).unwrap()
+    }
+
+    fn set_config(&mut self, config: JsValue) {
+        // For now, just log the config. In the future, this could update script behavior
+        web_sys::console::log_1(&format!("FireballScript config updated: {:?}", config).into());
+    }
+
     fn get_query(&self) -> EntityQuery {
         let mut query = EntityQuery::new();
         query.add::<FineWorldPos>();

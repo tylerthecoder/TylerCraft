@@ -7,6 +7,9 @@ use super::{
 };
 use crate::{components::velocity::Velocity, world::World};
 use serde::{Deserialize, Serialize};
+use serde_json;
+use serde_wasm_bindgen;
+use wasm_bindgen::JsValue;
 
 #[derive(Debug, Serialize, Deserialize, Default, Clone)]
 pub struct GravityData {
@@ -27,6 +30,29 @@ impl Default for GravityScript {
 }
 
 impl GameScript for GravityScript {
+    fn get_name(&self) -> String {
+        "gravity".to_string()
+    }
+
+    fn get_config(&self) -> JsValue {
+        let config = serde_json::json!({
+            "gravity_strength": self.gravity,
+            "enabled": true,
+            "terminal_velocity": 20.0
+        });
+        serde_wasm_bindgen::to_value(&config).unwrap()
+    }
+
+    fn set_config(&mut self, config: JsValue) {
+        if let Ok(config_obj) = serde_wasm_bindgen::from_value::<serde_json::Value>(config.clone())
+        {
+            if let Some(gravity) = config_obj.get("gravity_strength").and_then(|v| v.as_f64()) {
+                self.gravity = gravity as f32;
+            }
+        }
+        web_sys::console::log_1(&format!("GravityScript config updated: {:?}", config).into());
+    }
+
     fn get_query(&self) -> EntityQuery {
         let mut query = EntityQuery::new();
         query.add::<Velocity>();
