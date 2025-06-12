@@ -11,11 +11,20 @@ interface ScriptConfig {
   [key: string]: any;
 }
 
+interface ChunkFetcherConfig {
+  type: string;
+  json: {
+    [key: string]: any;
+  };
+}
+
 export function GameConfigMenu({ game, isOpen, onClose }: GameConfigMenuProps) {
   const [scriptNames, setScriptNames] = useState<string[]>([]);
   const [scriptConfigs, setScriptConfigs] = useState<{
     [scriptName: string]: ScriptConfig;
   }>({});
+  const [chunkFetcherConfig, setChunkFetcherConfig] =
+    useState<ChunkFetcherConfig>({});
   const [activeTab, setActiveTab] = useState<string>("");
 
   useEffect(() => {
@@ -31,18 +40,44 @@ export function GameConfigMenu({ game, isOpen, onClose }: GameConfigMenuProps) {
           const config: Map<string, any> = game.get_script_config_wasm(name);
           console.log("Config", name, config);
           if (config) {
-            configs[name] = Object.fromEntries(config);
+            if (config instanceof Map) {
+              configs[name] = Object.fromEntries(config);
+            } else {
+              configs[name] = config;
+            }
           }
         } catch (error) {
           console.warn(`Failed to get config for script ${name}:`, error);
           configs[name] = {};
         }
       });
+
+      console.log("Configs", configs);
+
       setScriptConfigs(configs);
 
-      // Set first script as active tab
-      if (names.length > 0 && !activeTab) {
-        setActiveTab(names[0]);
+      // Get chunk fetcher config
+      try {
+        const chunkConfig: ChunkFetcherConfig = game.chunk_fetcher.get_config();
+        console.log("Chunk Fetcher Config", chunkConfig);
+        if (chunkConfig) {
+          if (chunkConfig.json instanceof Map) {
+            chunkConfig.json = Object.fromEntries(chunkConfig.json);
+          }
+          setChunkFetcherConfig(chunkConfig);
+        }
+      } catch (error) {
+        console.warn("Failed to get chunk fetcher config:", error);
+        setChunkFetcherConfig({ type: "", json: {} });
+      }
+
+      // Set first available tab as active
+      if (!activeTab) {
+        if (names.length > 0) {
+          setActiveTab(names[0]);
+        } else {
+          setActiveTab("Chunk Fetcher");
+        }
       }
     }
   }, [isOpen, game, activeTab]);
@@ -65,6 +100,24 @@ export function GameConfigMenu({ game, isOpen, onClose }: GameConfigMenuProps) {
     }
   };
 
+  const handleChunkFetcherConfigChange = (key: string, value: any) => {
+    const updatedConfig = {
+      ...chunkFetcherConfig,
+      json: {
+        ...chunkFetcherConfig.json,
+        [key]: value,
+      },
+    };
+    setChunkFetcherConfig(updatedConfig);
+
+    // Update the game chunk fetcher config
+    try {
+      game.chunk_fetcher.set_config(updatedConfig);
+    } catch (error) {
+      console.error("Failed to update chunk fetcher config:", error);
+    }
+  };
+
   const renderConfigValue = (scriptName: string, key: string, value: any) => {
     console.log("RenderConfigValue", scriptName, key, value);
     const handleChange = (newValue: any) => {
@@ -73,87 +126,101 @@ export function GameConfigMenu({ game, isOpen, onClose }: GameConfigMenuProps) {
 
     if (typeof value === "boolean") {
       return (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            marginBottom: "8px",
-          }}
-        >
-          <span style={{ minWidth: "150px", color: "#ccc" }}>{key}:</span>
+        <div className="flex items-center gap-3 mb-2">
+          <span className="min-w-[150px] text-gray-400">{key}:</span>
           <input
             type="checkbox"
             checked={value}
             onChange={(e) => handleChange(e.target.checked)}
+            className="w-4 h-4"
           />
         </div>
       );
     } else if (typeof value === "number") {
       return (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            marginBottom: "8px",
-          }}
-        >
-          <span style={{ minWidth: "150px", color: "#ccc" }}>{key}:</span>
+        <div className="flex items-center gap-3 mb-2">
+          <span className="min-w-[150px] text-gray-400">{key}:</span>
           <input
             type="number"
             value={value}
             step={value % 1 === 0 ? 1 : 0.1}
             onChange={(e) => handleChange(parseFloat(e.target.value) || 0)}
-            style={{
-              background: "#333",
-              border: "1px solid #555",
-              color: "white",
-              padding: "6px 12px",
-              borderRadius: "4px",
-              maxWidth: "200px",
-            }}
+            className="bg-gray-700 border border-gray-600 text-white px-3 py-1.5 rounded max-w-[200px] focus:outline-none focus:border-green-500"
           />
         </div>
       );
     } else if (typeof value === "string") {
       return (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            marginBottom: "8px",
-          }}
-        >
-          <span style={{ minWidth: "150px", color: "#ccc" }}>{key}:</span>
+        <div className="flex items-center gap-3 mb-2">
+          <span className="min-w-[150px] text-gray-400">{key}:</span>
           <input
             type="text"
             value={value}
             onChange={(e) => handleChange(e.target.value)}
-            style={{
-              background: "#333",
-              border: "1px solid #555",
-              color: "white",
-              padding: "6px 12px",
-              borderRadius: "4px",
-              maxWidth: "200px",
-            }}
+            className="bg-gray-700 border border-gray-600 text-white px-3 py-1.5 rounded max-w-[200px] focus:outline-none focus:border-green-500"
           />
         </div>
       );
     } else {
       return (
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            marginBottom: "8px",
-          }}
-        >
-          <span style={{ minWidth: "150px", color: "#ccc" }}>{key}:</span>
-          <span style={{ color: "#ffc107", fontFamily: "monospace" }}>
+        <div className="flex items-center gap-3 mb-2">
+          <span className="min-w-[150px] text-gray-400">{key}:</span>
+          <span className="text-yellow-400 font-mono">
+            {JSON.stringify(value)}
+          </span>
+        </div>
+      );
+    }
+  };
+
+  const renderChunkFetcherConfigValue = (key: string, value: any) => {
+    console.log("RenderChunkFetcherConfigValue", key, value);
+    const handleChange = (newValue: any) => {
+      handleChunkFetcherConfigChange(key, newValue);
+    };
+
+    if (typeof value === "boolean") {
+      return (
+        <div className="flex items-center gap-3 mb-2">
+          <span className="min-w-[150px] text-gray-400">{key}:</span>
+          <input
+            type="checkbox"
+            checked={value}
+            onChange={(e) => handleChange(e.target.checked)}
+            className="w-4 h-4"
+          />
+        </div>
+      );
+    } else if (typeof value === "number") {
+      return (
+        <div className="flex items-center gap-3 mb-2">
+          <span className="min-w-[150px] text-gray-400">{key}:</span>
+          <input
+            type="number"
+            value={value}
+            step={value % 1 === 0 ? 1 : 0.1}
+            onChange={(e) => handleChange(parseFloat(e.target.value) || 0)}
+            className="bg-gray-700 border border-gray-600 text-white px-3 py-1.5 rounded max-w-[200px] focus:outline-none focus:border-green-500"
+          />
+        </div>
+      );
+    } else if (typeof value === "string") {
+      return (
+        <div className="flex items-center gap-3 mb-2">
+          <span className="min-w-[150px] text-gray-400">{key}:</span>
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => handleChange(e.target.value)}
+            className="bg-gray-700 border border-gray-600 text-white px-3 py-1.5 rounded max-w-[200px] focus:outline-none focus:border-green-500"
+          />
+        </div>
+      );
+    } else {
+      return (
+        <div className="flex items-center gap-3 mb-2">
+          <span className="min-w-[150px] text-gray-400">{key}:</span>
+          <span className="text-yellow-400 font-mono">
             {JSON.stringify(value)}
           </span>
         </div>
@@ -168,115 +235,78 @@ export function GameConfigMenu({ game, isOpen, onClose }: GameConfigMenuProps) {
   console.log("ActiveConfig", activeConfig, scriptConfigs, activeTab);
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100%",
-        height: "100%",
-        background: "rgba(0, 0, 0, 0.8)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        zIndex: 1000,
-      }}
-    >
-      <div
-        style={{
-          background: "#1a1a1a",
-          border: "2px solid #333",
-          borderRadius: "8px",
-          width: "90%",
-          maxWidth: "800px",
-          height: "80vh",
-          maxHeight: "600px",
-          color: "white",
-          fontFamily: "monospace",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "1rem",
-            borderBottom: "1px solid #333",
-          }}
-        >
-          <h2 style={{ margin: 0, color: "#4CAF50" }}>
-            Game Script Configuration
+    <div className="fixed inset-0 bg-black bg-opacity-80 flex justify-center items-center z-[1000]">
+      <div className="bg-gray-900 border-2 border-gray-700 rounded-lg w-[90%] max-w-4xl h-[80vh] max-h-[600px] text-white font-mono">
+        <div className="flex justify-between items-center p-4 border-b border-gray-700">
+          <h2 className="m-0 text-green-500 text-xl font-bold">
+            Game Configuration
           </h2>
           <button
             onClick={onClose}
-            style={{
-              background: "#f44336",
-              color: "white",
-              border: "none",
-              width: "30px",
-              height: "30px",
-              borderRadius: "50%",
-              cursor: "pointer",
-              fontSize: "18px",
-            }}
+            className="bg-red-600 hover:bg-red-700 text-white border-0 w-8 h-8 rounded-full cursor-pointer text-lg flex items-center justify-center focus:outline-none"
           >
             ×
           </button>
         </div>
 
-        <div style={{ display: "flex", height: "calc(100% - 80px)" }}>
-          {scriptNames.length === 0 ? (
-            <div
-              style={{
-                textAlign: "center",
-                color: "#888",
-                padding: "2rem",
-                width: "100%",
-              }}
-            >
-              No game scripts found
+        <div className="flex h-[calc(100%-80px)]">
+          {scriptNames.length === 0 &&
+            chunkFetcherConfig.json &&
+            Object.keys(chunkFetcherConfig.json).length === 0 ? (
+            <div className="text-center text-gray-500 p-8 w-full">
+              No configuration options found
             </div>
           ) : (
             <>
-              <div
-                style={{
-                  width: "200px",
-                  borderRight: "1px solid #333",
-                  overflowY: "auto",
-                }}
-              >
+              <div className="w-48 border-r border-gray-700 overflow-y-auto">
+                {/* Chunk Fetcher Tab */}
+                <button
+                  onClick={() => setActiveTab("Chunk Fetcher")}
+                  className={`block w-full px-4 py-3 text-left cursor-pointer border-b border-gray-700 transition-colors ${activeTab === "Chunk Fetcher"
+                      ? "bg-green-500 text-white"
+                      : "bg-transparent text-gray-400 hover:bg-gray-800"
+                    }`}
+                >
+                  Chunk Fetcher
+                </button>
+
+                {/* Script Tabs */}
                 {scriptNames.map((name) => (
                   <button
                     key={name}
                     onClick={() => setActiveTab(name)}
-                    style={{
-                      display: "block",
-                      width: "100%",
-                      padding: "12px 16px",
-                      background: activeTab === name ? "#4CAF50" : "none",
-                      border: "none",
-                      color: activeTab === name ? "white" : "#ccc",
-                      textAlign: "left",
-                      cursor: "pointer",
-                      borderBottom: "1px solid #333",
-                    }}
+                    className={`block w-full px-4 py-3 text-left cursor-pointer border-b border-gray-700 transition-colors ${activeTab === name
+                        ? "bg-green-500 text-white"
+                        : "bg-transparent text-gray-400 hover:bg-gray-800"
+                      }`}
                   >
                     {name}
                   </button>
                 ))}
               </div>
 
-              <div style={{ flex: 1, padding: "1rem", overflowY: "auto" }}>
-                {activeTab && scriptConfigs[activeTab] && (
+              <div className="flex-1 p-4 overflow-y-auto">
+                {activeTab === "Chunk Fetcher" ? (
                   <div>
-                    <h3
-                      style={{
-                        marginTop: 0,
-                        color: "#4CAF50",
-                        borderBottom: "1px solid #333",
-                        paddingBottom: "0.5rem",
-                      }}
-                    >
+                    <h3 className="mt-0 text-green-500 border-b border-gray-700 pb-2 mb-4">
+                      Chunk Fetcher Configuration
+                    </h3>
+                    {Object.entries(chunkFetcherConfig.json).map(
+                      ([key, value]) => (
+                        <div key={key}>
+                          {renderChunkFetcherConfigValue(key, value)}
+                        </div>
+                      )
+                    )}
+                    {Object.keys(chunkFetcherConfig).length === 0 && (
+                      <div className="text-center text-gray-500 p-8">
+                        No configuration options available
+                      </div>
+                    )}
+                  </div>
+                ) : activeTab && scriptConfigs[activeTab] ? (
+                  <div>
+                    <h3 className="mt-0 text-green-500 border-b border-gray-700 pb-2 mb-4">
                       {activeTab} Configuration
                     </h3>
                     {Object.entries(scriptConfigs[activeTab]).map(
@@ -287,18 +317,12 @@ export function GameConfigMenu({ game, isOpen, onClose }: GameConfigMenuProps) {
                       )
                     )}
                     {Object.keys(scriptConfigs[activeTab]).length === 0 && (
-                      <div
-                        style={{
-                          textAlign: "center",
-                          color: "#888",
-                          padding: "2rem",
-                        }}
-                      >
+                      <div className="text-center text-gray-500 p-8">
                         No configuration options available
                       </div>
                     )}
                   </div>
-                )}
+                ) : null}
               </div>
             </>
           )}

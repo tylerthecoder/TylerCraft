@@ -5,7 +5,10 @@ use super::{
     game_script::{GameScript, GameScripts, WasmGameScript},
 };
 use crate::{
-    chunk::{Chunk, ChunkId},
+    chunk::{
+        chunk_fetcher::{ChunkFetcher, ChunkLoader},
+        Chunk, ChunkId,
+    },
     components::world_pos::WorldPos,
     entities::{
         entity_action::EntityActionDtoMaker,
@@ -16,6 +19,7 @@ use crate::{
         player_jump_script::JumpAction,
         player_move_script::{MoveAction, MoveScript},
         player_rot_script::RotateAction,
+        terrain_gen::TerrainGenerator,
         velocity_script::VelocityScript,
     },
     positions::ChunkPos,
@@ -32,6 +36,7 @@ pub struct Game {
     pub id: String,
     pub world: World,
     pub entities: Entities,
+    pub chunk_fetcher: ChunkFetcher,
     scripts: GameScripts,
     schedule: GameSchedule,
     action_holder: EntityActionHolder,
@@ -66,6 +71,7 @@ impl Game {
             id: Uuid::new_v4().to_string(),
             world: World::default(),
             entities: Entities::new(),
+            chunk_fetcher: ChunkFetcher::new_wasm(TerrainGenerator::default()),
             scripts: GameScripts::default(),
             schedule: GameSchedule::empty(),
             action_holder: EntityActionHolder::default(),
@@ -80,6 +86,7 @@ impl Game {
             name,
             world,
             entities,
+            chunk_fetcher: ChunkFetcher::new_wasm(TerrainGenerator::default()),
             scripts: GameScripts::default(),
             schedule: GameSchedule::empty(),
             action_holder: EntityActionHolder::default(),
@@ -100,7 +107,7 @@ impl Game {
         for script in self.scripts.get_scripts_mut() {
             let query = script.get_query();
             let query_results = self.entities.query(&query);
-            let diff = script.update(world, query_results);
+            let diff = script.update(world, query_results, &mut self.chunk_fetcher);
             if let Some(diff) = diff {
                 self.schedule.combine(diff);
             }
@@ -135,7 +142,8 @@ impl Game {
     }
 
     pub fn add_single_chunk(&mut self) {
-        if let Some(chunk) = self.schedule.consume_single_chunk() {
+        let chunk = self.chunk_fetcher.consume_single_chunk();
+        if let Some(chunk) = chunk {
             let chunk_id = chunk.get_id();
             self.world.insert_chunk(chunk);
             self.scripts.iter_mut().for_each(|script| {

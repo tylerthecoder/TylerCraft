@@ -3,7 +3,10 @@ use super::{
     game::{Game, GameSchedule},
     game_script::GameScript,
 };
-use crate::{components::fine_world_pos::FineWorldPos, positions::ChunkPos, world::World};
+use crate::{
+    chunk::chunk_fetcher::ChunkFetcher, components::fine_world_pos::FineWorldPos,
+    positions::ChunkPos, world::World,
+};
 use serde::Serialize;
 use serde_json;
 use serde_wasm_bindgen;
@@ -18,9 +21,12 @@ pub trait RequestChunk: std::fmt::Debug {
 #[wasm_bindgen]
 pub struct SandBoxGScript {
     pub load_distance: u8,
-    #[serde(skip)]
-    request_chunk: Box<dyn RequestChunk>,
-    // pub terrain_gen: TerrainGenerator,
+}
+
+impl Default for SandBoxGScript {
+    fn default() -> Self {
+        Self { load_distance: 2 }
+    }
 }
 
 #[wasm_bindgen]
@@ -49,8 +55,6 @@ impl GameScript for SandBoxGScript {
     fn get_config(&self) -> JsValue {
         let config = serde_json::json!({
             "load_distance": self.load_distance,
-            "enabled": true,
-            "auto_load_chunks": true
         });
         serde_wasm_bindgen::to_value(&config).unwrap()
     }
@@ -71,7 +75,12 @@ impl GameScript for SandBoxGScript {
         query
     }
 
-    fn update(&mut self, world: &World, query_results: EntityQueryResults) -> Option<GameSchedule> {
+    fn update(
+        &mut self,
+        world: &World,
+        query_results: EntityQueryResults,
+        chunk_fetcher: &mut ChunkFetcher,
+    ) -> Option<GameSchedule> {
         let entity_poses: Vec<FineWorldPos> = query_results
             .entities
             .iter()
@@ -84,13 +93,8 @@ impl GameScript for SandBoxGScript {
             .filter(|pos| !world.has_chunk(pos))
             .collect();
 
-        // only load the first chunk
-        let chunk_pos = nearby_unloaded_chunks.first();
-
-        // let mut gdiff = GameSchedule::empty();
-
-        if let Some(chunk_pos) = chunk_pos {
-            self.request_chunk.request_chunk(*chunk_pos);
+        for chunk_pos in nearby_unloaded_chunks {
+            chunk_fetcher.request_chunk(chunk_pos);
         }
 
         None
@@ -103,35 +107,10 @@ pub mod wasm {
     use super::*;
 
     #[wasm_bindgen]
-    #[derive(Debug)]
-    pub struct WasmRequestChunk {
-        request_chunk: js_sys::Function,
-    }
-
-    #[wasm_bindgen]
-    impl WasmRequestChunk {
-        #[wasm_bindgen(constructor)]
-        pub fn new(request_chunk: js_sys::Function) -> WasmRequestChunk {
-            WasmRequestChunk { request_chunk }
-        }
-    }
-
-    impl RequestChunk for WasmRequestChunk {
-        fn request_chunk(&self, chunk_pos: ChunkPos) {
-            let val = serde_wasm_bindgen::to_value(&chunk_pos).unwrap();
-            let context = JsValue::NULL;
-            self.request_chunk.call1(&context, &val).unwrap();
-        }
-    }
-
-    #[wasm_bindgen]
     impl SandBoxGScript {
         #[wasm_bindgen(constructor)]
-        pub fn new_wasm(load_distance: u8, wasm_request_chunk: WasmRequestChunk) -> SandBoxGScript {
-            SandBoxGScript {
-                load_distance,
-                request_chunk: Box::new(wasm_request_chunk),
-            }
+        pub fn new_wasm() -> SandBoxGScript {
+            SandBoxGScript::default()
         }
 
         pub fn serialize(&self) -> Result<JsValue, serde_wasm_bindgen::Error> {

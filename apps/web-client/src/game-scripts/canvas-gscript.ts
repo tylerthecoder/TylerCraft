@@ -19,7 +19,6 @@ import { SphereRenderer } from "../renders/sphereRender";
 type Config = {
   renderDistance: number;
   fovFactor: number;
-  chunkSize: number;
 };
 
 export enum PlayerPerspective {
@@ -28,15 +27,19 @@ export enum PlayerPerspective {
   ThirdPersonFront,
 }
 
+const CHUNK_SIZE = 16;
+
 const DEFAULT_CONFIG: Config = {
   renderDistance: 5,
   fovFactor: 0.5,
-  chunkSize: 16,
 };
 
 // This class should only read game and not write.
 export class CanvasGameScript extends GameScript<Config> {
-  name = "world-renderer";
+  // This is called by the rust side
+  public name = "World Renderer";
+
+  public config: Config = DEFAULT_CONFIG;
 
   private renderers: Renderer[] = [];
   private entityRenderers: Map<number, Renderer> = new Map();
@@ -59,8 +62,7 @@ export class CanvasGameScript extends GameScript<Config> {
   constructor(
     game: Game,
     private webGlGScript: WebGlGScript,
-    private mainPlayerId: number,
-    public config: Config = DEFAULT_CONFIG
+    private mainPlayerId: number
   ) {
     super(game);
 
@@ -83,6 +85,13 @@ export class CanvasGameScript extends GameScript<Config> {
     this.isSpectating = false;
   }
 
+  // This is called by the rust side
+  getConfig(): Config {
+    console.log("CanvasGameScript: getConfig", this.config);
+    return this.config;
+  }
+
+  // This is called by the rust side
   setConfig(config: Config): void {
     this.config = { ...this.config, ...config };
     console.log("CanvasGameScript config updated:", this.config);
@@ -212,8 +221,7 @@ export class CanvasGameScript extends GameScript<Config> {
     // loop through all of the chunks that I would be able to see.
     const cameraXYPos = new Vector2D([camera.pos.get(0), camera.pos.get(2)]);
 
-    const realRenderDistance =
-      this.config.chunkSize * this.config.renderDistance;
+    const realRenderDistance = CHUNK_SIZE * this.config.renderDistance;
     const cameraChunkPos = this.gameWrapper.getChunkPosFromWorldPos(camera.pos);
 
     // const cameraRotNorm = camera.rot.toCartesianCoords().normalize();

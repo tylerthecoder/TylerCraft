@@ -1,77 +1,16 @@
-import { GameWrapper } from "@craft/engine";
 import { CanvasGameScript } from "./game-scripts/canvas-gscript";
 import { WebGlGScript } from "./game-scripts/webgl-gscript";
 import { MobileController } from "./controllers/playerControllers/mobileController";
 import { KeyboardPlayerEntityController } from "./controllers/playerControllers/keyboardPlayerController";
 import { getMyUid, IS_MOBILE } from "./utils";
-import {
-  Chunk,
-  EntityActionDto,
-  SandBoxGScript,
-  TerrainGenerator,
-  WasmRequestChunk,
-} from "@craft/rust-world";
+import { EntityActionDto, SandBoxGScript } from "@craft/rust-world";
 import { ClientDbGamesService } from "./services/sp-games-service";
 import { HudGScript } from "./game-scripts/hudRender";
 
-export class SinglePlayerTerrainChunkGetter {
-  public terrianGen: TerrainGenerator;
-  private chunks_to_insert: [{ x: number; y: number }, Chunk][] = [];
-  private fetched_chunks: [{ x: number; y: number }][] = [];
-
-  constructor(private game: GameWrapper, config: GameConfig) {
-    this.terrianGen = new TerrainGenerator(
-      config.seed,
-      config.flatWorld,
-      false
-    );
-  }
-
-  getChunk(chunkPos: { x: number; y: number }) {
-    const existingChunk = this.chunks_to_insert.find(
-      (c) => c[0].x === chunkPos.x && c[0].y === chunkPos.y
-    );
-    const existingFetchedChunk = this.fetched_chunks.find(
-      (c) => c[0].x === chunkPos.x && c[0].y === chunkPos.y
-    );
-    if (existingChunk || existingFetchedChunk) {
-      console.log("Chunk already exists in chunks_to_insert or fetched_chunks");
-      return;
-    }
-    console.log("Getting chunk", chunkPos);
-    const chunk = this.terrianGen.get_chunk(chunkPos.x, chunkPos.y);
-    this.chunks_to_insert.push([chunkPos, chunk]);
-    return chunk;
-  }
-
-  update() {
-    for (const chunk of this.chunks_to_insert) {
-      this.game.game.schedule_chunk_insert_wasm(chunk[1]);
-      this.fetched_chunks.push([chunk[0]]);
-    }
-    this.chunks_to_insert = [];
-  }
-
-  getWasmRequestChunk() {
-    return new WasmRequestChunk(this.getChunk.bind(this));
-  }
-}
-
 export const spGameService = await ClientDbGamesService.factory();
 
-export const DEFAULT_CONFIG = {
-  loadDistance: 2,
-  renderDistance: 10,
-  fovFactor: 0.5,
-  chunkSize: 16,
-  seed: 0,
-  flatWorld: true,
-};
-
-export type GameConfig = typeof DEFAULT_CONFIG;
-
-export async function run(id?: string, config: GameConfig = DEFAULT_CONFIG) {
-  console.log("Starting game", id, config);
+export async function run(id?: string) {
+  console.log("Starting game", id);
 
   const game = id ? await spGameService.getGame(id) : spGameService.newGame();
 
@@ -84,16 +23,6 @@ export async function run(id?: string, config: GameConfig = DEFAULT_CONFIG) {
     return;
   }
 
-  const chunkGetter = new SinglePlayerTerrainChunkGetter(game, config);
-
-  // add sandbox
-  const sandbox = new SandBoxGScript(
-    config.loadDistance,
-    chunkGetter.getWasmRequestChunk()
-  );
-  const serializedSandbox = sandbox.serialize();
-  game.game.add_sandbox_wasm(sandbox);
-
   const main_player_uid = getMyUid();
 
   game.makeAndAddPlayer(main_player_uid);
@@ -102,19 +31,20 @@ export async function run(id?: string, config: GameConfig = DEFAULT_CONFIG) {
   const ents = game.game.entities.get_all_clone();
   console.log("Ents", ents);
 
+  // ===== Game Scripts =====
+
+  // add sandbox
+  const sandbox = new SandBoxGScript();
+  game.game.add_sandbox_wasm(sandbox);
+
   const webglGameScript = new WebGlGScript(game.game);
+  game.makeAndAddGameScript(webglGameScript);
 
   const canvasGameScript = new CanvasGameScript(
     game.game,
     webglGameScript,
-    main_player_uid,
-    {
-      renderDistance: config.renderDistance,
-      fovFactor: config.fovFactor,
-      chunkSize: config.chunkSize,
-    }
+    main_player_uid
   );
-
   game.makeAndAddGameScript(canvasGameScript);
 
   const hudRender = new HudGScript(
@@ -135,11 +65,7 @@ export async function run(id?: string, config: GameConfig = DEFAULT_CONFIG) {
         game.game,
         onAction,
         () => {
-          spGameService.saveGame(
-            game,
-            chunkGetter.terrianGen,
-            serializedSandbox
-          );
+          spGameService.saveGame(game);
         },
         main_player_uid,
         canvasGameScript
@@ -166,8 +92,6 @@ export async function run(id?: string, config: GameConfig = DEFAULT_CONFIG) {
     await task();
     game.game.remove_blocks();
     await task();
-    chunkGetter.update();
-    await task();
     playerController.update();
     await task();
     canvasGameScript.update();
@@ -177,7 +101,7 @@ export async function run(id?: string, config: GameConfig = DEFAULT_CONFIG) {
     canvasGameScript.renderLoop(0);
     const end = performance.now();
     if (end - start > 50) {
-      console.log("Large update happened. Time: ", end - start);
+      console.warn("Large update happened. Time: ", end - start);
     }
     requestAnimationFrame(update);
   };

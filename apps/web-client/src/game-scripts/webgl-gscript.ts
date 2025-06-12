@@ -13,13 +13,13 @@ import { Game } from "@craft/rust-world";
 
 const WebGlLayer = (window as any).XRWebGLLayer as typeof XRWebGLLayer;
 
-type Conifg = {
+type Config = {
   transparency: boolean;
   glFov: number;
 };
 
-export class WebGlGScript extends GameScript<Conifg> {
-  name = "canvas";
+export class WebGlGScript extends GameScript<Config> {
+  public name = "WebGL Renderer";
 
   public eCanvas = document.getElementById("glCanvas") as HTMLCanvasElement;
   public eWebxrButton = document.getElementById(
@@ -43,6 +43,29 @@ export class WebGlGScript extends GameScript<Conifg> {
     transparency: true,
     glFov: (45 * Math.PI) / 180,
   };
+
+  // This is called by the rust side
+  getConfig(): Config {
+    return this.config;
+  }
+
+  setConfig(config: Config): void {
+    this.config = { ...this.config, ...config };
+    console.log("WebGlGScript config updated:", this.config);
+
+    // Recreate projection matrix if FOV changed
+    if (config.glFov && this.program) {
+      this.createProjectionMatrix();
+    }
+  }
+
+  onChunkUpdate(chunkId: number): void {
+    // no-op
+  }
+
+  onEntityUpdate(entityId: number): void {
+    // no-op
+  }
 
   constructor(game: Game) {
     super(game);
@@ -365,15 +388,5 @@ export class WebGlGScript extends GameScript<Conifg> {
     }
 
     return shader;
-  }
-
-  setConfig(config: Conifg): void {
-    this.config = { ...this.config, ...config };
-    console.log("WebGlGScript config updated:", this.config);
-
-    // Recreate projection matrix if FOV changed
-    if (config.glFov && this.program) {
-      this.createProjectionMatrix();
-    }
   }
 }

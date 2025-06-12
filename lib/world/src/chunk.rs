@@ -6,6 +6,7 @@ use serde_big_array::BigArray;
 use wasm_bindgen::prelude::*;
 
 mod chunk_duct;
+pub mod chunk_fetcher;
 pub mod chunk_mesh;
 #[cfg(test)]
 mod chunk_unit_tests;

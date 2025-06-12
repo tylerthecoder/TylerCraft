@@ -235,10 +235,10 @@ h1 {
   margin-top: -40px;
 }
 
-button {
+.title-button {
   border: none;
   padding: 10px 100px;
-  margin: 30px;
+  margin: 20px;
   font-size: 3em;
   font-family: "Roboto", sans-serif;
   cursor: pointer;
@@ -247,7 +247,22 @@ button {
   background-color: white;
 }
 
-button:hover {
+.title-button:hover {
+  box-shadow: 15px 15px 10px grey;
+  animation: lift 0.1s linear;
+}
+
+.menu-button {
+  border: none;
+  background-color: white;
+  padding: 10px 20px;
+  margin: 5px;
+  font-size: 1em;
+  font-family: "Roboto", sans-serif;
+  border-radius: 10px;
+}
+
+.menu-button:hover {
   box-shadow: 15px 15px 10px grey;
   animation: lift 0.1s linear;
 }

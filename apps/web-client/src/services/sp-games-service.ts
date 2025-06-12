@@ -105,24 +105,21 @@ export class ClientDbGamesService {
     return this.createGame(foundGame);
   }
 
-  async saveGame(
-    data: GameWrapper,
-    terrainGen: TerrainGenerator,
-    sandbox: any
-  ) {
+  async saveGame(data: GameWrapper) {
     return new Promise<void>((resolve, reject) => {
       const transaction = this.db.transaction(
         [ClientDbGamesService.WORLDS_OBS],
         "readwrite"
       );
       console.log("Entities", data.game.entities.to_js());
+
       const serializedGame = {
         gameId: data.game.id,
         name: data.game.name,
         entities: data.game.entities.to_js(),
         world: data.game.world.serialize_wasm(),
-        terrainGen: terrainGen.serialize(),
-        sandbox: sandbox,
+        chunkFetcher: data.game.chunk_fetcher.get_config(),
+        scripts: data.game.scripts.to_js(),
       };
 
       console.log("Saving game", serializedGame);

@@ -1,3 +1,4 @@
+use crate::chunk::chunk_fetcher::ChunkLoader;
 use crate::direction::DirectionVectorExtension2;
 use crate::{
     block::{BlockData, BlockType, ChunkBlock},
@@ -525,6 +526,16 @@ pub struct TerrainGenerator {
     pub debug_world: bool,
 }
 
+impl Default for TerrainGenerator {
+    fn default() -> Self {
+        Self {
+            seed: 0,
+            flat_world: true,
+            debug_world: false,
+        }
+    }
+}
+
 #[wasm_bindgen]
 impl TerrainGenerator {
     #[wasm_bindgen(constructor)]
@@ -559,5 +570,23 @@ impl TerrainGenerator {
 
         let chunk_getter = BasicChunkGetter::make(self.seed);
         chunk_getter.get_chunk(&chunk_pos)
+    }
+}
+
+impl ChunkLoader for TerrainGenerator {
+    fn load_chunk(&self, chunk_pos: ChunkPos) -> Chunk {
+        self.get_chunk(chunk_pos.x, chunk_pos.y)
+    }
+
+    fn clone_box(&self) -> Box<dyn ChunkLoader> {
+        Box::new(self.clone())
+    }
+
+    fn to_json(&self) -> serde_json::Value {
+        serde_json::to_value(self).expect("TerrainGenerator must be serializable")
+    }
+
+    fn to_js(&self) -> JsValue {
+        serde_wasm_bindgen::to_value(self).unwrap()
     }
 }

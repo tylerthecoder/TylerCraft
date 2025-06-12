@@ -5,6 +5,7 @@ use super::{
     game_script::GameScript,
 };
 use crate::{
+    chunk::chunk_fetcher::ChunkFetcher,
     components::{fine_world_pos::FineWorldPos, size3::Size3, velocity::Velocity},
     geometry::rect3::Rect3,
     vec::Vector3Ops,
@@ -36,11 +37,7 @@ impl GameScript for VelocityScript {
     }
 
     fn get_config(&self) -> JsValue {
-        let config = serde_json::json!({
-            "enabled": true,
-            "max_velocity": 10.0,
-            "damping_factor": 0.98
-        });
+        let config = serde_json::json!({});
         serde_wasm_bindgen::to_value(&config).unwrap()
     }
 
@@ -60,6 +57,7 @@ impl GameScript for VelocityScript {
         &mut self,
         world: &crate::world::World,
         query_results: EntityQueryResults,
+        _chunk_fetcher: &mut ChunkFetcher,
     ) -> Option<GameSchedule> {
         for entity in query_results.entities {
             let mut vel = entity.get::<Velocity>().unwrap().to_owned();

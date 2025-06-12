@@ -8,8 +8,8 @@ use super::{
     velocity_script::Forces,
 };
 use crate::{
-    components::velocity::Velocity, direction::Direction, geometry::rotation::SphericalRotation,
-    vec::Vector3Ops, world::World,
+    chunk::chunk_fetcher::ChunkFetcher, components::velocity::Velocity, direction::Direction,
+    geometry::rotation::SphericalRotation, vec::Vector3Ops, world::World,
 };
 use serde::{Deserialize, Serialize};
 use serde_json;
@@ -69,8 +69,6 @@ impl GameScript for MoveScript {
     fn get_config(&self) -> JsValue {
         let config = serde_json::json!({
             "max_speed": self.max_speed,
-            "slow_force_magnitude": 0.1,
-            "enabled": true
         });
         serde_wasm_bindgen::to_value(&config).unwrap()
     }
@@ -98,6 +96,7 @@ impl GameScript for MoveScript {
         &mut self,
         _world: &crate::world::World,
         query_results: EntityQueryResults,
+        _chunk_fetcher: &mut ChunkFetcher,
     ) -> Option<GameSchedule> {
         for entity in query_results.entities {
             let rot = entity.get::<SphericalRotation>().unwrap().to_owned();

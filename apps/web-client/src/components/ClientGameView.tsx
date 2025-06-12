@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { DEFAULT_CONFIG, GameConfig, run, spGameService } from "../runner";
+import { run, spGameService } from "../runner";
 import { GameConfigMenu } from "./GameConfigMenu";
 
 export function ClientGameView() {
@@ -45,9 +45,9 @@ export function ClientGameView() {
     };
   }, [showConfigMenu, gameExists]);
 
-  const handleConfigSubmit = (config: GameConfig) => {
+  const handleConfigSubmit = () => {
     // Create and join new game with config
-    run(gameId, config).then(() => {
+    run(gameId).then(() => {
       // Access the global game instance
       setGameInstance((window as any).game?.game);
       setGameExists(true);
@@ -59,7 +59,7 @@ export function ClientGameView() {
   }
 
   if (gameExists === false) {
-    return <ConfigSelector onConfigChange={handleConfigSubmit} />;
+    return <div>Game does not exist</div>;
   }
 
   return (
@@ -74,23 +74,10 @@ export function ClientGameView() {
           gap: "10px",
         }}
       >
-        <button
-          onClick={() => setShowConfigMenu(true)}
-          style={{
-            background: "#4CAF50",
-            color: "white",
-            border: "none",
-            padding: "8px 16px",
-            borderRadius: "4px",
-            cursor: "pointer",
-            fontFamily: "monospace",
-          }}
-        >
+        <button className="menu-button" onClick={() => setShowConfigMenu(true)}>
           Game Config (ESC)
         </button>
       </div>
-
-      <div>Game Started</div>
 
       {gameInstance && (
         <GameConfigMenu
@@ -99,40 +86,6 @@ export function ClientGameView() {
           onClose={() => setShowConfigMenu(false)}
         />
       )}
-    </div>
-  );
-}
-
-interface ConfigSelectorProps {
-  onConfigChange: (config: GameConfig) => void;
-}
-
-function ConfigSelector({ onConfigChange }: ConfigSelectorProps) {
-  const [config, setConfig] = useState<GameConfig>(DEFAULT_CONFIG);
-
-  return (
-    <div>
-      <div>
-        <label>Render Distance</label>
-        <input
-          type="number"
-          value={config.renderDistance}
-          onChange={(e) =>
-            setConfig({ ...config, renderDistance: parseInt(e.target.value) })
-          }
-        />
-      </div>
-      <div>
-        <label>FOV Factor</label>
-        <input
-          type="number"
-          value={config.fovFactor}
-          onChange={(e) =>
-            setConfig({ ...config, fovFactor: parseFloat(e.target.value) })
-          }
-        />
-      </div>
-      <button onClick={() => onConfigChange(config)}>Start Game</button>
     </div>
   );
 }

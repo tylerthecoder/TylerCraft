@@ -1,9 +1,6 @@
 import { GameScript } from "@craft/engine";
 import { CanvasGameScript } from "../game-scripts/canvas-gscript";
 import { getEleOrError, hideElement, IS_MOBILE } from "../utils";
-import { GameMenu } from "../renders/gameMenuRender";
-import React from "react";
-import ReactDOM from "react-dom";
 import { Game, Item, Player } from "@craft/rust-world";
 import TextureMapper from "../textureMapper";
 
@@ -42,12 +39,6 @@ export class HudGScript extends GameScript {
     private mainPlayerUid: number
   ) {
     super(game);
-
-    // Show the things!
-    ReactDOM.render(
-      React.createElement(GameMenu, { game: game }),
-      this.eMenuContainer
-    );
 
     this.eHud.style.visibility = "visible";
 

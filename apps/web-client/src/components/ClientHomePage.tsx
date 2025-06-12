@@ -1,12 +1,7 @@
 import { IGameMetadata } from "@craft/engine";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  DEFAULT_CONFIG,
-  SinglePlayerTerrainChunkGetter,
-  spGameService,
-} from "../runner";
-import { SandBoxGScript, TerrainGenerator } from "@craft/rust-world";
+import { spGameService } from "../runner";
 
 export function ClientHomePage() {
   const [games, setGames] = useState<IGameMetadata[]>([]);
@@ -16,15 +11,7 @@ export function ClientHomePage() {
   const newGame = async () => {
     console.log("Starting game");
     const game = spGameService.newGame();
-    const chunkGetter = new SinglePlayerTerrainChunkGetter(
-      game,
-      DEFAULT_CONFIG
-    );
-    spGameService.saveGame(
-      game,
-      new TerrainGenerator(0, false, false),
-      new SandBoxGScript(1, chunkGetter.getWasmRequestChunk())
-    );
+    spGameService.saveGame(game);
     navigate(`/client-game/${game.game.id}`);
   };
 

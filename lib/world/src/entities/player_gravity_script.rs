@@ -5,7 +5,7 @@ use super::{
     game_script::GameScript,
     velocity_script::Forces,
 };
-use crate::{components::velocity::Velocity, world::World};
+use crate::{chunk::chunk_fetcher::ChunkFetcher, components::velocity::Velocity, world::World};
 use serde::{Deserialize, Serialize};
 use serde_json;
 use serde_wasm_bindgen;
@@ -37,8 +37,6 @@ impl GameScript for GravityScript {
     fn get_config(&self) -> JsValue {
         let config = serde_json::json!({
             "gravity_strength": self.gravity,
-            "enabled": true,
-            "terminal_velocity": 20.0
         });
         serde_wasm_bindgen::to_value(&config).unwrap()
     }
@@ -65,6 +63,7 @@ impl GameScript for GravityScript {
         &mut self,
         _world: &World,
         query_results: EntityQueryResults,
+        _chunk_fetcher: &mut ChunkFetcher,
     ) -> Option<GameSchedule> {
         for entity in query_results.entities {
             let data = entity.get::<GravityData>().unwrap();

@@ -7,6 +7,7 @@ use super::{
     velocity_script::Forces,
 };
 use crate::{
+    chunk::chunk_fetcher::ChunkFetcher,
     components::{fine_world_pos::FineWorldPos, size3::Size3, velocity::Velocity},
     geometry::rect3::Rect3,
     utils::js_log,
@@ -63,10 +64,7 @@ impl GameScript for FireballScript {
     }
 
     fn get_config(&self) -> JsValue {
-        let config = serde_json::json!({
-            "enabled": true,
-            "damage": 10
-        });
+        let config = serde_json::json!({});
         serde_wasm_bindgen::to_value(&config).unwrap()
     }
 
@@ -86,6 +84,7 @@ impl GameScript for FireballScript {
         &mut self,
         world: &crate::world::World,
         mut query_results: EntityQueryResults,
+        _chunk_fetcher: &mut ChunkFetcher,
     ) -> Option<GameSchedule> {
         let mut game_schedule = GameSchedule::empty();
 

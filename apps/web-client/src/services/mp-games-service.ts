@@ -15,7 +15,6 @@ import {
   Game,
   SandBoxGScript,
   WasmGameScript,
-  WasmRequestChunk,
 } from "@craft/rust-world";
 import { CanvasGameScript } from "../game-scripts/canvas-gscript";
 import { WebGlGScript } from "../game-scripts/webgl-gscript";

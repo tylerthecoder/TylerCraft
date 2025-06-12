@@ -1,7 +1,7 @@
 use super::entities::{EntityQuery, EntityQueryResults};
 use super::entity::EntityId;
 use super::game::{GameDiff, GameSchedule};
-use crate::chunk::ChunkId;
+use crate::chunk::{chunk_fetcher::ChunkFetcher, ChunkId};
 use crate::world::World;
 use std::any::Any;
 use std::fmt::Debug;
@@ -13,6 +13,7 @@ pub trait GameScript: Any + Debug {
         &mut self,
         _world: &World,
         _query_results: EntityQueryResults,
+        _chunk_fetcher: &mut ChunkFetcher,
     ) -> Option<GameSchedule> {
         None
     }
@@ -108,7 +109,10 @@ impl GameScripts {
 #[wasm_bindgen]
 #[derive(Debug)]
 pub struct WasmGameScript {
+    name: String,
     context: JsValue,
+    get_config_jsfn: js_sys::Function,
+    set_config_jsfn: js_sys::Function,
     on_chunk_update_jsfn: js_sys::Function,
     on_entity_update_jsfn: js_sys::Function,
 }
@@ -121,9 +125,15 @@ impl WasmGameScript {
             js_sys::Reflect::get(&val, &JsValue::from("onChunkUpdate")).unwrap();
         let on_entity_update_jsfn =
             js_sys::Reflect::get(&val, &JsValue::from("onEntityUpdate")).unwrap();
+        let name = js_sys::Reflect::get(&val, &JsValue::from("name")).unwrap();
+        let get_config_jsfn = js_sys::Reflect::get(&val, &JsValue::from("getConfig")).unwrap();
+        let set_config_jsfn = js_sys::Reflect::get(&val, &JsValue::from("setConfig")).unwrap();
         WasmGameScript {
+            name: name.as_string().unwrap(),
             on_chunk_update_jsfn: on_chunk_update_jsfn.into(),
             on_entity_update_jsfn: on_entity_update_jsfn.into(),
+            get_config_jsfn: get_config_jsfn.into(),
+            set_config_jsfn: set_config_jsfn.into(),
             context: val,
         }
     }
@@ -134,8 +144,21 @@ impl GameScript for WasmGameScript {
         &mut self,
         _world: &World,
         _query_results: EntityQueryResults,
+        _chunk_fetcher: &mut ChunkFetcher,
     ) -> Option<GameSchedule> {
         None
+    }
+
+    fn get_name(&self) -> String {
+        self.name.clone()
+    }
+
+    fn get_config(&self) -> JsValue {
+        self.get_config_jsfn.call0(&self.context).unwrap()
+    }
+
+    fn set_config(&mut self, config: JsValue) {
+        self.set_config_jsfn.call1(&self.context, &config).unwrap();
     }
 
     fn on_chunk_update(&self, chunk_id: ChunkId) {
