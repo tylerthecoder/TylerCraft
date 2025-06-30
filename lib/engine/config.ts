@@ -38,7 +38,7 @@ export const BASE_CONFIG = {
   gravity: -0.013,
 
   player: {
-    speed: 0.2,
+    speed: 0.15,
     reach: 10,
     // jumpSpeed: 0.16,
     jumpSpeed: 0.25,

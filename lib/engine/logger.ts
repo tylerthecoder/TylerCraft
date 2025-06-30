@@ -1,15 +1,15 @@
-const disabled = true;
+const GLOBAL_DISABLE = false;
 
 export class Logger {
-  constructor(private tag: string) {}
+  constructor(private tag: string, private disabled = false) {}
 
   info(...message: any[]) {
-    if (disabled) return;
-    console.log(`%c${this.tag}`, "color: red; background: white", message);
+    if (GLOBAL_DISABLE || this.disabled) return;
+    console.log(`%c${this.tag}`, "color: red; background: white", ...message);
   }
 
   debug(...message: any[]) {
-    if (disabled) return;
-    console.log(message);
+    if (GLOBAL_DISABLE || this.disabled) return;
+    console.log(...message);
   }
 }

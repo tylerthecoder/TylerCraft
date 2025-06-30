@@ -45,6 +45,13 @@ export abstract class MovableEntity<
     const scaleFactor = delta / 16;
     const scaledVel = this.vel.scalarMultiply(scaleFactor);
 
+    console.log(
+      "Vel",
+      this.vel.magnitude(),
+      "Scaled vel",
+      scaledVel.data.join(",")
+    );
+
     this.pos = this.pos.add(scaledVel);
   }
 
@@ -55,7 +62,7 @@ export abstract class MovableEntity<
 
   private static gravityVector = new Vector3D([0, CONFIG.gravity, 0]);
   gravity() {
-    if (this.vel.magnitude() > 0.9) return; // set a terminal velocity
+    if (this.vel.magnitude() > 0.4) return; // set a terminal velocity
     this.vel = this.vel.add(MovableEntity.gravityVector);
   }
 

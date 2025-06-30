@@ -101,26 +101,35 @@ class CubeHelpersClass {
   }
 
   isCollide(cube1: Box, cube2: Box): boolean {
-    // loop through each dimension. Consider each edge along that dimension a line segmcube2
-    // check to see if my (cube1) line segmcube2 overlaps the cube2ities (cube2) line segmcube2
+    // // loop through each dimension. Consider each edge along that dimension a line segmcube2
+    // // check to see if my (cube1) line segmcube2 overlaps the cube2ities (cube2) line segmcube2
+    // for (let i = 0; i < 3; i++) {
+    //   if (
+    //     cube1.pos.get(i) <= cube2.pos.get(i) && // cube2 line is front
+    //     cube2.pos.get(i) >= cube1.pos.get(i) + (cube1.dim ?? CUBE_DIM)[i] // and cube2 is not contained in my (cube1) line segmcube2
+    //   ) {
+    //     // not possible for these to be intersecting since one dimension is too far away
+    //     return false;
+    //   }
+    //
+    //   if (
+    //     cube2.pos.get(i) <= cube1.pos.get(i) && // My (cube1) line is front
+    //     cube1.pos.get(i) >= cube2.pos.get(i) + (cube2.dim ?? CUBE_DIM)[i] // and cube2 is not contained in my (cube1) line segmcube2
+    //   ) {
+    //     // not possible for these to be intersecting since one dimension is too far away
+    //     return false;
+    //   }
+    // }
+    // return true;
     for (let i = 0; i < 3; i++) {
       if (
-        cube1.pos.get(i) <= cube2.pos.get(i) && // cube2 line is front
-        cube2.pos.get(i) >= cube1.pos.get(i) + (cube1.dim ?? CUBE_DIM)[i] // and cube2 is not contained in my (cube1) line segmcube2
+        cube1.pos.get(i) + (cube1.dim ?? CUBE_DIM)[i] <= cube2.pos.get(i) || // cube1 is completely before cube2
+        cube1.pos.get(i) >= cube2.pos.get(i) + (cube2.dim ?? CUBE_DIM)[i] // cube1 is completely after cube2
       ) {
-        // not possible for these to be intersecting since one dimension is too far away
-        return false;
-      }
-
-      if (
-        cube2.pos.get(i) <= cube1.pos.get(i) && // My (cube1) line is front
-        cube1.pos.get(i) >= cube2.pos.get(i) + (cube2.dim ?? CUBE_DIM)[i] // and cube2 is not contained in my (cube1) line segmcube2
-      ) {
-        // not possible for these to be intersecting since one dimension is too far away
-        return false;
+        return false; // no collision in this dimension
       }
     }
-    return true;
+    return true; // all dimensions overlap
   }
 }
 

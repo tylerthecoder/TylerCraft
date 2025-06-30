@@ -6,6 +6,9 @@ import { CameraRay, Direction, Game, IDim, Vector3D } from "../../index.js";
 import { MessageDto, MessageHolder } from "../../messageHelpers.js";
 import CubeHelpers from "../cube.js";
 import { Player } from "./player.js";
+import { Logger } from "../../logger.js";
+
+const logger = new Logger("PlayerActions", true);
 
 export enum PlayerActionType {
   Jump = "jump",
@@ -99,12 +102,12 @@ export class PlayerActionService {
     const player = this.game.entities.tryGet(playerId);
 
     if (!player) {
-      console.log("Player not found", playerId);
+      logger.info("Player not found", playerId);
       return;
     }
 
     if (!(player instanceof Player)) {
-      console.log("Entity is not a player", player);
+      logger.info("Entity is not a player", playerId);
       return;
     }
 
@@ -126,7 +129,7 @@ const handlePlayerAction = (
   player: Player,
   action: PlayerAction
 ) => {
-  console.log("Handling player action", player, action);
+  logger.info("Handling player action", player, action);
   if (action.isType(PlayerActionType.Rotate)) {
     const { playerRot } = action.data;
     player.rot = new Vector3D(playerRot);

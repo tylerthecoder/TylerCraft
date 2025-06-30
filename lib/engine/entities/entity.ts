@@ -1,8 +1,11 @@
-import { Game } from "../index.js";
+import { Game, getBlockData } from "../index.js";
+import { Logger } from "../logger.js";
 import { IDim } from "../types.js";
 import { Vector3D } from "../utils/vector.js";
 import CubeHelpers, { Cube, CUBE_DIM } from "./cube.js";
 import { IEntityType } from "./entityType.js";
+
+const logger = new Logger("Entity");
 
 export enum RenderType {
   CUBE,
@@ -132,6 +135,17 @@ export abstract class Entity<
 
     const newPos =
       ent.pos.get(i) + entDim[i] * switchDir(dir) - this.dim[i] * dir;
+
+    logger.info(
+      "Pushing out",
+      "min",
+      min,
+      ent,
+      "pos",
+      this.pos.data.join(","),
+      i,
+      newPos
+    );
 
     this.pos.set(i, newPos);
 
