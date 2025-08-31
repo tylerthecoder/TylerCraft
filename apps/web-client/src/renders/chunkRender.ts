@@ -9,19 +9,19 @@ import {
 import TextureMapper from "../textureMapper";
 import { BlockShape, BlockType } from "@craft/rust-world";
 import ShapeBuilder from "../services/shape-builder";
-import { WebGlGScript } from "../game-scripts/webgl-gscript";
+import { GameRenderer } from "../game-scripts/canvas-gscript";
 
 export class ChunkRenderer extends Renderer {
   private otherRenders: Renderer[] = [];
 
   constructor(
-    public webGlGScript: WebGlGScript,
+    public gameRenderer: GameRenderer,
     public chunkPos: Vector2D,
     public chunkMesh: ChunkMeshWrapper
   ) {
-    super(webGlGScript);
+    super(gameRenderer);
 
-    this.setActiveTexture(webGlGScript.textureAtlas);
+    this.setActiveTexture(gameRenderer.textureAtlas);
     this.getBufferData();
   }
 
@@ -31,7 +31,7 @@ export class ChunkRenderer extends Renderer {
 
   render(camera: Camera, trans?: boolean): void {
     // if (!this.isLoaded) return;
-    this.setActiveTexture(this.webGlGScript.textureAtlas);
+    this.setActiveTexture(this.gameRenderer.textureAtlas);
 
     this.renderObject(this.worldPos, camera, trans);
 

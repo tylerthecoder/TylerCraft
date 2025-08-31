@@ -118,11 +118,4 @@ pub mod wasm {
             Ok(serialized)
         }
     }
-
-    #[wasm_bindgen]
-    impl Game {
-        pub fn add_sandbox_wasm(&mut self, sandbox_game_script: SandBoxGScript) {
-            self.add_script(Box::new(sandbox_game_script));
-        }
-    }
 }

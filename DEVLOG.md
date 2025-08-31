@@ -1,3 +1,12 @@
+# 08_30_25
+
+It's been a bit but I'm back. I've mostly been working on getting scripts to be serialzied. It is hard to get the wasm scripts to live in rust.
+
+I'm currently trying to load the scripts and everything is moving forward.
+
+I probably want to move to a similar structure as the Entities soon where a GameScript is a struct instead of a trait
+
+
 # 06_03_25
 
 I've worked more on optimizing the chunk insertion code. The release build of the app is much faster now and I'm happy with it.

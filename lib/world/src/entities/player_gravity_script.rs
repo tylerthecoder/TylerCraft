@@ -18,7 +18,7 @@ pub struct GravityData {
 
 impl_component!(GravityData);
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct GravityScript {
     gravity: f32,
 }

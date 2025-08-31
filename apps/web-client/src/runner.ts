@@ -1,4 +1,3 @@
-import { CanvasGameScript } from "./game-scripts/canvas-gscript";
 import { WebGlGScript } from "./game-scripts/webgl-gscript";
 import { MobileController } from "./controllers/playerControllers/mobileController";
 import { KeyboardPlayerEntityController } from "./controllers/playerControllers/keyboardPlayerController";
@@ -6,6 +5,10 @@ import { getMyUid, IS_MOBILE } from "./utils";
 import { EntityActionDto, SandBoxGScript } from "@craft/rust-world";
 import { ClientDbGamesService } from "./services/sp-games-service";
 import { HudGScript } from "./game-scripts/hudRender";
+import {
+  GameRenderer,
+  GameRendererGameScript,
+} from "./game-scripts/canvas-gscript";
 
 export const spGameService = await ClientDbGamesService.factory();
 
@@ -23,35 +26,25 @@ export async function run(id?: string) {
     return;
   }
 
-  const main_player_uid = getMyUid();
+  const mainPlayerUid = getMyUid();
 
-  game.makeAndAddPlayer(main_player_uid);
+  game.makeAndAddPlayer(mainPlayerUid);
   game.game.update();
 
   const ents = game.game.entities.get_all_clone();
   console.log("Ents", ents);
 
   // ===== Game Scripts =====
+  game.game.scripts.ensure_script("sandbox");
+  game.game.scripts.ensure_script("game-renderer");
 
-  // add sandbox
-  const sandbox = new SandBoxGScript();
-  game.game.add_sandbox_wasm(sandbox);
-
-  const webglGameScript = new WebGlGScript(game.game);
-  game.makeAndAddGameScript(webglGameScript);
-
-  const canvasGameScript = new CanvasGameScript(
-    game.game,
-    webglGameScript,
-    main_player_uid
+  const gameRenderer = new GameRenderer(
+    game,
+    mainPlayerUid,
+    gameRenderGameScript
   );
-  game.makeAndAddGameScript(canvasGameScript);
 
-  const hudRender = new HudGScript(
-    game.game,
-    canvasGameScript,
-    main_player_uid
-  );
+  const hudRender = new HudGScript(game.game, gameRenderer, mainPlayerUid);
 
   const onAction = (action: EntityActionDto) => {
     game.game.handle_action_wasm(action);
@@ -59,7 +52,7 @@ export async function run(id?: string) {
 
   const playerController = (() => {
     if (IS_MOBILE) {
-      return new MobileController(onAction, main_player_uid);
+      return new MobileController(onAction, mainPlayerUid);
     } else {
       return new KeyboardPlayerEntityController(
         game.game,
@@ -67,8 +60,8 @@ export async function run(id?: string) {
         () => {
           spGameService.saveGame(game);
         },
-        main_player_uid,
-        canvasGameScript
+        mainPlayerUid,
+        gameRenderer
       );
     }
   })();
@@ -94,11 +87,11 @@ export async function run(id?: string) {
     await task();
     playerController.update();
     await task();
-    canvasGameScript.update();
+    gameRenderer.update();
     await task();
     hudRender.update(0);
     await task();
-    canvasGameScript.renderLoop(0);
+    gameRenderer.renderLoop(0);
     const end = performance.now();
     if (end - start > 50) {
       console.warn("Large update happened. Time: ", end - start);
@@ -108,5 +101,5 @@ export async function run(id?: string) {
 
   requestAnimationFrame(update);
 
-  canvasGameScript.renderLoop(0);
+  gameRenderer.renderLoop(0);
 }

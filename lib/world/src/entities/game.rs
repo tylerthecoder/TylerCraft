@@ -5,10 +5,7 @@ use super::{
     game_script::{GameScript, GameScripts, WasmGameScript},
 };
 use crate::{
-    chunk::{
-        chunk_fetcher::{ChunkFetcher, ChunkLoader},
-        Chunk, ChunkId,
-    },
+    chunk::{chunk_fetcher::ChunkFetcher, Chunk, ChunkId},
     components::world_pos::WorldPos,
     entities::{
         entity_action::EntityActionDtoMaker,
@@ -37,7 +34,7 @@ pub struct Game {
     pub world: World,
     pub entities: Entities,
     pub chunk_fetcher: ChunkFetcher,
-    scripts: GameScripts,
+    pub scripts: GameScripts,
     schedule: GameSchedule,
     action_holder: EntityActionHolder,
 }
@@ -45,10 +42,10 @@ pub struct Game {
 #[wasm_bindgen]
 impl Game {
     fn add_default_scripts(&mut self) {
-        self.add_script(Box::new(MoveScript::default()));
-        self.add_script(Box::new(VelocityScript::default()));
-        self.add_script(Box::new(GravityScript::default()));
-        self.add_script(Box::new(FireballScript::default()));
+        self.scripts.add_script(Box::new(MoveScript::default()));
+        self.scripts.add_script(Box::new(VelocityScript::default()));
+        self.scripts.add_script(Box::new(GravityScript::default()));
+        self.scripts.add_script(Box::new(FireballScript::default()));
 
         self.action_holder.add_handler(MoveAction::make_handler());
         self.action_holder.add_handler(JumpAction::make_handler());
@@ -262,29 +259,6 @@ impl Game {
         let chunk_js = serde_wasm_bindgen::to_value(&chunk);
         chunk_js
     }
-
-    // Scripts
-    pub fn add_game_script_wasm(&mut self, script: WasmGameScript) {
-        self.add_script(Box::new(script));
-    }
-
-    pub fn get_all_script_names_wasm(&self) -> Vec<String> {
-        self.scripts.get_all_script_names()
-    }
-
-    pub fn get_script_config_wasm(&self, script_name: String) -> JsValue {
-        self.scripts.get_script_config(script_name)
-    }
-
-    pub fn set_script_config_wasm(&mut self, script_name: String, config: JsValue) {
-        self.scripts.set_script_config(script_name, config);
-    }
-}
-
-impl Game {
-    pub fn add_script(&mut self, script: Box<dyn GameScript>) {
-        self.scripts.add_script(script);
-    }
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -437,11 +411,11 @@ mod tests {
         game.update();
 
         let move_script = Box::new(MoveScript::default());
-        game.add_script(move_script);
+        game.scripts.add_script(move_script);
         game.update();
 
         let velocity_script = Box::new(VelocityScript::default());
-        game.add_script(velocity_script);
+        game.scripts.add_script(velocity_script);
         game.update();
 
         game.action_holder.add_handler(MoveAction::make_handler());

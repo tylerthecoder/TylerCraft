@@ -16,7 +16,6 @@ import {
   SandBoxGScript,
   WasmGameScript,
 } from "@craft/rust-world";
-import { CanvasGameScript } from "../game-scripts/canvas-gscript";
 import { WebGlGScript } from "../game-scripts/webgl-gscript";
 import { getMyUid } from "../utils";
 import { KeyboardPlayerEntityController } from "../controllers/playerControllers/keyboardPlayerController";

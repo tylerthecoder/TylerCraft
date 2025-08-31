@@ -5,9 +5,9 @@ import ShapeBuilder from "../services/shape-builder";
 import { WebGlGScript } from "../game-scripts/webgl-gscript";
 
 export class CubeRenderer extends Renderer {
-  constructor(public webGlGScript: WebGlGScript, public entity: Entity) {
-    super(webGlGScript);
-    this.setActiveTexture(this.webGlGScript.textureAtlas);
+  constructor(public gameRenderer: WebGlGScript, public entity: Entity) {
+    super(gameRenderer);
+    this.setActiveTexture(this.gameRenderer.textureAtlas);
     this.setup();
   }
 

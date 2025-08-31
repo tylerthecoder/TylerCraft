@@ -1,5 +1,4 @@
 import { Game } from "@craft/rust-world";
-import { GameWrapper } from "./wrappers.js";
 
 export type GameScriptConfig = Record<string, any> | undefined;
 

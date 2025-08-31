@@ -1,4 +1,4 @@
-import { WebGlGScript } from "../game-scripts/webgl-gscript";
+import { GameRenderer } from "../game-scripts/canvas-gscript";
 import { RenderData, Renderer } from "./renderer";
 import { Camera, Vector3D } from "@craft/engine";
 import { Game } from "@craft/rust-world";
@@ -8,10 +8,10 @@ export class SphereRenderer extends Renderer {
 
   constructor(
     public game: Game,
-    webGlGScript: WebGlGScript,
+    protected gameRenderer: GameRenderer,
     public entityId: number
   ) {
-    super(webGlGScript);
+    super(gameRenderer);
 
     const fireball = game.entities.get_entity_as_fireball(entityId);
     if (!fireball) {

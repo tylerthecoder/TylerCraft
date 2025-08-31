@@ -2,8 +2,8 @@ import { Camera, Vector3D } from "@craft/engine";
 import { RenderData, Renderer } from "./renderer";
 import ShapeBuilder from "../services/shape-builder";
 import TextureMapper from "../textureMapper";
-import { WebGlGScript } from "../game-scripts/webgl-gscript";
 import { Game, Player } from "@craft/rust-world";
+import { GameRenderer } from "../game-scripts/canvas-gscript";
 
 class PlayerRenderWrapper {
   constructor(private player: Player) {}
@@ -30,11 +30,11 @@ export class PlayerRenderer extends Renderer {
 
   constructor(
     private game: Game,
-    webGlGScript: WebGlGScript,
+    protected gameRenderer: GameRenderer,
     public entityId: number
   ) {
-    super(webGlGScript);
-    this.setActiveTexture(this.webGlGScript.textureAtlas);
+    super(gameRenderer);
+    this.setActiveTexture(this.gameRenderer.textureAtlas);
   }
 
   render(camera: Camera) {

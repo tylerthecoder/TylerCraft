@@ -4,7 +4,6 @@ import {
   ISerializedGame,
   serializedGameToGame,
 } from "@craft/engine/src/wrappers";
-import { TerrainGenerator } from "@craft/rust-world";
 
 export class ClientDbGamesService {
   private static WORLDS_OBS = "worlds";

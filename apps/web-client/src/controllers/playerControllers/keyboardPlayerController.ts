@@ -1,7 +1,7 @@
 import { CONFIG, PlayerController } from "@craft/engine";
 import { Direction, EntityActionDto, Game } from "@craft/rust-world";
 import {
-  CanvasGameScript,
+  GameRenderer,
   PlayerPerspective,
 } from "../../game-scripts/canvas-gscript";
 
@@ -21,7 +21,7 @@ export class KeyboardPlayerEntityController extends PlayerController {
     handleAction: (action: EntityActionDto) => void,
     private save: () => void,
     playerId: number,
-    private canvasGScript: CanvasGameScript
+    private gameRenderer: GameRenderer
   ) {
     super(game, handleAction, playerId);
 
@@ -62,7 +62,7 @@ export class KeyboardPlayerEntityController extends PlayerController {
       const moveY = e.movementY * CONFIG.player.mouseRotSpeed;
 
       if (
-        this.canvasGScript.perspective === PlayerPerspective.ThirdPersonFront
+        this.gameRenderer.perspective === PlayerPerspective.ThirdPersonFront
       ) {
         moveX += Math.PI;
         this.rotate(moveX, moveY);

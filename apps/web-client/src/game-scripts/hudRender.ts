@@ -1,5 +1,5 @@
 import { GameScript } from "@craft/engine";
-import { CanvasGameScript } from "../game-scripts/canvas-gscript";
+import { GameRenderer } from "../game-scripts/canvas-gscript";
 import { getEleOrError, hideElement, IS_MOBILE } from "../utils";
 import { Game, Item, Player } from "@craft/rust-world";
 import TextureMapper from "../textureMapper";
@@ -35,7 +35,7 @@ export class HudGScript extends GameScript {
 
   constructor(
     game: Game,
-    private canvasGScript: CanvasGameScript,
+    private gameRenderer: GameRenderer,
     private mainPlayerUid: number
   ) {
     super(game);
@@ -110,7 +110,7 @@ export class HudGScript extends GameScript {
     const statsString = `
       playerPos: ${cameraPos} <br />
       playerRot: ${cameraRot} <br />
-      fps: ${this.canvasGScript.frameRate.toFixed(0)} <br />
+      fps: ${this.gameRenderer.frameRate.toFixed(0)} <br />
     `;
 
     if (this.lastStats !== statsString) {

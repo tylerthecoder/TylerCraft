@@ -29,7 +29,7 @@ export class ImageReneCanvasderer extends Renderer {
 
   render(camera: Camera): void {
     this.setActiveTexture(
-      this.webGlGScript.getGalleryTexture(this.galleryIndex)
+      this.gameRenderer.getGalleryTexture(this.galleryIndex)
     );
     this.renderObject(this.pos.data as IDim, camera);
   }

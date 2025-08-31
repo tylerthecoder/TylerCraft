@@ -50,7 +50,7 @@ impl EntityActionHandler for MoveAction {
 pub type MovingDirection = Option<Direction>;
 impl_component!(MovingDirection);
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct MoveScript {
     pub max_speed: f32,
 }
@@ -67,10 +67,7 @@ impl GameScript for MoveScript {
     }
 
     fn get_config(&self) -> JsValue {
-        let config = serde_json::json!({
-            "max_speed": self.max_speed,
-        });
-        serde_wasm_bindgen::to_value(&config).unwrap()
+        serde_wasm_bindgen::to_value(&self).unwrap()
     }
 
     fn set_config(&mut self, config: JsValue) {

@@ -1,6 +1,6 @@
 import { Camera, Vector3D } from "@craft/engine";
 import { mat4, vec3 } from "gl-matrix";
-import { WebGlGScript } from "../game-scripts/webgl-gscript";
+import { GameRenderer } from "../game-scripts/canvas-gscript";
 
 interface IRenderData {
   positions: number[];
@@ -50,10 +50,10 @@ export abstract class Renderer {
   amount = 0;
   transAmount = 0;
 
-  constructor(protected webGlGScript: WebGlGScript) {}
+  constructor(protected gameRenderer: GameRenderer) {}
 
   protected setBuffers(renData: IRenderData, transRenData?: IRenderData) {
-    const gl = this.webGlGScript.gl;
+    const gl = this.gameRenderer.gl;
 
     this.amount = renData.indices.length;
 
@@ -120,8 +120,8 @@ export abstract class Renderer {
   // Tell WebGL how to pull out the positions from the position
   // buffer into the vertexPosition attribute.
   private bindCube(trans: boolean) {
-    const programInfo = this.webGlGScript.program;
-    const gl = this.webGlGScript.gl;
+    const programInfo = this.gameRenderer.program;
+    const gl = this.gameRenderer.gl;
 
     const posBuffer = trans ? this.transPosBuffer : this.posBuffer;
     const indexBuffer = trans ? this.transIndexBuffer : this.indexBuffer;
@@ -146,8 +146,8 @@ export abstract class Renderer {
 
   // tell webgl how to pull out the texture coordinates from buffer
   private bindTexture(trans: boolean) {
-    const programInfo = this.webGlGScript.program;
-    const gl = this.webGlGScript.gl;
+    const programInfo = this.gameRenderer.program;
+    const gl = this.gameRenderer.gl;
 
     const textureBuffer = trans ? this.transTextureBuffer : this.textureBuffer;
 
@@ -171,7 +171,7 @@ export abstract class Renderer {
 
   renderXrObject(pos: Vector3D, camera: Camera, trans?: boolean) {
     const { currentXRFrame, xrRefSpace, gl, program, webXrSession } =
-      this.webGlGScript;
+      this.gameRenderer;
     if (!currentXRFrame || !xrRefSpace || !webXrSession) {
       return;
     }
@@ -238,11 +238,11 @@ export abstract class Renderer {
   }
 
   renderObject(pos: Vector3D, camera: Camera, trans?: boolean) {
-    if (this.webGlGScript.currentXRFrame) {
+    if (this.gameRenderer.currentXRFrame) {
       return this.renderXrObject(pos, camera, trans);
     }
-    const gl = this.webGlGScript.gl;
-    const programInfo = this.webGlGScript.program;
+    const gl = this.gameRenderer.gl;
+    const programInfo = this.gameRenderer.program;
 
     // Set the drawing position to the "identity" point, which is
     // the center of the scene.
