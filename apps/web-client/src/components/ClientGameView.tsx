@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { run, spGameService } from "../runner";
 import { GameConfigMenu } from "./GameConfigMenu";
 import { GameRendererGameScript } from "../game-scripts/canvas-gscript";
@@ -12,6 +12,8 @@ export function ClientGameView() {
   const [gameExists, setGameExists] = useState<boolean | null>(null);
   const [showConfigMenu, setShowConfigMenu] = useState(false);
   const [gameInstance, setGameInstance] = useState<any>(null);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   if (!gameId) {
     return <div>No game ID provided</div>;
@@ -22,10 +24,15 @@ export function ClientGameView() {
       setIsLoading(false);
       setGameExists(gameExists);
       if (gameExists) {
-        run(gameId).then(() => {
-          // Access the global game instance
-          setGameInstance((window as any).game?.game);
-        });
+        run(gameId)
+          .then(() => {
+            // Access the global game instance
+            setGameInstance((window as any).game?.game);
+          })
+          .catch((err) => {
+            console.error(err);
+            setError(err);
+          });
       }
     });
   }, [gameId]);
@@ -44,21 +51,25 @@ export function ClientGameView() {
     };
   }, [showConfigMenu, gameExists]);
 
-  const handleConfigSubmit = () => {
-    // Create and join new game with config
-    run(gameId).then(() => {
-      // Access the global game instance
-      setGameInstance((window as any).game?.game);
-      setGameExists(true);
-    });
-  };
-
   if (isLoading) {
     return <div>Loading...</div>;
   }
 
   if (gameExists === false) {
     return <div>Game does not exist</div>;
+  }
+
+  if (error) {
+    return (
+      <div>
+        {" "}
+        There was an error, Check the console for more details:{" "}
+        {JSON.stringify(error)} <br />
+        <button className="option-button" onClick={() => navigate("/client")}>
+          Back To Client Games
+        </button>
+      </div>
+    );
   }
 
   return (

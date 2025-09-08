@@ -32,17 +32,21 @@ export function ClientHomePage() {
         ⬅
       </div>
       <h1 className="text-4xl font-bold text-center">Local Games</h1>
-      <div className="flex flex-col items-center justify-center">
+      <div className="flex flex-col items-center justify-center container">
         {games.length > 0 &&
           games.map((game) => (
-            <div key={game.gameId}>
-              <button onClick={() => navigate(`/client-game/${game.gameId}`)}>
-                {game.name || game.gameId}
-              </button>
-            </div>
+            <button
+              key={game.gameId}
+              className="option-button"
+              onClick={() => navigate(`/client-game/${game.gameId}`)}
+            >
+              {game.name || game.gameId}
+            </button>
           ))}
         {games.length === 0 && <p>No games available</p>}
-        <button onClick={newGame}>Create Game</button>
+        <button className="option-button" onClick={newGame}>
+          Create Game
+        </button>
       </div>
     </div>
   );

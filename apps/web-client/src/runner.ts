@@ -44,6 +44,7 @@ export async function run(id?: string) {
   const gameRenderer = new GameRenderer(game, mainPlayerUid);
   const hudRender = new HudGScript(game.game, gameRenderer, mainPlayerUid);
 
+
   const onAction = (action: EntityActionDto) => {
     game.game.handle_action_wasm(action);
   };

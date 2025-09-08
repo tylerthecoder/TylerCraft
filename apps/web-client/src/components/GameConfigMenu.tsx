@@ -236,7 +236,7 @@ export function GameConfigMenu({ game, isOpen, onClose }: GameConfigMenuProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-80 flex justify-center items-center z-[1000]">
-      <div className="bg-gray-900 border-2 border-gray-700 rounded-lg w-[90%] max-w-4xl h-[80vh] max-h-[600px] text-white font-mono">
+      <div className="bg-gray-900 border-2 border-gray-700 rounded-lg w-[90%] max-w-[1200px] h-[80vh] max-h-[800px] text-white font-mono">
         <div className="flex justify-between items-center p-4 border-b border-gray-700">
           <h2 className="m-0 text-green-500 text-xl font-bold">
             Game Configuration

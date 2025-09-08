@@ -252,6 +252,24 @@ h1 {
   animation: lift 0.1s linear;
 }
 
+.option-button {
+  border: none;
+  width: 100%;
+  margin-bottom: 5px;
+  padding: 5px 10px;
+  font-size: 2em;
+  font-family: "Roboto", sans-serif;
+  cursor: pointer;
+  box-shadow: 8px 8px 10px grey;
+  border-radius: 10px;
+  background-color: white;
+}
+
+.option-button:hover {
+  box-shadow: 15px 15px 10px grey;
+  animation: lift 0.1s linear;
+}
+
 .menu-button {
   border: none;
   background-color: white;
@@ -347,3 +365,5 @@ h1 {
   font-weight: 550;
   font-family: "Roboto";
 }
+
+/* Removed ClientGameView overlay and exit button styles; consolidated into in-game menu */

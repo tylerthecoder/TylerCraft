@@ -66,6 +66,8 @@ export const GameMenu = (props: { game: Game }) => {
     </>
   );
 
+  
+
   // const gameScriptSections = game
   //   .getScriptActions()
   //   .map((s: any, i: number) => {
