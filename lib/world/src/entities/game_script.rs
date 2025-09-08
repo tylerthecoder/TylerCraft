@@ -3,6 +3,7 @@ use super::entity::EntityId;
 use super::game::GameSchedule;
 use crate::chunk::{chunk_fetcher::ChunkFetcher, ChunkId};
 use crate::entities::fireball::FireballScript;
+use crate::entities::game::Game;
 use crate::entities::player_gravity_script::GravityScript;
 use crate::entities::player_move_script::MoveScript;
 use crate::entities::sandbox::SandBoxGScript;
@@ -13,7 +14,7 @@ use js_sys::JSON;
 use lazy_static::lazy_static;
 use serde::ser::SerializeStruct;
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
-use serde_json::{from_value, to_value, Value};
+use serde_json::{from_value, to_value};
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -91,6 +92,7 @@ pub struct GameScripts {
 
 impl Clone for GameScripts {
     fn clone(&self) -> Self {
+        js_log("cloning");
         let serial = to_value(self).unwrap();
 
         from_value(serial).unwrap()
@@ -137,28 +139,19 @@ impl<'de> Deserialize<'de> for GameScripts {
 
         let GameScriptHelper { scripts } = GameScriptHelper::deserialize(deserializer)?;
 
-        js_log(&format!("All Scripts: {:?}", scripts));
-
         let mut game_scripts = GameScripts { scripts: vec![] };
 
-        let registry = SCRIPT_REGISTRY.lock().unwrap();
-        for key in registry.keys() {
-            js_log(&format!("regkey: {:?}", key));
-        }
         for item in scripts {
             let js_config: JsValue = JSON::parse(&item.config).unwrap();
 
-            js_log(&format!("value: {:?}", js_config));
+            js_log(&format!(
+                "Deserializing script {:?} with config {:?}",
+                item.name, js_config
+            ));
 
-            let deser = registry
-                .get(item.name.as_str())
-                .ok_or_else(|| de::Error::custom(format!("Unknown game script: {}", item.name)))?;
-
-            let mut val = deser();
-
-            val.set_config(js_config);
-
-            game_scripts.scripts.push(val);
+            let mut game_script = GameScripts::build_script_from_registry(item.name);
+            game_script.set_config(js_config);
+            game_scripts.add_script(game_script);
         }
 
         Ok(game_scripts)
@@ -166,8 +159,30 @@ impl<'de> Deserialize<'de> for GameScripts {
 }
 
 impl GameScripts {
+    fn build_script_from_registry(script_name: String) -> Box<dyn GameScript> {
+        if let Some(builder) = SCRIPT_REGISTRY.lock().unwrap().get(&script_name) {
+            return builder();
+        }
+
+        WASM_SCRIPT_REGISTERY.with(|reg| {
+            let map = reg.borrow();
+            if let Some(builder) = map.get(&script_name) {
+                return (builder)();
+            }
+            panic!("Script {:?} not found in registry", script_name);
+        })
+    }
+
     pub fn add_script(&mut self, script: Box<dyn GameScript>) {
-        self.scripts.push(script);
+        js_log(&format!("Adding script {}", script.get_name()));
+        let name = script.get_name();
+        if let Some(idx) = self.scripts.iter().position(|s| s.get_name() == name) {
+            js_log("Replacing exisiting");
+            let _ = std::mem::replace(&mut self.scripts[idx], script);
+        } else {
+            js_log("Inserting new");
+            self.scripts.push(script);
+        }
     }
 
     pub fn get_script_by_name(&self, script_name: String) -> Option<&Box<dyn GameScript>> {
@@ -198,48 +213,30 @@ impl GameScripts {
     pub fn iter_mut(&mut self) -> std::slice::IterMut<Box<dyn GameScript>> {
         self.scripts.iter_mut()
     }
-}
 
-#[wasm_bindgen]
-impl GameScripts {
     pub fn ensure_script(&mut self, script_name: String) -> () {
+        js_log(&format!("Ensuring Script: {}", script_name));
         let existing = self.get_script_by_name(script_name.clone());
         if existing.is_some() {
-            ()
+            return ();
         }
-        let registry = SCRIPT_REGISTRY.lock().unwrap();
+        let game_script = GameScripts::build_script_from_registry(script_name);
 
-        let builder = registry.get(&script_name);
-        if let Some(builder_found) = builder {
-            let game_script = builder_found();
-            js_log("Found rust script");
-            self.add_script(game_script);
-            return;
-        }
-
-        let binding = WASM_SCRIPT_REGISTERY.take();
-        for key in binding.keys() {
-            js_log(&format!("Keys {:?}", key));
-        }
-        let wasm_builder = binding.get(&script_name);
-        if let Some(wasm_found) = wasm_builder {
-            js_log("Found js script");
-            let script = wasm_found();
-            self.add_script(script);
-            return;
-        }
-
-        panic!("Script {:?} not found in registry", script_name);
+        self.add_script(game_script);
     }
 
-    pub fn get_script_state(&mut self, script_name: String) -> JsValue {
-        let script = self.get_script_by_name_mut(script_name.clone()).unwrap();
+    pub fn get_script_state(&self, script_name: String) -> JsValue {
+        let script = self
+            .get_script_by_name(script_name.clone())
+            .expect(&format!("Can't find script {:?}", script_name));
 
         script.get_state_wasm()
     }
 
     pub fn set_script_state(&mut self, script_name: String, state: JsValue) {
-        let script = self.get_script_by_name_mut(script_name.clone()).unwrap();
+        let script = self
+            .get_script_by_name_mut(script_name.clone())
+            .expect(&format!("Can't find script {:?}", script_name));
 
         script.set_state_wasm(state);
     }
@@ -268,12 +265,56 @@ impl GameScripts {
             }
         }
     }
+
+    pub fn to_js(&self) -> Result<JsValue, serde_wasm_bindgen::Error> {
+        serde_wasm_bindgen::to_value(self)
+    }
 }
 
 #[wasm_bindgen]
 impl GameScripts {
-    pub fn to_js(&self) -> Result<JsValue, serde_wasm_bindgen::Error> {
-        serde_wasm_bindgen::to_value(self)
+    #[wasm_bindgen(js_name = "fromJs")]
+    pub fn from_js(value: JsValue) -> Result<GameScripts, serde_wasm_bindgen::Error> {
+        let entity_holder: GameScripts = serde_wasm_bindgen::from_value(value)?;
+        Ok(entity_holder)
+    }
+}
+
+#[wasm_bindgen]
+impl Game {
+    #[wasm_bindgen(js_name = "ensureScript")]
+    pub fn ensure_script(&mut self, script_name: String) {
+        self.scripts.ensure_script(script_name);
+    }
+
+    #[wasm_bindgen(js_name = "getScriptsJs")]
+    pub fn get_scripts_js(&self) -> Result<JsValue, serde_wasm_bindgen::Error> {
+        self.scripts.to_js()
+    }
+
+    #[wasm_bindgen(js_name = "getScriptState")]
+    pub fn get_script_state(&self, script_name: String) -> JsValue {
+        self.scripts.get_script_state(script_name)
+    }
+
+    #[wasm_bindgen(js_name = "setScriptState")]
+    pub fn set_script_state(&mut self, script_name: String, state: JsValue) {
+        self.scripts.set_script_state(script_name, state);
+    }
+
+    #[wasm_bindgen(js_name = "getScriptConfig")]
+    pub fn get_script_config(&self, script_name: String) -> JsValue {
+        self.scripts.get_script_config(script_name)
+    }
+
+    #[wasm_bindgen(js_name = "getScriptNames")]
+    pub fn get_all_script_names(&self) -> Vec<String> {
+        self.scripts.get_all_script_names()
+    }
+
+    #[wasm_bindgen(js_name = "setScriptConfig")]
+    pub fn set_script_config(&mut self, script_name: String, val: JsValue) {
+        self.scripts.set_script_config(script_name, val);
     }
 }
 
@@ -290,22 +331,50 @@ pub struct WasmGameScript {
 
 #[wasm_bindgen]
 impl WasmGameScript {
+    pub fn get_name_from_class(js_class: &JsValue) -> String {
+        js_sys::Reflect::get(&js_class, &JsValue::from("name"))
+            .expect("Class should have a static name property")
+            .as_string()
+            .expect("Name should be a string")
+    }
+
     #[wasm_bindgen(constructor)]
-    pub fn make(val: JsValue) -> WasmGameScript {
-        let on_chunk_update_jsfn =
-            js_sys::Reflect::get(&val, &JsValue::from("onChunkUpdate")).unwrap();
-        let on_entity_update_jsfn =
-            js_sys::Reflect::get(&val, &JsValue::from("onEntityUpdate")).unwrap();
-        let name = js_sys::Reflect::get(&val, &JsValue::from("name")).unwrap();
-        let get_config_jsfn = js_sys::Reflect::get(&val, &JsValue::from("getConfig")).unwrap();
-        let set_config_jsfn = js_sys::Reflect::get(&val, &JsValue::from("setConfig")).unwrap();
+    pub fn make_from_class(js_class: &JsValue) -> WasmGameScript {
+        use js_sys::Reflect::{construct, get};
+        use js_sys::{Array, Function};
+
+        let name = WasmGameScript::get_name_from_class(js_class);
+
+        let factory: Function = js_class
+            .clone()
+            .dyn_into()
+            .expect("argument must be a class/constructor Function");
+
+        let args = Array::new();
+
+        let js_class_instance = construct(&factory, &args).expect("constructing script failed");
+
+        js_log(&format!(
+            "Making wasm game script from value {:?}",
+            js_class_instance
+        ));
+
+        let on_chunk_update_jsfn = get(&js_class_instance, &JsValue::from("onChunkUpdate"))
+            .expect("Can't find method onChunkUpdate");
+        let on_entity_update_jsfn = get(&js_class_instance, &JsValue::from("onEntityUpdate"))
+            .expect("can't find onEntityUpdate");
+        let get_config_jsfn =
+            get(&js_class_instance, &JsValue::from("getConfig")).expect("can't find getConfig");
+        let set_config_jsfn =
+            get(&js_class_instance, &JsValue::from("setConfig")).expect("can't find setConfig");
+
         WasmGameScript {
-            name: name.as_string().unwrap(),
+            name,
             on_chunk_update_jsfn: on_chunk_update_jsfn.into(),
             on_entity_update_jsfn: on_entity_update_jsfn.into(),
             get_config_jsfn: get_config_jsfn.into(),
             set_config_jsfn: set_config_jsfn.into(),
-            context: val,
+            context: js_class_instance,
         }
     }
 }
@@ -382,34 +451,18 @@ thread_local! {
         RefCell::new(HashMap::new());
 }
 
-thread_local! {
-    static WASM_SCRIPT_DEFAULT_CONFIG_REGISTERY: RefCell<HashMap<String, JsValue>> =
-        RefCell::new(HashMap::new());
-}
-
 type WasmScriptDeserializer = Box<dyn Fn() -> Box<dyn GameScript>>;
 
 #[wasm_bindgen]
 pub fn add_script_to_registry(game_script_class: JsValue) {
-    let name = js_sys::Reflect::get(&game_script_class, &JsValue::from("name"))
-        .unwrap()
-        .as_string()
-        .unwrap();
-
-    let factory: js_sys::Function = game_script_class
-        .dyn_into()
-        .expect("argument must be a class/constructor Function");
+    js_log(&format!(
+        "Adding WASM script to registry{:?}",
+        game_script_class
+    ));
+    let name = WasmGameScript::get_name_from_class(&game_script_class);
 
     let des: WasmScriptDeserializer = Box::new(move || -> Box<dyn GameScript> {
-        let args = {
-            let a = js_sys::Array::new();
-            a
-        };
-
-        let js_obj =
-            js_sys::Reflect::construct(&factory, &args).expect("constructing script failed");
-
-        let js_game_script = WasmGameScript::make(js_obj);
+        let js_game_script = WasmGameScript::make_from_class(&game_script_class);
         Box::new(js_game_script)
     });
 

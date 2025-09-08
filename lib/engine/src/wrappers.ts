@@ -16,6 +16,7 @@ import {
   RotateAction,
   MoveAction,
   WasmGameScript,
+  GameScripts,
 } from "@craft/rust-world";
 
 export interface ISerializedAction {
@@ -38,6 +39,7 @@ export interface ISerializedGame {
   world: World;
   terrainGen: TerrainGenerator;
   sandbox: SandBoxGScript;
+  scripts: ISerializedScript;
 }
 
 export interface IGameMetadata {
@@ -45,14 +47,23 @@ export interface IGameMetadata {
   name: string;
 }
 
+export interface ISerializedScript {
+  scripts: Array<{
+    config: string;
+    name: string;
+  }>;
+}
+
 export const serializedGameToGame = (serializedGame: ISerializedGame): Game => {
   const world = World.deserialize_wasm(serializedGame.world);
   const entityHolder = Entities.from_js(serializedGame.entities);
+  const scripts = GameScripts.fromJs(serializedGame.scripts);
   const game = Game.build(
     serializedGame.gameId,
     serializedGame.name,
     world,
-    entityHolder
+    entityHolder,
+    scripts
   );
   return game;
 };

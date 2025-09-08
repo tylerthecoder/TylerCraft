@@ -29,7 +29,7 @@ import type {
 import { mat4 } from "gl-matrix";
 import VertexShader from "../../shaders/vertex.glsl?raw";
 import FragmentShader from "../../shaders/fragment.glsl?raw";
-import { getEleOrError } from "../utils";
+import { getEle, getEleOrError } from "../utils";
 
 const WebGlLayer = (window as any).XRWebGLLayer as typeof XRWebGLLayer;
 
@@ -81,7 +81,6 @@ export class GameRendererGameScript {
 
   // This is called by the rust side
   getConfig(): Config {
-    console.log("CanvasGameScript: getConfig", this.config);
     return this.config;
   }
 
@@ -101,7 +100,7 @@ export class GameRenderer {
   public perspective: PlayerPerspective = PlayerPerspective.FirstPerson;
 
   public eCanvas = getEleOrError<HTMLCanvasElement>("glCanvas");
-  public eWebxrButton = getEleOrError<HTMLCanvasElement>("webxrButton");
+  public eWebxrButton = getEle<HTMLCanvasElement>("webxrButton");
   public gl: WebGLRenderingContext;
   public program: {
     program: WebGLProgram;
@@ -123,7 +122,7 @@ export class GameRenderer {
   public pastDeltas: number[] = [];
 
   private getGameScript(): GameRendererGameScript {
-    return this.game.game.scripts.get_script_state(
+    return this.game.game.getScriptState(
       GameRendererGameScript.name
     ) as GameRendererGameScript;
   }
@@ -298,10 +297,7 @@ export class GameRenderer {
     gameScript.updatedChunks.clear();
     gameScript.updatedEntities.clear();
 
-    this.game.game.scripts.set_script_config(
-      GameRendererGameScript.name,
-      gameScript
-    );
+    this.game.game.setScriptState(GameRendererGameScript.name, gameScript);
   }
 
   getFilter(camera: Camera): Vector3D {
@@ -630,7 +626,7 @@ export class GameRenderer {
 
     console.log("XR session", this.webXrSession);
     this.webXrSession.addEventListener("end", () => {
-      this.eWebxrButton.style.display = "none";
+      this.eWebxrButton!.style.display = "none";
     });
 
     this.webXrSession.addEventListener("inputsourceschange", () => {

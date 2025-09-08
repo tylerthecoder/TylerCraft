@@ -17,6 +17,8 @@ pub trait RequestChunk: std::fmt::Debug {
     fn request_chunk(&self, chunk_pos: ChunkPos);
 }
 
+static NAME: &'static str = "sandbox";
+
 #[derive(Debug, Serialize)]
 #[wasm_bindgen]
 pub struct SandBoxGScript {
@@ -31,6 +33,11 @@ impl Default for SandBoxGScript {
 
 #[wasm_bindgen]
 impl SandBoxGScript {
+    #[wasm_bindgen(js_name = "name")]
+    pub fn get_name_wasm() -> String {
+        return NAME.to_string();
+    }
+
     pub fn get_chunks_around_player(&self, pos: &FineWorldPos) -> Vec<ChunkPos> {
         let mut poses = vec![];
 
@@ -49,7 +56,7 @@ impl SandBoxGScript {
 
 impl GameScript for SandBoxGScript {
     fn get_name(&self) -> String {
-        "sandbox".to_string()
+        NAME.to_string()
     }
 
     fn get_config(&self) -> JsValue {

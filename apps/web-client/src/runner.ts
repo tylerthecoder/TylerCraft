@@ -17,7 +17,7 @@ export async function run(id?: string) {
 
   const game = id ? await spGameService.getGame(id) : spGameService.newGame();
 
-  console.log("Game", game);
+  console.log("Game Created", game);
 
   (window as any).game = game;
 
@@ -35,15 +35,13 @@ export async function run(id?: string) {
   console.log("Ents", ents);
 
   // ===== Game Scripts =====
-  game.game.scripts.ensure_script("sandbox");
-  game.game.scripts.ensure_script("game-renderer");
+  console.log("Ensuring scripts");
+  game.game.ensureScript(SandBoxGScript.name());
+  console.log("Sandbox done");
+  game.game.ensureScript(GameRendererGameScript.name);
+  console.log("Game Renderer done");
 
-  const gameRenderer = new GameRenderer(
-    game,
-    mainPlayerUid,
-    gameRenderGameScript
-  );
-
+  const gameRenderer = new GameRenderer(game, mainPlayerUid);
   const hudRender = new HudGScript(game.game, gameRenderer, mainPlayerUid);
 
   const onAction = (action: EntityActionDto) => {

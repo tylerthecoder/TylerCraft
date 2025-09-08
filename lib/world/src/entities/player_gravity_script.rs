@@ -29,6 +29,12 @@ impl Default for GravityScript {
     }
 }
 
+impl GravityScript {
+    pub fn name() -> String {
+        "gravity".to_string()
+    }
+}
+
 impl GameScript for GravityScript {
     fn get_name(&self) -> String {
         "gravity".to_string()

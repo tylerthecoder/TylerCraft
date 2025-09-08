@@ -55,6 +55,12 @@ pub struct MoveScript {
     pub max_speed: f32,
 }
 
+impl MoveScript {
+    pub fn name() -> String {
+        "move".to_string()
+    }
+}
+
 impl Default for MoveScript {
     fn default() -> Self {
         Self { max_speed: 0.2 }

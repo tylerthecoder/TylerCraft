@@ -20,6 +20,7 @@ use crate::{
         velocity_script::VelocityScript,
     },
     positions::ChunkPos,
+    utils::js_log,
     world::{world_block::WorldBlock, World},
 };
 use serde::{Deserialize, Serialize};
@@ -34,6 +35,7 @@ pub struct Game {
     pub world: World,
     pub entities: Entities,
     pub chunk_fetcher: ChunkFetcher,
+    #[wasm_bindgen(skip)]
     pub scripts: GameScripts,
     schedule: GameSchedule,
     action_holder: EntityActionHolder,
@@ -42,10 +44,11 @@ pub struct Game {
 #[wasm_bindgen]
 impl Game {
     fn add_default_scripts(&mut self) {
-        self.scripts.add_script(Box::new(MoveScript::default()));
-        self.scripts.add_script(Box::new(VelocityScript::default()));
-        self.scripts.add_script(Box::new(GravityScript::default()));
-        self.scripts.add_script(Box::new(FireballScript::default()));
+        js_log("Adding Default Scripts");
+        self.scripts.ensure_script(MoveScript::name());
+        self.scripts.ensure_script(VelocityScript::name());
+        self.scripts.ensure_script(GravityScript::name());
+        self.scripts.ensure_script(FireballScript::name());
 
         self.action_holder.add_handler(MoveAction::make_handler());
         self.action_holder.add_handler(JumpAction::make_handler());
@@ -77,17 +80,29 @@ impl Game {
         g
     }
 
-    pub fn build(id: String, name: String, world: World, entities: Entities) -> Game {
+    pub fn build(
+        id: String,
+        name: String,
+        world: World,
+        entities: Entities,
+        scripts: GameScripts,
+    ) -> Game {
+        console_error_panic_hook::set_once();
+        js_log("Building the game");
         let mut g = Game {
             id,
             name,
             world,
             entities,
+            scripts,
             chunk_fetcher: ChunkFetcher::new_wasm(TerrainGenerator::default()),
-            scripts: GameScripts::default(),
             schedule: GameSchedule::empty(),
             action_holder: EntityActionHolder::default(),
         };
+        js_log(&format!(
+            "Here is the game scripts: {:?}",
+            g.scripts.get_all_script_names()
+        ));
         g.add_default_scripts();
         g
     }

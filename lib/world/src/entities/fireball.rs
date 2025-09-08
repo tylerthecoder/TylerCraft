@@ -58,6 +58,12 @@ impl Fireball {
 #[derive(Debug, Default)]
 pub struct FireballScript {}
 
+impl FireballScript {
+    pub fn name() -> String {
+        "fireball".to_string()
+    }
+}
+
 impl GameScript for FireballScript {
     fn get_name(&self) -> String {
         "fireball".to_string()

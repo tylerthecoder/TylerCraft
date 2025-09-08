@@ -4,6 +4,14 @@ export function getEleOrError<T extends HTMLElement>(id: string): T {
   return ele as T;
 }
 
+export function getEle<T extends HTMLElement>(id: string): T | undefined {
+  const ele = document.getElementById(id);
+  if (!ele) {
+    return undefined;
+  }
+  return ele as T;
+}
+
 // export function hideElement(e: HTMLElement) {
 //   e.style.display = "none";
 // }

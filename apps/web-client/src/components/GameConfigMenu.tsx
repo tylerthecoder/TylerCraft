@@ -24,20 +24,20 @@ export function GameConfigMenu({ game, isOpen, onClose }: GameConfigMenuProps) {
     [scriptName: string]: ScriptConfig;
   }>({});
   const [chunkFetcherConfig, setChunkFetcherConfig] =
-    useState<ChunkFetcherConfig>({});
+    useState<ChunkFetcherConfig>(game.chunk_fetcher.get_config());
   const [activeTab, setActiveTab] = useState<string>("");
 
   useEffect(() => {
     if (isOpen && game) {
       // Get all script names
-      const names = game.get_all_script_names_wasm();
+      const names = game.getScriptNames();
       setScriptNames(names);
 
       // Get configs for all scripts
       const configs: { [scriptName: string]: ScriptConfig } = {};
       names.forEach((name) => {
         try {
-          const config: Map<string, any> = game.get_script_config_wasm(name);
+          const config: Map<string, any> = game.getScriptConfig(name);
           console.log("Config", name, config);
           if (config) {
             if (config instanceof Map) {
@@ -94,7 +94,7 @@ export function GameConfigMenu({ game, isOpen, onClose }: GameConfigMenuProps) {
 
     // Update the game script config
     try {
-      game.set_script_config_wasm(scriptName, updatedConfigs[scriptName]);
+      game.setScriptConfig(scriptName, updatedConfigs[scriptName]);
     } catch (error) {
       console.error(`Failed to update config for script ${scriptName}:`, error);
     }
@@ -251,8 +251,8 @@ export function GameConfigMenu({ game, isOpen, onClose }: GameConfigMenuProps) {
 
         <div className="flex h-[calc(100%-80px)]">
           {scriptNames.length === 0 &&
-            chunkFetcherConfig.json &&
-            Object.keys(chunkFetcherConfig.json).length === 0 ? (
+          chunkFetcherConfig.json &&
+          Object.keys(chunkFetcherConfig.json).length === 0 ? (
             <div className="text-center text-gray-500 p-8 w-full">
               No configuration options found
             </div>
@@ -262,10 +262,11 @@ export function GameConfigMenu({ game, isOpen, onClose }: GameConfigMenuProps) {
                 {/* Chunk Fetcher Tab */}
                 <button
                   onClick={() => setActiveTab("Chunk Fetcher")}
-                  className={`block w-full px-4 py-3 text-left cursor-pointer border-b border-gray-700 transition-colors ${activeTab === "Chunk Fetcher"
+                  className={`block w-full px-4 py-3 text-left cursor-pointer border-b border-gray-700 transition-colors ${
+                    activeTab === "Chunk Fetcher"
                       ? "bg-green-500 text-white"
                       : "bg-transparent text-gray-400 hover:bg-gray-800"
-                    }`}
+                  }`}
                 >
                   Chunk Fetcher
                 </button>
@@ -275,10 +276,11 @@ export function GameConfigMenu({ game, isOpen, onClose }: GameConfigMenuProps) {
                   <button
                     key={name}
                     onClick={() => setActiveTab(name)}
-                    className={`block w-full px-4 py-3 text-left cursor-pointer border-b border-gray-700 transition-colors ${activeTab === name
+                    className={`block w-full px-4 py-3 text-left cursor-pointer border-b border-gray-700 transition-colors ${
+                      activeTab === name
                         ? "bg-green-500 text-white"
                         : "bg-transparent text-gray-400 hover:bg-gray-800"
-                      }`}
+                    }`}
                   >
                     {name}
                   </button>

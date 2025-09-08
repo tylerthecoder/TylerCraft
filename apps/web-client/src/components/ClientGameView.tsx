@@ -2,6 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { run, spGameService } from "../runner";
 import { GameConfigMenu } from "./GameConfigMenu";
+import { GameRendererGameScript } from "../game-scripts/canvas-gscript";
+
+GameRendererGameScript.register();
 
 export function ClientGameView() {
   const { gameId } = useParams<{ gameId: string }>();
@@ -15,18 +18,14 @@ export function ClientGameView() {
   }
 
   useEffect(() => {
-    // Check if game exists when component mounts
-    spGameService.getGame(gameId).then((game) => {
+    spGameService.hasGame(gameId).then((gameExists) => {
       setIsLoading(false);
-      if (game) {
-        setGameExists(true);
-        // Auto-join existing game
+      setGameExists(gameExists);
+      if (gameExists) {
         run(gameId).then(() => {
           // Access the global game instance
           setGameInstance((window as any).game?.game);
         });
-      } else {
-        setGameExists(false);
       }
     });
   }, [gameId]);

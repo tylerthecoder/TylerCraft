@@ -31,6 +31,12 @@ impl_component!(Forces);
 #[derive(Debug, Default)]
 pub struct VelocityScript {}
 
+impl VelocityScript {
+    pub fn name() -> String {
+        "velocity".to_string()
+    }
+}
+
 impl GameScript for VelocityScript {
     fn get_name(&self) -> String {
         "velocity".to_string()

@@ -78,6 +78,27 @@ export class ClientDbGamesService {
     });
   }
 
+  async hasGame(gameId: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction(
+        [ClientDbGamesService.WORLDS_OBS],
+        "readonly"
+      );
+      const objectStore = transaction.objectStore(
+        ClientDbGamesService.WORLDS_OBS
+      );
+
+      // `getKey` is supported in modern browsers, lighter than `get`
+      const request = objectStore.getKey(gameId);
+
+      request.onsuccess = (event: any) => {
+        resolve(event.target.result !== undefined); // key exists if result is not undefined
+      };
+
+      request.onerror = () => reject(request.error);
+    });
+  }
+
   async getGame(gameId: string): Promise<GameWrapper | null> {
     const foundGame: ISerializedGame | null = await new Promise((resolve) => {
       const transaction = this.db.transaction([
@@ -118,7 +139,7 @@ export class ClientDbGamesService {
         entities: data.game.entities.to_js(),
         world: data.game.world.serialize_wasm(),
         chunkFetcher: data.game.chunk_fetcher.get_config(),
-        scripts: data.game.scripts.to_js(),
+        scripts: data.game.getScriptsJs(),
       };
 
       console.log("Saving game", serializedGame);
