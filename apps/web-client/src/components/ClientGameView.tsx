@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { run, spGameService } from "../runner";
+import { run, RunningGame, spGameService } from "../runner";
 import { GameConfigMenu } from "./GameConfigMenu";
 import { GameRendererGameScript } from "../renders/game-renderer";
 import { MenuButton } from "./ui/Buttons";
@@ -12,8 +12,8 @@ export function ClientGameView() {
   const [isLoading, setIsLoading] = useState(true);
   const [gameExists, setGameExists] = useState<boolean | null>(null);
   const [showConfigMenu, setShowConfigMenu] = useState(false);
-  const [gameInstance, setGameInstance] = useState<any>(null);
-  const [error, setError] = useState(null);
+  const [gameInstance, setGameInstance] = useState<RunningGame | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   if (!gameId) {
@@ -26,9 +26,13 @@ export function ClientGameView() {
       setGameExists(gameExists);
       if (gameExists) {
         run(gameId)
-          .then(() => {
-            // Access the global game instance
-            setGameInstance((window as any).game?.game);
+          .then((runningGame) => {
+            if ("game" in runningGame) {
+              // Access the global game instance
+              setGameInstance(runningGame);
+            } else {
+              setError(runningGame.error);
+            }
           })
           .catch((err) => {
             console.error(err);
@@ -83,10 +87,9 @@ export function ClientGameView() {
 
       {gameInstance && (
         <GameConfigMenu
-          game={gameInstance}
+          runningGame={gameInstance}
           isOpen={showConfigMenu}
           onClose={() => setShowConfigMenu(false)}
-          onExit={() => navigate("/client")}
         />
       )}
     </div>

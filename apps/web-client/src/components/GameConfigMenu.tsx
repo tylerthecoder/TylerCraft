@@ -1,14 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { Game } from "@craft/rust-world";
 import { BooleanInput, NumberInput, TextInput } from "./ui/Inputs";
-import { spGameService } from "../runner";
-import { GameWrapper } from "@craft/engine";
+import { RunningGame } from "../runner";
+import { useNavigate } from "react-router-dom";
 
 interface GameConfigMenuProps {
-  game: Game;
+  runningGame: RunningGame;
   isOpen: boolean;
   onClose: () => void;
-  onExit?: () => void;
 }
 
 interface ScriptConfig {
@@ -29,11 +27,11 @@ function MenuLabel({ children }: { children: React.ReactNode }) {
 }
 
 export function GameConfigMenu({
-  game,
+  runningGame,
   isOpen,
   onClose,
-  onExit,
 }: GameConfigMenuProps) {
+  const game = runningGame.game.game;
   const [scriptNames, setScriptNames] = useState<string[]>([]);
   const [scriptConfigs, setScriptConfigs] = useState<{
     [scriptName: string]: ScriptConfig;
@@ -42,9 +40,10 @@ export function GameConfigMenu({
     useState<ChunkFetcherConfig>(game.chunk_fetcher.get_config());
   const [activeTab, setActiveTab] = useState<ActiveTab>("Game Config");
   const [gameName, setGameName] = useState<string>(game.name);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    if (isOpen && game) {
+    if (isOpen && runningGame) {
       // Get all script names
       const names = game.getScriptNames();
       setScriptNames(names);
@@ -87,7 +86,7 @@ export function GameConfigMenu({
         setChunkFetcherConfig({ type: "", json: {} });
       }
     }
-  }, [isOpen, game, activeTab]);
+  }, [isOpen, runningGame, activeTab]);
 
   const handleConfigChange = (scriptName: string, key: string, value: any) => {
     const updatedConfigs = {
@@ -131,7 +130,12 @@ export function GameConfigMenu({
   };
 
   const handleSaveGame = () => {
-    spGameService.saveGame(new GameWrapper(game));
+    runningGame.save();
+  };
+
+  const handleExit = () => {
+    runningGame.cleanup();
+    navigate("/client");
   };
 
   const renderConfigValue = (scriptName: string, key: string, value: any) => {
@@ -232,15 +236,13 @@ export function GameConfigMenu({
         <div className="flex justify-between items-center p-4 border-b border-gray-700">
           <h2 className="m-0 text-green-500 text-xl font-bold">Menu</h2>
           <div className="flex items-center gap-2">
-            {onExit && (
-              <button
-                onClick={onExit}
-                className="bg-yellow-600 hover:bg-yellow-700 text-white border-0 px-3 py-1.5 rounded cursor-pointer text-sm flex items-center justify-center focus:outline-none"
-                title="Exit to Client"
-              >
-                Exit
-              </button>
-            )}
+            <button
+              onClick={handleExit}
+              className="bg-yellow-600 hover:bg-yellow-700 text-white border-0 px-3 py-1.5 rounded cursor-pointer text-sm flex items-center justify-center focus:outline-none"
+              title="Exit to Client"
+            >
+              Exit
+            </button>
             <button
               onClick={handleSaveGame}
               className="bg-blue-600 hover:bg-blue-700 text-white border-0 px-3 py-1.5 rounded cursor-pointer text-sm flex items-center justify-center focus:outline-none"

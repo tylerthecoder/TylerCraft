@@ -1,4 +1,3 @@
-import { WebGlGScript } from "./game-scripts/webgl-gscript";
 import { MobileController } from "./controllers/playerControllers/mobileController";
 import { KeyboardPlayerEntityController } from "./controllers/playerControllers/keyboardPlayerController";
 import { getMyUid, IS_MOBILE } from "./utils";
@@ -6,10 +5,21 @@ import { EntityActionDto, SandBoxGScript } from "@craft/rust-world";
 import { ClientDbGamesService } from "./services/sp-games-service";
 import { HudGScript } from "./renders/hud-renderer";
 import { GameRenderer, GameRendererGameScript } from "./renders/game-renderer";
+import { GameWrapper } from "@craft/engine";
 
 export const spGameService = await ClientDbGamesService.factory();
 
-export async function run(id?: string) {
+export interface RunningGame {
+  game: GameWrapper;
+  save: () => void;
+  cleanup: () => void;
+}
+
+interface RunGameError {
+  error: string;
+}
+
+export async function run(id?: string): Promise<RunningGame | RunGameError> {
   console.log("Starting game", id);
 
   const game = id ? await spGameService.getGame(id) : spGameService.newGame();
@@ -20,7 +30,9 @@ export async function run(id?: string) {
 
   if (!game) {
     console.error("Game not found");
-    return;
+    return {
+      error: "Game not found",
+    };
   }
 
   const mainPlayerUid = getMyUid();
@@ -102,7 +114,15 @@ export async function run(id?: string) {
 
   gameRenderer.renderLoop(0);
 
-  const cleanup = () => {
-    running = false;
+  return {
+    game,
+    save: () => {
+      spGameService.saveGame(game);
+    },
+    cleanup: () => {
+      running = false;
+      gameRenderer.cleanup();
+      hudRender.cleanup();
+    },
   };
 }

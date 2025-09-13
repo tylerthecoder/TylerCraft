@@ -47,11 +47,7 @@ export class HudGScript extends GameScript {
     this.textureImg.style.display = "none";
     document.body.appendChild(this.textureImg);
 
-    const getCanvasDimensions = () => {
-      this.eHudCanvas.height = window.innerHeight;
-      this.eHudCanvas.width = window.innerWidth;
-    };
-    window.addEventListener("resize", getCanvasDimensions);
+    window.addEventListener("resize", this.updateCanvasDimensionsBound);
 
     const hudContext = this.eHudCanvas.getContext("2d");
     if (!hudContext) {
@@ -66,6 +62,18 @@ export class HudGScript extends GameScript {
     this.textureImg.onload = () => {
       // this.drawBelt();
     };
+  }
+
+  cleanup() {
+    console.log("HudGScript: Cleaning up");
+    this.eHud.style.visibility = "hidden";
+    window.removeEventListener("resize", this.updateCanvasDimensionsBound);
+  }
+
+  private updateCanvasDimensionsBound = this.updateCanvasDimensions.bind(this);
+  private updateCanvasDimensions() {
+    this.eHudCanvas.height = window.innerHeight;
+    this.eHudCanvas.width = window.innerWidth;
   }
 
   private getScreenDim(): [sw: number, sh: number] {

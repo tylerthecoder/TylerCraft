@@ -153,16 +153,6 @@ export class GameRenderer {
 
     this.gl = gl;
 
-    const getCanvasDimensions = () => {
-      this.eCanvas.height = window.innerHeight;
-      this.eCanvas.width = window.innerWidth;
-      this.gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-      if (this.program) this.createProjectionMatrix();
-    };
-
-    window.addEventListener("resize", getCanvasDimensions);
-    getCanvasDimensions();
-
     gl.enable(gl.DEPTH_TEST); // Enable depth testing
     gl.depthFunc(gl.LEQUAL); // Near things obscure far things
     gl.activeTexture(gl.TEXTURE0); // Tell WebGL we want to affect texture unit 0
@@ -244,10 +234,6 @@ export class GameRenderer {
     });
     console.log("Canvas Render Usecase", this);
 
-    window.addEventListener("keydown", (e) => {
-      this.handleKeyDown(e.key);
-    });
-
     // Create renderers for initial entities
     for (const entity of this.game.game.entities.get_all_clone()) {
       this.onNewEntity(entity);
@@ -259,6 +245,17 @@ export class GameRenderer {
     }
 
     this.isSpectating = false;
+
+    window.addEventListener("keydown", this.handleKeyDownBound);
+    window.addEventListener("resize", this.handleCanvasSizeChangeBound);
+    this.handleCanvasSizeChange(new Event("resize"));
+  }
+
+  cleanup() {
+    console.log("CanvasGameScript: Cleaning up");
+    window.removeEventListener("keydown", this.handleKeyDownBound);
+    window.removeEventListener("resize", this.handleCanvasSizeChangeBound);
+    this.eCanvas.style.display = "none";
   }
 
   getCamera(): Camera {
@@ -315,10 +312,20 @@ export class GameRenderer {
     this.loop(this.renderLoop.bind(this));
   }
 
-  private handleKeyDown(key: string) {
+  private handleKeyDownBound = this.handleKeyDown.bind(this);
+  private handleKeyDown(e: KeyboardEvent) {
+    const key = e.key;
     if (key === "v") {
       this.togglePerspective();
     }
+  }
+
+  private handleCanvasSizeChangeBound = this.handleCanvasSizeChange.bind(this);
+  private handleCanvasSizeChange(_e: Event) {
+    this.eCanvas.height = window.innerHeight;
+    this.eCanvas.width = window.innerWidth;
+    this.gl.viewport(0, 0, this.gl.canvas.width, this.gl.canvas.height);
+    if (this.program) this.createProjectionMatrix();
   }
 
   public togglePerspective(): boolean {
