@@ -86,6 +86,7 @@ impl Game {
         world: World,
         entities: Entities,
         scripts: GameScripts,
+        chunk_fetcher: ChunkFetcher,
     ) -> Game {
         console_error_panic_hook::set_once();
         js_log("Building the game");
@@ -95,7 +96,7 @@ impl Game {
             world,
             entities,
             scripts,
-            chunk_fetcher: ChunkFetcher::new_wasm(TerrainGenerator::default()),
+            chunk_fetcher,
             schedule: GameSchedule::empty(),
             action_holder: EntityActionHolder::default(),
         };

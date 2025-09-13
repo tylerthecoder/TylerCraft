@@ -17,6 +17,7 @@ import {
   MoveAction,
   WasmGameScript,
   GameScripts,
+  ChunkFetcher,
 } from "@craft/rust-world";
 
 export interface ISerializedAction {
@@ -32,6 +33,11 @@ export interface IServerGameMetadata {
   onlinePlayers: number;
 }
 
+export interface ISerializedChunkFetcher {
+  type: string;
+  json: any;
+}
+
 export interface ISerializedGame {
   gameId: string;
   name: string;
@@ -40,6 +46,7 @@ export interface ISerializedGame {
   terrainGen: TerrainGenerator;
   sandbox: SandBoxGScript;
   scripts: ISerializedScript;
+  chunkFetcher: ISerializedChunkFetcher;
 }
 
 export interface IGameMetadata {
@@ -58,12 +65,14 @@ export const serializedGameToGame = (serializedGame: ISerializedGame): Game => {
   const world = World.deserialize_wasm(serializedGame.world);
   const entityHolder = Entities.from_js(serializedGame.entities);
   const scripts = GameScripts.fromJs(serializedGame.scripts);
+  const chunkFetcher = ChunkFetcher.fromJs(serializedGame.chunkFetcher);
   const game = Game.build(
     serializedGame.gameId,
     serializedGame.name,
     world,
     entityHolder,
-    scripts
+    scripts,
+    chunkFetcher
   );
   return game;
 };

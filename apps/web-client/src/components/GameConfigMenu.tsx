@@ -118,7 +118,7 @@ export function GameConfigMenu({
 
     // Update the game chunk fetcher config
     try {
-      game.chunk_fetcher.set_config(updatedConfig);
+      game.setChunkFetcherConfig(updatedConfig);
     } catch (error) {
       console.error("Failed to update chunk fetcher config:", error);
     }

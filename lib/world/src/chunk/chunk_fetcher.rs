@@ -1,7 +1,7 @@
 use crate::chunk::Chunk;
+use crate::entities::game::Game;
 use crate::entities::terrain_gen::TerrainGenerator;
 use crate::positions::ChunkPos;
-use crate::utils::js_log;
 use lazy_static::lazy_static;
 use serde::{ser::SerializeStruct, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;
@@ -49,9 +49,17 @@ impl ChunkFetcher {
         serde_wasm_bindgen::to_value(&self.chunk_loader).unwrap()
     }
 
-    pub fn set_config(&mut self, config: JsValue) {
-        js_log(&format!("Setting chunk loader config: {:?}", config));
-        self.chunk_loader = serde_wasm_bindgen::from_value(config).unwrap();
+    #[wasm_bindgen(js_name = "fromJs")]
+    pub fn from_js(value: JsValue) -> Self {
+        Self::new(serde_wasm_bindgen::from_value(value).unwrap())
+    }
+}
+
+#[wasm_bindgen]
+impl Game {
+    #[wasm_bindgen(js_name = "setChunkFetcherConfig")]
+    pub fn set_chunk_fetcher_config(&mut self, config: JsValue) {
+        self.chunk_fetcher.chunk_loader = serde_wasm_bindgen::from_value(config).unwrap();
     }
 }
 
