@@ -23,7 +23,13 @@ impl_component!(WorldPos);
 
 impl_vector_ops!(WorldPos, i32);
 
+#[wasm_bindgen]
 impl WorldPos {
+    #[wasm_bindgen(constructor)]
+    pub fn new_wasm(x: i32, y: i32, z: i32) -> WorldPos {
+        WorldPos { x, y, z }
+    }
+
     pub fn is_valid(&self) -> bool {
         self.y >= 0 && self.y < 256
     }

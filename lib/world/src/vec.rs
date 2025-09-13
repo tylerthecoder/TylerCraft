@@ -6,6 +6,7 @@ use std::{
     fmt::Display,
     ops::{Add, AddAssign, Div, Mul, Neg, Sub, SubAssign},
 };
+use wasm_bindgen::prelude::wasm_bindgen;
 
 pub trait AsF32 {
     fn as_f32(self) -> f32;
@@ -242,6 +243,7 @@ pub struct Vec3i16 {
 impl_vector_ops!(Vec3i16, i16);
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Serialize, Deserialize)]
+#[wasm_bindgen]
 pub struct Vec3u8 {
     pub x: i8,
     pub y: i8,

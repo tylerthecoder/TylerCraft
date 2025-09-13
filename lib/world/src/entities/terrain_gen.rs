@@ -396,19 +396,24 @@ impl BasicChunkGetter {
     }
 }
 
-struct FlatWorldChunkGetter {}
+struct FlatWorldChunkGetter {
+    height: i32,
+}
 
 impl FlatWorldChunkGetter {
     pub fn get_chunk(&self, chunk_pos: &ChunkPos) -> Chunk {
         let mut chunk = Chunk::new(*chunk_pos);
         for x in 0u8..CHUNK_WIDTH as u8 {
             for z in 0u8..CHUNK_WIDTH as u8 {
-                let block = ChunkBlock {
-                    pos: InnerChunkPos::new(x as i8, 0, z as i8),
-                    block_type: BlockType::Grass,
-                    extra_data: BlockData::None,
-                };
-                chunk.add_block(block);
+                for y in 0..self.height {
+                    let block = ChunkBlock {
+                        pos: InnerChunkPos::new(x as i8, y as i8, z as i8),
+                        block_type: BlockType::Grass,
+                        extra_data: BlockData::None,
+                    };
+                    chunk.add_block(block);
+                    chunk.add_block(block);
+                }
             }
         }
         chunk
@@ -523,6 +528,7 @@ impl ParkorChunkGetter {
 pub struct TerrainGenerator {
     pub seed: u32,
     pub flat_world: bool,
+    pub flat_world_height: i32,
     pub debug_world: bool,
 }
 
@@ -530,7 +536,8 @@ impl Default for TerrainGenerator {
     fn default() -> Self {
         Self {
             seed: 0,
-            flat_world: true,
+            flat_world: false,
+            flat_world_height: 5,
             debug_world: false,
         }
     }
@@ -539,10 +546,16 @@ impl Default for TerrainGenerator {
 #[wasm_bindgen]
 impl TerrainGenerator {
     #[wasm_bindgen(constructor)]
-    pub fn new(seed: u32, flat_world: bool, debug_world: bool) -> TerrainGenerator {
+    pub fn new(
+        seed: u32,
+        flat_world: bool,
+        flat_world_height: i32,
+        debug_world: bool,
+    ) -> TerrainGenerator {
         TerrainGenerator {
             seed,
             flat_world,
+            flat_world_height,
             debug_world,
         }
     }
@@ -559,7 +572,9 @@ impl TerrainGenerator {
         };
 
         if self.flat_world {
-            let chunk_getter = FlatWorldChunkGetter {};
+            let chunk_getter = FlatWorldChunkGetter {
+                height: self.flat_world_height,
+            };
             return chunk_getter.get_chunk(&chunk_pos);
         }
 

@@ -81,6 +81,8 @@ impl EntityActionHandler for UsePrimaryItemAction {
 
             let pointed_at = world.get_pointed_at_block(camera_ray);
 
+            js_log(&format!("pointed_at: {:?}", pointed_at));
+
             if let Some(pointed_at) = pointed_at {
                 let looking_at_pos = pointed_at.block.world_pos;
                 js_log(&format!("looking_at_pos: {:?}", looking_at_pos));

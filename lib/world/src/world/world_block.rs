@@ -9,8 +9,10 @@ use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Copy)]
+#[wasm_bindgen]
 pub struct WorldBlock {
     pub block_type: BlockType,
+    #[wasm_bindgen(skip)]
     pub extra_data: BlockData,
     pub world_pos: WorldPos,
 }

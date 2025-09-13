@@ -7,11 +7,14 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use tsify::Tsify;
+use wasm_bindgen::prelude::wasm_bindgen;
 
-#[derive(Tsify, Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone)]
+#[wasm_bindgen]
 pub struct ChunkMesh {
-    face_map: HashMap<usize, Directions>,
-    chunk_pos: ChunkPos,
+    #[wasm_bindgen(skip)]
+    pub face_map: HashMap<usize, Directions>,
+    pub chunk_pos: ChunkPos,
 }
 
 #[derive(PartialEq, Debug, Serialize, Deserialize)]

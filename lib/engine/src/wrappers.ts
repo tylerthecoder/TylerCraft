@@ -1,5 +1,4 @@
 import { Vector2D, Vector3D } from "./vector.js";
-import { GameScript } from "./game-script.js";
 import {
   SandBoxGScript,
   TerrainGenerator,
@@ -15,7 +14,6 @@ import {
   SphericalRotation,
   RotateAction,
   MoveAction,
-  WasmGameScript,
   GameScripts,
   ChunkFetcher,
 } from "@craft/rust-world";
@@ -143,39 +141,6 @@ export type Cube = {
   pos: Vector3D;
 };
 
-type RustChunkMesh = Array<[RustBlock, { data: boolean[] }]>;
-
-export class ChunkMeshWrapper {
-  mesh: Array<[BlockWrapper, Direction[]]>;
-
-  constructor(mesh: RustChunkMesh) {
-    this.mesh = mesh.map(([block, faces]) => [
-      new BlockWrapper(block),
-      faces.data.map((_, i) => i as Direction),
-    ]);
-  }
-}
-
-type RustBlock = {
-  block_type: BlockType;
-  extra_data: string;
-  world_pos: RustPos;
-};
-
-export class BlockWrapper {
-  pos: Vector3D;
-  type: BlockType;
-
-  constructor(block: RustBlock) {
-    this.pos = new Vector3D([
-      block.world_pos.x,
-      block.world_pos.y,
-      block.world_pos.z,
-    ]);
-    this.type = block.block_type;
-  }
-}
-
 export class GameWrapper {
   constructor(public game: Game) {}
 
@@ -231,31 +196,12 @@ export class GameWrapper {
     return Number(this.game.get_chunk_id_from_chunk_pos_wasm(data));
   }
 
-  makeAndAddGameScript(script: GameScript) {
-    const wasmScript = new WasmGameScript(script);
-    this.game.add_game_script_wasm(wasmScript);
-  }
-
-  getChunkMeshFromChunkPos(chunkId: number): ChunkMeshWrapper {
-    const id = BigInt(chunkId);
-    const start = performance.now();
-    const val = this.game.get_chunk_mesh_by_chunkid_wasm(id);
-    const end = performance.now();
-    console.log("Time taken to get chunk mesh", end - start, " ms");
-    return new ChunkMeshWrapper(val);
-  }
-
   getPlayer(uid: number): Player {
     const player = this.game.entities.get_entity_as_player(uid);
     if (!player) {
       throw new Error("Player not found");
     }
     return player;
-  }
-
-  getBlock(pos: Vector3D): BlockWrapper {
-    const block = this.game.get_block_wasm(pos.get(0), pos.get(1), pos.get(1));
-    return new BlockWrapper(block);
   }
 
   getLoadedChunkIds(): number[] {

@@ -71,6 +71,16 @@ pub struct Directions {
     data: [bool; 6],
 }
 
+#[wasm_bindgen]
+impl Directions {
+    pub fn to_array(&self) -> Vec<Direction> {
+        (0..6)
+            .filter_map(|i| if self.data[i] { Some(i) } else { None })
+            .map(move |i| Direction::from_index(i))
+            .collect::<Vec<Direction>>()
+    }
+}
+
 impl FromIterator<Direction> for Directions {
     fn from_iter<I: IntoIterator<Item = Direction>>(iter: I) -> Self {
         let mut data = [false; 6];

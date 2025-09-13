@@ -2,9 +2,9 @@ use tsify::declare;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 use crate::{
-    chunk::CHUNK_WIDTH,
+    chunk::{ChunkId, CHUNK_WIDTH},
     components::world_pos::WorldPos,
-    entities::entity_component::impl_component,
+    entities::{entity_component::impl_component, game::Game},
     geometry::vec2::Vec2i16,
     utils::js_log,
     vec::{Vec3f32, Vec3u8, Vector3Ops},
@@ -38,6 +38,24 @@ impl InnerChunkPos {
     pub fn to_world_pos(&self, chunk_pos: &ChunkPos) -> WorldPos {
         let pos = chunk_pos.scalar_mul(CHUNK_WIDTH).move_to_3d(0).add(self);
         WorldPos::new(pos.x() as i32, pos.y() as i32, pos.z() as i32)
+    }
+}
+
+#[wasm_bindgen]
+impl Game {
+    #[wasm_bindgen(js_name = "chunkIndexToWorldPos")]
+    pub fn chunk_index_to_world_pos(&self, index: usize, chunk_pos: &ChunkPos) -> WorldPos {
+        InnerChunkPos::make_from_chunk_index(index).to_world_pos(chunk_pos)
+    }
+
+    #[wasm_bindgen(js_name = "chunkIdToWorldPos")]
+    pub fn chunk_id_to_world_pos(&self, chunk_id: ChunkId) -> WorldPos {
+        ChunkPos::from_id(chunk_id).to_world_pos()
+    }
+
+    #[wasm_bindgen(js_name = "chunkIdToChunkPos")]
+    pub fn chunk_id_to_chunk_pos(&self, chunk_id: ChunkId) -> ChunkPos {
+        ChunkPos::from_id(chunk_id)
     }
 }
 
@@ -97,7 +115,7 @@ impl ChunkPos {
         ((a + b) * (a + b + 1)) / 2 + a
     }
 
-    pub fn from_id(z: u64) -> ChunkPos {
+    pub fn from_id(z: ChunkId) -> ChunkPos {
         let w = (((8 * z + 1) as f64).sqrt() - 1.0) / 2.0;
         let w = w.floor() as u64;
         let t = (w * w + w) / 2;

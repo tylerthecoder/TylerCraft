@@ -16,6 +16,7 @@ import {
   Entity,
   Fireball,
   Player,
+  WorldPos,
 } from "@craft/rust-world";
 import { PlayerRenderer } from "./playerRender";
 import { SphereRenderer } from "./sphereRender";
@@ -299,9 +300,14 @@ export class GameRenderer {
 
   getFilter(camera: Camera): Vector3D {
     const shiftedDown = camera.pos.sub(new Vector3D([0, 0.5, 0]));
-    const block = this.game.getBlock(shiftedDown);
+    const worldPos = new WorldPos(
+      shiftedDown.get(0),
+      shiftedDown.get(1),
+      shiftedDown.get(2)
+    );
+    const blockType = this.game.game.getBlockType(worldPos);
 
-    if (block?.type === BlockType.Water) {
+    if (blockType === BlockType.Water) {
       return new Vector3D([0, 0.3, 1]);
     } else {
       return Vector3D.zero;
@@ -504,9 +510,7 @@ export class GameRenderer {
 
   createChunkRender(chunkId: number): void {
     console.log("CanvasGameScript: Creating chunk render", chunkId);
-    const chunkPos = this.game.getChunkPosFromChunkId(chunkId);
-    const chunkMesh = this.game.getChunkMeshFromChunkPos(chunkId);
-    const chunkRenderer = new ChunkRenderer(this, chunkPos, chunkMesh);
+    const chunkRenderer = new ChunkRenderer(this, chunkId, this.game);
     chunkRenderer.getBufferData();
     this.chunkRenderers.set(chunkId, chunkRenderer);
   }

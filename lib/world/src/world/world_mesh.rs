@@ -1,13 +1,19 @@
 use std::collections::HashSet;
 
+use wasm_bindgen::prelude::wasm_bindgen;
+
 use super::{ChunkNotLoadedError, World, WorldStateDiff};
 use crate::{
-    chunk::chunk_mesh::{BlockMesh, ChunkMesh},
+    chunk::{
+        chunk_mesh::{BlockMesh, ChunkMesh},
+        ChunkId,
+    },
     components::world_pos::WorldPos,
     direction::{DirectionVectorExtension, Directions},
+    entities::game::Game,
     positions::ChunkPos,
     vec::Vector3Ops,
-    world::{world_block::WorldBlock, AdjacentBlocks},
+    world::AdjacentBlocks,
 };
 
 impl World {
@@ -101,6 +107,34 @@ impl World {
         WorldStateDiff {
             chunk_ids: updated_ids,
         }
+    }
+}
+
+#[wasm_bindgen]
+pub struct FaceEntry {
+    pub index: usize,
+    pub directions: Directions,
+}
+
+#[wasm_bindgen]
+impl Game {
+    #[wasm_bindgen(js_name = "getChunkMeshByChunkId")]
+    pub fn get_chunk_mesh_js(
+        &self,
+        chunk_id: ChunkId,
+    ) -> Result<Vec<FaceEntry>, ChunkNotLoadedError> {
+        let chunk_pos = ChunkPos::from_id(chunk_id);
+        let mesh = self.world.get_chunk_mesh(&chunk_pos)?;
+        Ok(mesh
+            .face_map
+            .iter()
+            // filter out empty directions
+            .filter(|(_, directions)| directions.into_iter().len() > 0)
+            .map(|(index, directions)| FaceEntry {
+                index: *index,
+                directions: *directions,
+            })
+            .collect())
     }
 }
 

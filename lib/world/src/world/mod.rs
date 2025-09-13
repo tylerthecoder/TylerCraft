@@ -1,8 +1,10 @@
 use self::world_block::WorldBlock;
+use crate::block::BlockType;
 use crate::chunk::chunk_mesh::ChunkMesh;
 use crate::chunk::Chunk;
 use crate::components::world_pos::WorldPos;
 use crate::direction::{Direction, DirectionVectorExtension, Directions};
+use crate::entities::game::Game;
 use crate::positions::ChunkPos;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
@@ -136,6 +138,19 @@ impl World {
         let chunk = self.get_mut_chunk(&world_pos.to_chunk_pos())?;
         chunk.remove_block(&world_pos.to_inner_chunk_pos());
         Ok(self.update_chunks_around_block(world_pos))
+    }
+}
+
+#[wasm_bindgen]
+impl Game {
+    #[wasm_bindgen(js_name = "getBlock")]
+    pub fn get_block_js(&self, world_pos: &WorldPos) -> WorldBlock {
+        self.world.get_block(world_pos)
+    }
+
+    #[wasm_bindgen(js_name = "getBlockType")]
+    pub fn get_block_type_js(&self, world_pos: &WorldPos) -> BlockType {
+        self.world.get_block(world_pos).block_type
     }
 }
 
