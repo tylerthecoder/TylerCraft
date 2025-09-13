@@ -3,7 +3,7 @@ import { RenderData, Renderer } from "./renderer";
 import ShapeBuilder from "../services/shape-builder";
 import TextureMapper from "../textureMapper";
 import { Game, Player } from "@craft/rust-world";
-import { GameRenderer } from "../game-scripts/canvas-gscript";
+import { GameRenderer } from "./game-renderer";
 
 class PlayerRenderWrapper {
   constructor(private player: Player) {}

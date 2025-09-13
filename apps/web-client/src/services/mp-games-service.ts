@@ -19,7 +19,7 @@ import {
 import { WebGlGScript } from "../game-scripts/webgl-gscript";
 import { getMyUid } from "../utils";
 import { KeyboardPlayerEntityController } from "../controllers/playerControllers/keyboardPlayerController";
-import { HudGScript } from "../game-scripts/hudRender";
+import { HudGScript } from "../renders/hud-renderer";
 
 export const SocketInterface = new SocketHandler();
 

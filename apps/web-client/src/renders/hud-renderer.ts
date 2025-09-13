@@ -1,5 +1,5 @@
 import { GameScript } from "@craft/engine";
-import { GameRenderer } from "../game-scripts/canvas-gscript";
+import { GameRenderer } from "./game-renderer";
 import { getEleOrError, hideElement, IS_MOBILE } from "../utils";
 import { Game, Item, Player } from "@craft/rust-world";
 import TextureMapper from "../textureMapper";

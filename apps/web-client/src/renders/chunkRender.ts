@@ -9,7 +9,7 @@ import {
 import TextureMapper from "../textureMapper";
 import { BlockShape, BlockType } from "@craft/rust-world";
 import ShapeBuilder from "../services/shape-builder";
-import { GameRenderer } from "../game-scripts/canvas-gscript";
+import { GameRenderer } from "./game-renderer";
 
 export class ChunkRenderer extends Renderer {
   private otherRenders: Renderer[] = [];

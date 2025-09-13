@@ -8,8 +8,8 @@ import {
   Vector2D,
   Vector3D,
 } from "@craft/engine";
-import { Renderer } from "../renders/renderer";
-import { ChunkRenderer } from "../renders/chunkRender";
+import { Renderer } from "./renderer";
+import { ChunkRenderer } from "./chunkRender";
 import {
   add_script_to_registry,
   BlockType,
@@ -17,8 +17,8 @@ import {
   Fireball,
   Player,
 } from "@craft/rust-world";
-import { PlayerRenderer } from "../renders/playerRender";
-import { SphereRenderer } from "../renders/sphereRender";
+import { PlayerRenderer } from "./playerRender";
+import { SphereRenderer } from "./sphereRender";
 import type {
   Navigator,
   XRSession,
@@ -292,7 +292,7 @@ export class GameRenderer {
       this.createChunkRender(chunkId);
     }
 
-    let gameScript = this.getGameScript();
+    const gameScript = this.getGameScript();
 
     gameScript.updatedChunks.clear();
     gameScript.updatedEntities.clear();

@@ -4,11 +4,8 @@ import { KeyboardPlayerEntityController } from "./controllers/playerControllers/
 import { getMyUid, IS_MOBILE } from "./utils";
 import { EntityActionDto, SandBoxGScript } from "@craft/rust-world";
 import { ClientDbGamesService } from "./services/sp-games-service";
-import { HudGScript } from "./game-scripts/hudRender";
-import {
-  GameRenderer,
-  GameRendererGameScript,
-} from "./game-scripts/canvas-gscript";
+import { HudGScript } from "./renders/hud-renderer";
+import { GameRenderer, GameRendererGameScript } from "./renders/game-renderer";
 
 export const spGameService = await ClientDbGamesService.factory();
 
@@ -44,7 +41,6 @@ export async function run(id?: string) {
   const gameRenderer = new GameRenderer(game, mainPlayerUid);
   const hudRender = new HudGScript(game.game, gameRenderer, mainPlayerUid);
 
-
   const onAction = (action: EntityActionDto) => {
     game.game.handle_action_wasm(action);
   };
@@ -68,6 +64,8 @@ export async function run(id?: string) {
   async function task() {
     await new Promise((resolve) => setTimeout(resolve, 0));
   }
+
+  let running = true;
 
   const update = async () => {
     const start = performance.now();
@@ -95,10 +93,16 @@ export async function run(id?: string) {
     if (end - start > 50) {
       console.warn("Large update happened. Time: ", end - start);
     }
-    requestAnimationFrame(update);
+    if (running) {
+      requestAnimationFrame(update);
+    }
   };
 
   requestAnimationFrame(update);
 
   gameRenderer.renderLoop(0);
+
+  const cleanup = () => {
+    running = false;
+  };
 }

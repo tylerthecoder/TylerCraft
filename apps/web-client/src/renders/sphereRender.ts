@@ -1,4 +1,4 @@
-import { GameRenderer } from "../game-scripts/canvas-gscript";
+import { GameRenderer } from "./game-renderer";
 import { RenderData, Renderer } from "./renderer";
 import { Camera, Vector3D } from "@craft/engine";
 import { Game } from "@craft/rust-world";

@@ -1,6 +1,6 @@
 import { Camera, Vector3D } from "@craft/engine";
 import { mat4, vec3 } from "gl-matrix";
-import { GameRenderer } from "../game-scripts/canvas-gscript";
+import { GameRenderer } from "./game-renderer";
 
 interface IRenderData {
   positions: number[];

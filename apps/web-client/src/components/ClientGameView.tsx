@@ -2,7 +2,8 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { run, spGameService } from "../runner";
 import { GameConfigMenu } from "./GameConfigMenu";
-import { GameRendererGameScript } from "../game-scripts/canvas-gscript";
+import { GameRendererGameScript } from "../renders/game-renderer";
+import { MenuButton } from "./ui/Buttons";
 
 GameRendererGameScript.register();
 
@@ -65,28 +66,19 @@ export function ClientGameView() {
         {" "}
         There was an error, Check the console for more details:{" "}
         {JSON.stringify(error)} <br />
-        <button className="option-button" onClick={() => navigate("/client")}>
+        <MenuButton onClick={() => navigate("/client")}>
           Back To Client Games
-        </button>
+        </MenuButton>
       </div>
     );
   }
 
   return (
     <div>
-      <div
-        style={{
-          position: "fixed",
-          top: "10px",
-          right: "10px",
-          zIndex: 100,
-          display: "flex",
-          gap: "10px",
-        }}
-      >
-        <button className="menu-button" onClick={() => setShowConfigMenu(true)}>
+      <div className="fixed top-2 right-2 z-[100] flex gap-2">
+        <MenuButton onClick={() => setShowConfigMenu(true)}>
           Game Config (ESC)
-        </button>
+        </MenuButton>
       </div>
 
       {gameInstance && (
@@ -94,6 +86,7 @@ export function ClientGameView() {
           game={gameInstance}
           isOpen={showConfigMenu}
           onClose={() => setShowConfigMenu(false)}
+          onExit={() => navigate("/client")}
         />
       )}
     </div>

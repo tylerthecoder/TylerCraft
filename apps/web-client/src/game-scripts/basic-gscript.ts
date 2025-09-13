@@ -6,10 +6,10 @@ import {
 import { IS_MOBILE, getMyUid } from "../app";
 import { MobileController } from "../controllers/playerControllers/mobileController";
 import { KeyboardPlayerEntityController } from "../controllers/playerControllers/keyboardPlayerController";
-import { CanvasGameScript } from "../game-scripts/canvas-gscript";
+import { CanvasGameScript } from "../renders/game-renderer";
 import { GameScript } from "@craft/engine/game-script";
 import { WebGlGScript } from "./webgl-gscript";
-import { HudGScript } from "./hudRender";
+import { HudGScript } from "../renders/hud-renderer";
 import { Game, Player } from "@craft/rust-world";
 import { GameWrapper, PlayerAction } from "@craft/engine/modules";
 

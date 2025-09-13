@@ -1,9 +1,6 @@
 import { CONFIG, PlayerController } from "@craft/engine";
 import { Direction, EntityActionDto, Game } from "@craft/rust-world";
-import {
-  GameRenderer,
-  PlayerPerspective,
-} from "../../game-scripts/canvas-gscript";
+import { GameRenderer, PlayerPerspective } from "../../renders/game-renderer";
 
 export class KeyboardPlayerEntityController extends PlayerController {
   cleanup(): void {

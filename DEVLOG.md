@@ -1,3 +1,15 @@
+# 09_13_25
+
+I need to get the PR out, here are the remaining things to do
+- Ensure the game scripts thing works
+- Get mobile working
+- Battle Test the server
+- Add a single new fun game script: Falling blocks, the world blocks start falling and you have to jump to stay as high as possilbe
+
+Then deploy this!
+
+
+
 # 08_30_25
 
 It's been a bit but I'm back. I've mostly been working on getting scripts to be serialzied. It is hard to get the wasm scripts to live in rust.

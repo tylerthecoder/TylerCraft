@@ -4,50 +4,55 @@
   <link href="https://fonts.googleapis.com/css2?family=Indie+Flower&family=Roboto&display=swap" rel="stylesheet">
 </head>
 
-<body>
+<body class="bg-sky-400 font-['Roboto',sans-serif] m-0 p-0">
   <div id="root"></div>
   <div id="canvasHolder">
     <canvas id="glCanvas" width="800" height="800" style="display: none;"></canvas>
+    <!-- HUD Canvas kept hidden by default; scripts can enable if needed -->
     <canvas id="hudCanvas" width="800" height="800" style="display: none;"></canvas>
-    <div id="hud">
 
+    <!-- HUD Overlay -->
+    <div id="hud" class="fixed inset-0 invisible">
       <div id="menuContainer" class="hidden"></div>
 
-      <div id="crosshairs">
-        <div id="verticalCrosshair"></div>
-        <div id="horizontalCrosshair"></div>
+      <!-- Crosshairs -->
+      <div id="crosshairs" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 size-[30px]">
+        <div id="verticalCrosshair" class="absolute left-[45%] w-[10%] h-full bg-red-600"></div>
+        <div id="horizontalCrosshair" class="absolute top-[45%] h-[10%] w-full bg-red-600"></div>
       </div>
 
-      <div id="stats">
+      <!-- Stats -->
+      <div id="stats" class="absolute bg-black/90 text-red-500 p-1.5 text-sm font-sans">
         0,0,0 <br />
         Fps:
       </div>
 
-      <div id="toolbelt">
-        <div class="toolbelt-item" id="toolbelt-item-0"></div>
-        <div class="toolbelt-item" id="toolbelt-item-1"></div>
-        <div class="toolbelt-item" id="toolbelt-item-2"></div>
-        <div class="toolbelt-item" id="toolbelt-item-3"></div>
-        <div class="toolbelt-item" id="toolbelt-item-4"></div>
-        <div class="toolbelt-item" id="toolbelt-item-5"></div>
-        <div class="toolbelt-item" id="toolbelt-item-6"></div>
-        <div class="toolbelt-item" id="toolbelt-item-7"></div>
-        <div class="toolbelt-item" id="toolbelt-item-8"></div>
-        <div class="toolbelt-item" id="toolbelt-item-9"></div>
+      <!-- Toolbelt -->
+      <div id="toolbelt" class="absolute bottom-2 left-1/2 -translate-x-1/2 h-[50px] w-[500px] flex justify-evenly border-2 border-white box-border">
+        <div class="toolbelt-item h-[42px] w-[42px] border-2 border-white box-border m-[3px]" id="toolbelt-item-0"></div>
+        <div class="toolbelt-item h-[42px] w-[42px] border-2 border-white box-border m-[3px]" id="toolbelt-item-1"></div>
+        <div class="toolbelt-item h-[42px] w-[42px] border-2 border-white box-border m-[3px]" id="toolbelt-item-2"></div>
+        <div class="toolbelt-item h-[42px] w-[42px] border-2 border-white box-border m-[3px]" id="toolbelt-item-3"></div>
+        <div class="toolbelt-item h-[42px] w-[42px] border-2 border-white box-border m-[3px]" id="toolbelt-item-4"></div>
+        <div class="toolbelt-item h-[42px] w-[42px] border-2 border-white box-border m-[3px]" id="toolbelt-item-5"></div>
+        <div class="toolbelt-item h-[42px] w-[42px] border-2 border-white box-border m-[3px]" id="toolbelt-item-6"></div>
+        <div class="toolbelt-item h-[42px] w-[42px] border-2 border-white box-border m-[3px]" id="toolbelt-item-7"></div>
+        <div class="toolbelt-item h-[42px] w-[42px] border-2 border-white box-border m-[3px]" id="toolbelt-item-8"></div>
+        <div class="toolbelt-item h-[42px] w-[42px] border-2 border-white box-border m-[3px]" id="toolbelt-item-9"></div>
       </div>
 
-      <div id="healthBarOutline">
-        <div id="healthBar"></div>
+      <!-- Health Bar -->
+      <div id="healthBarOutline" class="absolute bottom-[70px] left-1/2 -translate-x-1/2 w-1/2 h-[30px] border-2 border-white">
+        <div id="healthBar" class="w-full h-full bg-red-600"></div>
       </div>
-      <div id="joyStickOutline">
-        <div id="joyStick"></div>
-      </div>
+
+      <!-- Movement / Action Buttons -->
       <div id="movementButtons">
-        <div id="forwardButton"></div>
-        <div id="jumpButton"></div>
+        <div id="forwardButton" class="absolute left-[30px] bottom-[80px] size-[50px] bg-blue-600"></div>
+        <div id="jumpButton" class="absolute left-[30px] bottom-[40px] size-[50px] bg-blue-600"></div>
       </div>
-      <div id="useItemButton"></div>
-      <div id="useItemButton2"></div>
+      <div id="useItemButton" class="absolute right-[60px] bottom-[30px] size-[50px] bg-blue-600"></div>
+      <div id="useItemButton2" class="absolute right-[10px] bottom-[30px] size-[50px] bg-blue-600"></div>
     </div>
   </div>
 
