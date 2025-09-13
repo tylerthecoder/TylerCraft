@@ -8,7 +8,7 @@ use crate::entities::game::Game;
 use crate::positions::ChunkPos;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::{self, fmt};
 use tsify::Tsify;
 use wasm_bindgen::prelude::*;

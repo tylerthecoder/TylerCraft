@@ -2,7 +2,6 @@ use crate::components::fine_world_pos::FineWorldPos;
 use crate::components::size3::Size3;
 use crate::components::world_pos::WorldPos;
 use crate::direction::DirectionVectorExtension;
-use crate::utils::js_log;
 use crate::vec::Vector3Ops;
 use crate::world::World;
 

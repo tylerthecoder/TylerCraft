@@ -1,5 +1,4 @@
 use lazy_static::lazy_static;
-use serde::Serializer;
 use serde_json::Value;
 use std::{any::Any, collections::HashMap, fmt::Debug, sync::Mutex};
 use wasm_bindgen::JsValue;

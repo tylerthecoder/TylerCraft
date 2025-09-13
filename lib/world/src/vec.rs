@@ -1,10 +1,10 @@
 use crate::direction::DirectionVectorExtension;
 use crate::direction::Directions;
-use num::{integer::Roots, traits::real::Real, Num, One, Zero};
+use num::{integer::Roots, traits::real::Real, One, Zero};
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::Display,
-    ops::{Add, AddAssign, Div, Mul, Neg, Sub, SubAssign},
+    ops::{Div, Neg, Sub},
 };
 use wasm_bindgen::prelude::wasm_bindgen;
 

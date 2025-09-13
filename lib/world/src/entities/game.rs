@@ -2,7 +2,7 @@ use super::{
     entities::Entities,
     entity::{Entity, EntityId},
     entity_action::{EntityActionDto, EntityActionHolder},
-    game_script::{GameScript, GameScripts, WasmGameScript},
+    game_script::{GameScript, GameScripts},
 };
 use crate::{
     chunk::{chunk_fetcher::ChunkFetcher, Chunk, ChunkId},
@@ -375,18 +375,7 @@ impl GameSchedule {
 }
 
 mod tests {
-    use crate::{
-        components::{fine_world_pos::FineWorldPos, velocity::Velocity},
-        direction::Direction,
-        entities::{
-            entity_action::EntityActionDtoMaker,
-            game::Game,
-            player::make_player,
-            player_jump_script::{JumpAction, JumpActionData},
-            player_move_script::{MoveAction, MoveActionData, MoveScript},
-            velocity_script::{self, VelocityScript},
-        },
-    };
+    
 
     #[test]
     pub fn add_player() {

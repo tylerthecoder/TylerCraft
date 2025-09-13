@@ -6,8 +6,7 @@ use crate::{
     components::world_pos::WorldPos,
     entities::{entity_component::impl_component, game::Game},
     geometry::vec2::Vec2i16,
-    utils::js_log,
-    vec::{Vec3f32, Vec3u8, Vector3Ops},
+    vec::{Vec3u8, Vector3Ops},
 };
 
 #[cfg(test)]

@@ -1,9 +1,9 @@
 use crate::vec::{AsF32, Vec3i16};
-use num::{integer::Roots, traits::real::Real, Num, One, Zero};
+use num::{integer::Roots, traits::real::Real, One, Zero};
 use serde::{Deserialize, Serialize};
 use std::{
     fmt::Display,
-    ops::{Add, AddAssign, Div, Mul, Neg, Sub, SubAssign},
+    ops::{Add, Div, Mul, Neg, Sub},
 };
 use wasm_bindgen::prelude::wasm_bindgen;
 

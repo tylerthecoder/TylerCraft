@@ -1,11 +1,10 @@
 use crate::{
     block::{BlockData, BlockMetaData, BlockShape, BlockType, ChunkBlock},
     components::world_pos::WorldPos,
-    direction::{Direction, Directions},
+    direction::Directions,
     world::AdjacentBlocks,
 };
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 
 #[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Clone, Copy)]

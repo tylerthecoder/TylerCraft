@@ -3,8 +3,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::{
     chunk::{CHUNK_HEIGHT, CHUNK_WIDTH},
-    direction::Direction,
-    entities::entity_component::{impl_component, Component},
+    entities::entity_component::impl_component,
     positions::{ChunkPos, InnerChunkPos},
     vec::{impl_vector_ops, Vector3Ops},
 };

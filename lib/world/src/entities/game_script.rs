@@ -13,7 +13,7 @@ use crate::world::World;
 use js_sys::JSON;
 use lazy_static::lazy_static;
 use serde::ser::SerializeStruct;
-use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::{from_value, to_value};
 use std::any::Any;
 use std::cell::RefCell;
