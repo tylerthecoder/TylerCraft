@@ -1,12 +1,11 @@
 import {
-  deserializeChunk,
   ISerializedChunk,
   IServerGameMetadata,
   ISocketMessageType,
   SocketMessage,
   WelcomeMessage,
 } from "@craft/engine";
-import { SocketHandler, SocketListener } from "../socket";
+import { SocketHandler, SocketListener } from "./socket-service";
 import { AppConfig } from "../appConfig";
 import {
   Entities,

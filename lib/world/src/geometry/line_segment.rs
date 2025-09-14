@@ -1,6 +1,7 @@
 use crate::{
     chunk::chunk_mesh::BlockMesh, components::fine_world_pos::FineWorldPos,
-    direction::DirectionVectorExtension, plane::WorldPlane, vec::Vector3Ops, world::World,
+    geometry::direction::DirectionVectorExtension, geometry::plane::WorldPlane,
+    geometry::vec::Vector3Ops, world::World,
 };
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
@@ -186,11 +187,13 @@ impl World {
 #[cfg(test)]
 pub mod tests {
     use crate::{
-        chunk::{chunk_mesh::BlockMesh, Chunk},
+        chunk::chunk_mesh::BlockMesh,
         components::{fine_world_pos::FineWorldPos, world_pos::WorldPos},
-        direction::{Direction, Directions},
-        plane::WorldPlane,
-        vec::Vector3Ops,
+        geometry::{
+            direction::{Direction, Directions},
+            plane::WorldPlane,
+            vec::Vector3Ops,
+        },
     };
 
     use super::{LineSegment, LineSegmentIntersectionInfo};

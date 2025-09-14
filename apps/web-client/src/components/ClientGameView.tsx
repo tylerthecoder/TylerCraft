@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { run, RunningGame, spGameService } from "../runner";
+import { run, RunningGame, spGameService } from "../services/sp-games-service";
 import { GameConfigMenu } from "./GameConfigMenu";
 import { GameRendererGameScript } from "../renders/game-renderer";
 import { MenuButton } from "./ui/Buttons";

@@ -2,7 +2,7 @@ import { GameScript } from "@craft/engine";
 import { GameRenderer } from "./game-renderer";
 import { getEleOrError, hideElement, IS_MOBILE } from "../utils";
 import { Game, Item, Player } from "@craft/rust-world";
-import TextureMapper from "../textureMapper";
+import TextureMapper from "../services/texture-mapping-service";
 
 export class HudGScript extends GameScript {
   name = "hud-renderer";
@@ -134,7 +134,7 @@ export class HudGScript extends GameScript {
   }
 
   update(_delta: number): void {
-    const player = this.game.entities.get_entity_as_player(this.mainPlayerUid);
+    const player = this.game.getEntityAsPlayer(this.mainPlayerUid);
     if (!player) {
       console.log("HudGScript: Player not found", this.mainPlayerUid);
       return;

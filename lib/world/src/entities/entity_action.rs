@@ -1,12 +1,12 @@
 use super::entities::Entities;
 use super::entity::{Entity, EntityId};
-use super::game::GameSchedule;
-use crate::entities::player_belt_script::{
+use crate::game::GameSchedule;
+use crate::scripts::player_belt_script::{
     SecondaryBeltActionData, SelectItemActionData, UsePrimaryItemActionData,
 };
-use crate::entities::player_jump_script::JumpActionData;
-use crate::entities::player_move_script::MoveActionData;
-use crate::entities::player_rot_script::RotateActionData;
+use crate::scripts::player_jump_script::JumpActionData;
+use crate::scripts::player_move_script::MoveActionData;
+use crate::scripts::player_rot_script::RotateActionData;
 use crate::utils::js_log;
 use crate::world::World;
 use lazy_static::lazy_static;

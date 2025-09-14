@@ -39,7 +39,7 @@ export abstract class PlayerController {
   }
 
   beltRight() {
-    const player = this.game.entities.get_entity_as_player(this.playerId);
+    const player = this.game.getEntityAsPlayer(this.playerId);
     if (!player) {
       return;
     }
@@ -52,7 +52,7 @@ export abstract class PlayerController {
   }
 
   beltLeft() {
-    const player = this.game.entities.get_entity_as_player(this.playerId);
+    const player = this.game.getEntityAsPlayer(this.playerId);
     if (!player) {
       return;
     }

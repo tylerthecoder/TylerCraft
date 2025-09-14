@@ -14,8 +14,12 @@ function HomePage() {
         A 3D sandbox game by Tyler Tracy
       </h2>
       <div className="flex flex-col items-center justify-center mt-10">
-        <TitleButton onClick={() => navigate("/client")}>Play Local</TitleButton>
-        <TitleButton onClick={() => navigate("/server")}>Play Online</TitleButton>
+        <TitleButton onClick={() => navigate("/client")}>
+          Play Local
+        </TitleButton>
+        <TitleButton onClick={() => navigate("/server")}>
+          Play Online
+        </TitleButton>
       </div>
     </div>
   );

@@ -7,11 +7,12 @@ use crate::{
     components::{
         fine_world_pos::FineWorldPos, size3::Size3, velocity::Velocity, world_pos::WorldPos,
     },
-    entities::{
-        player::Health, player_belt_script::Belt, player_gravity_script::GravityData,
-        player_jump_script::JumpData, player_move_script::MovingDirection, velocity_script::Forces,
-    },
+    entities::player::Health,
     geometry::rotation::SphericalRotation,
+    scripts::{
+        player_belt_script::Belt, player_gravity_script::GravityData, player_jump_script::JumpData,
+        player_move_script::MovingDirection, velocity_script::Forces,
+    },
 };
 
 pub trait Component: Any + Debug {

@@ -1,4 +1,4 @@
-use crate::{entities::entity_component::impl_component, vec::impl_vector_ops};
+use crate::{entities::entity_component::impl_component, geometry::vec::impl_vector_ops};
 use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 

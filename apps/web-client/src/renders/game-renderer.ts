@@ -1,6 +1,5 @@
 import {
   Camera,
-  GameWrapper,
   makeCameraForPlayer,
   makeThirdPersonBackCamera,
   makeThirdPersonFrontCamera,
@@ -9,17 +8,19 @@ import {
   Vector3D,
 } from "@craft/engine";
 import { Renderer } from "./renderer";
-import { ChunkRenderer } from "./chunkRender";
+import { ChunkRenderer } from "./chunk-render";
 import {
   add_script_to_registry,
   BlockType,
+  ChunkPos,
   Entity,
   Fireball,
+  Game,
   Player,
   WorldPos,
 } from "@craft/rust-world";
-import { PlayerRenderer } from "./playerRender";
-import { SphereRenderer } from "./sphereRender";
+import { PlayerRenderer } from "./player-render";
+import { SphereRenderer } from "./sphere-render";
 import type {
   Navigator,
   XRSession,
@@ -97,7 +98,7 @@ GameRendererGameScript.register();
 export class GameRenderer {
   private renderers: Renderer[] = [];
   private entityRenderers: Map<number, Renderer> = new Map();
-  private chunkRenderers: Map<number, ChunkRenderer> = new Map();
+  private chunkRenderers: Map<bigint, ChunkRenderer> = new Map();
   public perspective: PlayerPerspective = PlayerPerspective.FirstPerson;
 
   public eCanvas = getEleOrError<HTMLCanvasElement>("glCanvas");
@@ -123,7 +124,7 @@ export class GameRenderer {
   public pastDeltas: number[] = [];
 
   private getGameScript(): GameRendererGameScript {
-    return this.game.game.getScriptState(
+    return this.game.getScriptState(
       GameRendererGameScript.name
     ) as GameRendererGameScript;
   }
@@ -133,7 +134,7 @@ export class GameRenderer {
     return gameScript.getConfig();
   }
 
-  constructor(private game: GameWrapper, private mainPlayerId: number) {
+  constructor(private game: Game, private mainPlayerId: number) {
     this.eCanvas.style.display = "block";
 
     // init gl eCanvas
@@ -236,12 +237,12 @@ export class GameRenderer {
     console.log("Canvas Render Usecase", this);
 
     // Create renderers for initial entities
-    for (const entity of this.game.game.entities.get_all_clone()) {
+    for (const entity of this.game.getAllEntities()) {
       this.onNewEntity(entity);
     }
 
     // Create renderers for initial chunks
-    for (const chunkId of this.game.getLoadedChunkIds()) {
+    for (const chunkId of this.game.get_loaded_chunk_ids_wasm()) {
       this.createChunkRender(chunkId);
     }
 
@@ -260,7 +261,10 @@ export class GameRenderer {
   }
 
   getCamera(): Camera {
-    const player = this.game.getPlayer(this.mainPlayerId);
+    const player = this.game.getEntityAsPlayer(this.mainPlayerId);
+    if (!player) {
+      throw new Error("Player not found");
+    }
     if (this.isXr) {
       return makeXRCamera(player);
     } else {
@@ -277,7 +281,7 @@ export class GameRenderer {
   update() {
     for (const entityId of this.getGameScript().updatedEntities) {
       console.log("CanvasGameScript: Updating entity", entityId);
-      const entity = this.game.game.entities.get_entity_by_id_clone(entityId);
+      const entity = this.game.getEntityById(entityId);
       if (!entity) {
         console.log("CanvasGameScript: Entity not found", entityId);
         this.onRemovedEntity(entityId);
@@ -287,7 +291,7 @@ export class GameRenderer {
     }
 
     for (const chunkId of this.getGameScript().updatedChunks) {
-      this.createChunkRender(chunkId);
+      this.createChunkRender(BigInt(chunkId));
     }
 
     const gameScript = this.getGameScript();
@@ -295,7 +299,7 @@ export class GameRenderer {
     gameScript.updatedChunks.clear();
     gameScript.updatedEntities.clear();
 
-    this.game.game.setScriptState(GameRendererGameScript.name, gameScript);
+    this.game.setScriptState(GameRendererGameScript.name, gameScript);
   }
 
   getFilter(camera: Camera): Vector3D {
@@ -305,7 +309,7 @@ export class GameRenderer {
       shiftedDown.get(1),
       shiftedDown.get(2)
     );
-    const blockType = this.game.game.getBlockType(worldPos);
+    const blockType = this.game.getBlockType(worldPos);
 
     if (blockType === BlockType.Water) {
       return new Vector3D([0, 0.3, 1]);
@@ -368,7 +372,7 @@ export class GameRenderer {
 
     const renderedChunks = new Set<ChunkRenderer>();
     // this will hold the coords of ever chunk that was rendered.
-    const renderedSet = new Set<string>();
+    const renderedSet = new Set<bigint>();
 
     for (const renderer of this.renderers) {
       renderer.render(camera);
@@ -390,12 +394,17 @@ export class GameRenderer {
     const cameraXYPos = new Vector2D([camera.pos.get(0), camera.pos.get(2)]);
 
     const realRenderDistance = CHUNK_SIZE * this.getConfig().renderDistance;
-    const cameraChunkPos = this.game.getChunkPosFromWorldPos(camera.pos);
+    const cameraWorldPos = new WorldPos(
+      camera.pos.get(0),
+      camera.pos.get(1),
+      camera.pos.get(2)
+    );
+    const cameraChunkPos = cameraWorldPos.to_chunk_pos();
 
     // const cameraRotNorm = camera.rot.toCartesianCoords().normalize();
 
-    const renderChunk = (chunkPos: Vector2D) => {
-      const chunkId = this.game.getChunkIdFromChunkPos(chunkPos);
+    const renderChunk = (chunkPos: ChunkPos) => {
+      const chunkId = chunkPos.to_id();
       const chunkRenderer = this.chunkRenderers.get(chunkId);
       if (!chunkRenderer) {
         return;
@@ -403,8 +412,6 @@ export class GameRenderer {
       renderedChunks.add(chunkRenderer);
       chunkRenderer.render(camera);
     };
-
-    const skippedChunkPos = new Set<Vector2D>();
 
     for (
       let i = -this.getConfig().renderDistance;
@@ -416,13 +423,10 @@ export class GameRenderer {
         j <= this.getConfig().renderDistance;
         j++
       ) {
-        const indexVec = new Vector2D([i, j]);
-        const chunkPos = cameraChunkPos.add(indexVec);
-        const chunkWorldPos = this.game.getWorldPosFromChunkPos(chunkPos);
-        const chunkXYPos = new Vector2D([
-          chunkWorldPos.get(0),
-          chunkWorldPos.get(2),
-        ]);
+        const chunkPosOffset = new ChunkPos(i, j);
+        const chunkPos = cameraChunkPos.add(chunkPosOffset);
+        const chunkWorldPos = chunkPos.to_world_pos();
+        const chunkXYPos = new Vector2D([chunkWorldPos.x, chunkWorldPos.z]);
         const distAway = cameraXYPos.distFrom(chunkXYPos);
 
         if (distAway > realRenderDistance) {
@@ -441,29 +445,8 @@ export class GameRenderer {
         //   continue;
         // }
 
-        renderedSet.add(chunkPos.toIndex());
+        renderedSet.add(chunkPos.to_id());
 
-        renderChunk(chunkPos);
-      }
-    }
-
-    for (const chunkPos of skippedChunkPos.values()) {
-      // check to see if any of the neighboring chunks were rendered
-      // this is slightly inefficient but it makes sure the user sees all chunks.
-      // since we are checking to see if the user can see the middle of the chunk we miss some chunks
-      // that the user sees the edge of. This fixes that
-      let stillShouldntRender = true;
-      for (let k = -1; k <= 1; k += 1) {
-        for (let l = -1; l <= 1; l += 1) {
-          const indexVec = new Vector2D([k, l]);
-          const chunkPosToCheck = chunkPos.add(indexVec);
-          if (renderedSet.has(chunkPosToCheck.toIndex())) {
-            stillShouldntRender = false;
-          }
-        }
-      }
-
-      if (!stillShouldntRender) {
         renderChunk(chunkPos);
       }
     }
@@ -473,9 +456,9 @@ export class GameRenderer {
     // see the chunk. Thus this renders the 9 chunks below you.
     for (let k = -1; k <= 1; k += 1) {
       for (let l = -1; l <= 1; l += 1) {
-        const indexVec = new Vector2D([k, l]);
+        const indexVec = new ChunkPos(k, l);
         const chunkPos = cameraChunkPos.add(indexVec);
-        if (!renderedSet.has(chunkPos.toIndex())) renderChunk(chunkPos);
+        if (!renderedSet.has(chunkPos.to_id())) renderChunk(chunkPos);
       }
     }
 
@@ -494,11 +477,11 @@ export class GameRenderer {
     // if (entity instanceof PlayerWrapper) {
     if (Player.is_player(entity)) {
       console.log("CanvasGameScript: Adding player");
-      const renderer = new PlayerRenderer(this.game.game, this, entity.id);
+      const renderer = new PlayerRenderer(this.game, this, entity.id);
       this.entityRenderers.set(entity.id, renderer);
     } else if (Fireball.is_fireball(entity)) {
       console.log("CanvasGameScript: Adding fireball");
-      const renderer = new SphereRenderer(this.game.game, this, entity.id);
+      const renderer = new SphereRenderer(this.game, this, entity.id);
       this.entityRenderers.set(entity.id, renderer);
     }
   }
@@ -508,7 +491,7 @@ export class GameRenderer {
     this.entityRenderers.delete(entityId);
   }
 
-  createChunkRender(chunkId: number): void {
+  createChunkRender(chunkId: bigint): void {
     console.log("CanvasGameScript: Creating chunk render", chunkId);
     const chunkRenderer = new ChunkRenderer(this, chunkId, this.game);
     chunkRenderer.getBufferData();

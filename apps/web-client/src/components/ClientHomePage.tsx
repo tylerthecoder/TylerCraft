@@ -1,7 +1,7 @@
 import { IGameMetadata } from "@craft/engine";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { spGameService } from "../runner";
+import { spGameService } from "../services/sp-games-service";
 import { OptionButton } from "./ui/Buttons";
 
 export function ClientHomePage() {
@@ -13,7 +13,7 @@ export function ClientHomePage() {
     console.log("Starting game");
     const game = spGameService.newGame();
     spGameService.saveGame(game);
-    navigate(`/client-game/${game.game.id}`);
+    navigate(`/client-game/${game.id}`);
   };
 
   useEffect(() => {

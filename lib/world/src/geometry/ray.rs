@@ -2,9 +2,9 @@ use super::{line_segment::LineSegment, rotation::SphericalRotation};
 use crate::{
     chunk::chunk_mesh::BlockMesh,
     components::fine_world_pos::FineWorldPos,
-    direction::{Direction, DirectionVectorExtension},
-    plane::WorldPlane,
-    vec::Vector3Ops,
+    geometry::direction::{Direction, DirectionVectorExtension},
+    geometry::plane::WorldPlane,
+    geometry::vec::Vector3Ops,
     world::{world_block::WorldBlock, World},
 };
 use serde::{Deserialize, Serialize};
@@ -38,8 +38,8 @@ pub struct LookingAt {
 
 impl Ray {
     pub fn move_forward_mut(&mut self, amount: f32) {
-        let rot_vec = self.rot.get_unit_vector();
-        self.pos = FineWorldPos::from_vec3(rot_vec.scalar_mult(amount));
+        let rot_vec = self.rot.get_unit_vector().scalar_mult(amount);
+        self.pos = FineWorldPos::new(rot_vec.x(), rot_vec.y(), rot_vec.z());
     }
 
     pub fn move_forward(&self, amount: f32) -> Ray {
@@ -107,12 +107,12 @@ mod tests {
     use super::{LookingAt, Ray};
     use crate::{
         block::{BlockData, BlockType},
-        chunk::{chunk_mesh::BlockMesh, Chunk},
+        chunk::{chunk::Chunk, chunk_mesh::BlockMesh},
         components::{fine_world_pos::FineWorldPos, world_pos::WorldPos},
-        direction::{Direction, Directions},
+        geometry::direction::{Direction, Directions},
+        geometry::plane::WorldPlane,
         geometry::rotation::SphericalRotation,
-        plane::WorldPlane,
-        vec::Vector3Ops,
+        geometry::vec::Vector3Ops,
         world::{world_block::WorldBlock, World},
     };
 

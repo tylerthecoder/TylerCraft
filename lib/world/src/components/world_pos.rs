@@ -2,10 +2,9 @@ use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 
 use crate::{
-    chunk::{CHUNK_HEIGHT, CHUNK_WIDTH},
+    chunk::{chunk_pos::ChunkPos, inner_chunk_pos::InnerChunkPos, CHUNK_HEIGHT, CHUNK_WIDTH},
     entities::entity_component::impl_component,
-    positions::{ChunkPos, InnerChunkPos},
-    vec::{impl_vector_ops, Vector3Ops},
+    geometry::vec::{impl_vector_ops, Vector3Ops},
 };
 
 use super::fine_world_pos::FineWorldPos;

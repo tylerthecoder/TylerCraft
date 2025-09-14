@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { BooleanInput, NumberInput, TextInput } from "./ui/Inputs";
-import { RunningGame } from "../runner";
+import { RunningGame } from "../services/sp-games-service";
 import { useNavigate } from "react-router-dom";
 
 interface GameConfigMenuProps {
@@ -31,7 +31,7 @@ export function GameConfigMenu({
   isOpen,
   onClose,
 }: GameConfigMenuProps) {
-  const game = runningGame.game.game;
+  const game = runningGame.game;
   const [scriptNames, setScriptNames] = useState<string[]>([]);
   const [scriptConfigs, setScriptConfigs] = useState<{
     [scriptName: string]: ScriptConfig;

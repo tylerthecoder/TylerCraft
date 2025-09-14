@@ -4,15 +4,15 @@ use wasm_bindgen::prelude::wasm_bindgen;
 
 use super::{ChunkNotLoadedError, World, WorldStateDiff};
 use crate::{
+    chunk::chunk_pos::ChunkPos,
     chunk::{
+        chunk::ChunkId,
         chunk_mesh::{BlockMesh, ChunkMesh},
-        ChunkId,
     },
     components::world_pos::WorldPos,
-    direction::{DirectionVectorExtension, Directions},
-    entities::game::Game,
-    positions::ChunkPos,
-    vec::Vector3Ops,
+    game::Game,
+    geometry::direction::{DirectionVectorExtension, Directions},
+    geometry::vec::Vector3Ops,
     world::AdjacentBlocks,
 };
 
@@ -142,11 +142,11 @@ impl Game {
 mod tests {
     use crate::{
         block::{BlockData, BlockType},
-        chunk::{chunk_mesh::BlockMesh, Chunk},
+        chunk::chunk_pos::ChunkPos,
+        chunk::{chunk::Chunk, chunk_mesh::BlockMesh},
         components::world_pos::WorldPos,
-        direction::{Direction, Directions},
-        positions::ChunkPos,
-        vec::Vector3Ops,
+        geometry::direction::{Direction, Directions},
+        geometry::vec::Vector3Ops,
         world::{world_block::WorldBlock, World},
     };
 

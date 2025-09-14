@@ -1,6 +1,6 @@
 use crate::{
-    direction::Direction,
-    positions::{ChunkPos, InnerChunkPos},
+    chunk::{chunk_pos::ChunkPos, inner_chunk_pos::InnerChunkPos},
+    geometry::direction::Direction,
     world::world_block::WorldBlock,
 };
 use serde::{Deserialize, Serialize};
@@ -59,7 +59,7 @@ pub enum BlockData {
 pub mod wasm {
     use wasm_bindgen::prelude::wasm_bindgen;
 
-    use crate::direction::Direction;
+    use crate::geometry::direction::Direction;
 
     #[wasm_bindgen]
     pub struct ImageData {

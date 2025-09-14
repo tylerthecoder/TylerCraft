@@ -1,7 +1,7 @@
-use crate::chunk::Chunk;
-use crate::entities::game::Game;
-use crate::entities::terrain_gen::TerrainGenerator;
-use crate::positions::ChunkPos;
+use crate::chunk::chunk::Chunk;
+use crate::chunk::chunk_pos::ChunkPos;
+use crate::game::Game;
+use crate::terrain_gen::TerrainGenerator;
 use lazy_static::lazy_static;
 use serde::{ser::SerializeStruct, Deserialize, Deserializer, Serialize, Serializer};
 use serde_json::Value;

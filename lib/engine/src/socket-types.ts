@@ -1,5 +1,5 @@
-import { Entities, GameDiff, Player } from "@craft/rust-world";
-import { ISerializedAction } from "./wrappers.js";
+import { Entity, GameDiff, Player } from "@craft/rust-world";
+import { ISerializedAction } from "./serialize.js";
 
 export interface MessageDto<
   MESSAGE extends string,
@@ -40,7 +40,7 @@ export enum ISocketMessageType {
 
 export interface WelcomeMessage {
   uid: number;
-  entities: Entities;
+  entities: Entity[];
 }
 
 export interface SocketMessageData extends Record<ISocketMessageType, unknown> {

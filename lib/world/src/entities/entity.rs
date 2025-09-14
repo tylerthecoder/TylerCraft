@@ -69,9 +69,14 @@ impl<'de> Deserialize<'de> for Entity {
 
             let parsed_value = serde_json::from_str(&value).map_err(de::Error::custom)?;
 
-            let deser = registry
-                .get(type_name.as_str())
-                .ok_or_else(|| de::Error::custom(format!("Unknown component: {}", type_name)))?;
+            let all_type_names = registry.keys().cloned().collect::<Vec<_>>();
+
+            let deser = registry.get(type_name.as_str()).ok_or_else(|| {
+                de::Error::custom(format!(
+                    "Unknown component: {} all_type_names: {:?}",
+                    type_name, all_type_names
+                ))
+            })?;
 
             entity.components.push(deser(parsed_value));
         }

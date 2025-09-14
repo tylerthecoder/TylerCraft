@@ -1,8 +1,8 @@
 use super::{ChunkNotLoadedError, World, WorldStateDiff};
 use crate::{
-    chunk::{chunk_mesh::ChunkMesh, Chunk},
+    chunk::chunk_pos::ChunkPos,
+    chunk::{chunk::Chunk, chunk_mesh::ChunkMesh},
     components::world_pos::WorldPos,
-    positions::ChunkPos,
 };
 use std::collections::HashSet;
 
@@ -82,11 +82,10 @@ mod tests {
 
     use crate::{
         block::{BlockData, BlockType, ChunkBlock},
-        chunk::Chunk,
+        chunk::{chunk::Chunk, chunk_pos::ChunkPos, inner_chunk_pos::InnerChunkPos},
         components::world_pos::WorldPos,
-        entities::terrain_gen::TerrainGenerator,
-        positions::{ChunkPos, InnerChunkPos},
-        vec::Vector3Ops,
+        geometry::vec::Vector3Ops,
+        terrain_gen::TerrainGenerator,
         world::{world_block::WorldBlock, World},
     };
 
@@ -122,7 +121,7 @@ mod tests {
 
         let block_pos = WorldPos::new(0, 0, 0);
 
-        let chunk = Chunk::new(ChunkPos { x: 0, y: 0 });
+        let chunk = Chunk::new(ChunkPos::new(0, 0));
 
         // In the first chunk
         world.insert_chunk(chunk);
@@ -141,7 +140,7 @@ mod tests {
         assert_eq!(block.extra_data, BlockData::None);
 
         // In a different chunk
-        let chunk2 = Chunk::new(ChunkPos { x: 1, y: 0 });
+        let chunk2 = Chunk::new(ChunkPos::new(1, 0));
         let block_pos = WorldPos::new(16, 0, 0);
 
         let world_block = WorldBlock {
@@ -169,7 +168,7 @@ mod tests {
         // Average time: 20.878063ms
         // Max time: 31.049449ms
 
-        let terrain_gen = TerrainGenerator::new(0, false, false);
+        let terrain_gen = TerrainGenerator::default();
 
         let mut times = Vec::new();
         for i in 0..500 {

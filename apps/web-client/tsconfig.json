@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./build",
-    "lib": ["es2019", "dom", "WebWorker"],
+    "lib": ["es2020", "dom", "WebWorker"],
     "skipLibCheck": true,
     "isolatedModules": true,
     "module": "ESNext",

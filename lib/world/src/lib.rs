@@ -1,14 +1,13 @@
 pub mod block;
 pub mod chunk;
-pub mod direction;
-pub mod entities;
-pub mod geometry;
-pub mod plane;
-pub mod positions;
-pub mod utils;
-pub mod vec;
-pub mod world;
 pub mod components;
+pub mod entities;
+pub mod game;
+pub mod geometry;
+pub mod scripts;
+pub mod terrain_gen;
+pub mod utils;
+pub mod world;
 
 use wasm_bindgen::prelude::*;
 

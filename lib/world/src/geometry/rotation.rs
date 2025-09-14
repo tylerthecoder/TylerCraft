@@ -1,8 +1,6 @@
-use crate::vec::Vector3Ops;
 use crate::{
     components::{fine_world_pos::FineWorldPos, velocity::Velocity},
     entities::entity_component::impl_component,
-    vec::Vec3f32,
 };
 use serde::{Deserialize, Serialize};
 use std::{f32::consts::PI, ops::Add};
@@ -32,11 +30,11 @@ impl SphericalRotation {
         SphericalRotation { theta, phi }
     }
 
-    pub fn get_unit_vector(&self) -> Vec3f32 {
+    pub fn get_unit_vector(&self) -> Velocity {
         let phi_offset = (PI / 2.0) - self.phi;
         let theta_offset = self.theta + (PI / 2.0);
 
-        Vec3f32::new(
+        Velocity::new(
             -(theta_offset.cos() * phi_offset.sin()),
             -phi_offset.cos(),
             theta_offset.sin() * phi_offset.sin(),
@@ -103,7 +101,7 @@ impl Into<Velocity> for SphericalRotation {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::direction::Direction;
+    use crate::geometry::direction::Direction;
 
     impl Velocity {
         fn assert_eq(&self, other: Velocity) {

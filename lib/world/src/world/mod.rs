@@ -1,11 +1,10 @@
 use self::world_block::WorldBlock;
 use crate::block::BlockType;
+use crate::chunk::chunk::Chunk;
 use crate::chunk::chunk_mesh::ChunkMesh;
-use crate::chunk::Chunk;
 use crate::components::world_pos::WorldPos;
-use crate::direction::{Direction, DirectionVectorExtension, Directions};
-use crate::entities::game::Game;
-use crate::positions::ChunkPos;
+use crate::game::Game;
+use crate::geometry::direction::{Direction, DirectionVectorExtension, Directions};
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -159,7 +158,8 @@ mod tests {
     use super::*;
     use crate::{
         block::{BlockData, BlockType},
-        vec::Vector3Ops,
+        chunk::{chunk::Chunk, chunk_pos::ChunkPos},
+        geometry::vec::Vector3Ops,
     };
 
     #[test]

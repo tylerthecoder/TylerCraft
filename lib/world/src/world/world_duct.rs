@@ -1,9 +1,8 @@
 use super::World;
 use crate::{
-    chunk::{Chunk, ChunkId},
-    direction::Directions,
-    geometry::ray::Ray,
-    world::{world_block::WorldBlock, ChunkPos, WorldPos},
+    chunk::{chunk::Chunk, chunk::ChunkId, chunk_pos::ChunkPos},
+    geometry::{direction::Directions, ray::Ray},
+    world::{world_block::WorldBlock, WorldPos},
 };
 use serde_wasm_bindgen::{from_value, to_value, Error};
 use wasm_bindgen::prelude::*;

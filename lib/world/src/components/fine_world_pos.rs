@@ -1,8 +1,11 @@
-use std::ops::Add;
 use crate::components::world_pos::WorldPos;
-use crate::{entities::entity_component::impl_component, vec::{impl_vector_ops, Vec3f32, Vector3Ops}};
-use wasm_bindgen::prelude::*;
+use crate::{
+    entities::entity_component::impl_component,
+    geometry::vec::{impl_vector_ops, Vector3Ops},
+};
 use serde::{Deserialize, Serialize};
+use std::ops::Add;
+use wasm_bindgen::prelude::*;
 
 use super::velocity::Velocity;
 
@@ -21,18 +24,9 @@ impl_component!(FineWorldPos);
 impl_vector_ops!(FineWorldPos, f32);
 
 impl FineWorldPos {
-    pub fn from_vec3(vec: Vec3f32) -> Self {
-        Self {
-            x: vec.x(),
-            y: vec.y(),
-            z: vec.z(),
-        }
-    }
-
     pub fn new(x: f32, y: f32, z: f32) -> Self {
         Self { x, y, z }
     }
-
 
     pub fn to_world_pos(&self) -> WorldPos {
         WorldPos {
@@ -55,7 +49,6 @@ impl FineWorldPos {
     }
 }
 
-
 impl Add<Velocity> for FineWorldPos {
     type Output = Self;
 
@@ -65,5 +58,37 @@ impl Add<Velocity> for FineWorldPos {
             y: self.y + other.y,
             z: self.z + other.z,
         }
+    }
+}
+
+#[cfg(test)]
+pub mod tests {
+    use crate::{components::fine_world_pos::FineWorldPos, geometry::vec::Vector3Ops};
+
+    #[test]
+    fn test_distance_to() {
+        let vec1 = FineWorldPos {
+            x: 0 as f32,
+            y: 0 as f32,
+            z: 0 as f32,
+        };
+        let vec2 = FineWorldPos {
+            x: 1 as f32,
+            y: 1 as f32,
+            z: 1 as f32,
+        };
+        assert_eq!(vec1.distance_to(&vec2), 1.7320508);
+
+        let vec1 = FineWorldPos {
+            x: 0 as f32,
+            y: 0 as f32,
+            z: 0 as f32,
+        };
+        let vec2 = FineWorldPos {
+            x: 1 as f32,
+            y: 0 as f32,
+            z: 0 as f32,
+        };
+        assert_eq!(vec1.distance_to(&vec2), 1.0);
     }
 }

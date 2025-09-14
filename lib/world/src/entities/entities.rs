@@ -1,3 +1,5 @@
+use crate::game::Game;
+
 use super::entity::{Entity, EntityId};
 use super::entity_component::Component;
 use super::fireball::Fireball;
@@ -91,7 +93,6 @@ impl Entities {
     }
 }
 
-#[wasm_bindgen]
 impl Entities {
     pub fn add_entity(&mut self, entity: Entity) {
         self.entities.push(entity);
@@ -103,11 +104,6 @@ impl Entities {
 
     pub fn to_js(&self) -> JsValue {
         to_value(self).unwrap()
-    }
-
-    pub fn from_js(value: JsValue) -> Result<Entities, serde_wasm_bindgen::Error> {
-        let entity_holder: Entities = from_value(value)?;
-        Ok(entity_holder)
     }
 
     pub fn get_entity_as_player(&self, id: EntityId) -> Option<Player> {
@@ -124,5 +120,34 @@ impl Entities {
 
     pub fn get_entity_by_id_clone(&self, id: EntityId) -> Option<Entity> {
         self.get_entity_by_id(id).map(|entity| entity.clone())
+    }
+}
+
+#[wasm_bindgen]
+impl Game {
+    #[wasm_bindgen(js_name = "getEntityAsPlayer")]
+    pub fn get_entity_as_player(&self, id: EntityId) -> Option<Player> {
+        self.entities.get_entity_as_player(id)
+    }
+
+    #[wasm_bindgen(js_name = "getEntityById")]
+    pub fn get_entity_by_id(&self, id: EntityId) -> Option<Entity> {
+        self.entities.get_entity_by_id_clone(id)
+    }
+
+    #[wasm_bindgen(js_name = "getAllEntities")]
+    pub fn get_all_entities(&self) -> Vec<Entity> {
+        self.entities.get_all_clone()
+    }
+
+    #[wasm_bindgen(js_name = "deserializeEntities")]
+    pub fn deserialize_entities(value: JsValue) -> Result<Entities, serde_wasm_bindgen::Error> {
+        let entity_holder: Entities = from_value(value)?;
+        Ok(entity_holder)
+    }
+
+    #[wasm_bindgen(js_name = "serializeEntities")]
+    pub fn serialize_entities(&self) -> JsValue {
+        to_value(&self.entities).unwrap()
     }
 }

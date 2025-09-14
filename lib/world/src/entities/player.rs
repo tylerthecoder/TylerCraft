@@ -4,12 +4,12 @@ use wasm_bindgen::prelude::wasm_bindgen;
 use super::{
     entity::{Entity, EntityId},
     entity_component::impl_component,
-    player_belt_script::Belt,
-    player_gravity_script::GravityData,
-    player_jump_script::JumpData,
-    player_move_script::MovingDirection,
-    velocity_script::Forces,
 };
+use crate::scripts::player_belt_script::Belt;
+use crate::scripts::player_gravity_script::GravityData;
+use crate::scripts::player_jump_script::JumpData;
+use crate::scripts::player_move_script::MovingDirection;
+use crate::scripts::velocity_script::Forces;
 use crate::{
     components::{fine_world_pos::FineWorldPos, size3::Size3, velocity::Velocity},
     geometry::rotation::SphericalRotation,

@@ -1,11 +1,11 @@
 use super::{
     entities::{EntityQuery, EntityQueryResults},
     entity::{make_entity_id, Entity},
-    game::GameSchedule,
-    game_script::GameScript,
     player::Health,
-    velocity_script::Forces,
 };
+use crate::game::GameSchedule;
+use crate::scripts::game_script::GameScript;
+use crate::scripts::velocity_script::Forces;
 use crate::{
     chunk::chunk_fetcher::ChunkFetcher,
     components::{fine_world_pos::FineWorldPos, size3::Size3, velocity::Velocity},

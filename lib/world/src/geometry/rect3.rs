@@ -1,8 +1,8 @@
 use crate::components::fine_world_pos::FineWorldPos;
 use crate::components::size3::Size3;
 use crate::components::world_pos::WorldPos;
-use crate::direction::DirectionVectorExtension;
-use crate::vec::Vector3Ops;
+use crate::geometry::direction::DirectionVectorExtension;
+use crate::geometry::vec::Vector3Ops;
 use crate::world::World;
 
 use super::line_segment::{LineSegment, LineSegmentIntersectionInfo};
@@ -312,7 +312,7 @@ pub mod tests {
         chunk::Chunk,
         components::{fine_world_pos::FineWorldPos, size3::Size3, world_pos::WorldPos},
         geometry::rect3::Rect3,
-        vec::Vector3Ops,
+        geometry::vec::Vector3Ops,
         world::{world_block::WorldBlock, World},
     };
 

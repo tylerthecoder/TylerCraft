@@ -1,7 +1,7 @@
 use crate::{
     block::{BlockData, BlockMetaData, BlockShape, BlockType, ChunkBlock},
     components::world_pos::WorldPos,
-    direction::Directions,
+    geometry::direction::Directions,
     world::AdjacentBlocks,
 };
 use serde::{Deserialize, Serialize};
@@ -93,7 +93,7 @@ mod tests {
     use crate::{
         block::{BlockData, BlockType},
         components::world_pos::WorldPos,
-        direction::Direction,
+        geometry::direction::Direction,
         world::{world_block::WorldBlock, AdjacentBlocks},
     };
     use std::collections::HashMap;

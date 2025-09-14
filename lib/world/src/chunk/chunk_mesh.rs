@@ -1,8 +1,8 @@
 use crate::{
+    chunk::{chunk_pos::ChunkPos, inner_chunk_pos::InnerChunkPos},
     components::world_pos::WorldPos,
-    direction::Directions,
-    plane::WorldPlane,
-    positions::{ChunkPos, InnerChunkPos},
+    geometry::direction::Directions,
+    geometry::plane::WorldPlane,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -84,10 +84,10 @@ impl IntoIterator for &ChunkMesh {
 mod tests {
     use crate::{
         chunk::chunk_mesh::{BlockMesh, ChunkMesh},
+        chunk::chunk_pos::ChunkPos,
         components::world_pos::WorldPos,
-        direction::Directions,
-        positions::ChunkPos,
-        vec::Vector3Ops,
+        geometry::direction::Directions,
+        geometry::vec::Vector3Ops,
     };
 
     #[test]

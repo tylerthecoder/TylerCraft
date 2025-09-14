@@ -1,9 +1,134 @@
 import {
-  GameWrapper,
   IGameMetadata,
   ISerializedGame,
-  serializedGameToGame,
-} from "@craft/engine/src/wrappers";
+  deserializeGame,
+  serializeGame,
+} from "@craft/engine";
+import { Game } from "@craft/rust-world";
+import { MobileController } from "../controllers/playerControllers/mobileController";
+import { KeyboardPlayerEntityController } from "../controllers/playerControllers/keyboardPlayerController";
+import { getMyUid, IS_MOBILE } from "../utils";
+import { EntityActionDto, SandBoxGScript } from "@craft/rust-world";
+import { HudGScript } from "../renders/hud-renderer";
+import { GameRenderer, GameRendererGameScript } from "../renders/game-renderer";
+
+export interface RunningGame {
+  game: Game;
+  save: () => void;
+  cleanup: () => void;
+}
+
+interface RunGameError {
+  error: string;
+}
+
+export async function run(id?: string): Promise<RunningGame | RunGameError> {
+  console.log("Starting game", id);
+
+  const game = id ? await spGameService.getGame(id) : spGameService.newGame();
+
+  console.log("Game Created", game);
+
+  (window as any).game = game;
+
+  if (!game) {
+    console.error("Game not found");
+    return {
+      error: "Game not found",
+    };
+  }
+
+  const mainPlayerUid = getMyUid();
+
+  game.make_and_add_player_wasm(mainPlayerUid);
+  game.update();
+
+  const ents = game.getAllEntities();
+  console.log("Ents", ents);
+
+  // ===== Game Scripts =====
+  console.log("Ensuring scripts");
+  game.ensureScript(SandBoxGScript.name());
+  console.log("Sandbox done");
+  game.ensureScript(GameRendererGameScript.name);
+  console.log("Game Renderer done");
+
+  const gameRenderer = new GameRenderer(game, mainPlayerUid);
+  const hudRender = new HudGScript(game, gameRenderer, mainPlayerUid);
+
+  const onAction = (action: EntityActionDto) => {
+    game.handle_action_wasm(action);
+  };
+
+  const playerController = (() => {
+    if (IS_MOBILE) {
+      return new MobileController(onAction, mainPlayerUid);
+    } else {
+      return new KeyboardPlayerEntityController(
+        game,
+        onAction,
+        () => {
+          spGameService.saveGame(game);
+        },
+        mainPlayerUid,
+        gameRenderer
+      );
+    }
+  })();
+
+  async function task() {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
+  let running = true;
+
+  const update = async () => {
+    const start = performance.now();
+    game.handle_actions();
+    game.run_scripts();
+    await task();
+    game.add_new_entities();
+    await task();
+    game.remove_entities();
+    await task();
+    game.add_single_chunk();
+    await task();
+    game.add_blocks();
+    await task();
+    game.remove_blocks();
+    await task();
+    playerController.update();
+    await task();
+    gameRenderer.update();
+    await task();
+    hudRender.update(0);
+    await task();
+    gameRenderer.renderLoop(0);
+    const end = performance.now();
+    if (end - start > 50) {
+      console.warn("Large update happened. Time: ", end - start);
+    }
+    if (running) {
+      requestAnimationFrame(update);
+    }
+  };
+
+  requestAnimationFrame(update);
+
+  gameRenderer.renderLoop(0);
+
+  return {
+    game,
+    save: () => {
+      spGameService.saveGame(game);
+    },
+    cleanup: () => {
+      running = false;
+      gameRenderer.cleanup();
+      hudRender.cleanup();
+    },
+  };
+}
 
 export class ClientDbGamesService {
   private static WORLDS_OBS = "worlds";
@@ -43,13 +168,13 @@ export class ClientDbGamesService {
 
   private constructor(private db: IDBDatabase) {}
 
-  newGame(): GameWrapper {
-    return GameWrapper.makeGame();
+  newGame(): Game {
+    return new Game();
   }
 
-  createGame(createGameOptions: ISerializedGame): GameWrapper {
-    const game = serializedGameToGame(createGameOptions);
-    return new GameWrapper(game);
+  createGame(createGameOptions: ISerializedGame): Game {
+    const game = deserializeGame(createGameOptions);
+    return game;
   }
 
   getAllGames(): Promise<IGameMetadata[]> {
@@ -99,7 +224,7 @@ export class ClientDbGamesService {
     });
   }
 
-  async getGame(gameId: string): Promise<GameWrapper | null> {
+  async getGame(gameId: string): Promise<Game | null> {
     const foundGame: ISerializedGame | null = await new Promise((resolve) => {
       const transaction = this.db.transaction([
         ClientDbGamesService.WORLDS_OBS,
@@ -125,22 +250,13 @@ export class ClientDbGamesService {
     return this.createGame(foundGame);
   }
 
-  async saveGame(data: GameWrapper) {
+  async saveGame(data: Game) {
     return new Promise<void>((resolve, reject) => {
       const transaction = this.db.transaction(
         [ClientDbGamesService.WORLDS_OBS],
         "readwrite"
       );
-      console.log("Entities", data.game.entities.to_js());
-
-      const serializedGame = {
-        gameId: data.game.id,
-        name: data.game.name,
-        entities: data.game.entities.to_js(),
-        world: data.game.world.serialize_wasm(),
-        chunkFetcher: data.game.chunk_fetcher.get_config(),
-        scripts: data.game.getScriptsJs(),
-      };
+      const serializedGame = serializeGame(data);
 
       console.log("Saving game", serializedGame);
 
@@ -175,3 +291,5 @@ export class ClientDbGamesService {
     objStore.delete(gameId);
   }
 }
+
+export const spGameService = await ClientDbGamesService.factory();

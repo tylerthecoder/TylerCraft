@@ -1,6 +1,5 @@
 use crate::{
-    chunk::{Chunk, InnerChunkPos},
-    positions::ChunkPos,
+    chunk::{chunk::Chunk, chunk_pos::ChunkPos, inner_chunk_pos::InnerChunkPos},
     world::world_block::WorldBlock,
 };
 use serde_wasm_bindgen::{from_value, to_value, Error};
