@@ -153,7 +153,7 @@ mod tests {
     #[test]
     fn calculate_chunk_mesh() {
         let mut world = World::default();
-        let mut chunk = Chunk::new(ChunkPos { x: 0, y: 0 });
+        let chunk = Chunk::new(ChunkPos { x: 0, y: 0 });
 
         let world_pos = WorldPos::new(0, 0, 0);
 
@@ -182,7 +182,7 @@ mod tests {
     #[test]
     fn calculate_chunk_mesh_with_adjacent_block() {
         let mut world = World::default();
-        let mut chunk = Chunk::new(ChunkPos { x: 0, y: 0 });
+        let chunk = Chunk::new(ChunkPos { x: 0, y: 0 });
 
         let world_pos = WorldPos::new(0, 0, 0);
         let adjacent_world_pos = WorldPos::new(0, 0, 1);
@@ -221,7 +221,7 @@ mod tests {
     #[test]
     fn calculate_chunk_mesh_with_adjacent_block_south() {
         let mut world = World::default();
-        let mut chunk = Chunk::new(ChunkPos { x: 0, y: 0 });
+        let chunk = Chunk::new(ChunkPos { x: 0, y: 0 });
 
         let world_pos = WorldPos::new(0, 0, 1);
         let adjacent_world_pos = WorldPos::new(0, 0, 0);

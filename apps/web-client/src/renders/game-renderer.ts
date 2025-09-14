@@ -33,6 +33,10 @@ import VertexShader from "../../shaders/vertex.glsl?raw";
 import FragmentShader from "../../shaders/fragment.glsl?raw";
 import { getEle, getEleOrError } from "../utils";
 
+const log = (...message: any[]) => {
+  console.log("GameRenderer: ", ...message);
+};
+
 const WebGlLayer = (window as any).XRWebGLLayer as typeof XRWebGLLayer;
 
 type Config = {
@@ -71,13 +75,13 @@ export class GameRendererGameScript {
 
   // This is called by the rust side when a chunk is updated
   onChunkUpdate(chunkId: number): void {
-    console.log("CanvasGameScript: onChunkUpdate", chunkId);
+    log("GameScript onChunkUpdate", chunkId);
     this.updatedChunks.add(chunkId);
   }
 
   // This is called by the rust side when an entity is updated
   onEntityUpdate(entityId: number): void {
-    console.log("CanvasGameScript: onEntityUpdate", entityId);
+    log("GameScript onEntityUpdate", entityId);
     this.updatedEntities.add(entityId);
   }
 
@@ -89,7 +93,7 @@ export class GameRendererGameScript {
   // This is called by the rust side
   setConfig(config: Config): void {
     this.config = { ...this.config, ...config };
-    console.log("CanvasGameScript config updated:", this.config);
+    log("GameScript config updated:", this.config);
   }
 }
 
@@ -199,6 +203,14 @@ export class GameRenderer {
       throw new Error("Unable to init shader program");
     }
 
+    const getUniformLocation = (name: string) => {
+      const location = gl.getUniformLocation(shaderProgram, name);
+      if (!location) {
+        throw new Error(`Uniform location for ${name} not found`);
+      }
+      return location;
+    };
+
     this.program = {
       program: shaderProgram,
       attribLocations: {
@@ -206,16 +218,10 @@ export class GameRenderer {
         textureCord: gl.getAttribLocation(shaderProgram, "aTextureCord"),
       },
       uniformLocations: {
-        projectionMatrix: gl.getUniformLocation(
-          shaderProgram,
-          "uProjectionMatrix"
-        )!,
-        modelViewMatrix: gl.getUniformLocation(
-          shaderProgram,
-          "uModelViewMatrix"
-        )!,
-        uSampler: gl.getUniformLocation(shaderProgram, "uSampler")!,
-        uFilter: gl.getUniformLocation(shaderProgram, "uFilter")!,
+        projectionMatrix: getUniformLocation("uProjectionMatrix"),
+        modelViewMatrix: getUniformLocation("uModelViewMatrix"),
+        uSampler: getUniformLocation("uSampler"),
+        uFilter: getUniformLocation("uFilter"),
       },
     };
 
@@ -242,9 +248,13 @@ export class GameRenderer {
     }
 
     // Create renderers for initial chunks
-    for (const chunkId of this.game.get_loaded_chunk_ids_wasm()) {
-      this.createChunkRender(chunkId);
-    }
+    // console.log(
+    //   "CanvasGameScript: Creating chunk renders",
+    //   this.game.getLoadedChunkids()
+    // );
+    // for (const chunkId of this.game.getLoadedChunkids()) {
+    //   this.createChunkRender(chunkId);
+    // }
 
     this.isSpectating = false;
 
@@ -280,10 +290,10 @@ export class GameRenderer {
 
   update() {
     for (const entityId of this.getGameScript().updatedEntities) {
-      console.log("CanvasGameScript: Updating entity", entityId);
+      log("Updating entity", entityId);
       const entity = this.game.getEntityById(entityId);
       if (!entity) {
-        console.log("CanvasGameScript: Entity not found", entityId);
+        log("GameScript Entity not found", entityId);
         this.onRemovedEntity(entityId);
         continue;
       }
@@ -291,6 +301,8 @@ export class GameRenderer {
     }
 
     for (const chunkId of this.getGameScript().updatedChunks) {
+      const chunkPos = ChunkPos.from_id(BigInt(chunkId));
+      log(`GameScript Updating chunk (${chunkPos.x}, ${chunkPos.y})`);
       this.createChunkRender(BigInt(chunkId));
     }
 
@@ -473,28 +485,28 @@ export class GameRenderer {
   }
 
   onNewEntity(entity: Entity): void {
-    console.log("CanvasGameScript: Adding entity", entity);
+    log("Adding entity", entity);
     // if (entity instanceof PlayerWrapper) {
     if (Player.is_player(entity)) {
-      console.log("CanvasGameScript: Adding player");
+      log("Adding player");
       const renderer = new PlayerRenderer(this.game, this, entity.id);
       this.entityRenderers.set(entity.id, renderer);
     } else if (Fireball.is_fireball(entity)) {
-      console.log("CanvasGameScript: Adding fireball");
+      log("Adding fireball");
       const renderer = new SphereRenderer(this.game, this, entity.id);
       this.entityRenderers.set(entity.id, renderer);
     }
   }
 
   onRemovedEntity(entityId: number): void {
-    console.log("CanvasGameScript: Removing entity", entityId);
+    log("Removing entity", entityId);
     this.entityRenderers.delete(entityId);
   }
 
   createChunkRender(chunkId: bigint): void {
-    console.log("CanvasGameScript: Creating chunk render", chunkId);
+    const chunkPos = ChunkPos.from_id(chunkId);
+    log(`Creating chunk render (${chunkPos.x}, ${chunkPos.y})`);
     const chunkRenderer = new ChunkRenderer(this, chunkId, this.game);
-    chunkRenderer.getBufferData();
     this.chunkRenderers.set(chunkId, chunkRenderer);
   }
 

@@ -184,7 +184,7 @@ impl World {
         let mut current_rect = *rect;
 
         // loop 3 times to handle multiple collisions one for each axis
-        for iteration in 0..3 {
+        for _ in 0..3 {
             // Check for collisions from current position to target
             let intersections = self.get_rect3_intersection_infos(&current_rect, current_end_pos);
 

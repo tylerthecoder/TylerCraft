@@ -12,6 +12,10 @@ import { EntityActionDto, SandBoxGScript } from "@craft/rust-world";
 import { HudGScript } from "../renders/hud-renderer";
 import { GameRenderer, GameRendererGameScript } from "../renders/game-renderer";
 
+const log = (...message: any[]) => {
+  console.log("sp-games-service.ts: ", ...message);
+};
+
 export interface RunningGame {
   game: Game;
   save: () => void;
@@ -22,42 +26,78 @@ interface RunGameError {
   error: string;
 }
 
-export async function run(id?: string): Promise<RunningGame | RunGameError> {
-  console.log("Starting game", id);
+export async function run(
+  uiMessage: (message: string) => void,
+  id?: string
+): Promise<RunningGame | RunGameError> {
+  log("Starting game", id);
 
-  const game = id ? await spGameService.getGame(id) : spGameService.newGame();
+  let game: Game | null = null;
+  uiMessage("Checking records...");
 
-  console.log("Game Created", game);
+  if (id) {
+    const serializedGame = await spGameService.getGame(id);
+    if (!serializedGame) {
+      return {
+        error: "Game with id " + id + " not found",
+      };
+    }
+
+    const start = performance.now();
+    game = deserializeGame(serializedGame);
+    const end = performance.now();
+    log("Deserialized game in", end - start, "ms");
+  } else {
+    log("Creating new game");
+    const start = performance.now();
+    game = new Game();
+    const end = performance.now();
+    log("Created new game in", end - start, "ms");
+  }
+
+  log("The Game", game);
 
   (window as any).game = game;
-
-  if (!game) {
-    console.error("Game not found");
-    return {
-      error: "Game not found",
-    };
-  }
 
   const mainPlayerUid = getMyUid();
 
   game.make_and_add_player_wasm(mainPlayerUid);
   game.update();
 
-  const ents = game.getAllEntities();
-  console.log("Ents", ents);
-
   // ===== Game Scripts =====
-  console.log("Ensuring scripts");
+  log("Ensuring scripts");
   game.ensureScript(SandBoxGScript.name());
-  console.log("Sandbox done");
   game.ensureScript(GameRendererGameScript.name);
-  console.log("Game Renderer done");
+
+  async function task() {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
+  let running = true;
+
+  log("Running scripts");
+
+  game.run_scripts();
+
+  let pendingChunkCount = game.getPendingChunkCount();
+  const initialChunkCount = pendingChunkCount;
+  // Load the initial chunks
+  while (pendingChunkCount > 0) {
+    log("Pending chunk count", pendingChunkCount);
+    uiMessage(
+      `Loading chunks... ${
+        initialChunkCount - pendingChunkCount
+      } / ${initialChunkCount}`
+    );
+    await task();
+    await game.add_single_chunk();
+    pendingChunkCount = game.getPendingChunkCount();
+  }
 
   const gameRenderer = new GameRenderer(game, mainPlayerUid);
-  const hudRender = new HudGScript(game, gameRenderer, mainPlayerUid);
 
   const onAction = (action: EntityActionDto) => {
-    game.handle_action_wasm(action);
+    game.handleAction(action);
   };
 
   const playerController = (() => {
@@ -76,11 +116,12 @@ export async function run(id?: string): Promise<RunningGame | RunGameError> {
     }
   })();
 
-  async function task() {
-    await new Promise((resolve) => setTimeout(resolve, 0));
-  }
+  // Inital Render
+  uiMessage("Painting the world...");
+  await task();
+  gameRenderer.update();
 
-  let running = true;
+  const hudRender = new HudGScript(game, gameRenderer, mainPlayerUid);
 
   const update = async () => {
     const start = performance.now();
@@ -90,9 +131,7 @@ export async function run(id?: string): Promise<RunningGame | RunGameError> {
     game.add_new_entities();
     await task();
     game.remove_entities();
-    await task();
-    game.add_single_chunk();
-    await task();
+    await game.add_single_chunk();
     game.add_blocks();
     await task();
     game.remove_blocks();
@@ -168,15 +207,6 @@ export class ClientDbGamesService {
 
   private constructor(private db: IDBDatabase) {}
 
-  newGame(): Game {
-    return new Game();
-  }
-
-  createGame(createGameOptions: ISerializedGame): Game {
-    const game = deserializeGame(createGameOptions);
-    return game;
-  }
-
   getAllGames(): Promise<IGameMetadata[]> {
     return new Promise((resolve) => {
       const transaction = this.db.transaction([
@@ -224,7 +254,7 @@ export class ClientDbGamesService {
     });
   }
 
-  async getGame(gameId: string): Promise<Game | null> {
+  async getGame(gameId: string): Promise<ISerializedGame | null> {
     const foundGame: ISerializedGame | null = await new Promise((resolve) => {
       const transaction = this.db.transaction([
         ClientDbGamesService.WORLDS_OBS,
@@ -247,10 +277,11 @@ export class ClientDbGamesService {
 
     if (!foundGame) return null;
 
-    return this.createGame(foundGame);
+    return foundGame;
   }
 
   async saveGame(data: Game) {
+    log("Saving game", data);
     return new Promise<void>((resolve, reject) => {
       const transaction = this.db.transaction(
         [ClientDbGamesService.WORLDS_OBS],
@@ -258,10 +289,8 @@ export class ClientDbGamesService {
       );
       const serializedGame = serializeGame(data);
 
-      console.log("Saving game", serializedGame);
-
       transaction.oncomplete = async () => {
-        console.log("Saving game complete");
+        log("Saving game complete");
         resolve();
       };
       transaction.onerror = () => {

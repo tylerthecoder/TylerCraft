@@ -41,15 +41,6 @@ impl World {
         return to_value(&keys);
     }
 
-    pub fn get_loaded_chunk_ids(&self) -> Vec<u64> {
-        let keys = self
-            .chunks
-            .values()
-            .map(|c| c.position.to_id())
-            .collect::<Vec<u64>>();
-        keys
-    }
-
     pub fn is_chunk_loaded_wasm(&self, val: JsValue) -> Result<bool, Error> {
         from_value(val).map(|pos: ChunkPos| self.get_chunk(&pos).is_ok())
     }

@@ -61,11 +61,9 @@ export class ChunkRenderer extends Renderer {
     );
     const end = performance.now();
     console.log(
-      "Time taken to get chunk mesh",
+      `Time taken to get chunk mesh (${this.chunkPos.x}, ${this.chunkPos.y})`,
       end - start,
-      " ms",
-      this.chunkPos,
-      chunkMeshEntries
+      "ms"
     );
 
     this.otherRenders = [];
@@ -132,7 +130,11 @@ export class ChunkRenderer extends Renderer {
     });
 
     const end2 = performance.now();
-    console.log("Time taken to render chunk", end2 - start2, " ms");
+    console.log(
+      `Time taken to render chunk (${this.chunkPos.x}, ${this.chunkPos.y})`,
+      end2 - start2,
+      "ms"
+    );
 
     this.setBuffers(renData, transRenData);
   }

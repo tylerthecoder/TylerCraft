@@ -140,14 +140,21 @@ impl Game {
         self.entities.get_all_clone()
     }
 
-    #[wasm_bindgen(js_name = "deserializeEntities")]
-    pub fn deserialize_entities(value: JsValue) -> Result<Entities, serde_wasm_bindgen::Error> {
-        let entity_holder: Entities = from_value(value)?;
-        Ok(entity_holder)
-    }
-
     #[wasm_bindgen(js_name = "serializeEntities")]
     pub fn serialize_entities(&self) -> JsValue {
         to_value(&self.entities).unwrap()
+    }
+
+    #[wasm_bindgen(js_name = "addEntity")]
+    pub fn add_entity(&mut self, entity: Entity) {
+        self.entities.add_entity(entity);
+    }
+}
+
+#[wasm_bindgen]
+impl Entities {
+    #[wasm_bindgen(js_name = "deserialize")]
+    pub fn from_js(value: JsValue) -> Result<Entities, serde_wasm_bindgen::Error> {
+        from_value(value)
     }
 }

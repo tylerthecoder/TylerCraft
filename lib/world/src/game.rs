@@ -2,7 +2,6 @@ use crate::{
     chunk::{
         chunk::{Chunk, ChunkId},
         chunk_fetcher::ChunkFetcher,
-        chunk_pos::ChunkPos,
     },
     components::world_pos::WorldPos,
     entities::{
@@ -26,9 +25,8 @@ use crate::{
     world::{world_block::WorldBlock, World},
 };
 use serde::{Deserialize, Serialize};
-use serde_wasm_bindgen::{from_value, Error};
 use uuid::Uuid;
-use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
+use wasm_bindgen::prelude::wasm_bindgen;
 
 #[wasm_bindgen(getter_with_clone)]
 pub struct Game {
@@ -40,7 +38,8 @@ pub struct Game {
     #[wasm_bindgen(skip)]
     pub scripts: GameScripts,
     schedule: GameSchedule,
-    action_holder: EntityActionHolder,
+    #[wasm_bindgen(skip)]
+    pub action_holder: EntityActionHolder,
 }
 
 #[wasm_bindgen]
@@ -73,7 +72,7 @@ impl Game {
             id: Uuid::new_v4().to_string(),
             world: World::default(),
             entities: Entities::new(),
-            chunk_fetcher: ChunkFetcher::new_wasm(TerrainGenerator::default()),
+            chunk_fetcher: ChunkFetcher::make_from_terrain_generator(TerrainGenerator::default()),
             scripts: GameScripts::default(),
             schedule: GameSchedule::empty(),
             action_holder: EntityActionHolder::default(),
@@ -83,31 +82,36 @@ impl Game {
     }
 
     pub fn build(
-        id: String,
-        name: String,
-        world: World,
-        entities: Entities,
-        scripts: GameScripts,
-        chunk_fetcher: ChunkFetcher,
+        id: Option<String>,
+        name: Option<String>,
+        world: Option<World>,
+        entities: Option<Entities>,
+        scripts: Option<GameScripts>,
+        chunk_fetcher: Option<ChunkFetcher>,
     ) -> Game {
         console_error_panic_hook::set_once();
         js_log("Building the game");
-        let mut g = Game {
-            id,
-            name,
-            world,
-            entities,
-            scripts,
-            chunk_fetcher,
-            schedule: GameSchedule::empty(),
-            action_holder: EntityActionHolder::default(),
-        };
-        js_log(&format!(
-            "Here is the game scripts: {:?}",
-            g.scripts.get_all_script_names()
-        ));
-        g.add_default_scripts();
-        g
+        let mut game = Game::new();
+        if let Some(id) = id {
+            game.id = id;
+        }
+        if let Some(name) = name {
+            game.name = name;
+        }
+        if let Some(world) = world {
+            game.world = world;
+        }
+        if let Some(entities) = entities {
+            game.entities = entities;
+        }
+        if let Some(scripts) = scripts {
+            game.scripts = scripts;
+        }
+        if let Some(chunk_fetcher) = chunk_fetcher {
+            game.chunk_fetcher = chunk_fetcher;
+        }
+        game.add_default_scripts();
+        game
     }
 
     pub fn handle_actions(&mut self) {
@@ -156,8 +160,8 @@ impl Game {
         self.schedule.removed_entities.clear();
     }
 
-    pub fn add_single_chunk(&mut self) {
-        let chunk = self.chunk_fetcher.consume_single_chunk();
+    pub async fn add_single_chunk(&mut self) {
+        let chunk = self.chunk_fetcher.consume_single_chunk().await;
         if let Some(chunk) = chunk {
             let chunk_id = chunk.get_id();
             self.world.insert_chunk(chunk);
@@ -217,65 +221,6 @@ impl Game {
         let player = make_player(uid);
         self.schedule_entity_insert(player);
         self.update();
-    }
-
-    pub fn handle_action_wasm(&mut self, action: EntityActionDto) {
-        self.action_holder.add(action);
-    }
-
-    pub fn schedule_chunk_insert_wasm(&mut self, chunk: Chunk) {
-        self.schedule_chunk_insert(chunk);
-    }
-
-    pub fn get_chunk_mesh_by_chunkid_wasm(&self, chunk_id: ChunkId) -> Result<JsValue, Error> {
-        self.world.get_chunk_mesh_wasm(chunk_id)
-    }
-
-    pub fn get_chunk_pos_from_id_wasm(&self, chunk_id: ChunkId) -> Result<JsValue, Error> {
-        let chunk_pos = ChunkPos::from_id(chunk_id);
-        let chunk_pos_js = serde_wasm_bindgen::to_value(&chunk_pos).unwrap();
-        Ok(chunk_pos_js)
-    }
-
-    pub fn get_chunk_id_from_chunk_pos_wasm(&self, value: JsValue) -> ChunkId {
-        let chunk_pos: ChunkPos = from_value(value).unwrap();
-        chunk_pos.to_id()
-    }
-
-    pub fn get_world_pos_from_chunk_pos_wasm(&self, x: i16, y: i16) -> Result<JsValue, Error> {
-        let chunk_pos = ChunkPos { x, y };
-        let world_pos: WorldPos = chunk_pos.to_world_pos();
-        let world_pos_js = serde_wasm_bindgen::to_value(&world_pos).unwrap();
-        Ok(world_pos_js)
-    }
-
-    pub fn get_chunk_pos_from_world_pos_wasm(
-        &self,
-        x: i32,
-        y: i32,
-        z: i32,
-    ) -> Result<JsValue, Error> {
-        let world_pos = WorldPos { x, y, z };
-        let chunk_pos: ChunkPos = world_pos.to_chunk_pos();
-        let chunk_pos_js = serde_wasm_bindgen::to_value(&chunk_pos).unwrap();
-        Ok(chunk_pos_js)
-    }
-
-    pub fn get_loaded_chunk_ids_wasm(&self) -> Vec<u64> {
-        return self.world.get_loaded_chunk_ids();
-    }
-
-    pub fn get_block_wasm(&self, x: i32, y: i32, z: i32) -> Result<JsValue, Error> {
-        let world_pos = WorldPos { x, y, z };
-        let block = self.world.get_block(&world_pos);
-        let block_js = serde_wasm_bindgen::to_value(&block).unwrap();
-        Ok(block_js)
-    }
-
-    pub fn get_chunk_wasm(&self, chunk_pos: ChunkPos) -> Result<JsValue, Error> {
-        let chunk = self.world.get_chunk(&chunk_pos);
-        let chunk_js = serde_wasm_bindgen::to_value(&chunk);
-        chunk_js
     }
 }
 
@@ -376,19 +321,15 @@ impl GameSchedule {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use crate::{
         components::{fine_world_pos::FineWorldPos, velocity::Velocity},
-        entities::{entity_action::EntityActionDtoMaker, player::make_player},
-        game::Game,
         geometry::direction::Direction,
-        scripts::{
-            player_jump_script::{JumpAction, JumpActionData},
-            player_move_script::{MoveAction, MoveActionData, MoveScript},
-            velocity_script::VelocityScript,
-        },
+        scripts::{player_jump_script::JumpActionData, player_move_script::MoveActionData},
     };
 
+    use super::*;
     #[test]
     pub fn add_player() {
         let mut game = Game::new();

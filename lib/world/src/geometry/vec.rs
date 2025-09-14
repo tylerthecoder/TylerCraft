@@ -1,8 +1,8 @@
 use crate::geometry::direction::{DirectionVectorExtension, Directions};
-use num::{integer::Roots, traits::real::Real, One, Zero};
+use num::{One, Zero};
 use std::{
     fmt::Display,
-    ops::{Div, Neg, Sub},
+    ops::{Div, Neg},
 };
 
 pub trait AsF32 {

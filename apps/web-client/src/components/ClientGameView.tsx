@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { run, RunningGame, spGameService } from "../services/sp-games-service";
+import { run, RunningGame } from "../services/sp-games-service";
 import { GameConfigMenu } from "./GameConfigMenu";
 import { GameRendererGameScript } from "../renders/game-renderer";
 import { MenuButton } from "./ui/Buttons";
@@ -10,42 +10,45 @@ GameRendererGameScript.register();
 export function ClientGameView() {
   const { gameId } = useParams<{ gameId: string }>();
   const [isLoading, setIsLoading] = useState(true);
-  const [gameExists, setGameExists] = useState<boolean | null>(null);
   const [showConfigMenu, setShowConfigMenu] = useState(false);
   const [gameInstance, setGameInstance] = useState<RunningGame | null>(null);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const loadingMessageRef = useRef<HTMLDivElement>(null);
 
-  if (!gameId) {
-    return <div>No game ID provided</div>;
+  async function startGame(gameId?: string) {
+    const updateLoadingMessage = (message: string) => {
+      console.log("Updating loading message", message);
+      if (loadingMessageRef.current) {
+        console.log("Updating loading message", message);
+        loadingMessageRef.current.innerHTML = message;
+      }
+    };
+
+    try {
+      const runningGame = await run(updateLoadingMessage, gameId);
+      if ("game" in runningGame) {
+        setGameInstance(runningGame);
+      } else {
+        setError(runningGame.error);
+      }
+    } catch (err) {
+      setError(err as string);
+    }
+    setIsLoading(false);
   }
 
   useEffect(() => {
-    spGameService.hasGame(gameId).then((gameExists) => {
-      setIsLoading(false);
-      setGameExists(gameExists);
-      if (gameExists) {
-        run(gameId)
-          .then((runningGame) => {
-            if ("game" in runningGame) {
-              // Access the global game instance
-              setGameInstance(runningGame);
-            } else {
-              setError(runningGame.error);
-            }
-          })
-          .catch((err) => {
-            console.error(err);
-            setError(err);
-          });
-      }
-    });
+    startGame(gameId);
   }, [gameId]);
 
   useEffect(() => {
-    // Add keyboard shortcut for config menu (ESC key)
+    if (!gameInstance) {
+      return;
+    }
+
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && gameExists) {
+      if (event.key === "Escape") {
         setShowConfigMenu(!showConfigMenu);
       }
     };
@@ -54,14 +57,17 @@ export function ClientGameView() {
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [showConfigMenu, gameExists]);
+  }, [showConfigMenu, gameInstance]);
 
   if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  if (gameExists === false) {
-    return <div>Game does not exist</div>;
+    return (
+      <div className="w-full h-full flex items-center justify-center">
+        <img src="/img/loading.gif" alt="Loading" className="w-10 h-10" />
+        <div className="text-center" ref={loadingMessageRef}>
+          {" "}
+        </div>
+      </div>
+    );
   }
 
   if (error) {

@@ -587,21 +587,3 @@ impl TerrainGenerator {
         chunk_getter.get_chunk(&chunk_pos)
     }
 }
-
-impl ChunkLoader for TerrainGenerator {
-    fn load_chunk(&self, chunk_pos: ChunkPos) -> Chunk {
-        self.get_chunk(chunk_pos.x, chunk_pos.y)
-    }
-
-    fn clone_box(&self) -> Box<dyn ChunkLoader> {
-        Box::new(self.clone())
-    }
-
-    fn to_json(&self) -> serde_json::Value {
-        serde_json::to_value(self).expect("TerrainGenerator must be serializable")
-    }
-
-    fn to_js(&self) -> JsValue {
-        serde_wasm_bindgen::to_value(self).unwrap()
-    }
-}

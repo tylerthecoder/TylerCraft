@@ -72,9 +72,9 @@ export interface ISerializedGame {
 
 export const deserializeGame = (serializedGame: ISerializedGame): Game => {
   const world = World.deserialize_wasm(serializedGame.world);
-  const entityHolder = Game.deserializeEntities(serializedGame.entities);
+  const entityHolder = Entities.deserialize(serializedGame.entities);
   const scripts = GameScripts.fromJs(serializedGame.scripts);
-  const chunkFetcher = ChunkFetcher.fromJs(serializedGame.chunkFetcher);
+  const chunkFetcher = ChunkFetcher.deserialize(serializedGame.chunkFetcher);
   const game = Game.build(
     serializedGame.gameId,
     serializedGame.name,
@@ -92,7 +92,7 @@ export const serializeGame = (game: Game): ISerializedGame => {
     name: game.name,
     entities: game.serializeEntities(),
     world: game.world.serialize_wasm(),
-    chunkFetcher: game.chunk_fetcher.get_config(),
+    chunkFetcher: game.serializeChunkFetcher(),
     scripts: game.getScriptsJs(),
   };
 };

@@ -37,7 +37,7 @@ export function GameConfigMenu({
     [scriptName: string]: ScriptConfig;
   }>({});
   const [chunkFetcherConfig, setChunkFetcherConfig] =
-    useState<ChunkFetcherConfig>(game.chunk_fetcher.get_config());
+    useState<ChunkFetcherConfig>(game.serializeChunkFetcher());
   const [activeTab, setActiveTab] = useState<ActiveTab>("Game Config");
   const [gameName, setGameName] = useState<string>(game.name);
   const navigate = useNavigate();
@@ -73,7 +73,7 @@ export function GameConfigMenu({
 
       // Get chunk fetcher config
       try {
-        const chunkConfig: ChunkFetcherConfig = game.chunk_fetcher.get_config();
+        const chunkConfig: ChunkFetcherConfig = game.serializeChunkFetcher();
         console.log("Chunk Fetcher Config", chunkConfig);
         if (chunkConfig) {
           if (chunkConfig.json instanceof Map) {

@@ -126,7 +126,7 @@ impl Serialize for GameScripts {
             })
             .collect();
 
-        s.serialize_field("scripts", &scripts);
+        s.serialize_field("scripts", &scripts)?;
         s.end()
     }
 }

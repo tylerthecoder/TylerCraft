@@ -1,8 +1,10 @@
+use wasm_bindgen::prelude::wasm_bindgen;
+
 use super::{ChunkNotLoadedError, World, WorldStateDiff};
 use crate::{
-    chunk::chunk_pos::ChunkPos,
-    chunk::{chunk::Chunk, chunk_mesh::ChunkMesh},
+    chunk::{chunk::Chunk, chunk_mesh::ChunkMesh, chunk_pos::ChunkPos},
     components::world_pos::WorldPos,
+    game::Game,
 };
 use std::collections::HashSet;
 
@@ -73,6 +75,23 @@ impl World {
         let index = chunk_pos.to_world_index();
         self.chunks.insert(index.to_owned(), chunk);
         self.chunks.get_mut(&index.to_owned()).unwrap()
+    }
+
+    pub fn get_loaded_chunk_ids(&self) -> Vec<u64> {
+        let keys = self
+            .chunks
+            .values()
+            .map(|c| c.position.to_id())
+            .collect::<Vec<u64>>();
+        keys
+    }
+}
+
+#[wasm_bindgen]
+impl Game {
+    #[wasm_bindgen(js_name = "getLoadedChunkids")]
+    pub fn get_loaded_chunkids_wasm(&self) -> Vec<u64> {
+        self.world.get_loaded_chunk_ids()
     }
 }
 
@@ -171,7 +190,7 @@ mod tests {
         let terrain_gen = TerrainGenerator::default();
 
         let mut times = Vec::new();
-        for i in 0..500 {
+        for _ in 0..500 {
             let start_time = Instant::now();
             let mut world = World::default();
             let chunk_pos = ChunkPos::new(0, 0);

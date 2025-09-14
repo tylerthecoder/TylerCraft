@@ -10,10 +10,7 @@ export function ClientHomePage() {
   const navigate = useNavigate();
 
   const newGame = async () => {
-    console.log("Starting game");
-    const game = spGameService.newGame();
-    spGameService.saveGame(game);
-    navigate(`/client-game/${game.id}`);
+    navigate("/client-game");
   };
 
   useEffect(() => {

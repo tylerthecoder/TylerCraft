@@ -1,3 +1,13 @@
+# 09_14_25
+
+Yesterday I got the menu and saving stuff working much better. I'm pretty happy with how everything works now. I also restructred a lot of things and made chunk mesh rendering much quicker. I might want to move to some sort of shared memory thing for inserting chunks. I'm not sure why it is so slow still.
+
+Goals for today
+- Get multiplayer working again.
+- Add an options screen for launching new games
+- Speed up chunk loading again
+
+
 # 09_13_25
 
 I need to get the PR out, here are the remaining things to do

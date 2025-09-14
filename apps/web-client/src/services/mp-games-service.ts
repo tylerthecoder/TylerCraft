@@ -12,13 +12,13 @@ import {
   Entity,
   EntityActionDto,
   Game,
+  MakeGameOptions,
   SandBoxGScript,
-  WasmGameScript,
 } from "@craft/rust-world";
-import { WebGlGScript } from "../game-scripts/webgl-gscript";
 import { getMyUid } from "../utils";
 import { KeyboardPlayerEntityController } from "../controllers/playerControllers/keyboardPlayerController";
 import { HudGScript } from "../renders/hud-renderer";
+import { GameRenderer, GameRendererGameScript } from "../renders/game-renderer";
 
 export const SocketInterface = new SocketHandler();
 
@@ -93,17 +93,32 @@ export async function serverRunner(gameId: string) {
 
   console.log("My UID", myUid);
 
-  const game = new Game();
+  const entities = Entities.deserialize(welcomeMessage.entities);
+
+  const fetchingChunk = new Set<string>();
+  const getChunk = async (chunkPos: { x: number; y: number }) => {
+    if (fetchingChunk.has(chunkPos.x + "," + chunkPos.y)) {
+      return;
+    }
+    console.log("Getting chunk", chunkPos);
+    fetchingChunk.add(chunkPos.x + "," + chunkPos.y);
+    fetch(`${baseUrl}/game/${gameId}/chunk/${chunkPos.x}/${chunkPos.y}`)
+      .then((data) => data.json())
+      .then((chunk) => {
+        chunksToInsert.push(chunk.Ok);
+        fetchingChunk.delete(chunkPos.x + "," + chunkPos.y);
+      });
+  };
+
+  const game = Game.build(gameId, null, null, entities, null, getChunk);
   (window as any).game = game;
 
-  const entities = Entities.from_js(welcomeMessage.entities);
+  game.ensureScript(GameRendererGameScript.name);
+  game.ensureScript(SandBoxGScript.name());
 
-  const webglGameScript = new WebGlGScript(game);
+  const gameRenderer = new GameRenderer(game, myUid);
+  const hudRender = new HudGScript(game, gameRenderer, myUid);
 
-  const canvasGameScript = new CanvasGameScript(game, webglGameScript, myUid);
-  const wasmCanvasGameScript = new WasmGameScript(canvasGameScript);
-  const hudRender = new HudGScript(game, canvasGameScript, myUid);
-  game.add_game_script_wasm(wasmCanvasGameScript);
   const chunksToInsert: ISerializedChunk[] = [];
 
   const onAction = (action: EntityActionDto) => {
@@ -122,7 +137,7 @@ export async function serverRunner(gameId: string) {
     }
     if (message.isType(ISocketMessageType.newPlayer)) {
       const player = message.data;
-      game.entities.add_entity(Entity.from_js(player));
+      game.addEntity(Entity.from_js(player));
     }
   });
 
@@ -133,23 +148,8 @@ export async function serverRunner(gameId: string) {
       // NO-OP
     },
     myUid,
-    canvasGameScript
+    gameRenderer
   );
-
-  const fetchingChunk = new Set<string>();
-  const getChunk = async (chunkPos: { x: number; y: number }) => {
-    if (fetchingChunk.has(chunkPos.x + "," + chunkPos.y)) {
-      return;
-    }
-    console.log("Getting chunk", chunkPos);
-    fetchingChunk.add(chunkPos.x + "," + chunkPos.y);
-    fetch(`${baseUrl}/game/${gameId}/chunk/${chunkPos.x}/${chunkPos.y}`)
-      .then((data) => data.json())
-      .then((chunk) => {
-        chunksToInsert.push(chunk.Ok);
-        fetchingChunk.delete(chunkPos.x + "," + chunkPos.y);
-      });
-  };
 
   const chunkRequester = new WasmRequestChunk(getChunk);
 

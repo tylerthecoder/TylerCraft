@@ -1,9 +1,10 @@
 use std::time::{Duration, Instant};
-use world::{entities::terrain_gen::TerrainGenerator, positions::ChunkPos, world::World};
+
+use world::{chunk::chunk_pos::ChunkPos, terrain_gen::TerrainGenerator, world::World};
 
 fn main() {
     // This reproduces the profile_chunk_insertion test as a standalone example
-    let terrain_gen = TerrainGenerator::new(0, false, false);
+    let terrain_gen = TerrainGenerator::default();
 
     let mut times = Vec::new();
     for _i in 0..500 {

@@ -1,6 +1,6 @@
-use super::{chunk::Chunk, chunk_pos::ChunkPos, inner_chunk_pos::InnerChunkPos};
 use crate::{
     block::{BlockData, BlockType, ChunkBlock},
+    chunk::{chunk::Chunk, chunk_pos::ChunkPos, inner_chunk_pos::InnerChunkPos},
     components::world_pos::WorldPos,
     geometry::vec::Vector3Ops,
     world::World,

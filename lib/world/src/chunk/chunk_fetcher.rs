@@ -1,57 +1,79 @@
-use crate::chunk::chunk::Chunk;
 use crate::chunk::chunk_pos::ChunkPos;
 use crate::game::Game;
 use crate::terrain_gen::TerrainGenerator;
-use lazy_static::lazy_static;
-use serde::{ser::SerializeStruct, Deserialize, Deserializer, Serialize, Serializer};
-use serde_json::Value;
-use std::collections::HashMap;
-use std::sync::Mutex;
+use crate::{chunk::chunk::Chunk, utils::js_log};
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
+use wasm_bindgen_futures::JsFuture;
+use web_sys::{Request, RequestInit, RequestMode, Response};
 
 #[derive(Clone, Serialize, Deserialize)]
 #[wasm_bindgen(getter_with_clone)]
 pub struct ChunkFetcher {
-    loaded_chunks: Vec<(ChunkPos, Chunk)>,
-    chunk_loader: Box<dyn ChunkLoader>,
+    chunks_to_load: Vec<ChunkPos>,
+    chunk_loader: ChunkLoader,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub enum ChunkLoader {
+    TerrainGenerator(TerrainGenerator),
+    Server(ServerChunkLoader),
 }
 
 impl ChunkFetcher {
-    pub fn new(chunk_loader: Box<dyn ChunkLoader>) -> Self {
+    pub fn new(chunk_loader: ChunkLoader) -> Self {
         Self {
-            loaded_chunks: Vec::new(),
+            chunks_to_load: Vec::new(),
             chunk_loader,
         }
     }
 
     pub fn request_chunk(&mut self, chunk_pos: ChunkPos) {
-        if self.loaded_chunks.iter().any(|(pos, _)| pos == &chunk_pos) {
+        js_log(&format!(
+            "chunk_fetcher.rs: Requesting chunk: {:?}",
+            chunk_pos
+        ));
+        if self.chunks_to_load.iter().any(|pos| pos == &chunk_pos) {
             return;
         }
-
-        let chunk = self.chunk_loader.load_chunk(chunk_pos);
-        self.loaded_chunks.push((chunk_pos, chunk));
+        self.chunks_to_load.push(chunk_pos);
     }
 
-    pub fn consume_single_chunk(&mut self) -> Option<Chunk> {
-        self.loaded_chunks.pop().map(|(_, chunk)| chunk)
+    pub async fn consume_single_chunk(&mut self) -> Option<Chunk> {
+        let chunk_pos = self.chunks_to_load.pop()?;
+        match &self.chunk_loader {
+            ChunkLoader::TerrainGenerator(loader) => {
+                let chunk = loader.get_chunk(chunk_pos.x, chunk_pos.y);
+                Some(chunk)
+            }
+            ChunkLoader::Server(loader) => {
+                let chunk = loader.load_chunk(chunk_pos).await.unwrap();
+                Some(chunk)
+            }
+        }
+    }
+
+    pub fn get_chunk_to_load_count(&self) -> usize {
+        self.chunks_to_load.len()
     }
 }
 
 #[wasm_bindgen]
 impl ChunkFetcher {
-    #[wasm_bindgen(constructor)]
-    pub fn new_wasm(gen: TerrainGenerator) -> Self {
-        Self::new(Box::new(gen))
+    #[wasm_bindgen(js_name = "makeFromTerrainGenerator")]
+    pub fn make_from_terrain_generator(loader: TerrainGenerator) -> Self {
+        Self::new(ChunkLoader::TerrainGenerator(loader))
     }
 
-    pub fn get_config(&self) -> JsValue {
-        serde_wasm_bindgen::to_value(&self.chunk_loader).unwrap()
+    #[wasm_bindgen(js_name = "makeFromServerChunkLoader")]
+    pub fn make_from_server_chunk_loader(loader: ServerChunkLoader) -> Self {
+        Self::new(ChunkLoader::Server(loader))
     }
 
-    #[wasm_bindgen(js_name = "fromJs")]
-    pub fn from_js(value: JsValue) -> Self {
-        Self::new(serde_wasm_bindgen::from_value(value).unwrap())
+    #[wasm_bindgen(js_name = "deserialize")]
+    pub fn deserialize(js_value: JsValue) -> Result<Self, JsValue> {
+        serde_wasm_bindgen::from_value(js_value)
+            .map_err(|e| JsValue::from_str(&format!("Failed to deserialize ChunkFetcher: {}", e)))
     }
 }
 
@@ -61,71 +83,60 @@ impl Game {
     pub fn set_chunk_fetcher_config(&mut self, config: JsValue) {
         self.chunk_fetcher.chunk_loader = serde_wasm_bindgen::from_value(config).unwrap();
     }
-}
 
-pub trait ChunkLoader {
-    fn load_chunk(&self, chunk_pos: ChunkPos) -> Chunk;
-    fn clone_box(&self) -> Box<dyn ChunkLoader>;
-    fn type_name(&self) -> &'static str {
-        std::any::type_name::<Self>()
+    #[wasm_bindgen(js_name = "serializeChunkFetcher")]
+    pub fn serialize(&self) -> Result<JsValue, JsValue> {
+        serde_wasm_bindgen::to_value(&self.chunk_fetcher)
+            .map_err(|_| JsValue::from_str("Failed to serialize ChunkFetcher"))
     }
-    fn to_json(&self) -> serde_json::Value;
-    fn to_js(&self) -> JsValue;
-}
 
-impl Clone for Box<dyn ChunkLoader> {
-    fn clone(&self) -> Self {
-        self.clone_box()
+    #[wasm_bindgen(js_name = "getPendingChunkCount")]
+    pub fn get_pending_chunk_count(&self) -> usize {
+        self.chunk_fetcher.chunks_to_load.len()
     }
 }
 
-impl Serialize for Box<dyn ChunkLoader> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let mut s = serializer.serialize_struct("ChunkLoader", 2)?;
-        s.serialize_field("type", &self.type_name())?;
-        s.serialize_field("json", &self.to_json())?;
-        s.end()
+#[derive(Clone, Serialize, Deserialize)]
+#[wasm_bindgen]
+pub struct ServerChunkLoader {
+    base_url: String,
+    game_id: String,
+}
+
+impl ServerChunkLoader {
+    pub fn new(base_url: String, game_id: String) -> Self {
+        Self { base_url, game_id }
     }
-}
 
-#[derive(Deserialize)]
-struct ChunkLoaderHelper {
-    #[serde(rename = "type")]
-    type_name: String,
-    json: Value,
-}
+    pub async fn load_chunk(&self, chunk_pos: ChunkPos) -> Result<Chunk, JsValue> {
+        let url = format!(
+            "{}/game/{}/chunk/{}/{}",
+            self.base_url, self.game_id, chunk_pos.x, chunk_pos.y
+        );
 
-impl<'de> Deserialize<'de> for Box<dyn ChunkLoader> {
-    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        let helper = ChunkLoaderHelper::deserialize(deserializer)?;
-        let registry = CHUNK_LOADER_REGISTRY.lock().unwrap();
-        let deserializer_fn = registry.get(helper.type_name.as_str()).ok_or_else(|| {
-            serde::de::Error::custom(format!("Unknown ChunkLoader type: {}", helper.type_name))
-        })?;
-        Ok(deserializer_fn(helper.json))
+        let opts = RequestInit::new();
+        opts.set_method("GET");
+        opts.set_mode(RequestMode::Cors);
+
+        let request = Request::new_with_str_and_init(&url, &opts)?;
+
+        request
+            .headers()
+            .set("Accept", "application/vnd.github.v3+json")?;
+
+        let window = web_sys::window().unwrap();
+        let resp_value = JsFuture::from(window.fetch_with_request(&request)).await?;
+
+        // `resp_value` is a `Response` object.
+        assert!(resp_value.is_instance_of::<Response>());
+        let resp: Response = resp_value.dyn_into().unwrap();
+
+        // Convert this other `Promise` into a rust `Future`.
+        let json = JsFuture::from(resp.json()?).await?;
+
+        let chunk = Chunk::deserialize(json)?;
+
+        // Send the JSON response back to JS.
+        Ok(chunk)
     }
-}
-
-type ChunkLoaderDeserializer = fn(Value) -> Box<dyn ChunkLoader>;
-
-lazy_static! {
-    static ref CHUNK_LOADER_REGISTRY: Mutex<HashMap<&'static str, ChunkLoaderDeserializer>> = {
-        let mut map = HashMap::new();
-
-        fn register<T: ChunkLoader + serde::de::DeserializeOwned + 'static>(
-            map: &mut HashMap<&'static str, ChunkLoaderDeserializer>,
-        ) {
-            fn deser<T: ChunkLoader + serde::de::DeserializeOwned + 'static>(
-                v: Value,
-            ) -> Box<dyn ChunkLoader> {
-                Box::new(serde_json::from_value::<T>(v).unwrap())
-            }
-
-            map.insert(std::any::type_name::<T>(), deser::<T>);
-        }
-
-        register::<TerrainGenerator>(&mut map);
-
-        Mutex::new(map)
-    };
 }

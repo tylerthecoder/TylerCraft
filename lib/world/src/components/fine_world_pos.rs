@@ -1,8 +1,5 @@
 use crate::components::world_pos::WorldPos;
-use crate::{
-    entities::entity_component::impl_component,
-    geometry::vec::{impl_vector_ops, Vector3Ops},
-};
+use crate::{entities::entity_component::impl_component, geometry::vec::impl_vector_ops};
 use serde::{Deserialize, Serialize};
 use std::ops::Add;
 use wasm_bindgen::prelude::*;

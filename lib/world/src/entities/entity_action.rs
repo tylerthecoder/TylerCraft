@@ -1,6 +1,6 @@
 use super::entities::Entities;
 use super::entity::{Entity, EntityId};
-use crate::game::GameSchedule;
+use crate::game::{Game, GameSchedule};
 use crate::scripts::player_belt_script::{
     SecondaryBeltActionData, SelectItemActionData, UsePrimaryItemActionData,
 };
@@ -213,5 +213,13 @@ impl EntityActionHolder {
         self.actions.clear();
 
         schedule
+    }
+}
+
+#[wasm_bindgen]
+impl Game {
+    #[wasm_bindgen(js_name = "handleAction")]
+    pub fn handle_action_wasm(&mut self, action: EntityActionDto) {
+        self.action_holder.add(action);
     }
 }

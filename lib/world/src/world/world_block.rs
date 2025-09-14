@@ -96,7 +96,6 @@ mod tests {
         geometry::direction::Direction,
         world::{world_block::WorldBlock, AdjacentBlocks},
     };
-    use std::collections::HashMap;
 
     #[test]
     fn is_block_face_visible() {

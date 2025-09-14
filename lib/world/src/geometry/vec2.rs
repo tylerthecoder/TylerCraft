@@ -1,5 +1,5 @@
 use crate::geometry::vec::AsF32;
-use num::{integer::Roots, traits::real::Real, One, Zero};
+use num::{One, Zero};
 use std::{
     fmt::Display,
     ops::{Add, Div, Mul, Neg, Sub},
