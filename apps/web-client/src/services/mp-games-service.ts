@@ -16,9 +16,7 @@ import {
   ServerChunkLoader,
 } from "@craft/rust-world";
 import { getMyUid } from "../utils";
-import { KeyboardPlayerEntityController } from "../controllers/keyboardPlayerController";
-import { HudGScript } from "../renders/hud-renderer";
-import { GameRenderer, GameRendererGameScript } from "../renders/game-renderer";
+import { GameRendererGameScript } from "../renders/game-renderer";
 import {
   addGameRenderer,
   addHudRenderer,
@@ -41,7 +39,7 @@ export async function getAllGames(): Promise<IServerGameMetadata[]> {
   return await response.json();
 }
 
-export async function createGame(name: string): Promise<string> {
+export async function create(name: string): Promise<string> {
   const response = await fetch(`${baseUrl}/game`, {
     method: "POST",
     body: JSON.stringify({ name }),
@@ -49,21 +47,16 @@ export async function createGame(name: string): Promise<string> {
   return await response.text();
 }
 
-export async function startGame(gameId: string): Promise<void> {
+export async function start(gameId: string): Promise<void> {
   await fetch(`${baseUrl}/game/${gameId}/start`, {
     method: "POST",
   });
 }
 
-export async function serverRunner(
+export async function run(
   uiMessage: (message: string) => void,
-  gameId?: string
+  gameId: string
 ): Promise<RunningGame | RunGameError> {
-  // ===== Create Game if not exists =====
-  if (!gameId) {
-    gameId = await createGame("test");
-  }
-
   // ===== Join Game =====
   async function joinGame(gameId: string): Promise<WelcomeMessage> {
     SocketInterface.send(
@@ -102,9 +95,17 @@ export async function serverRunner(
     return welcomeMessage;
   }
 
+  uiMessage("Connecting to game server...");
+
   await SocketInterface.connect(() => {
     console.error("Socket disconnected");
   });
+
+  uiMessage("Starting game...");
+
+  await start(gameId);
+
+  uiMessage("Joining game...");
 
   const welcomeMessage = await joinGame(gameId);
 

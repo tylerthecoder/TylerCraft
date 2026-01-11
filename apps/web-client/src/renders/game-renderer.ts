@@ -247,6 +247,11 @@ export class GameRenderer {
     //   this.onNewEntity(entity);
     // }
 
+    // Create renderers for initial chunks
+    for (const chunkId of this.game.getLoadedChunkids()) {
+      this.createChunkRender(BigInt(chunkId));
+    }
+
     this.isSpectating = false;
 
     window.addEventListener("keydown", this.handleKeyDownBound);

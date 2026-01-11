@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { RunGameError, RunningGame } from "../services/running-game";
 import { GameConfigMenu } from "./GameConfigMenu";
 import { GameRendererGameScript } from "../renders/game-renderer";
@@ -10,12 +10,12 @@ GameRendererGameScript.register();
 export function RunningGameView(props: {
   runFn: (
     uiMessage: (message: string) => void,
-    gameId?: string
+    gameId: string
   ) => Promise<RunningGame | RunGameError>;
   backUrl: string;
+  gameId: string;
 }) {
-  const { runFn, backUrl } = props;
-  const { gameId } = useParams<{ gameId: string }>();
+  const { runFn, backUrl, gameId } = props;
   const [isLoading, setIsLoading] = useState(true);
   const [showConfigMenu, setShowConfigMenu] = useState(false);
   const [gameInstance, setGameInstance] = useState<RunningGame | null>(null);
@@ -23,7 +23,8 @@ export function RunningGameView(props: {
   const navigate = useNavigate();
   const loadingMessageRef = useRef<HTMLDivElement>(null);
 
-  async function startGame(gameId?: string) {
+  async function startGame(gameId: string) {
+    console.log("Starting game", gameId);
     const updateLoadingMessage = (message: string) => {
       console.log("Updating loading message", message);
       if (loadingMessageRef.current) {
@@ -40,6 +41,7 @@ export function RunningGameView(props: {
         setError(runningGame.error);
       }
     } catch (err) {
+      console.error("Error starting game", err);
       setError(err as string);
     }
     setIsLoading(false);
@@ -47,7 +49,7 @@ export function RunningGameView(props: {
 
   useEffect(() => {
     startGame(gameId);
-  }, [gameId]);
+  }, []);
 
   useEffect(() => {
     if (!gameInstance) {

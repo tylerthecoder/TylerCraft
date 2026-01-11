@@ -7,6 +7,7 @@ import { ServerGameManager } from "./server-game-manager.js";
 import { GameDb } from "./db.js";
 import { deserializeGame, IGameMetadata } from "@craft/engine";
 import { Game } from "@craft/rust-world";
+import { makeLogger } from "./logger.js";
 
 const PORT = process.env.PORT ?? 3000;
 const webClientPath = new URL("../../web-client/dist", import.meta.url)
@@ -14,9 +15,7 @@ const webClientPath = new URL("../../web-client/dist", import.meta.url)
 
 console.log("Config", { PORT, webClientPath });
 
-const log = (...args: any[]) => {
-  console.log(`[${new Date().toISOString()}]`, ...args);
-};
+const log = makeLogger("server.ts");
 
 const app = express();
 const games: Map<string, ServerGameManager> = new Map();
@@ -54,7 +53,9 @@ app.get("/games", async (_req: Request, res: Response) => {
 });
 
 app.post("/game", async (req: Request, res: Response) => {
+  log("Creating game");
   const game = await gameDb.createGame();
+  log("Game created", game.id);
   res.send(game.id);
 });
 

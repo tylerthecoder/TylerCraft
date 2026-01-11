@@ -10,8 +10,11 @@ import SocketServer from "./socket";
 import WebSocket from "ws";
 import { ISocketMessageType, SocketMessage } from "@craft/engine";
 import { GameDb } from "./db";
+import { makeLogger } from "./logger.js";
 
 type ClientId = number;
+
+const log = makeLogger("ServerGameManager");
 
 export class ServerGameManager {
   is_running = false;
@@ -34,10 +37,11 @@ export class ServerGameManager {
 
   listenForJoinRequests(ws: WebSocket) {
     this.socketInterface.listenTo(ws, (message) => {
-      console.log("Socket message from client", message);
+      log("Socket message from client", message);
       if (!message.isType(ISocketMessageType.joinWorld)) {
         return;
       }
+      log("Joining game", message.data);
       const { gameId, myUid } = message.data;
       if (gameId !== this.game.id) {
         return;
@@ -45,9 +49,9 @@ export class ServerGameManager {
 
       this.game.makeAndAddPlayer(myUid);
 
-      const entities = this.game.getAllEntities();
+      const entities = this.game.serializeEntities();
 
-      console.log("Entities", JSON.stringify(entities, null, 2));
+      log("Entities", JSON.stringify(entities, null, 2));
 
       // send welcome message
       this.socketInterface.send(
@@ -79,12 +83,12 @@ export class ServerGameManager {
 
   listenForPlayerActions(ws: WebSocket, clientId: ClientId) {
     this.socketInterface.listenTo(ws, (message) => {
-      console.log("Socket message from client", JSON.stringify(message));
+      log("Socket message from client", JSON.stringify(message));
       if (!message.isType(ISocketMessageType.actions)) {
         return;
       }
       const action = message.data;
-      console.log("Received Action", JSON.stringify(action, null, 2));
+      log("Received Action", JSON.stringify(action, null, 2));
 
       const actionDto = EntityActionDto.from_js(action);
 

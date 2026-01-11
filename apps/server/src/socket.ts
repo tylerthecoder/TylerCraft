@@ -40,6 +40,7 @@ export default class SocketServer {
 
   listenTo(ws: WebSocket, func: MessageListener): void {
     ws.on("message", (data: string) => {
+      console.log("Received socket message", data);
       const message: SocketMessageDto | undefined = (() => {
         try {
           return JSON.parse(data) as SocketMessageDto;

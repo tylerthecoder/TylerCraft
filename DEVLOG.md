@@ -1,3 +1,10 @@
+# 01_11_26
+
+Worked on the starting flow for making a client and server game. The joining and starting of a game seems to have some race condition because I have to refresh the page to actually join.
+
+Need to figure out this flow more
+
+
 # 09_14_25
 
 Yesterday I got the menu and saving stuff working much better. I'm pretty happy with how everything works now. I also restructred a lot of things and made chunk mesh rendering much quicker. I might want to move to some sort of shared memory thing for inserting chunks. I'm not sure why it is so slow still.

@@ -21,9 +21,24 @@ const log = (...message: any[]) => {
   console.log("sp-games-service.ts: ", ...message);
 };
 
+export async function create(gameName: string): Promise<string> {
+  log("Creating new game");
+  const startCreation = performance.now();
+  const game = new Game();
+  game.name = gameName;
+  const endCreation = performance.now();
+  log("Created new game in", endCreation - startCreation, "ms");
+  log("Saving game");
+  const startSaving = performance.now();
+  await spGameService.saveGame(game);
+  const endSaving = performance.now();
+  log("Saved game in", endSaving - startSaving, "ms");
+  return game.id;
+}
+
 export async function run(
   uiMessage: (message: string) => void,
-  id?: string
+  id: string
 ): Promise<RunningGame | RunGameError> {
   log("Starting game", id);
 
@@ -31,25 +46,20 @@ export async function run(
   let game: Game | null = null;
   uiMessage("Checking records...");
 
-  if (id) {
-    const serializedGame = await spGameService.getGame(id);
-    if (!serializedGame) {
-      return {
-        error: "Game with id " + id + " not found",
-      };
-    }
-
-    const start = performance.now();
-    game = deserializeGame(serializedGame);
-    const end = performance.now();
-    log("Deserialized game in", end - start, "ms");
-  } else {
-    log("Creating new game");
-    const start = performance.now();
-    game = new Game();
-    const end = performance.now();
-    log("Created new game in", end - start, "ms");
+  const serializedGame = await spGameService.getGame(id);
+  if (!serializedGame) {
+    return {
+      error: "Game with id " + id + " not found",
+    };
   }
+
+  uiMessage("Loading game");
+
+  const start = performance.now();
+  game = deserializeGame(serializedGame);
+  const end = performance.now();
+  log("Deserialized game in", end - start, "ms");
+
   log("The Game", game);
   (window as any).game = game;
 
