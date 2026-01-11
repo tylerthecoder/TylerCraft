@@ -15,6 +15,8 @@ function App() {
         <Route path="/client" element={<ClientHomePage />} />
         <Route path="/server-game/:gameId" element={<ServerGameView />} />
         <Route path="/client-game/:gameId" element={<ClientGameView />} />
+        <Route path="/server-game/" element={<ServerGameView />} />
+        <Route path="/client-game/" element={<ClientGameView />} />
       </Routes>
     </Router>
   );

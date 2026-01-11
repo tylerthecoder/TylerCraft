@@ -1,5 +1,4 @@
 import {
-  ISerializedChunk,
   IServerGameMetadata,
   ISocketMessageType,
   SocketMessage,
@@ -8,17 +7,30 @@ import {
 import { SocketHandler, SocketListener } from "./socket-service";
 import { AppConfig } from "../appConfig";
 import {
+  ChunkFetcher,
   Entities,
   Entity,
   EntityActionDto,
   Game,
-  MakeGameOptions,
   SandBoxGScript,
+  ServerChunkLoader,
 } from "@craft/rust-world";
 import { getMyUid } from "../utils";
-import { KeyboardPlayerEntityController } from "../controllers/playerControllers/keyboardPlayerController";
+import { KeyboardPlayerEntityController } from "../controllers/keyboardPlayerController";
 import { HudGScript } from "../renders/hud-renderer";
 import { GameRenderer, GameRendererGameScript } from "../renders/game-renderer";
+import {
+  addGameRenderer,
+  addHudRenderer,
+  addPlayerController,
+  loadInitialChunks,
+  RunGameError,
+  RunningGame,
+} from "./running-game";
+
+const log = (...message: any[]) => {
+  console.log("mp-games-service.ts: ", ...message);
+};
 
 export const SocketInterface = new SocketHandler();
 
@@ -43,7 +55,16 @@ export async function startGame(gameId: string): Promise<void> {
   });
 }
 
-export async function serverRunner(gameId: string) {
+export async function serverRunner(
+  uiMessage: (message: string) => void,
+  gameId?: string
+): Promise<RunningGame | RunGameError> {
+  // ===== Create Game if not exists =====
+  if (!gameId) {
+    gameId = await createGame("test");
+  }
+
+  // ===== Join Game =====
   async function joinGame(gameId: string): Promise<WelcomeMessage> {
     SocketInterface.send(
       SocketMessage.make(ISocketMessageType.joinWorld, {
@@ -89,51 +110,53 @@ export async function serverRunner(gameId: string) {
 
   console.log("Joined game", welcomeMessage);
 
-  const myUid = getMyUid();
-
-  console.log("My UID", myUid);
-
+  // ===== Deserialize Game =====
   const entities = Entities.deserialize(welcomeMessage.entities);
 
-  const fetchingChunk = new Set<string>();
-  const getChunk = async (chunkPos: { x: number; y: number }) => {
-    if (fetchingChunk.has(chunkPos.x + "," + chunkPos.y)) {
-      return;
-    }
-    console.log("Getting chunk", chunkPos);
-    fetchingChunk.add(chunkPos.x + "," + chunkPos.y);
-    fetch(`${baseUrl}/game/${gameId}/chunk/${chunkPos.x}/${chunkPos.y}`)
-      .then((data) => data.json())
-      .then((chunk) => {
-        chunksToInsert.push(chunk.Ok);
-        fetchingChunk.delete(chunkPos.x + "," + chunkPos.y);
-      });
-  };
-
-  const game = Game.build(gameId, null, null, entities, null, getChunk);
+  const game = Game.build(
+    gameId,
+    null,
+    null,
+    entities,
+    null,
+    ChunkFetcher.makeFromServerChunkLoader(
+      new ServerChunkLoader(baseUrl, gameId)
+    )
+  );
   (window as any).game = game;
 
+  // ===== Game Scripts =====
   game.ensureScript(GameRendererGameScript.name);
   game.ensureScript(SandBoxGScript.name());
 
-  const gameRenderer = new GameRenderer(game, myUid);
-  const hudRender = new HudGScript(game, gameRenderer, myUid);
+  // ===== Main Player =====
+  const myUid = getMyUid();
+  console.log("My UID", myUid);
 
-  const chunksToInsert: ISerializedChunk[] = [];
+  // ===== Running Game =====
+  const runningGame = new RunningGame(game, myUid);
 
+  // ===== Load Initial Chunks =====
+  await loadInitialChunks(runningGame, uiMessage);
+
+  // ===== Game Renderer =====
+  const gameRenderer = await addGameRenderer(runningGame, uiMessage);
+
+  // ===== Add Action Listener =====
   const onAction = (action: EntityActionDto) => {
-    console.log("Player Action", action);
-    const data = action.to_js();
-    game.handle_action_wasm(action);
-    SocketInterface.send(SocketMessage.make(ISocketMessageType.actions, data));
+    SocketInterface.send(
+      SocketMessage.make(ISocketMessageType.actions, action.to_js())
+    );
   };
+  runningGame.onActionListeners.addListener(onAction, "onAction");
 
+  // ===== Add Socket Listener =====
   SocketInterface.addListener((message) => {
     console.log("Got actions message from server", message);
     if (message.isType(ISocketMessageType.actions)) {
       const action = message.data;
       const actionDto = EntityActionDto.from_js(action);
-      game.handle_action_wasm(actionDto);
+      game.handleAction(actionDto);
     }
     if (message.isType(ISocketMessageType.newPlayer)) {
       const player = message.data;
@@ -141,69 +164,14 @@ export async function serverRunner(gameId: string) {
     }
   });
 
-  const playerController = new KeyboardPlayerEntityController(
-    game,
-    onAction,
-    () => {
-      // NO-OP
-    },
-    myUid,
-    gameRenderer
-  );
+  // ===== Add Player Controller =====
+  addPlayerController(runningGame, gameRenderer);
 
-  const chunkRequester = new WasmRequestChunk(getChunk);
+  // ===== Hud Renderer =====
+  addHudRenderer(runningGame, gameRenderer);
 
-  // add sandbox
-  const sandbox = new SandBoxGScript(1, chunkRequester);
+  // ===== Start Game =====
+  runningGame.start();
 
-  // Load initial chunks
-  const chunksAroundPlayer = sandbox.get_chunks_around_player(
-    entities.get_entity_by_id_clone(myUid)!.as_player().pos
-  );
-  console.log("Chunks around player", chunksAroundPlayer);
-  for (const chunkPos of chunksAroundPlayer) {
-    getChunk(chunkPos);
-  }
-
-  // load all the first chunks
-  while (fetchingChunk.size > 0 || chunksToInsert.length > 0) {
-    const chunkToInsert = chunksToInsert.pop();
-    if (chunkToInsert) {
-      console.log("Inserting initial chunk", chunkToInsert);
-      const chunk = deserializeChunk(chunkToInsert);
-      game.schedule_chunk_insert_wasm(chunk);
-    }
-    await new Promise((resolve) => setTimeout(resolve, 100));
-  }
-
-  console.log("Initial chunks loaded");
-
-  game.update();
-  canvasGameScript.update();
-
-  console.log("Game Updated");
-
-  console.log("Setting game entities");
-
-  game.entities = entities;
-
-  console.log("Game entities", game.entities.to_js());
-
-  game.add_sandbox_wasm(sandbox);
-
-  const gameLoop = async () => {
-    const chunkToInsert = chunksToInsert.pop();
-    if (chunkToInsert) {
-      const chunk = deserializeChunk(chunkToInsert);
-      game.schedule_chunk_insert_wasm(chunk);
-    }
-
-    game.update();
-    playerController.update();
-    canvasGameScript.update();
-    hudRender.update(0);
-    canvasGameScript.renderLoop(0);
-  };
-
-  setInterval(gameLoop, 1000 / 60);
+  return runningGame;
 }

@@ -1,17 +1,15 @@
 import { IServerGameMetadata } from "@craft/engine";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { createGame, getAllGames } from "../services/mp-games-service";
+import { getAllGames } from "../services/mp-games-service";
 
 export function ServerHomePage() {
   const [games, setGames] = useState<IServerGameMetadata[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const createGameWrapper = async (gameId: string) => {
-    console.log("Starting game", gameId);
-    const game = await createGame(gameId);
-    navigate(`/server-game/${game}`);
+  const createGameWrapper = async () => {
+    navigate("/server-game");
   };
 
   useEffect(() => {
@@ -60,7 +58,7 @@ export function ServerHomePage() {
         <h2>Create New Game</h2>
         <button
           onClick={() => {
-            createGameWrapper("test");
+            createGameWrapper();
           }}
         >
           Create Game

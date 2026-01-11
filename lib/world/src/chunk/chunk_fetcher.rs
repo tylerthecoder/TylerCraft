@@ -103,11 +103,15 @@ pub struct ServerChunkLoader {
     game_id: String,
 }
 
+#[wasm_bindgen]
 impl ServerChunkLoader {
+    #[wasm_bindgen(constructor)]
     pub fn new(base_url: String, game_id: String) -> Self {
         Self { base_url, game_id }
     }
+}
 
+impl ServerChunkLoader {
     pub async fn load_chunk(&self, chunk_pos: ChunkPos) -> Result<Chunk, JsValue> {
         let url = format!(
             "{}/game/{}/chunk/{}/{}",

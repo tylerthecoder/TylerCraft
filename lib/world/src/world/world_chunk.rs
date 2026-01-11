@@ -93,6 +93,12 @@ impl Game {
     pub fn get_loaded_chunkids_wasm(&self) -> Vec<u64> {
         self.world.get_loaded_chunk_ids()
     }
+
+    #[wasm_bindgen(js_name = "getChunk")]
+    pub fn get_chunk_wasm(&self, chunk_pos: &ChunkPos) -> Result<Chunk, ChunkNotLoadedError> {
+        let chunk = self.world.get_chunk(chunk_pos)?;
+        Ok(chunk.to_owned())
+    }
 }
 
 #[cfg(test)]

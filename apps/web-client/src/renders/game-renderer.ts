@@ -243,17 +243,8 @@ export class GameRenderer {
     console.log("Canvas Render Usecase", this);
 
     // Create renderers for initial entities
-    for (const entity of this.game.getAllEntities()) {
-      this.onNewEntity(entity);
-    }
-
-    // Create renderers for initial chunks
-    // console.log(
-    //   "CanvasGameScript: Creating chunk renders",
-    //   this.game.getLoadedChunkids()
-    // );
-    // for (const chunkId of this.game.getLoadedChunkids()) {
-    //   this.createChunkRender(chunkId);
+    // for (const entity of this.game.getAllEntities()) {
+    //   this.onNewEntity(entity);
     // }
 
     this.isSpectating = false;

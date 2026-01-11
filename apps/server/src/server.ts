@@ -5,13 +5,18 @@ import cors from "cors";
 import SocketServer from "./socket.js";
 import { ServerGameManager } from "./server-game-manager.js";
 import { GameDb } from "./db.js";
-import { IGameMetadata } from "@craft/engine";
+import { deserializeGame, IGameMetadata } from "@craft/engine";
+import { Game } from "@craft/rust-world";
 
 const PORT = process.env.PORT ?? 3000;
 const webClientPath = new URL("../../web-client/dist", import.meta.url)
   .pathname;
 
 console.log("Config", { PORT, webClientPath });
+
+const log = (...args: any[]) => {
+  console.log(`[${new Date().toISOString()}]`, ...args);
+};
 
 const app = express();
 const games: Map<string, ServerGameManager> = new Map();
@@ -55,16 +60,28 @@ app.post("/game", async (req: Request, res: Response) => {
 
 app.post("/game/:id/start", async (req: Request, res: Response) => {
   const { id } = req.params;
+  log("Starting game", id);
   const localGame = games.get(id);
   if (localGame && localGame.is_running) {
     res.status(404).send("Game already running");
     return;
   }
-  const game = await gameDb.getGame(id);
-  if (!game) {
+  log("Getting game", id);
+  const gameDto = await gameDb.getGame(id);
+  if (!gameDto) {
     res.status(404).send("Game not found");
     return;
   }
+
+  let game: Game | null = null;
+  try {
+    game = deserializeGame(gameDto);
+  } catch (error) {
+    log("Error deserializing game", error);
+    res.status(500).send("Error deserializing game");
+    return;
+  }
+
   const gameManager = new ServerGameManager(game, socketService, gameDb);
   games.set(id, gameManager);
   gameManager.start();
@@ -78,8 +95,17 @@ app.get("/game/:id/chunk/:x/:y", async (req: Request, res: Response) => {
     res.status(404).send("Game not found");
     return;
   }
-  const chunkPos = { x: parseInt(x), y: parseInt(y) };
-  const chunk = game.getChunk(chunkPos);
+  const xInt = parseInt(x);
+  if (isNaN(xInt)) {
+    res.status(400).send("Invalid x");
+    return;
+  }
+  const yInt = parseInt(y);
+  if (isNaN(yInt)) {
+    res.status(400).send("Invalid y");
+    return;
+  }
+  const chunk = game.getChunk(xInt, yInt);
   res.send(chunk);
 });
 

@@ -1,5 +1,5 @@
 import { EntityActionDto } from "@craft/rust-world";
-import { getEleOrError } from "../../utils";
+import { getEleOrError } from "../utils";
 import { Vector2D, PlayerController, GameWrapper } from "@craft/engine";
 
 export class MobileController extends PlayerController {

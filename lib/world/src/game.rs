@@ -7,9 +7,8 @@ use crate::{
     entities::{
         entities::Entities,
         entity::{Entity, EntityId},
-        entity_action::{EntityActionDto, EntityActionDtoMaker, EntityActionHolder},
+        entity_action::{EntityActionDtoMaker, EntityActionHolder},
         fireball::FireballScript,
-        player::make_player,
     },
     scripts::{
         game_script::GameScripts,
@@ -212,16 +211,6 @@ impl Game {
     pub fn schedule_entity_insert(&mut self, entity: Entity) {
         self.schedule.new_entities.push(entity);
     }
-
-    pub fn make_and_add_player_wasm(&mut self, uid: EntityId) -> () {
-        // skip if player already exists
-        if self.entities.get_entity_by_id(uid).is_some() {
-            return;
-        }
-        let player = make_player(uid);
-        self.schedule_entity_insert(player);
-        self.update();
-    }
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -325,6 +314,7 @@ impl GameSchedule {
 mod tests {
     use crate::{
         components::{fine_world_pos::FineWorldPos, velocity::Velocity},
+        entities::player::Player,
         geometry::direction::Direction,
         scripts::{player_jump_script::JumpActionData, player_move_script::MoveActionData},
     };
@@ -333,7 +323,7 @@ mod tests {
     #[test]
     pub fn add_player() {
         let mut game = Game::new();
-        let player = make_player(1);
+        let player = Player::make_entity(1);
         game.schedule_entity_insert(player);
         game.update();
 
@@ -346,7 +336,7 @@ mod tests {
     #[test]
     pub fn jump_script() {
         let mut game = Game::new();
-        let player = make_player(1);
+        let player = Player::make_entity(1);
         game.schedule_entity_insert(player);
         game.update();
         let jump_action_handler = JumpAction::make_handler();
@@ -362,7 +352,7 @@ mod tests {
     #[test]
     pub fn move_script() {
         let mut game = Game::new();
-        let player = make_player(1);
+        let player = Player::make_entity(1);
         player.print_components();
 
         game.schedule_entity_insert(player);

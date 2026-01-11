@@ -4,8 +4,8 @@ import {
   WorldModule,
 } from "@craft/engine";
 import { IS_MOBILE, getMyUid } from "../app";
-import { MobileController } from "../controllers/playerControllers/mobileController";
-import { KeyboardPlayerEntityController } from "../controllers/playerControllers/keyboardPlayerController";
+import { MobileController } from "../controllers/mobileController";
+import { KeyboardPlayerEntityController } from "../controllers/keyboardPlayerController";
 import { CanvasGameScript } from "../renders/game-renderer";
 import { GameScript } from "@craft/engine/game-script";
 import { WebGlGScript } from "./webgl-gscript";

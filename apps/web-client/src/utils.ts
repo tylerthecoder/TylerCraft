@@ -48,3 +48,7 @@ export function getMyUid() {
 
 export const IS_MOBILE = /Mobi/.test(window.navigator.userAgent);
 console.log("Is Mobile: ", IS_MOBILE);
+
+export async function task() {
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}

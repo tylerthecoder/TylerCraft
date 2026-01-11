@@ -7,6 +7,10 @@ import {
   ChunkFetcher,
 } from "@craft/rust-world";
 
+const log = (...args: any[]) => {
+  console.log(`[${new Date().toISOString()}] serialize.ts: `, ...args);
+};
+
 export interface ISerializedAction {
   entity_id: number;
   name: string;
@@ -71,6 +75,7 @@ export interface ISerializedGame {
 }
 
 export const deserializeGame = (serializedGame: ISerializedGame): Game => {
+  const start = performance.now();
   const world = World.deserialize_wasm(serializedGame.world);
   const entityHolder = Entities.deserialize(serializedGame.entities);
   const scripts = GameScripts.fromJs(serializedGame.scripts);
@@ -83,6 +88,8 @@ export const deserializeGame = (serializedGame: ISerializedGame): Game => {
     scripts,
     chunkFetcher
   );
+  const end = performance.now();
+  log("Deserialized game in", end - start, "ms");
   return game;
 };
 

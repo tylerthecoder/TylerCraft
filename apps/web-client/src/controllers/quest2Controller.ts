@@ -1,6 +1,6 @@
 import { MetaAction, Vector3D, EntityController, Player } from "@craft/engine";
 import { quat } from "gl-matrix";
-import { WebGlGScript } from "../../game-scripts/webgl-gscript";
+import { WebGlGScript } from "../game-scripts/webgl-gscript";
 
 export class Quest2Controller extends EntityController {
   constructor(private player: Player, private webGlGScript: WebGlGScript) {

@@ -1,9 +1,4 @@
-import {
-  IGameMetadata,
-  ISerializedGame,
-  deserializeGame,
-  serializeGame,
-} from "@craft/engine";
+import { IGameMetadata, ISerializedGame, serializeGame } from "@craft/engine";
 import { Game } from "@craft/rust-world";
 import { Collection, Document, MongoClient } from "mongodb";
 
@@ -39,14 +34,13 @@ export class GameDb {
       .toArray();
   }
 
-  async getGame(gameId: string): Promise<Game | null> {
+  async getGame(gameId: string): Promise<ISerializedGame | null> {
     const data: ISerializedGame | null =
       await this.gameCollection.findOne<ISerializedGame>({ gameId });
     if (!data) {
       return null;
     }
-    const game = deserializeGame(data);
-    return game;
+    return data;
   }
 
   async getSerializedGame(gameId: string): Promise<ISerializedGame | null> {
