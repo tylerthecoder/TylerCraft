@@ -26,6 +26,7 @@ function makeListenerGroup<T extends unknown[]>(listenerGroupName: string) {
 
 export class RunningGame {
   private running = true;
+  private pendingActions: unknown[] = [];
 
   constructor(public game: Game, public playerId: number) {}
 
@@ -54,13 +55,19 @@ export class RunningGame {
   public updateListeners = makeListenerGroup<[]>("update");
   public async update() {
     const start = performance.now();
+    // Drain pending actions from JS queue into Rust queue
+    // This must happen in a synchronous block before any awaits
+    for (const actionData of this.pendingActions) {
+      this.game.handleAction(EntityActionDto.from_js(actionData));
+    }
+    this.pendingActions = [];
     this.game.handle_actions();
     this.game.run_scripts();
     await task();
     this.game.add_new_entities();
     await task();
     this.game.remove_entities();
-    await this.game.add_single_chunk();
+    this.game.add_single_chunk();
     this.game.add_blocks();
     await task();
     this.game.remove_blocks();
@@ -74,8 +81,19 @@ export class RunningGame {
   public onActionListeners = makeListenerGroup<[EntityActionDto]>("onAction");
   public onAction(action: EntityActionDto) {
     console.log("On Action", action);
-    this.game.handleAction(action);
-    this.onActionListeners.callAll(action);
+    const serializedAction = action.to_js();
+    // Queue in JS to avoid borrow conflicts during async update loop
+    this.pendingActions.push(serializedAction);
+    // Notify listeners with a copy
+    this.onActionListeners.callAll(EntityActionDto.from_js(serializedAction));
+  }
+
+  /**
+   * Queue an action from external sources (e.g., socket messages).
+   * The action data should already be serialized JS object.
+   */
+  public queueAction(actionData: unknown) {
+    this.pendingActions.push(actionData);
   }
 
   public saveListeners = makeListenerGroup<[]>("save");
@@ -167,7 +185,7 @@ export async function loadInitialChunks(
       } / ${initialChunkCount}`
     );
     await task();
-    await game.add_single_chunk();
+    game.add_single_chunk();
     pendingChunkCount = game.getPendingChunkCount();
   }
 }

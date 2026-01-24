@@ -5,8 +5,7 @@ import cors from "cors";
 import SocketServer from "./socket.js";
 import { ServerGameManager } from "./server-game-manager.js";
 import { GameDb } from "./db.js";
-import { deserializeGame, IGameMetadata } from "@craft/engine";
-import { Game } from "@craft/rust-world";
+import { IGameMetadata } from "@craft/engine";
 import { makeLogger } from "./logger.js";
 
 const PORT = process.env.PORT ?? 3000;
@@ -74,18 +73,17 @@ app.post("/game/:id/start", async (req: Request, res: Response) => {
     return;
   }
 
-  let game: Game | null = null;
+  let game: ServerGameManager | null = null;
   try {
-    game = deserializeGame(gameDto);
+    game = await ServerGameManager.create(gameDto, socketService, gameDb);
   } catch (error) {
-    log("Error deserializing game", error);
-    res.status(500).send("Error deserializing game");
+    log("Error creating  game", error);
+    res.status(500).send("Error creating game");
     return;
   }
 
-  const gameManager = new ServerGameManager(game, socketService, gameDb);
-  games.set(id, gameManager);
-  gameManager.start();
+  games.set(id, game);
+  game.start();
   res.send("Game started");
 });
 
@@ -106,7 +104,11 @@ app.get("/game/:id/chunk/:x/:y", async (req: Request, res: Response) => {
     res.status(400).send("Invalid y");
     return;
   }
-  const chunk = game.getChunk(xInt, yInt);
+  const chunk = game.getOrRequestChunk(xInt, yInt);
+  if (!chunk) {
+    res.status(404).send({ message: "Chunk requested" });
+    return;
+  }
   res.send(chunk);
 });
 

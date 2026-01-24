@@ -8,6 +8,7 @@ import { SocketHandler, SocketListener } from "./socket-service";
 import { AppConfig } from "../appConfig";
 import {
   ChunkFetcher,
+  ChunkPos,
   Entities,
   Entity,
   EntityActionDto,
@@ -25,10 +26,6 @@ import {
   RunGameError,
   RunningGame,
 } from "./running-game";
-
-const log = (...message: any[]) => {
-  console.log("mp-games-service.ts: ", ...message);
-};
 
 export const SocketInterface = new SocketHandler();
 
@@ -163,6 +160,12 @@ export async function run(
       const player = message.data;
       game.addEntity(Entity.from_js(player));
     }
+    // if (message.isType(ISocketMessageType.gameDiff)) {
+    //   const diff = message.data;
+    //   for (const chunkId of diff.updated_chunks) {
+    //     game.request_chunk(ChunkPos.from_id(BigInt(chunkId)));
+    //   }
+    // }
   });
 
   // ===== Add Player Controller =====

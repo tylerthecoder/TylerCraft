@@ -2,6 +2,7 @@ use crate::{
     chunk::{
         chunk::{Chunk, ChunkId},
         chunk_fetcher::ChunkFetcher,
+        chunk_pos::ChunkPos,
     },
     components::world_pos::WorldPos,
     entities::{
@@ -25,7 +26,7 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-use wasm_bindgen::prelude::wasm_bindgen;
+use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 
 #[wasm_bindgen(getter_with_clone)]
 pub struct Game {
@@ -159,8 +160,8 @@ impl Game {
         self.schedule.removed_entities.clear();
     }
 
-    pub async fn add_single_chunk(&mut self) {
-        let chunk = self.chunk_fetcher.consume_single_chunk().await;
+    pub fn add_single_chunk(&mut self) {
+        let chunk = self.chunk_fetcher.consume_single_chunk();
         if let Some(chunk) = chunk {
             let chunk_id = chunk.get_id();
             self.world.insert_chunk(chunk);
@@ -168,6 +169,10 @@ impl Game {
                 script.on_chunk_update(chunk_id);
             });
         }
+    }
+
+    pub fn request_chunk(&mut self, chunk_pos: ChunkPos) {
+        self.chunk_fetcher.request_chunk(chunk_pos);
     }
 
     pub fn add_blocks(&mut self) {
@@ -199,6 +204,7 @@ impl Game {
         self.run_scripts();
         self.add_new_entities();
         self.remove_entities();
+        // TODO: this shouldn't be async
         self.add_single_chunk();
         self.add_blocks();
         self.remove_blocks();
@@ -218,6 +224,29 @@ impl Game {
 pub struct GameDiff {
     pub updated_entities: Vec<EntityId>,
     pub updated_chunks: Vec<ChunkId>,
+}
+
+#[wasm_bindgen]
+impl GameDiff {
+    #[wasm_bindgen(constructor)]
+    pub fn new() -> GameDiff {
+        GameDiff {
+            updated_entities: Vec::new(),
+            updated_chunks: Vec::new(),
+        }
+    }
+
+    pub fn add_entity(&mut self, entity_id: EntityId) {
+        self.updated_entities.push(entity_id);
+    }
+
+    pub fn add_chunk(&mut self, chunk_id: ChunkId) {
+        self.updated_chunks.push(chunk_id);
+    }
+
+    pub fn to_js(&self) -> Result<JsValue, serde_wasm_bindgen::Error> {
+        serde_wasm_bindgen::to_value(self)
+    }
 }
 
 pub struct GameSchedule {

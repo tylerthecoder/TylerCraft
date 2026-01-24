@@ -2,16 +2,25 @@ use crate::chunk::chunk_pos::ChunkPos;
 use crate::game::Game;
 use crate::terrain_gen::TerrainGenerator;
 use crate::{chunk::chunk::Chunk, utils::js_log};
+use js_sys;
 use serde::{Deserialize, Serialize};
+use std::cell::RefCell;
+use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;
 use web_sys::{Request, RequestInit, RequestMode, Response};
+
+/// Shared state for tracking an in-flight async chunk load
+type InFlightState = Rc<RefCell<Option<Result<Chunk, String>>>>;
 
 #[derive(Clone, Serialize, Deserialize)]
 #[wasm_bindgen(getter_with_clone)]
 pub struct ChunkFetcher {
     chunks_to_load: Vec<ChunkPos>,
     chunk_loader: ChunkLoader,
+    /// Tracks all currently loading chunks (not serialized)
+    #[serde(skip)]
+    in_flight: Vec<InFlightState>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -25,6 +34,7 @@ impl ChunkFetcher {
         Self {
             chunks_to_load: Vec::new(),
             chunk_loader,
+            in_flight: Vec::new(),
         }
     }
 
@@ -39,18 +49,58 @@ impl ChunkFetcher {
         self.chunks_to_load.push(chunk_pos);
     }
 
-    pub async fn consume_single_chunk(&mut self) -> Option<Chunk> {
-        let chunk_pos = self.chunks_to_load.pop()?;
-        match &self.chunk_loader {
-            ChunkLoader::TerrainGenerator(loader) => {
-                let chunk = loader.get_chunk(chunk_pos.x, chunk_pos.y);
-                Some(chunk)
-            }
-            ChunkLoader::Server(loader) => {
-                let chunk = loader.load_chunk(chunk_pos).await.unwrap();
-                Some(chunk)
+    /// Attempts to get a loaded chunk. Returns `Some(chunk)` if one is ready,
+    /// or `None` if still loading or no chunks are pending.
+    ///
+    /// For server-loaded chunks, this spawns async fetches in the background
+    /// and returns chunks as they complete on subsequent calls.
+    pub fn consume_single_chunk(&mut self) -> Option<Chunk> {
+        // 1. Check if any in-flight request has completed
+        let mut completed_index = None;
+        for (i, in_flight) in self.in_flight.iter().enumerate() {
+            if in_flight.borrow().is_some() {
+                completed_index = Some(i);
+                break;
             }
         }
+
+        if let Some(index) = completed_index {
+            let in_flight = self.in_flight.remove(index);
+            let result = in_flight.borrow_mut().take().unwrap();
+            match result {
+                Ok(chunk) => return Some(chunk),
+                Err(e) => {
+                    js_log(&format!("Chunk load failed: {}", e));
+                    // Continue to try starting new requests or check other in-flight
+                }
+            }
+        }
+
+        // 2. Start new requests for any pending chunks
+        while let Some(chunk_pos) = self.chunks_to_load.pop() {
+            match &self.chunk_loader {
+                ChunkLoader::TerrainGenerator(loader) => {
+                    // Sync case - return immediately
+                    return Some(loader.get_chunk(chunk_pos.x, chunk_pos.y));
+                }
+                ChunkLoader::Server(loader) => {
+                    // Async case - spawn background task
+                    let state: InFlightState = Rc::new(RefCell::new(None));
+                    let state_clone = state.clone();
+                    let loader_clone = loader.clone();
+
+                    wasm_bindgen_futures::spawn_local(async move {
+                        let result = loader_clone.load_chunk(chunk_pos).await;
+                        let mapped = result.map_err(|e| format!("{:?}", e));
+                        *state_clone.borrow_mut() = Some(mapped);
+                    });
+
+                    self.in_flight.push(state);
+                }
+            }
+        }
+
+        None // No chunks ready yet
     }
 
     pub fn get_chunk_to_load_count(&self) -> usize {
@@ -92,7 +142,7 @@ impl Game {
 
     #[wasm_bindgen(js_name = "getPendingChunkCount")]
     pub fn get_pending_chunk_count(&self) -> usize {
-        self.chunk_fetcher.chunks_to_load.len()
+        self.chunk_fetcher.chunks_to_load.len() + self.chunk_fetcher.in_flight.len()
     }
 }
 
@@ -118,29 +168,48 @@ impl ServerChunkLoader {
             self.base_url, self.game_id, chunk_pos.x, chunk_pos.y
         );
 
-        let opts = RequestInit::new();
-        opts.set_method("GET");
-        opts.set_mode(RequestMode::Cors);
+        loop {
+            let opts = RequestInit::new();
+            opts.set_method("GET");
+            opts.set_mode(RequestMode::Cors);
 
-        let request = Request::new_with_str_and_init(&url, &opts)?;
+            let request = Request::new_with_str_and_init(&url, &opts)?;
 
-        request
-            .headers()
-            .set("Accept", "application/vnd.github.v3+json")?;
+            request
+                .headers()
+                .set("Accept", "application/vnd.github.v3+json")?;
 
-        let window = web_sys::window().unwrap();
-        let resp_value = JsFuture::from(window.fetch_with_request(&request)).await?;
+            let window = web_sys::window().unwrap();
+            let resp_value = JsFuture::from(window.fetch_with_request(&request)).await?;
 
-        // `resp_value` is a `Response` object.
-        assert!(resp_value.is_instance_of::<Response>());
-        let resp: Response = resp_value.dyn_into().unwrap();
+            // `resp_value` is a `Response` object.
+            assert!(resp_value.is_instance_of::<Response>());
+            let resp: Response = resp_value.dyn_into().unwrap();
 
-        // Convert this other `Promise` into a rust `Future`.
-        let json = JsFuture::from(resp.json()?).await?;
+            // Handle not found - wait and retry
+            if resp.status() == 404 {
+                js_log(&format!(
+                    "Chunk requested at ({}, {}), retrying in 1 second...",
+                    chunk_pos.x, chunk_pos.y
+                ));
+                // Sleep for 1 second before retrying
+                let promise = js_sys::Promise::new(&mut |resolve, _| {
+                    let window = web_sys::window().unwrap();
+                    window
+                        .set_timeout_with_callback_and_timeout_and_arguments_0(&resolve, 1000)
+                        .unwrap();
+                });
+                JsFuture::from(promise).await?;
+                continue;
+            }
 
-        let chunk = Chunk::deserialize(json)?;
+            // Convert this other `Promise` into a rust `Future`.
+            let json = JsFuture::from(resp.json()?).await?;
 
-        // Send the JSON response back to JS.
-        Ok(chunk)
+            let chunk = Chunk::deserialize(json)?;
+
+            // Send the JSON response back to JS.
+            return Ok(chunk);
+        }
     }
 }

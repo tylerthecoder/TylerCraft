@@ -15,6 +15,9 @@ export default class SocketServer {
 
   listenForConnection(listener: ConnectionListener): void {
     this.connectionListeners.push(listener);
+    for (const ws of this.server.clients) {
+      listener(ws);
+    }
   }
 
   newConnection(ws: WebSocket, request: IncomingMessage): void {
