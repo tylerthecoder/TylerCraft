@@ -11,7 +11,14 @@ use wasm_bindgen_futures::JsFuture;
 use web_sys::{Request, RequestInit, RequestMode, Response};
 
 /// Shared state for tracking an in-flight async chunk load
-type InFlightState = Rc<RefCell<Option<Result<Chunk, String>>>>;
+type InFlightResult = Rc<RefCell<Option<Result<Chunk, String>>>>;
+
+/// An in-flight chunk request with its position and result state
+#[derive(Clone)]
+struct InFlightChunk {
+    pos: ChunkPos,
+    result: InFlightResult,
+}
 
 #[derive(Clone, Serialize, Deserialize)]
 #[wasm_bindgen(getter_with_clone)]
@@ -20,7 +27,7 @@ pub struct ChunkFetcher {
     chunk_loader: ChunkLoader,
     /// Tracks all currently loading chunks (not serialized)
     #[serde(skip)]
-    in_flight: Vec<InFlightState>,
+    in_flight: Vec<InFlightChunk>,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -39,13 +46,22 @@ impl ChunkFetcher {
     }
 
     pub fn request_chunk(&mut self, chunk_pos: ChunkPos) {
+        // Check if already queued
+        if self.chunks_to_load.iter().any(|pos| pos == &chunk_pos) {
+            return;
+        }
+        // Check if already in-flight
+        if self
+            .in_flight
+            .iter()
+            .any(|inflight| inflight.pos == chunk_pos)
+        {
+            return;
+        }
         js_log(&format!(
             "chunk_fetcher.rs: Requesting chunk: {:?}",
             chunk_pos
         ));
-        if self.chunks_to_load.iter().any(|pos| pos == &chunk_pos) {
-            return;
-        }
         self.chunks_to_load.push(chunk_pos);
     }
 
@@ -58,7 +74,7 @@ impl ChunkFetcher {
         // 1. Check if any in-flight request has completed
         let mut completed_index = None;
         for (i, in_flight) in self.in_flight.iter().enumerate() {
-            if in_flight.borrow().is_some() {
+            if in_flight.result.borrow().is_some() {
                 completed_index = Some(i);
                 break;
             }
@@ -66,7 +82,7 @@ impl ChunkFetcher {
 
         if let Some(index) = completed_index {
             let in_flight = self.in_flight.remove(index);
-            let result = in_flight.borrow_mut().take().unwrap();
+            let result = in_flight.result.borrow_mut().take().unwrap();
             match result {
                 Ok(chunk) => return Some(chunk),
                 Err(e) => {
@@ -85,17 +101,20 @@ impl ChunkFetcher {
                 }
                 ChunkLoader::Server(loader) => {
                     // Async case - spawn background task
-                    let state: InFlightState = Rc::new(RefCell::new(None));
-                    let state_clone = state.clone();
+                    let result: InFlightResult = Rc::new(RefCell::new(None));
+                    let result_clone = result.clone();
                     let loader_clone = loader.clone();
 
                     wasm_bindgen_futures::spawn_local(async move {
-                        let result = loader_clone.load_chunk(chunk_pos).await;
-                        let mapped = result.map_err(|e| format!("{:?}", e));
-                        *state_clone.borrow_mut() = Some(mapped);
+                        let fetch_result = loader_clone.load_chunk(chunk_pos).await;
+                        let mapped = fetch_result.map_err(|e| format!("{:?}", e));
+                        *result_clone.borrow_mut() = Some(mapped);
                     });
 
-                    self.in_flight.push(state);
+                    self.in_flight.push(InFlightChunk {
+                        pos: chunk_pos,
+                        result,
+                    });
                 }
             }
         }
