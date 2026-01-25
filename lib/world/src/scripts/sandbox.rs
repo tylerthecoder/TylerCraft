@@ -1,5 +1,5 @@
 use crate::chunk::chunk_pos::ChunkPos;
-use crate::entities::entities::{EntityQuery, EntityQueryResults};
+use crate::entities::entities::{Entities, EntityQuery, EntityQueryResults};
 use crate::game::GameSchedule;
 use crate::scripts::game_script::GameScript;
 use crate::{
@@ -78,6 +78,39 @@ impl GameScript for SandBoxGScript {
         let mut query = EntityQuery::new();
         query.add::<FineWorldPos>();
         query
+    }
+
+    fn on_script_mounted(
+        &mut self,
+        world: &World,
+        entities: &Entities,
+        chunk_fetcher: &mut ChunkFetcher,
+    ) {
+        web_sys::console::log_1(
+            &format!(
+                "SandBoxGScript onScriptMounted: {} chunks, {} entities",
+                world.get_all_chunk_ids().len(),
+                entities.get_all_entity_ids().len()
+            )
+            .into(),
+        );
+
+        // Request chunks around all entities on mount
+        let entity_poses: Vec<FineWorldPos> = entities
+            .get_all()
+            .iter()
+            .filter_map(|ent| ent.get::<FineWorldPos>().cloned())
+            .collect();
+
+        let nearby_unloaded_chunks: Vec<ChunkPos> = entity_poses
+            .iter()
+            .flat_map(|p| self.get_chunks_around_player(p))
+            .filter(|pos| !world.has_chunk(pos))
+            .collect();
+
+        for chunk_pos in nearby_unloaded_chunks {
+            chunk_fetcher.request_chunk(chunk_pos);
+        }
     }
 
     fn update(

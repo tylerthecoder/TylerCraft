@@ -170,8 +170,6 @@ export async function loadInitialChunks(
 ) {
   const { game } = runningGame;
   console.log("Loading initial chunks");
-  game.run_scripts();
-
   async function task() {
     await new Promise((resolve) => setTimeout(resolve, 0));
   }

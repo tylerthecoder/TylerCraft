@@ -185,10 +185,8 @@ impl Game {
     }
 
     pub fn add_all_scripts(&mut self) {
-        let all_chunk_ids = self.world.get_all_chunk_ids();
-        let all_entity_ids = self.entities.get_all_entity_ids();
         self.scripts
-            .add_all_scheduled_scripts(&all_chunk_ids, &all_entity_ids);
+            .add_all_scheduled_scripts(&self.world, &self.entities, &mut self.chunk_fetcher);
     }
 
     pub fn run_scripts(&mut self) {

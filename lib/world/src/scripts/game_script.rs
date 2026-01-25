@@ -1,6 +1,6 @@
 use crate::chunk::chunk::ChunkId;
 use crate::chunk::chunk_fetcher::ChunkFetcher;
-use crate::entities::entities::{EntityQuery, EntityQueryResults};
+use crate::entities::entities::{Entities, EntityQuery, EntityQueryResults};
 use crate::entities::entity::EntityId;
 use crate::entities::fireball::FireballScript;
 use crate::game::Game;
@@ -19,7 +19,6 @@ use serde_json::{from_value, to_value};
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::collections::HashSet;
 use std::fmt::Debug;
 use std::sync::Mutex;
 use wasm_bindgen::prelude::wasm_bindgen;
@@ -28,8 +27,9 @@ use wasm_bindgen::{JsCast, JsValue};
 pub trait GameScript: Any + Debug {
     fn on_script_mounted(
         &mut self,
-        _all_chunk_ids: &HashSet<ChunkId>,
-        _all_entity_ids: &HashSet<EntityId>,
+        _world: &World,
+        _entities: &Entities,
+        _chunk_fetcher: &mut ChunkFetcher,
     ) {
         // Default implementation does nothing
     }
@@ -193,15 +193,16 @@ impl GameScripts {
 
     pub fn add_all_scheduled_scripts(
         &mut self,
-        all_chunk_ids: &HashSet<ChunkId>,
-        all_entity_ids: &HashSet<EntityId>,
+        world: &World,
+        entities: &Entities,
+        chunk_fetcher: &mut ChunkFetcher,
     ) {
         let scripts = std::mem::take(&mut self.scripts_to_add);
         for script in scripts {
             let script_name = script.get_name();
             self.add_script(script);
             let script = self.get_script_by_name_mut(script_name).unwrap();
-            script.on_script_mounted(all_chunk_ids, all_entity_ids);
+            script.on_script_mounted(world, entities, chunk_fetcher);
         }
     }
 
@@ -439,9 +440,14 @@ impl GameScript for WasmGameScript {
 
     fn on_script_mounted(
         &mut self,
-        all_chunk_ids: &HashSet<ChunkId>,
-        all_entity_ids: &HashSet<EntityId>,
+        world: &World,
+        entities: &Entities,
+        _chunk_fetcher: &mut ChunkFetcher,
     ) {
+        // For JavaScript scripts, we pass the IDs since they can access
+        // the full Game object to get World/Entities data as needed
+        let all_chunk_ids = world.get_all_chunk_ids();
+        let all_entity_ids = entities.get_all_entity_ids();
         let val = serde_wasm_bindgen::to_value(&all_chunk_ids).unwrap();
         let val2 = serde_wasm_bindgen::to_value(&all_entity_ids).unwrap();
         self.on_script_mounted_jsfn

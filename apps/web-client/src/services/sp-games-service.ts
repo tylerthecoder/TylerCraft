@@ -62,16 +62,16 @@ export async function run(
   log("The Game", game);
   (window as any).game = game;
 
+  // ===== Main Player =====
+  const mainPlayerUid = getMyUid();
+  game.makeAndAddPlayer(mainPlayerUid);
+  game.add_new_entities();
+
   // ===== Game Scripts =====
   log("Ensuring scripts");
   game.ensureScript(SandBoxGScript.name());
   game.ensureScript(GameRendererGameScript.name);
   game.add_all_scripts();
-
-  // ===== Main Player =====
-  const mainPlayerUid = getMyUid();
-  game.makeAndAddPlayer(mainPlayerUid);
-  game.update();
 
   // ===== Running Game =====
   const runningGame = new RunningGame(game, mainPlayerUid);

@@ -107,6 +107,5 @@ impl Game {
         }
         let player = Player::make_entity(uid);
         self.schedule_entity_insert(player);
-        self.update();
     }
 }
