@@ -111,8 +111,6 @@ impl Game {
             .add_handler(SecondaryBeltAction::make_handler());
         self.action_holder
             .add_handler(SelectItemAction::make_handler());
-
-        self.update();
     }
 
     #[wasm_bindgen(constructor)]
