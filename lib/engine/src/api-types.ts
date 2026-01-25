@@ -71,3 +71,8 @@ export class SocketMessage extends MessageHolder<
     return new SocketMessage(type, data);
   }
 }
+
+export interface IApiGameMetadata {
+  gameId: string;
+  name: string;
+}

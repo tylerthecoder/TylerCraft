@@ -1,5 +1,9 @@
-import { IGameMetadata, ISerializedGame, serializeGame } from "@craft/engine";
-import { Game } from "@craft/rust-world";
+import {
+  IApiGameMetadata,
+  ISerializedGame,
+  serializeGame,
+} from "@craft/engine";
+import { CreateGameOptions, Game } from "@craft/rust-world";
 import { Collection, Document, MongoClient } from "mongodb";
 
 export class GameDb {
@@ -20,7 +24,7 @@ export class GameDb {
     this.gameCollection = this.client.db("tylercraft").collection("games");
   }
 
-  getAllGameMetadata(): Promise<IGameMetadata[]> {
+  getAllGameMetadata(): Promise<IApiGameMetadata[]> {
     return this.gameCollection
       .find<ISerializedGame>(
         {},
@@ -67,8 +71,8 @@ export class GameDb {
     );
   }
 
-  async createGame(): Promise<Game> {
-    const game = new Game();
+  async createGame(options: CreateGameOptions): Promise<Game> {
+    const game = Game.create(options);
     await this.saveGame(game);
     return game;
   }

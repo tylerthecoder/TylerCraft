@@ -29,6 +29,57 @@ use uuid::Uuid;
 use wasm_bindgen::{prelude::wasm_bindgen, JsValue};
 
 #[wasm_bindgen(getter_with_clone)]
+#[derive(Serialize, Deserialize)]
+pub struct CreateGameOptions {
+    pub name: String,
+    #[wasm_bindgen(js_name = "flatWorld")]
+    pub flat_world: bool,
+    #[wasm_bindgen(js_name = "flatWorldHeight")]
+    pub flat_world_height: i32,
+    #[wasm_bindgen(js_name = "debugWorld")]
+    pub debug_world: bool,
+    pub seed: u32,
+}
+
+#[wasm_bindgen]
+impl CreateGameOptions {
+    #[wasm_bindgen(constructor)]
+    pub fn new(
+        name: String,
+        flat_world: bool,
+        flat_world_height: i32,
+        debug_world: bool,
+        seed: u32,
+    ) -> CreateGameOptions {
+        CreateGameOptions {
+            name,
+            flat_world,
+            flat_world_height,
+            debug_world,
+            seed,
+        }
+    }
+
+    pub fn default() -> CreateGameOptions {
+        CreateGameOptions {
+            name: "".to_string(),
+            flat_world: false,
+            flat_world_height: 1,
+            debug_world: false,
+            seed: 0,
+        }
+    }
+
+    pub fn from_js(value: JsValue) -> Result<CreateGameOptions, serde_wasm_bindgen::Error> {
+        serde_wasm_bindgen::from_value(value)
+    }
+
+    pub fn to_js(&self) -> Result<JsValue, serde_wasm_bindgen::Error> {
+        serde_wasm_bindgen::to_value(self)
+    }
+}
+
+#[wasm_bindgen(getter_with_clone)]
 pub struct Game {
     pub name: String,
     pub id: String,
@@ -81,6 +132,20 @@ impl Game {
         g
     }
 
+    #[wasm_bindgen(js_name = "create")]
+    pub fn create(options: CreateGameOptions) -> Game {
+        let mut g = Game::new();
+        g.name = options.name;
+        g.chunk_fetcher = ChunkFetcher::make_from_terrain_generator(TerrainGenerator::new(
+            options.seed,
+            options.flat_world,
+            options.flat_world_height,
+            options.debug_world,
+        ));
+        g.add_default_scripts();
+        g
+    }
+
     pub fn build(
         id: Option<String>,
         name: Option<String>,
@@ -119,6 +184,13 @@ impl Game {
             .action_holder
             .handle_actions(&self.world, &mut self.entities);
         self.schedule.combine(schedule);
+    }
+
+    pub fn add_all_scripts(&mut self) {
+        let all_chunk_ids = self.world.get_all_chunk_ids();
+        let all_entity_ids = self.entities.get_all_entity_ids();
+        self.scripts
+            .add_all_scheduled_scripts(&all_chunk_ids, &all_entity_ids);
     }
 
     pub fn run_scripts(&mut self) {
@@ -201,6 +273,7 @@ impl Game {
 
     pub fn update(&mut self) {
         self.handle_actions();
+        self.add_all_scripts();
         self.run_scripts();
         self.add_new_entities();
         self.remove_entities();
@@ -388,11 +461,11 @@ mod tests {
         game.update();
 
         let move_script = Box::new(MoveScript::default());
-        game.scripts.add_script(move_script);
+        game.scripts.schedule_script_for_mount(move_script);
         game.update();
 
         let velocity_script = Box::new(VelocityScript::default());
-        game.scripts.add_script(velocity_script);
+        game.scripts.schedule_script_for_mount(velocity_script);
         game.update();
 
         game.action_holder.add_handler(MoveAction::make_handler());

@@ -1,4 +1,3 @@
-import { CONFIG } from "./config.js";
 import { Vector3D } from "./vector.js";
 import { Player } from "@craft/rust-world";
 
@@ -24,10 +23,7 @@ export const makeCameraForPlayer = (player: Player) => {
   };
 };
 
-export const makeThirdPersonBackCamera = (
-  player: Player,
-  dist = CONFIG.player.thirdPersonCamDist
-) => {
+export const makeThirdPersonBackCamera = (player: Player, dist = 6) => {
   const rot = new Vector3D([0, player.rot.phi, player.rot.theta]);
   const player_pos = new Vector3D([player.pos.x, player.pos.y, player.pos.z]);
 
@@ -43,10 +39,7 @@ export const makeThirdPersonBackCamera = (
   };
 };
 
-export const makeThirdPersonFrontCamera = (
-  player: Player,
-  dist = CONFIG.player.thirdPersonCamDist
-) => {
+export const makeThirdPersonFrontCamera = (player: Player, dist = 6) => {
   const player_rot = new Vector3D([0, player.rot.phi, player.rot.theta]);
   const player_pos = new Vector3D([player.pos.x, player.pos.y, player.pos.z]);
 

@@ -8,7 +8,7 @@ import { SocketHandler, SocketListener } from "./socket-service";
 import { AppConfig } from "../appConfig";
 import {
   ChunkFetcher,
-  ChunkPos,
+  CreateGameOptions,
   Entities,
   Entity,
   EntityActionDto,
@@ -36,10 +36,15 @@ export async function getAllGames(): Promise<IServerGameMetadata[]> {
   return await response.json();
 }
 
-export async function create(name: string): Promise<string> {
+export async function create(options: CreateGameOptions): Promise<string> {
+  const optionsJson = options.to_js();
+  console.log("Creating game", optionsJson);
   const response = await fetch(`${baseUrl}/game`, {
     method: "POST",
-    body: JSON.stringify({ name }),
+    body: JSON.stringify(optionsJson),
+    headers: {
+      "Content-Type": "application/json",
+    },
   });
   return await response.text();
 }
@@ -126,6 +131,7 @@ export async function run(
   // ===== Game Scripts =====
   game.ensureScript(GameRendererGameScript.name);
   game.ensureScript(SandBoxGScript.name());
+  game.add_all_scripts();
 
   // ===== Main Player =====
   const myUid = getMyUid();
@@ -158,7 +164,7 @@ export async function run(
     }
     if (message.isType(ISocketMessageType.newPlayer)) {
       const player = message.data;
-      game.addEntity(Entity.from_js(player));
+      game.schedule_entity_insert(Entity.from_js(player));
     }
     // if (message.isType(ISocketMessageType.gameDiff)) {
     //   const diff = message.data;

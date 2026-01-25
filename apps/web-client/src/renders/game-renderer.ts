@@ -73,6 +73,16 @@ export class GameRendererGameScript {
     add_script_to_registry(GameRendererGameScript);
   }
 
+  onScriptMounted(allChunkIds: Set<number>, allEntityIds: Set<number>): void {
+    log("GameScript onScriptMounted", allChunkIds, allEntityIds);
+    for (const chunkId of allChunkIds) {
+      this.updatedChunks.add(chunkId);
+    }
+    for (const entityId of allEntityIds) {
+      this.updatedEntities.add(entityId);
+    }
+  }
+
   // This is called by the rust side when a chunk is updated
   onChunkUpdate(chunkId: number): void {
     log("GameScript onChunkUpdate", chunkId);
@@ -484,7 +494,7 @@ export class GameRenderer {
     log("Adding entity", entity);
     // if (entity instanceof PlayerWrapper) {
     if (Player.is_player(entity)) {
-      log("Adding player");
+      log("Adding player with id", entity.id);
       const renderer = new PlayerRenderer(this.game, this, entity.id);
       this.entityRenderers.set(entity.id, renderer);
     } else if (Fireball.is_fireball(entity)) {

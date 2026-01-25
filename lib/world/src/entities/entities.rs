@@ -6,6 +6,7 @@ use super::fireball::Fireball;
 use super::player::Player;
 use serde::{Deserialize, Serialize};
 use serde_wasm_bindgen::{from_value, to_value};
+use std::collections::HashSet;
 use std::{any::TypeId, fmt::Debug};
 use wasm_bindgen::prelude::*;
 
@@ -71,6 +72,10 @@ impl Entities {
 
     pub fn get_all(&self) -> &Vec<Entity> {
         &self.entities
+    }
+
+    pub fn get_all_entity_ids(&self) -> HashSet<EntityId> {
+        self.entities.iter().map(|entity| entity.id).collect()
     }
 
     pub fn get_all_mut(&mut self) -> &mut Vec<Entity> {

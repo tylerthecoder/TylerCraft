@@ -19,12 +19,21 @@ use serde_json::{from_value, to_value};
 use std::any::Any;
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::collections::HashSet;
 use std::fmt::Debug;
 use std::sync::Mutex;
 use wasm_bindgen::prelude::wasm_bindgen;
 use wasm_bindgen::{JsCast, JsValue};
 
 pub trait GameScript: Any + Debug {
+    fn on_script_mounted(
+        &mut self,
+        _all_chunk_ids: &HashSet<ChunkId>,
+        _all_entity_ids: &HashSet<EntityId>,
+    ) {
+        // Default implementation does nothing
+    }
+
     fn update(
         &mut self,
         _world: &World,
@@ -89,6 +98,7 @@ impl std::fmt::Display for ScriptNotFoundError {
 #[wasm_bindgen]
 pub struct GameScripts {
     scripts: Vec<Box<dyn GameScript>>,
+    scripts_to_add: Vec<Box<dyn GameScript>>,
 }
 
 impl Clone for GameScripts {
@@ -140,7 +150,10 @@ impl<'de> Deserialize<'de> for GameScripts {
 
         let GameScriptHelper { scripts } = GameScriptHelper::deserialize(deserializer)?;
 
-        let mut game_scripts = GameScripts { scripts: vec![] };
+        let mut game_scripts = GameScripts {
+            scripts: vec![],
+            scripts_to_add: vec![],
+        };
 
         for item in scripts {
             let js_config: JsValue = JSON::parse(&item.config).unwrap();
@@ -174,7 +187,25 @@ impl GameScripts {
         })
     }
 
-    pub fn add_script(&mut self, script: Box<dyn GameScript>) {
+    pub fn schedule_script_for_mount(&mut self, script: Box<dyn GameScript>) {
+        self.scripts_to_add.push(script);
+    }
+
+    pub fn add_all_scheduled_scripts(
+        &mut self,
+        all_chunk_ids: &HashSet<ChunkId>,
+        all_entity_ids: &HashSet<EntityId>,
+    ) {
+        let scripts = std::mem::take(&mut self.scripts_to_add);
+        for script in scripts {
+            let script_name = script.get_name();
+            self.add_script(script);
+            let script = self.get_script_by_name_mut(script_name).unwrap();
+            script.on_script_mounted(all_chunk_ids, all_entity_ids);
+        }
+    }
+
+    fn add_script(&mut self, script: Box<dyn GameScript>) {
         js_log(&format!("Adding script {}", script.get_name()));
         let name = script.get_name();
         if let Some(idx) = self.scripts.iter().position(|s| s.get_name() == name) {
@@ -223,7 +254,7 @@ impl GameScripts {
         }
         let game_script = GameScripts::build_script_from_registry(script_name);
 
-        self.add_script(game_script);
+        self.schedule_script_for_mount(game_script);
     }
 
     pub fn get_script_state(&self, script_name: String) -> JsValue {
@@ -326,6 +357,7 @@ pub struct WasmGameScript {
     context: JsValue,
     get_config_jsfn: js_sys::Function,
     set_config_jsfn: js_sys::Function,
+    on_script_mounted_jsfn: js_sys::Function,
     on_chunk_update_jsfn: js_sys::Function,
     on_entity_update_jsfn: js_sys::Function,
 }
@@ -360,6 +392,8 @@ impl WasmGameScript {
             js_class_instance
         ));
 
+        let on_script_mounted_jsfn = get(&js_class_instance, &JsValue::from("onScriptMounted"))
+            .expect("Can't find method onScriptMounted");
         let on_chunk_update_jsfn = get(&js_class_instance, &JsValue::from("onChunkUpdate"))
             .expect("Can't find method onChunkUpdate");
         let on_entity_update_jsfn = get(&js_class_instance, &JsValue::from("onEntityUpdate"))
@@ -371,6 +405,7 @@ impl WasmGameScript {
 
         WasmGameScript {
             name,
+            on_script_mounted_jsfn: on_script_mounted_jsfn.into(),
             on_chunk_update_jsfn: on_chunk_update_jsfn.into(),
             on_entity_update_jsfn: on_entity_update_jsfn.into(),
             get_config_jsfn: get_config_jsfn.into(),
@@ -400,6 +435,18 @@ impl GameScript for WasmGameScript {
 
     fn set_config(&mut self, config: JsValue) {
         self.set_config_jsfn.call1(&self.context, &config).unwrap();
+    }
+
+    fn on_script_mounted(
+        &mut self,
+        all_chunk_ids: &HashSet<ChunkId>,
+        all_entity_ids: &HashSet<EntityId>,
+    ) {
+        let val = serde_wasm_bindgen::to_value(&all_chunk_ids).unwrap();
+        let val2 = serde_wasm_bindgen::to_value(&all_entity_ids).unwrap();
+        self.on_script_mounted_jsfn
+            .call2(&self.context, &val, &val2)
+            .unwrap();
     }
 
     fn on_chunk_update(&self, chunk_id: ChunkId) {

@@ -37,6 +37,14 @@ class ServerGameManagerGameScript {
     add_script_to_registry(ServerGameManagerGameScript);
   }
 
+  onScriptMounted(allChunkIds: Set<number>, allEntityIds: Set<number>): void {
+    console.log(
+      "ServerGameManagerGameScript onScriptMounted",
+      allChunkIds,
+      allEntityIds
+    );
+  }
+
   onChunkUpdate(chunkId: number): void {
     console.log("ServerGameManagerGameScript onChunkUpdate", chunkId);
     this.updatedChunks.add(chunkId);
@@ -105,6 +113,7 @@ export class ServerGameManager {
     });
 
     game.ensureScript(ServerGameManagerGameScript.name);
+    game.add_all_scripts();
   }
 
   private getGameManagerGameScript(): ServerGameManagerGameScript {

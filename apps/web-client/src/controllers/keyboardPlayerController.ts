@@ -1,4 +1,4 @@
-import { CONFIG, PlayerController } from "@craft/engine";
+import { PlayerController } from "@craft/engine";
 import { Direction, EntityActionDto, Game } from "@craft/rust-world";
 import { GameRenderer, PlayerPerspective } from "../renders/game-renderer";
 
@@ -55,8 +55,8 @@ export class KeyboardPlayerEntityController extends PlayerController {
         return;
       }
 
-      let moveX = e.movementX * CONFIG.player.mouseRotSpeed;
-      const moveY = e.movementY * CONFIG.player.mouseRotSpeed;
+      let moveX = e.movementX * 0.002;
+      const moveY = e.movementY * 0.002;
 
       if (
         this.gameRenderer.perspective === PlayerPerspective.ThirdPersonFront

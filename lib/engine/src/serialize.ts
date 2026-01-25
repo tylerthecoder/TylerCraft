@@ -29,11 +29,6 @@ export interface ISerializedChunkFetcher {
   json: any;
 }
 
-export interface IGameMetadata {
-  gameId: string;
-  name: string;
-}
-
 export interface ISerializedScript {
   scripts: Array<{
     config: string;

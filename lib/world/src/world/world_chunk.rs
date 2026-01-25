@@ -2,7 +2,11 @@ use wasm_bindgen::prelude::wasm_bindgen;
 
 use super::{ChunkNotLoadedError, World, WorldStateDiff};
 use crate::{
-    chunk::{chunk::Chunk, chunk_mesh::ChunkMesh, chunk_pos::ChunkPos},
+    chunk::{
+        chunk::{Chunk, ChunkId},
+        chunk_mesh::ChunkMesh,
+        chunk_pos::ChunkPos,
+    },
     components::world_pos::WorldPos,
     game::Game,
 };
@@ -28,6 +32,10 @@ impl World {
         world_pos: &WorldPos,
     ) -> Result<&Chunk, ChunkNotLoadedError> {
         self.get_chunk(&world_pos.to_chunk_pos())
+    }
+
+    pub fn get_all_chunk_ids(&self) -> HashSet<ChunkId> {
+        self.chunks.keys().map(|&k| k as u64).collect()
     }
 
     pub fn get_mut_chunk(

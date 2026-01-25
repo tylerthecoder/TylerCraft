@@ -38,7 +38,14 @@ export class PlayerRenderer extends Renderer {
   }
 
   render(camera: Camera) {
-    const player = this.game.entities.get_entity_as_player(this.entityId);
+    const player = this.game.getEntityAsPlayer(this.entityId);
+    console.log(
+      "Rendering player with id",
+      this.entityId,
+      player?.pos.x,
+      player?.pos.y,
+      player?.pos.z
+    );
     if (!player) {
       throw new Error("Player not found");
     }

@@ -5,7 +5,8 @@ import cors from "cors";
 import SocketServer from "./socket.js";
 import { ServerGameManager } from "./server-game-manager.js";
 import { GameDb } from "./db.js";
-import { IGameMetadata } from "@craft/engine";
+import { IApiGameMetadata } from "@craft/engine";
+import { CreateGameOptions } from "@craft/rust-world";
 import { makeLogger } from "./logger.js";
 
 const PORT = process.env.PORT ?? 3000;
@@ -36,7 +37,7 @@ app.use(express.static(webClientPath));
 app.get("/games", async (_req: Request, res: Response) => {
   const gamesMetadata = await gameDb.getAllGameMetadata();
 
-  const gameInfos: (IGameMetadata & {
+  const gameInfos: (IApiGameMetadata & {
     isRunning: boolean;
     onlinePlayers: number;
   })[] = gamesMetadata.map((gameMetadata) => {
@@ -52,8 +53,10 @@ app.get("/games", async (_req: Request, res: Response) => {
 });
 
 app.post("/game", async (req: Request, res: Response) => {
-  log("Creating game");
-  const game = await gameDb.createGame();
+  const body = req.body;
+  log("Creating game", body);
+  const options = CreateGameOptions.from_js(req.body);
+  const game = await gameDb.createGame(options);
   log("Game created", game.id);
   res.send(game.id);
 });

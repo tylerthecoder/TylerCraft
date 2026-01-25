@@ -1,11 +1,11 @@
 import {
-  IGameMetadata,
+  IApiGameMetadata,
   ISerializedGame,
   deserializeGame,
   serializeGame,
 } from "@craft/engine";
-import { Game } from "@craft/rust-world";
-import { getMyUid, task } from "../utils";
+import { CreateGameOptions, Game } from "@craft/rust-world";
+import { getMyUid } from "../utils";
 import { SandBoxGScript } from "@craft/rust-world";
 import { GameRendererGameScript } from "../renders/game-renderer";
 import {
@@ -21,11 +21,10 @@ const log = (...message: any[]) => {
   console.log("sp-games-service.ts: ", ...message);
 };
 
-export async function create(gameName: string): Promise<string> {
+export async function create(options: CreateGameOptions): Promise<string> {
   log("Creating new game");
   const startCreation = performance.now();
-  const game = new Game();
-  game.name = gameName;
+  const game = Game.create(options);
   const endCreation = performance.now();
   log("Created new game in", endCreation - startCreation, "ms");
   log("Saving game");
@@ -67,6 +66,7 @@ export async function run(
   log("Ensuring scripts");
   game.ensureScript(SandBoxGScript.name());
   game.ensureScript(GameRendererGameScript.name);
+  game.add_all_scripts();
 
   // ===== Main Player =====
   const mainPlayerUid = getMyUid();
@@ -139,7 +139,7 @@ export class ClientDbGamesService {
 
   private constructor(private db: IDBDatabase) {}
 
-  getAllGames(): Promise<IGameMetadata[]> {
+  getAllGames(): Promise<IApiGameMetadata[]> {
     return new Promise((resolve) => {
       const transaction = this.db.transaction([
         ClientDbGamesService.WORLDS_OBS,
