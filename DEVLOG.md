@@ -2,6 +2,8 @@
 
 Working on loading chunks with the server. I started to launch chunk requests in the background so I don't have to await on the consume single chunk request.
 
+Looks like multiplayer is working. But the client and server are hopelessly out of sync. I also don't know why the client is so slow, I need to figure that out. That should help. But really I need to add deltas to the update functions and I need to have the server sync the position with the client.
+
 # 01_11_26
 
 Worked on the starting flow for making a client and server game. The joining and starting of a game seems to have some race condition because I have to refresh the page to actually join.
