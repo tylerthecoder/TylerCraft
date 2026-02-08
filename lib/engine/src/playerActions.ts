@@ -8,6 +8,7 @@ import {
   SecondaryBeltAction,
   SelectItemAction,
   SphericalRotation,
+  TeleportAction,
   UsePrimaryItemAction,
 } from "@craft/rust-world";
 export abstract class PlayerController {
@@ -80,6 +81,11 @@ export abstract class PlayerController {
 
   secondaryAction() {
     const action = SecondaryBeltAction.make_wasm(this.playerId);
+    this.handleAction(action);
+  }
+
+  teleport(x: number, y: number, z: number) {
+    const action = TeleportAction.make_wasm(this.playerId, x, y, z);
     this.handleAction(action);
   }
 

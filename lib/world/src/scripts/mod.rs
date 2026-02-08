@@ -6,4 +6,5 @@ pub mod player_move_script;
 pub mod player_rot_script;
 pub mod sandbox;
 pub mod script_map;
+pub mod player_tp_script;
 pub mod velocity_script;

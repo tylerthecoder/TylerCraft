@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { BooleanInput, NumberInput, TextInput } from "./ui/Inputs";
 import { RunningGame } from "../services/sp-games-service";
 import { useNavigate } from "react-router-dom";
+import { TeleportAction } from "@craft/rust-world";
 
 interface GameConfigMenuProps {
   runningGame: RunningGame;
@@ -20,7 +21,7 @@ interface ChunkFetcherConfig {
   };
 }
 
-type ActiveTab = "Chunk Fetcher" | "Game Config" | string;
+type ActiveTab = "Chunk Fetcher" | "Game Config" | "Player Actions" | string;
 
 function MenuLabel({ children }: { children: React.ReactNode }) {
   return <span className="min-w-[150px] text-gray-400">{children}</span>;
@@ -40,7 +41,23 @@ export function GameConfigMenu({
     useState<ChunkFetcherConfig>(game.serializeChunkFetcher());
   const [activeTab, setActiveTab] = useState<ActiveTab>("Game Config");
   const [gameName, setGameName] = useState<string>(game.name);
+  const [tpX, setTpX] = useState(0);
+  const [tpY, setTpY] = useState(0);
+  const [tpZ, setTpZ] = useState(0);
   const navigate = useNavigate();
+
+  // Load current player position when Player Actions tab is opened
+  useEffect(() => {
+    if (isOpen && activeTab === "Player Actions") {
+      const player = game.getEntityAsPlayer(runningGame.playerId);
+      if (player) {
+        const pos = player.pos;
+        setTpX(Math.round(pos.x * 100) / 100);
+        setTpY(Math.round(pos.y * 100) / 100);
+        setTpZ(Math.round(pos.z * 100) / 100);
+      }
+    }
+  }, [isOpen, activeTab]);
 
   useEffect(() => {
     if (isOpen && runningGame) {
@@ -127,6 +144,11 @@ export function GameConfigMenu({
   const handleGameNameChange = (value: string) => {
     game.name = value;
     setGameName(value);
+  };
+
+  const handleTeleport = () => {
+    const action = TeleportAction.make_wasm(runningGame.playerId, tpX, tpY, tpZ);
+    runningGame.onAction(action);
   };
 
   const handleSaveGame = () => {
@@ -290,6 +312,17 @@ export function GameConfigMenu({
                   Chunk Fetcher
                 </button>
 
+                {/* Player Actions Tab */}
+                <button
+                  onClick={() => setActiveTab("Player Actions")}
+                  className={`block w-full px-4 py-3 text-left cursor-pointer border-b border-gray-700 transition-colors ${activeTab === "Player Actions"
+                      ? "bg-green-500 text-white"
+                      : "bg-transparent text-gray-400 hover:bg-gray-800"
+                    }`}
+                >
+                  Player Actions
+                </button>
+
                 {/* Script Tabs */}
                 {scriptNames.map((name) => (
                   <button
@@ -323,6 +356,44 @@ export function GameConfigMenu({
                         No configuration options available
                       </div>
                     )}
+                  </div>
+                ) : activeTab === "Player Actions" ? (
+                  <div>
+                    <h3 className="mt-0 text-green-500 border-b border-gray-700 pb-2 mb-4">
+                      Player Actions
+                    </h3>
+
+                    <h4 className="text-gray-300 mb-3">Teleport</h4>
+                    <div className="flex items-center gap-3 mb-2">
+                      <MenuLabel>X:</MenuLabel>
+                      <NumberInput
+                        value={tpX}
+                        step={1}
+                        onChange={(v) => setTpX(v)}
+                      />
+                    </div>
+                    <div className="flex items-center gap-3 mb-2">
+                      <MenuLabel>Y:</MenuLabel>
+                      <NumberInput
+                        value={tpY}
+                        step={1}
+                        onChange={(v) => setTpY(v)}
+                      />
+                    </div>
+                    <div className="flex items-center gap-3 mb-2">
+                      <MenuLabel>Z:</MenuLabel>
+                      <NumberInput
+                        value={tpZ}
+                        step={1}
+                        onChange={(v) => setTpZ(v)}
+                      />
+                    </div>
+                    <button
+                      onClick={handleTeleport}
+                      className="bg-green-600 hover:bg-green-700 text-white border-0 px-4 py-2 rounded cursor-pointer text-sm mt-2 focus:outline-none"
+                    >
+                      Teleport
+                    </button>
                   </div>
                 ) : activeTab === "Game Config" ? (
                   <div>

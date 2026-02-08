@@ -18,6 +18,7 @@ use crate::{
         player_jump_script::JumpAction,
         player_move_script::{MoveAction, MoveScript},
         player_rot_script::RotateAction,
+        player_tp_script::TeleportAction,
         velocity_script::VelocityScript,
     },
     terrain_gen::TerrainGenerator,
@@ -111,6 +112,8 @@ impl Game {
             .add_handler(SecondaryBeltAction::make_handler());
         self.action_holder
             .add_handler(SelectItemAction::make_handler());
+        self.action_holder
+            .add_handler(TeleportAction::make_handler());
     }
 
     #[wasm_bindgen(constructor)]
@@ -189,12 +192,12 @@ impl Game {
             .add_all_scheduled_scripts(&self.world, &self.entities, &mut self.chunk_fetcher);
     }
 
-    pub fn run_scripts(&mut self) {
+    pub fn run_scripts(&mut self, delta_ms: f32) {
         let world = &self.world;
         for script in self.scripts.get_scripts_mut() {
             let query = script.get_query();
             let query_results = self.entities.query(&query);
-            let diff = script.update(world, query_results, &mut self.chunk_fetcher);
+            let diff = script.update(world, query_results, &mut self.chunk_fetcher, delta_ms);
             if let Some(diff) = diff {
                 self.schedule.combine(diff);
             }
@@ -267,10 +270,10 @@ impl Game {
         self.schedule.removed_blocks.clear();
     }
 
-    pub fn update(&mut self) {
+    pub fn update(&mut self, delta_ms: f32) {
         self.handle_actions();
         self.add_all_scripts();
-        self.run_scripts();
+        self.run_scripts(delta_ms);
         self.add_new_entities();
         self.remove_entities();
         // TODO: this shouldn't be async
@@ -418,12 +421,14 @@ mod tests {
     };
 
     use super::*;
+    const TEST_DELTA_MS: f32 = 16.67;
+
     #[test]
     pub fn add_player() {
         let mut game = Game::new();
         let player = Player::make_entity(1);
         game.schedule_entity_insert(player);
-        game.update();
+        game.update(TEST_DELTA_MS);
 
         // expect game to have a player in it
         game.entities.get_all_mut().iter().for_each(|ent| {
@@ -436,12 +441,12 @@ mod tests {
         let mut game = Game::new();
         let player = Player::make_entity(1);
         game.schedule_entity_insert(player);
-        game.update();
+        game.update(TEST_DELTA_MS);
         let jump_action_handler = JumpAction::make_handler();
         game.action_holder.add_handler(jump_action_handler);
         let jump_action = JumpAction::make_dto(1, JumpActionData {});
         game.action_holder.add(jump_action);
-        game.update();
+        game.update(TEST_DELTA_MS);
         let player = game.entities.get_entity_by_id(1).unwrap();
         let player_vel = player.get::<Velocity>().unwrap();
         assert!(player_vel.y > 0.0);
@@ -454,15 +459,15 @@ mod tests {
         player.print_components();
 
         game.schedule_entity_insert(player);
-        game.update();
+        game.update(TEST_DELTA_MS);
 
         let move_script = Box::new(MoveScript::default());
         game.scripts.schedule_script_for_mount(move_script);
-        game.update();
+        game.update(TEST_DELTA_MS);
 
         let velocity_script = Box::new(VelocityScript::default());
         game.scripts.schedule_script_for_mount(velocity_script);
-        game.update();
+        game.update(TEST_DELTA_MS);
 
         game.action_holder.add_handler(MoveAction::make_handler());
 
@@ -473,7 +478,7 @@ mod tests {
             },
         );
         game.action_holder.add(move_action);
-        game.update();
+        game.update(TEST_DELTA_MS);
 
         let player = game.entities.get_entity_by_id(1).unwrap();
         let player_pos = player.get::<FineWorldPos>().unwrap();

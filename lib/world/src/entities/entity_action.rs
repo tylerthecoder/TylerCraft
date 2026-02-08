@@ -7,6 +7,7 @@ use crate::scripts::player_belt_script::{
 use crate::scripts::player_jump_script::JumpActionData;
 use crate::scripts::player_move_script::MoveActionData;
 use crate::scripts::player_rot_script::RotateActionData;
+use crate::scripts::player_tp_script::TeleportActionData;
 use crate::utils::js_log;
 use crate::world::World;
 use lazy_static::lazy_static;
@@ -78,6 +79,7 @@ lazy_static! {
         register_action::<SecondaryBeltActionData>(&mut map, "SecondaryBeltAction");
         register_action::<SelectItemActionData>(&mut map, "SelectItemAction");
         register_action::<JumpActionData>(&mut map, "Jump-Action");
+        register_action::<TeleportActionData>(&mut map, "Teleport");
 
         Mutex::new(map)
     };
