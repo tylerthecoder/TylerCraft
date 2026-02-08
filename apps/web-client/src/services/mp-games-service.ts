@@ -1,30 +1,91 @@
 import {
-  IGameMetadata,
-  ISocketWelcomePayload,
-  ICreateGameOptions,
-  Game,
-  GameAction,
+  IServerGameMetadata,
   ISocketMessageType,
-  PlayerAction,
   SocketMessage,
-  IGamesService,
-  IContructGameOptions,
+  WelcomeMessage,
 } from "@craft/engine";
-import { SocketListener } from "../socket";
-import { SocketInterface, getMyUid } from "../app";
-import { ApiService } from "../services/api-service";
-import { GameScript } from "@craft/engine/game-script";
-import { BasicGScript } from "../game-scripts/basic-gscript";
+import { SocketHandler, SocketListener } from "./socket-service";
+import { AppConfig } from "../appConfig";
+import {
+  ChunkFetcher,
+  CreateGameOptions,
+  Entities,
+  Entity,
+  EntityActionDto,
+  Game,
+  SandBoxGScript,
+  ServerChunkLoader,
+} from "@craft/rust-world";
+import { getMyUid } from "../utils";
+import { GameRendererGameScript } from "../renders/game-renderer";
+import {
+  addGameRenderer,
+  addHudRenderer,
+  addPlayerController,
+  loadInitialChunks,
+  RunGameError,
+  RunningGame,
+} from "./running-game";
 
-export class NetworkGamesService implements IGamesService {
-  private async waitForWelcomeMessage() {
+export const SocketInterface = new SocketHandler();
+
+const baseUrl = AppConfig.api.baseUrl;
+
+export async function getAllGames(): Promise<IServerGameMetadata[]> {
+  const response = await fetch(`${baseUrl}/games`);
+  return await response.json();
+}
+
+export async function create(options: CreateGameOptions): Promise<string> {
+  const optionsJson = options.to_js();
+  console.log("Creating game", optionsJson);
+  const response = await fetch(`${baseUrl}/game`, {
+    method: "POST",
+    body: JSON.stringify(optionsJson),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  return await response.text();
+}
+
+export async function start(gameId: string): Promise<void> {
+  await fetch(`${baseUrl}/game/${gameId}/start`, {
+    method: "POST",
+  });
+}
+
+export async function run(
+  uiMessage: (message: string) => void,
+  gameId: string
+): Promise<RunningGame | RunGameError> {
+  // ===== Join Game =====
+  async function joinGame(gameId: string): Promise<WelcomeMessage> {
+    SocketInterface.send(
+      SocketMessage.make(ISocketMessageType.joinWorld, {
+        gameId,
+        myUid: getMyUid(),
+      })
+    );
+
+    const welcomeMessage = await waitForWelcomeMessage();
+    console.log("Welcome message", welcomeMessage);
+
+    if (!welcomeMessage) {
+      throw new Error("Server didn't create the world");
+    }
+    return welcomeMessage;
+  }
+
+  async function waitForWelcomeMessage() {
     let listener: SocketListener | null = null;
-    const welcomeMessage: ISocketWelcomePayload | null = await new Promise(
+    const welcomeMessage: WelcomeMessage | null = await new Promise(
       (resolve) => {
         listener = (message) => {
+          console.log("SocketMessage", message);
           if (message.isType(ISocketMessageType.welcome)) {
             resolve(message.data);
-          } else if (message.isType(ISocketMessageType.worldNotFound)) {
+          } else if (message.isType(ISocketMessageType.failedToJoin)) {
             resolve(null);
             console.error("Requested world not found");
           }
@@ -36,131 +97,91 @@ export class NetworkGamesService implements IGamesService {
     return welcomeMessage;
   }
 
-  private async buildGame(constructGame: IContructGameOptions) {
-    const gameSaver = {
-      save: async (game: Game) => {
-        this.saveGame(game);
-      },
-    };
+  uiMessage("Connecting to game server...");
 
-    const game = Game.make(constructGame, gameSaver);
+  await SocketInterface.connect(() => {
+    console.error("Socket disconnected");
+  });
 
-    const basic = game.addGameScript(BasicGScript);
-    game.addGameScript(ServerSideGameScript, basic);
+  uiMessage("Starting game...");
 
-    return game;
-  }
+  await start(gameId);
 
-  public async createGame(options: ICreateGameOptions): Promise<Game> {
+  uiMessage("Joining game...");
+
+  const welcomeMessage = await joinGame(gameId);
+
+  console.log("Joined game", welcomeMessage);
+
+  // ===== Deserialize Game =====
+  const entities = Entities.deserialize(welcomeMessage.entities);
+
+  const game = Game.build(
+    gameId,
+    null,
+    null,
+    entities,
+    null,
+    ChunkFetcher.makeFromServerChunkLoader(
+      new ServerChunkLoader(baseUrl, gameId)
+    )
+  );
+  (window as any).game = game;
+
+  // ===== Game Scripts =====
+  game.ensureScript(GameRendererGameScript.name);
+  game.ensureScript(SandBoxGScript.name());
+  game.add_all_scripts();
+
+  // ===== Main Player =====
+  const myUid = getMyUid();
+  console.log("My UID", myUid);
+
+  // ===== Running Game =====
+  const runningGame = new RunningGame(game, myUid, true);
+
+  // ===== Load Initial Chunks =====
+  await loadInitialChunks(runningGame, uiMessage);
+
+  // ===== Game Renderer =====
+  const gameRenderer = await addGameRenderer(runningGame, uiMessage);
+
+  // ===== Add Action Listener =====
+  const onAction = (action: EntityActionDto) => {
     SocketInterface.send(
-      SocketMessage.make(ISocketMessageType.newWorld, {
-        myUid: getMyUid(),
-        ...options,
-      })
+      SocketMessage.make(ISocketMessageType.actions, action.to_js())
     );
+  };
+  runningGame.onActionListeners.addListener(onAction, "onAction");
 
-    console.log("Creating world");
-
-    const welcomeMessage = await this.waitForWelcomeMessage();
-
-    if (!welcomeMessage) {
-      throw new Error("Server didn't create the world");
+  // ===== Add Socket Listener =====
+  SocketInterface.addListener((message) => {
+    console.log("Got actions message from server", message);
+    if (message.isType(ISocketMessageType.actions)) {
+      const action = message.data;
+      const actionDto = EntityActionDto.from_js(action);
+      game.handleAction(actionDto);
     }
-
-    console.log("Welcome Message", welcomeMessage);
-
-    return this.buildGame(welcomeMessage.game);
-  }
-
-  public async getGame(gameId: string): Promise<Game | null> {
-    SocketInterface.send(
-      SocketMessage.make(ISocketMessageType.joinWorld, {
-        worldId: gameId,
-        myUid: getMyUid(),
-      })
-    );
-
-    const welcomeMessage = await this.waitForWelcomeMessage();
-
-    if (!welcomeMessage) {
-      return null;
+    if (message.isType(ISocketMessageType.newPlayer)) {
+      const player = message.data;
+      game.schedule_entity_insert(Entity.from_js(player));
     }
+    // if (message.isType(ISocketMessageType.gameDiff)) {
+    //   const diff = message.data;
+    //   for (const chunkId of diff.updated_chunks) {
+    //     game.request_chunk(ChunkPos.from_id(BigInt(chunkId)));
+    //   }
+    // }
+  });
 
-    return this.buildGame(welcomeMessage.game);
-  }
+  // ===== Add Player Controller =====
+  addPlayerController(runningGame, gameRenderer);
 
-  public async getAllGames(): Promise<IGameMetadata[]> {
-    return await ApiService.getWorlds();
-  }
+  // ===== Hud Renderer =====
+  addHudRenderer(runningGame, gameRenderer);
 
-  // we might not have to send the data to the server here. Just tell the server that we want to save and it will
-  // use its local copy of the game to save
-  public async saveGame(gameData: Game): Promise<void> {
-    SocketInterface.send(
-      SocketMessage.make(ISocketMessageType.saveWorld, {
-        worldId: gameData.gameId,
-      })
-    );
-  }
+  // ===== Start Game =====
+  runningGame.start();
 
-  public async deleteGame(_gameId: string) {
-    // TO-DO implement this (REST)
-  }
-}
-
-export class ServerSideGameScript extends GameScript {
-  name = "server-side";
-
-  debug = true;
-
-  constructor(game: Game, private basic: BasicGScript) {
-    super(game);
-  }
-
-  setup() {
-    console.log("Setting up ServerSideGameScript");
-    SocketInterface.addListener(this.onSocketMessage.bind(this));
-
-    this.basic.playerActionService.addActionListener(
-      this.basic.mainPlayer.uid,
-      this.onPlayerAction.bind(this)
-    );
-  }
-
-  onGameAction(action: GameAction) {
-    if (this.debug) {
-      console.log("Sending game action", action);
-    }
-    SocketInterface.send(
-      SocketMessage.make(ISocketMessageType.actions, action.getDto())
-    );
-  }
-
-  onPlayerAction(action: PlayerAction) {
-    if (this.debug) {
-      console.log("Sending player action", action);
-    }
-    SocketInterface.send(
-      SocketMessage.make(ISocketMessageType.playerActions, action.getDto())
-    );
-  }
-
-  private onSocketMessage(message: SocketMessage) {
-    console.log("MP: Got message", message);
-    const mainPlayer = this.basic.mainPlayer;
-    const playerActionService = this.basic.playerActionService;
-
-    if (message.isType(ISocketMessageType.gameDiff)) {
-      this.game.handleStateDiff(message.data);
-    } else if (message.isType(ISocketMessageType.playerActions)) {
-      if (message.data.data.playerUid === mainPlayer.uid) return;
-
-      const playerAction = new PlayerAction(
-        message.data.type,
-        message.data.data
-      );
-
-      playerActionService.performAction(playerAction);
-    }
-  }
+  return runningGame;
 }

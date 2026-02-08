@@ -1,7 +1,8 @@
-use super::{Chunk, ChunkPos, InnerChunkPos};
 use crate::{
-    block::{BlockData, BlockType},
-    chunk::ChunkBlock,
+    block::{BlockData, BlockType, ChunkBlock},
+    chunk::{chunk::Chunk, chunk_pos::ChunkPos, inner_chunk_pos::InnerChunkPos},
+    components::world_pos::WorldPos,
+    geometry::vec::Vector3Ops,
     world::World,
 };
 
@@ -129,4 +130,130 @@ fn deletes_blocks() {
     let block = chunk.get_block_type(&inner_chunk_pos);
 
     assert_eq!(block, BlockType::Void)
+}
+
+#[test]
+fn index_conversion() {
+    fn do_test(index: usize, inner_chunk_pos: InnerChunkPos) -> () {
+        assert_eq!(inner_chunk_pos.to_chunk_index(), index);
+        assert_eq!(InnerChunkPos::make_from_chunk_index(index), inner_chunk_pos);
+    }
+
+    do_test(1024 + 32 + 3, InnerChunkPos::new(1, 2, 3));
+    do_test(0, InnerChunkPos::new(0, 0, 0));
+}
+
+#[test]
+fn inner_chunk_pos_to_chunk_index() {
+    fn do_test(inner_chunk_pos: InnerChunkPos) {
+        let index = inner_chunk_pos.to_chunk_index();
+        let inner_chunk_pos2 = InnerChunkPos::make_from_chunk_index(index);
+        assert_eq!(inner_chunk_pos, inner_chunk_pos2);
+    }
+
+    do_test(InnerChunkPos::new(0, 0, 0));
+    do_test(InnerChunkPos::new(15, 15, 15));
+}
+
+#[test]
+fn inner_chunk_pos_to_world_pos() {
+    fn do_test(inner_chunk_pos: InnerChunkPos, chunk_pos: ChunkPos, world_pos: WorldPos) {
+        assert_eq!(inner_chunk_pos.to_world_pos(&chunk_pos), world_pos);
+    }
+
+    do_test(
+        InnerChunkPos::new(1, 2, 3),
+        ChunkPos { x: 0, y: 0 },
+        WorldPos { x: 1, y: 2, z: 3 },
+    );
+
+    do_test(
+        InnerChunkPos::new(1, 2, 3),
+        ChunkPos { x: 1, y: 1 },
+        WorldPos { x: 17, y: 2, z: 19 },
+    );
+
+    do_test(
+        InnerChunkPos::new(1, 2, 3),
+        ChunkPos { x: -1, y: -1 },
+        WorldPos {
+            x: -15,
+            y: 2,
+            z: -13,
+        },
+    );
+
+    do_test(
+        InnerChunkPos::new(15, 0, 15),
+        ChunkPos { x: -2, y: -3 },
+        WorldPos {
+            x: -17,
+            y: 0,
+            z: -33,
+        },
+    );
+}
+
+#[test]
+fn world_pos_to_chunk_pos() {
+    assert_eq!(
+        WorldPos { x: 1, y: 2, z: 3 }.to_chunk_pos(),
+        ChunkPos { x: 0, y: 0 }
+    );
+    assert_eq!(
+        WorldPos { x: 0, y: 0, z: 0 }.to_chunk_pos(),
+        ChunkPos { x: 0, y: 0 }
+    );
+    assert_eq!(
+        WorldPos { x: -1, y: 0, z: -1 }.to_chunk_pos(),
+        ChunkPos { x: -1, y: -1 }
+    );
+
+    assert_eq!(
+        WorldPos {
+            x: -16,
+            y: 0,
+            z: -16,
+        }
+        .to_chunk_pos(),
+        ChunkPos { x: -1, y: -1 }
+    );
+
+    assert_eq!(
+        WorldPos { x: 16, y: 0, z: 0 }.to_chunk_pos(),
+        ChunkPos { x: 1, y: 0 }
+    );
+
+    assert_eq!(
+        WorldPos { x: 0, y: 0, z: -1 }.to_chunk_pos(),
+        ChunkPos { x: 0, y: -1 }
+    );
+}
+
+#[test]
+fn world_pos_to_inner_chunk_pos() {
+    assert_eq!(
+        WorldPos { x: 1, y: 2, z: 3 }.to_inner_chunk_pos(),
+        InnerChunkPos::new(1, 2, 3)
+    );
+
+    assert_eq!(
+        WorldPos { x: -1, y: 0, z: 1 }.to_inner_chunk_pos(),
+        InnerChunkPos::new(15, 0, 1)
+    );
+
+    assert_eq!(
+        WorldPos { x: -1, y: 0, z: -1 }.to_inner_chunk_pos(),
+        InnerChunkPos::new(15, 0, 15)
+    );
+
+    assert_eq!(
+        WorldPos {
+            x: -32,
+            y: 20,
+            z: 0,
+        }
+        .to_inner_chunk_pos(),
+        InnerChunkPos::new(0, 20, 0)
+    );
 }

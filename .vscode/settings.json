@@ -6,15 +6,13 @@
     "gravitable",
     "mult",
     "toolbelt",
+    "Tsify",
     "tylercraft",
     "upsert",
     "vecs",
     "wasd"
   ],
   "typescript.tsdk": ".yarn/sdks/typescript/lib",
-  "files.exclude": {
-    // "bin/": true
-  },
   "rust-analyzer.linkedProjects": ["lib/world/Cargo.toml"],
   "search.exclude": {
     "**/node_modules": true,
@@ -26,5 +24,10 @@
   },
   "editor.suggestSelection": "first",
   "eslint.nodePath": ".yarn/sdks",
-  "typescript.enablePromptUseWorkspaceTsdk": true
+  "editor.defaultFormatter": "dbaeumer.vscode-eslint",
+
+  "typescript.enablePromptUseWorkspaceTsdk": true,
+  "[typescript]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  }
 }

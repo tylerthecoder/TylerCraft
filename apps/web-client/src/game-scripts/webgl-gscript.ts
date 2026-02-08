@@ -1,4 +1,4 @@
-import { Game, Vector3D } from "@craft/engine";
+import { GameScript, GameWrapper, Vector3D } from "@craft/engine";
 import type {
   Navigator,
   XRSession,
@@ -9,17 +9,17 @@ import type {
 import { mat4 } from "gl-matrix";
 import VertexShader from "../../shaders/vertex.glsl?raw";
 import FragmentShader from "../../shaders/fragment.glsl?raw";
-import { GameScript } from "@craft/engine/game-script";
+import { Game } from "@craft/rust-world";
 
 const WebGlLayer = (window as any).XRWebGLLayer as typeof XRWebGLLayer;
 
-type Conifg = {
+type Config = {
   transparency: boolean;
   glFov: number;
 };
 
-export class WebGlGScript extends GameScript<Conifg> {
-  name = "canvas";
+export class WebGlGScript extends GameScript<Config> {
+  public name = "WebGL Renderer";
 
   public eCanvas = document.getElementById("glCanvas") as HTMLCanvasElement;
   public eWebxrButton = document.getElementById(
@@ -41,16 +41,36 @@ export class WebGlGScript extends GameScript<Conifg> {
 
   public config = {
     transparency: true,
-    glFov: 0,
+    glFov: (45 * Math.PI) / 180,
   };
+
+  // This is called by the rust side
+  getConfig(): Config {
+    return this.config;
+  }
+
+  setConfig(config: Config): void {
+    this.config = { ...this.config, ...config };
+    console.log("WebGlGScript config updated:", this.config);
+
+    // Recreate projection matrix if FOV changed
+    if (config.glFov && this.program) {
+      this.createProjectionMatrix();
+    }
+  }
+
+  onChunkUpdate(chunkId: number): void {
+    // no-op
+  }
+
+  onEntityUpdate(entityId: number): void {
+    // no-op
+  }
 
   constructor(game: Game) {
     super(game);
 
-    this.config = {
-      transparency: game.config.transparency,
-      glFov: game.config.glFov,
-    };
+    this.eCanvas.style.display = "block";
 
     // init gl eCanvas
     const gl = this.eCanvas.getContext("webgl2", {
@@ -59,7 +79,7 @@ export class WebGlGScript extends GameScript<Conifg> {
     });
     if (gl === null) throw new Error("WebGL failed to load"); // Only continue if WebGL is available and working
 
-    this.textureAtlas = this.loadTextureFromUrl("./img/texture_map.png", gl);
+    this.textureAtlas = this.loadTextureFromUrl("/img/texture_map.png", gl);
 
     this.galleryImagesPaths.forEach((path) => {
       const img = new Image();

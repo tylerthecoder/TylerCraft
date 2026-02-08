@@ -6,7 +6,7 @@
     "module": "esnext",
     "moduleResolution": "node"
   },
-  "include": ["./**/*.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": ["dist/**"],
   "references": [{ "path": "../../lib/engine" }]
 }

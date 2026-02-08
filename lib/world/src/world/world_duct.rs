@@ -1,9 +1,8 @@
 use super::World;
 use crate::{
-    chunk::Chunk,
-    direction::Directions,
-    geometry::ray::Ray,
-    world::{world_block::WorldBlock, ChunkPos, WorldPos},
+    chunk::{chunk::Chunk, chunk::ChunkId, chunk_pos::ChunkPos},
+    geometry::{direction::Directions, ray::Ray},
+    world::{world_block::WorldBlock, WorldPos},
 };
 use serde_wasm_bindgen::{from_value, to_value, Error};
 use wasm_bindgen::prelude::*;
@@ -68,20 +67,22 @@ impl World {
         })
     }
 
-    pub fn get_chunk_mesh_wasm(&self, val: JsValue) -> Result<JsValue, Error> {
-        from_value(val).and_then(|pos: ChunkPos| {
-            let mesh = self.get_chunk_mesh(&pos).map_err(Self::convert_error)?;
+    pub fn get_chunk_mesh_wasm(&self, chunk_id: ChunkId) -> Result<JsValue, Error> {
+        let chunk_pos = ChunkPos::from_id(chunk_id);
 
-            let wasm_chunk_mesh = mesh
-                .into_iter()
-                .map(|(world_pos, directions)| {
-                    let block = self.get_block(&world_pos);
-                    (block, directions.to_owned())
-                })
-                .collect::<Vec<(WorldBlock, Directions)>>();
+        let mesh = self
+            .get_chunk_mesh(&chunk_pos)
+            .map_err(Self::convert_error)?;
 
-            to_value(&wasm_chunk_mesh)
-        })
+        let wasm_chunk_mesh = mesh
+            .into_iter()
+            .map(|(world_pos, directions)| {
+                let block = self.get_block(&world_pos);
+                (block, directions.to_owned())
+            })
+            .collect::<Vec<(WorldBlock, Directions)>>();
+
+        to_value(&wasm_chunk_mesh)
     }
 
     pub fn is_block_loaded_wasm(&self, val: JsValue) -> Result<JsValue, Error> {
@@ -106,6 +107,10 @@ impl World {
             self.insert_chunk(chunk);
             Ok(())
         })
+    }
+
+    pub fn deserialize_wasm(value: JsValue) -> Result<World, Error> {
+        from_value(value)
     }
 
     pub fn has_chunk_wasm(&self, value: JsValue) -> bool {

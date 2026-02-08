@@ -10,9 +10,12 @@
   },
   "dependencies": {
     "@craft/engine": "1.0.0",
+    "@tailwindcss/vite": "^4.1.7",
     "gl-matrix": "2.4.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.8.0",
+    "tailwindcss": "^4.1.7"
   },
   "devDependencies": {
     "@craft/eslint-config-tylercraft": "^1.0.0",

@@ -3,6 +3,7 @@ use noise::{NoiseFn, Perlin};
 use rand::rngs::StdRng;
 use rand::SeedableRng;
 use rand_distr::{Distribution, Uniform};
+use serde::{Deserialize, Serialize};
 use wasm_bindgen::prelude::*;
 use world::{
     block::{self, BlockType, ChunkBlock},
@@ -101,6 +102,7 @@ impl TreeLocator {
             blocks.push(WorldBlock {
                 world_pos: pos,
                 block_type: BlockType::Leaf,
+
                 extra_data: block::BlockData::None,
             });
         }
@@ -111,16 +113,24 @@ impl TreeLocator {
 
 pub struct TreeRandomSpreadGenerator {
     seed: u64,
+    dist: Uniform<u8>,
 }
 
 impl TreeRandomSpreadGenerator {
+    fn make_from_seed(seed: u64) -> TreeRandomSpreadGenerator {
+        TreeRandomSpreadGenerator {
+            seed,
+            dist: Uniform::new(0, CHUNK_WIDTH),
+        }
+    }
+
+
     fn get_potential_tree_locations(
         &self,
         chunk_pos: ChunkPos,
     ) -> Box<dyn Iterator<Item = WorldPos>> {
         let chunk_seed = self.seed + (chunk_pos.x as u64 * 1000) + (chunk_pos.y as u64 * 1000000);
         let mut rng: StdRng = SeedableRng::seed_from_u64(chunk_seed);
-        let dist = Uniform::new(0, CHUNK_WIDTH);
 
         let mut tree_locations: Vec<WorldPos> = Vec::new();
 
@@ -392,6 +402,95 @@ impl FlatWorldChunkGetter {
                 chunk.add_block(block);
             }
         }
+        chunk
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+#[wasm_bindgen]
+struct ParkorChunkGetter {
+    #[wasm_bindgen(skip)]
+    pub current_blocks: Vec<WorldBlock>,
+
+    // how far away the blocks are generated from requested chunks
+    pub load_distance: u8,
+}
+
+#[wasm_bindgen]
+impl ParkorChunkGetter {
+    pub fn new() -> ParkorChunkGetter {
+        ParkorChunkGetter {
+            current_blocks: Vec::new(),
+            load_distance: 4,
+        }
+    }
+
+    pub fn get_chunk_wasm(&mut self, chunk_x: i16, chunk_y: i16) -> Chunk {
+        let chunk_pos = ChunkPos {
+            x: chunk_x,
+            y: chunk_y,
+        };
+        self.get_chunk(&chunk_pos)
+    }
+}
+
+impl ParkorChunkGetter {
+    pub fn get_next_block(&self) -> WorldBlock {
+        let current_block = self.current_blocks.last();
+
+        if let Some(block) = current_block {
+            let block_pos = block.world_pos;
+
+            // compute the next pos
+            let next_pos = block_pos
+                .move_direction(&Direction::North)
+                .move_direction(&Direction::North);
+
+            WorldBlock {
+                world_pos: next_pos,
+                block_type: BlockType::Stone,
+                extra_data: block::BlockData::None,
+            }
+        } else {
+            // return the first block
+            WorldBlock {
+                world_pos: WorldPos::new(0, 0, 0),
+                block_type: BlockType::Stone,
+                extra_data: block::BlockData::None,
+            }
+        }
+    }
+
+    fn load_chunk(&mut self, chunk_pos: &ChunkPos) {
+        // check if there are any blocks in this chunk
+        let next_block = self.get_next_block();
+
+        let mut count = 0;
+
+        // keep loading the next block until it isn't load distance away from me
+        while next_block.world_pos.to_chunk_pos().distance_to(*chunk_pos) as u8
+            <= self.load_distance
+            && count < 10
+        {
+            self.current_blocks.push(next_block);
+            let next_block = self.get_next_block();
+            self.current_blocks.push(next_block);
+            count += 1;
+        }
+    }
+
+    pub fn get_chunk(&mut self, chunk_pos: &ChunkPos) -> Chunk {
+        let mut chunk = Chunk::new(*chunk_pos);
+
+        self.load_chunk(chunk_pos);
+
+        for block in self.current_blocks.iter() {
+            let block_chunk_pos = block.world_pos.to_chunk_pos();
+            if block_chunk_pos == *chunk_pos {
+                chunk.add_block(block.to_chunk_block());
+            }
+        }
+
         chunk
     }
 }

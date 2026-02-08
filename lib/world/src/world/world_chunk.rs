@@ -1,16 +1,26 @@
-use std::collections::HashSet;
+use wasm_bindgen::prelude::wasm_bindgen;
 
 use super::{ChunkNotLoadedError, World, WorldStateDiff};
 use crate::{
-    chunk::{chunk_mesh::ChunkMesh, Chunk},
-    positions::{ChunkPos, WorldPos},
+    chunk::{
+        chunk::{Chunk, ChunkId},
+        chunk_mesh::ChunkMesh,
+        chunk_pos::ChunkPos,
+    },
+    components::world_pos::WorldPos,
+    game::Game,
 };
+use std::collections::HashSet;
 
 impl World {
     pub fn get_chunk(&self, chunk_pos: &ChunkPos) -> Result<&Chunk, ChunkNotLoadedError> {
         self.chunks
             .get(&chunk_pos.to_world_index())
             .ok_or(ChunkNotLoadedError)
+    }
+
+    pub fn chunk_count(&self) -> usize {
+        self.chunks.len()
     }
 
     pub fn has_chunk(&self, chunk_pos: &ChunkPos) -> bool {
@@ -24,6 +34,10 @@ impl World {
         self.get_chunk(&world_pos.to_chunk_pos())
     }
 
+    pub fn get_all_chunk_ids(&self) -> HashSet<ChunkId> {
+        self.chunks.keys().map(|&k| k as u64).collect()
+    }
+
     pub fn get_mut_chunk(
         &mut self,
         chunk_pos: &ChunkPos,
@@ -35,13 +49,13 @@ impl World {
 
     pub fn insert_chunk(&mut self, chunk: Chunk) -> WorldStateDiff {
         // Update adjacent chunk meshes
-        let updated_chunk_ids: HashSet<String> = chunk
+        let updated_chunk_ids: HashSet<u64> = chunk
             .position
             .get_adjacent_vecs()
             .iter()
             .filter_map(|chunk_pos| {
                 if self.update_chunk_mesh(chunk_pos).is_ok() {
-                    Some(chunk_pos.to_index())
+                    Some(chunk_pos.to_id())
                 } else {
                     None
                 }
@@ -70,14 +84,41 @@ impl World {
         self.chunks.insert(index.to_owned(), chunk);
         self.chunks.get_mut(&index.to_owned()).unwrap()
     }
+
+    pub fn get_loaded_chunk_ids(&self) -> Vec<u64> {
+        let keys = self
+            .chunks
+            .values()
+            .map(|c| c.position.to_id())
+            .collect::<Vec<u64>>();
+        keys
+    }
+}
+
+#[wasm_bindgen]
+impl Game {
+    #[wasm_bindgen(js_name = "getLoadedChunkids")]
+    pub fn get_loaded_chunkids_wasm(&self) -> Vec<u64> {
+        self.world.get_loaded_chunk_ids()
+    }
+
+    #[wasm_bindgen(js_name = "getChunk")]
+    pub fn get_chunk_wasm(&self, chunk_pos: &ChunkPos) -> Result<Chunk, ChunkNotLoadedError> {
+        let chunk = self.world.get_chunk(chunk_pos)?;
+        Ok(chunk.to_owned())
+    }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::time::{Duration, Instant};
+
     use crate::{
         block::{BlockData, BlockType, ChunkBlock},
-        chunk::Chunk,
-        positions::{ChunkPos, InnerChunkPos, WorldPos},
+        chunk::{chunk::Chunk, chunk_pos::ChunkPos, inner_chunk_pos::InnerChunkPos},
+        components::world_pos::WorldPos,
+        geometry::vec::Vector3Ops,
+        terrain_gen::TerrainGenerator,
         world::{world_block::WorldBlock, World},
     };
 
@@ -113,7 +154,7 @@ mod tests {
 
         let block_pos = WorldPos::new(0, 0, 0);
 
-        let chunk = Chunk::new(ChunkPos { x: 0, y: 0 });
+        let chunk = Chunk::new(ChunkPos::new(0, 0));
 
         // In the first chunk
         world.insert_chunk(chunk);
@@ -132,7 +173,7 @@ mod tests {
         assert_eq!(block.extra_data, BlockData::None);
 
         // In a different chunk
-        let chunk2 = Chunk::new(ChunkPos { x: 1, y: 0 });
+        let chunk2 = Chunk::new(ChunkPos::new(1, 0));
         let block_pos = WorldPos::new(16, 0, 0);
 
         let world_block = WorldBlock {
@@ -149,5 +190,33 @@ mod tests {
 
         assert_eq!(block.block_type, BlockType::Gold);
         assert_eq!(block.extra_data, BlockData::None);
+    }
+
+    #[test]
+    fn profile_chunk_insertion() {
+        // Average time: 32.633088ms
+        // Max time: 50.154277ms
+
+        // New
+        // Average time: 20.878063ms
+        // Max time: 31.049449ms
+
+        let terrain_gen = TerrainGenerator::default();
+
+        let mut times = Vec::new();
+        for _ in 0..500 {
+            let start_time = Instant::now();
+            let mut world = World::default();
+            let chunk_pos = ChunkPos::new(0, 0);
+            let chunk = terrain_gen.get_chunk(chunk_pos.x, chunk_pos.y);
+            world.insert_chunk(chunk);
+            times.push(start_time.elapsed());
+        }
+
+        println!(
+            "Average time: {:?}",
+            times.iter().sum::<Duration>() / times.len() as u32
+        );
+        println!("Max time: {:?}", times.iter().max().unwrap());
     }
 }

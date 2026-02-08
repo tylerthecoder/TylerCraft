@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+.toolbelt-item.selected {
+  border-color: red;
+}

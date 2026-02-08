@@ -1,6 +1,5 @@
 use crate::{
-    chunk::{Chunk, InnerChunkPos},
-    positions::ChunkPos,
+    chunk::{chunk::Chunk, chunk_pos::ChunkPos, inner_chunk_pos::InnerChunkPos},
     world::world_block::WorldBlock,
 };
 use serde_wasm_bindgen::{from_value, to_value, Error};
@@ -15,8 +14,8 @@ impl Chunk {
         })
     }
 
-    pub fn get_chunk_id(&self) -> String {
-        self.position.to_index()
+    pub fn get_chunk_id(&self) -> u64 {
+        self.position.to_id()
     }
 
     pub fn add_block_wasm(&mut self, js_block: JsValue) -> Result<(), Error> {

@@ -1,6 +1,11 @@
+use crate::components::fine_world_pos::FineWorldPos;
+use crate::components::size3::Size3;
+use crate::components::world_pos::WorldPos;
+use crate::geometry::direction::DirectionVectorExtension;
+use crate::geometry::vec::Vector3Ops;
+use crate::world::World;
+
 use super::line_segment::{LineSegment, LineSegmentIntersectionInfo};
-use crate::positions::WorldPos;
-use crate::{positions::FineWorldPos, vec::Vec3, world::World};
 use serde::{Deserialize, Serialize};
 use serde_wasm_bindgen::{from_value, to_value};
 use std::cmp::Ordering;
@@ -10,12 +15,37 @@ use wasm_bindgen::JsValue;
 #[derive(Debug, Serialize, Deserialize, PartialEq, Clone, Copy)]
 pub struct Rect3 {
     pub pos: FineWorldPos,
-    pub dim: Vec3<f32>,
+    pub dim: Size3,
 }
 
-static DISTANCE_EPSILON: f32 = 0.03;
+static DISTANCE_EPSILON: f32 = 0.01;
 
 impl Rect3 {
+    pub fn does_intersect(&self, other: &Rect3) -> bool {
+        // Axis-Aligned Bounding Box (AABB) intersection test
+        let self_min_x = self.pos.x;
+        let self_max_x = self.pos.x + self.dim.x;
+        let self_min_y = self.pos.y;
+        let self_max_y = self.pos.y + self.dim.y;
+        let self_min_z = self.pos.z;
+        let self_max_z = self.pos.z + self.dim.z;
+
+        let other_min_x = other.pos.x;
+        let other_max_x = other.pos.x + other.dim.x;
+        let other_min_y = other.pos.y;
+        let other_max_y = other.pos.y + other.dim.y;
+        let other_min_z = other.pos.z;
+        let other_max_z = other.pos.z + other.dim.z;
+
+        // Check for separation along each axis
+        !(self_max_x <= other_min_x
+            || self_min_x >= other_max_x
+            || self_max_y <= other_min_y
+            || self_min_y >= other_max_y
+            || self_max_z <= other_min_z
+            || self_min_z >= other_max_z)
+    }
+
     pub fn get_all_points(&self) -> [FineWorldPos; 8] {
         let x = self.pos.x;
         let y = self.pos.y;
@@ -96,7 +126,25 @@ impl Rect3 {
 }
 
 impl World {
-    fn get_moving_rect3_intersection_info(
+    pub fn get_rect3_intersection_infos(
+        &self,
+        rect: &Rect3,
+        end_pos: FineWorldPos,
+    ) -> Vec<LineSegmentIntersectionInfo> {
+        let diff = end_pos.sub(&rect.pos);
+
+        let line_segments = rect.get_all_points().map(|point| LineSegment {
+            start_pos: point,
+            end_pos: point.add(&diff),
+        });
+
+        line_segments
+            .iter()
+            .filter_map(|seg| self.get_line_segment_intersection_info(*seg))
+            .collect()
+    }
+
+    pub fn get_moving_rect3_intersection_info(
         &self,
         rect: &Rect3,
         end_pos: FineWorldPos,
@@ -106,13 +154,13 @@ impl World {
             rect, end_pos
         );
 
-        let diff = end_pos - rect.pos;
+        let diff = end_pos.sub(&rect.pos);
 
         println!("diff: {:?}", diff);
 
         let line_segments = rect.get_all_points().map(|point| LineSegment {
             start_pos: point,
-            end_pos: point + diff,
+            end_pos: point.add(&diff),
         });
 
         for segment in &line_segments {
@@ -131,51 +179,86 @@ impl World {
     }
 
     pub fn move_rect3(&self, rect: &Rect3, end_pos: FineWorldPos) -> FineWorldPos {
-        let new_pos_from_info = |info: LineSegmentIntersectionInfo, end_pos: FineWorldPos| {
-            let hit_axis = info.world_plane.direction.to_axis();
-            let mut new_pos = end_pos.clone();
-            let outward = info.world_plane.direction.is_outward();
-            let rect_dim_dir = rect.dim.get_component_from_axis(hit_axis);
-
-            let eplison_diff = if outward {
-                DISTANCE_EPSILON
-            } else {
-                -(rect_dim_dir + DISTANCE_EPSILON)
-            };
-
-            let hit_plane_pos = info.world_plane.get_relative_y() as f32;
-
-            let new_axis_pos = eplison_diff + hit_plane_pos;
-
-            // println!(
-            //     "outward: {}, eplison_diff: {}, hit_plane_pos: {}, new_axis_pos: {}",
-            //     outward, eplison_diff, hit_plane_pos, new_axis_pos
-            // );
-
-            new_pos.set_component_from_axis(hit_axis, new_axis_pos);
-            new_pos
-        };
-
+        // Handle multiple sequential collisions (e.g., hitting a wall then the ground)
         let mut current_end_pos = end_pos;
+        let mut current_rect = *rect;
 
+        // loop 3 times to handle multiple collisions one for each axis
         for _ in 0..3 {
-            let intersection = self.get_moving_rect3_intersection_info(rect, current_end_pos);
+            // Check for collisions from current position to target
+            let intersections = self.get_rect3_intersection_infos(&current_rect, current_end_pos);
 
-            if let Some(info) = intersection {
-                // unsafe {
-                //     web_sys::console::log_2(&"intersection".into(), &to_value(&info).unwrap())
-                // }
-                println!("intersection: {:?}", info);
-
-                current_end_pos = new_pos_from_info(info, current_end_pos);
-                // unsafe {
-                //     web_sys::console::log_2(&"new_pos".into(), &to_value(&current_end_pos).unwrap())
-                // }
-                println!("new_pos: {:?}", current_end_pos);
-            } else {
-                // If no intersection is found, break the loop
+            if intersections.is_empty() {
                 break;
             }
+
+            // Calculate the intersection that would push the rect the least
+            let mut axis_diffs = Vec::new();
+            for intersection in &intersections {
+                let hit_axis = intersection.world_plane.direction.to_axis();
+                let outward = intersection.world_plane.direction.is_outward();
+                let hit_plane_pos = intersection.world_plane.get_relative_y() as f32;
+
+                let new_axis_pos = if outward {
+                    hit_plane_pos + DISTANCE_EPSILON
+                } else {
+                    let rect_dim_dir = current_rect.dim.get_component_from_axis(hit_axis);
+                    hit_plane_pos - (rect_dim_dir + DISTANCE_EPSILON)
+                };
+
+                let current_end_pos_intersection_axis_val =
+                    current_end_pos.get_component_from_axis(hit_axis);
+
+                let diff = new_axis_pos - current_end_pos_intersection_axis_val;
+
+                axis_diffs.push((hit_axis, diff, new_axis_pos));
+            }
+
+            let min_diff = axis_diffs
+                .iter()
+                .min_by(|a, b| a.1.abs().partial_cmp(&b.1.abs()).unwrap_or(Ordering::Equal));
+
+            if min_diff.is_none() {
+                // No valid intersection found, break out of the loop
+                break;
+            }
+
+            let (hit_axis, _, new_axis_pos) = min_diff.unwrap();
+
+            // Push the rect!
+            current_end_pos.set_component_from_axis(*hit_axis, *new_axis_pos);
+            current_rect
+                .pos
+                .set_component_from_axis(*hit_axis, *new_axis_pos);
+
+            // let intersections_string = intersections
+            //     .iter()
+            //     .map(|info| format!("\n   {:?}", info))
+            //     .collect::<Vec<String>>()
+            //     .join(", ");
+
+            // let axises_diff_string = axis_diffs
+            //     .iter()
+            //     .map(|(axis, diff, new_axis_pos)| {
+            //         format!(
+            //             "\n   axis: {:?}, diff: {:?}, new_axis_pos: {:?}",
+            //             axis, diff, new_axis_pos
+            //         )
+            //     })
+            //     .collect::<Vec<String>>()
+            //     .join(", ");
+
+            // js_log(&format!(
+            //     "({:?}) hit_axis: {:?}, \naxises_diff: {}, \nintersections: {}, \nstart_pos: {:?}, \ntrying_to_go_to: {:?}, \ncurrent_rect_pos: {:?}, \ncurrent_end_pos: {:?}",
+            //     iteration,
+            //     hit_axis,
+            //     axises_diff_string,
+            //     intersections_string,
+            //     rect.pos,
+            //     end_pos,
+            //     current_rect.pos,
+            //     current_end_pos
+            // ));
         }
 
         current_end_pos
@@ -227,9 +310,9 @@ pub mod tests {
     use crate::{
         block::{BlockData, BlockType},
         chunk::Chunk,
+        components::{fine_world_pos::FineWorldPos, size3::Size3, world_pos::WorldPos},
         geometry::rect3::Rect3,
-        positions::{FineWorldPos, WorldPos},
-        vec::Vec3,
+        geometry::vec::Vector3Ops,
         world::{world_block::WorldBlock, World},
     };
 
@@ -298,7 +381,7 @@ pub mod tests {
                     y: 2.3,
                     z: 0.5,
                 },
-                dim: Vec3::new(1.0, 1.0, 1.0),
+                dim: Size3::new(1.0, 1.0, 1.0),
             },
             FineWorldPos {
                 x: 0.5,
@@ -327,7 +410,7 @@ pub mod tests {
                     y: 2.3,
                     z: 0.5,
                 },
-                dim: Vec3::new(1.0, 1.0, 1.0),
+                dim: Size3::new(1.0, 1.0, 1.0),
             },
             FineWorldPos {
                 x: 0.5,
@@ -356,7 +439,7 @@ pub mod tests {
                     y: 1.3,
                     z: 2.5,
                 },
-                dim: Vec3::new(1.0, 1.0, 1.0),
+                dim: Size3::new(1.0, 1.0, 1.0),
             },
             FineWorldPos {
                 x: 0.5,
@@ -381,7 +464,7 @@ pub mod tests {
                     y: 1.3,
                     z: -1.5,
                 },
-                dim: Vec3::new(1.0, 1.0, 1.0),
+                dim: Size3::new(1.0, 1.0, 1.0),
             },
             FineWorldPos {
                 x: -3.5,
@@ -410,7 +493,7 @@ pub mod tests {
                     y: 1.5,
                     z: -1.5,
                 },
-                dim: Vec3::new(0.8, 0.8, 0.8),
+                dim: Size3::new(0.8, 0.8, 0.8),
             },
             FineWorldPos {
                 x: 0.5,
@@ -439,7 +522,7 @@ pub mod tests {
                     y: 1.5,
                     z: 0.5,
                 },
-                dim: Vec3::new(1.0, 1.0, 1.0),
+                dim: Size3::new(1.0, 1.0, 1.0),
             },
             FineWorldPos {
                 x: 0.5,
@@ -464,7 +547,7 @@ pub mod tests {
                     y: 1.03,
                     z: 0.023,
                 },
-                dim: Vec3::new(1.0, 1.0, 1.0),
+                dim: Size3::new(1.0, 1.0, 1.0),
             },
             FineWorldPos {
                 x: 5.007,
@@ -548,7 +631,7 @@ pub mod tests {
                     y: 1.1,
                     z: 0.5,
                 },
-                dim: Vec3::new(1.0, 2.0, 1.0),
+                dim: Size3::new(1.0, 2.0, 1.0),
             },
             FineWorldPos {
                 x: -0.3,
@@ -584,7 +667,7 @@ pub mod tests {
                     y: 1.3,
                     z: -1.5,
                 },
-                dim: Vec3::new(0.8, 2.0, 0.8),
+                dim: Size3::new(0.8, 2.0, 0.8),
             },
             FineWorldPos {
                 x: -2.5,
@@ -620,7 +703,7 @@ pub mod tests {
                     y: 1.3,
                     z: 1.9,
                 },
-                dim: Vec3::new(0.8, 2.0, 0.8),
+                dim: Size3::new(0.8, 2.0, 0.8),
             },
             FineWorldPos {
                 x: 2.3,
@@ -649,7 +732,7 @@ pub mod tests {
                     y: 1.1,
                     z: 0.5,
                 },
-                dim: Vec3::new(1.0, 1.0, 1.0),
+                dim: Size3::new(1.0, 1.0, 1.0),
             },
             FineWorldPos {
                 x: 0.3,
@@ -662,6 +745,52 @@ pub mod tests {
                 z: -0.3,
             },
         );
+    }
+
+    #[test]
+    fn test_cursed_movement() {
+        // test_try_moving_blocks(
+        //     vec![
+        //         WorldBlock {
+        //             block_type: BlockType::Leaf,
+        //             extra_data: BlockData::None,
+        //             world_pos: WorldPos::new(-15, 0, -24),
+        //         },
+        //         WorldBlock {
+        //             block_type: BlockType::Leaf,
+        //             extra_data: BlockData::None,
+        //             world_pos: WorldPos::new(-15, 0, -25),
+        //         },
+        //         WorldBlock {
+        //             block_type: BlockType::Leaf,
+        //             extra_data: BlockData::None,
+        //             world_pos: WorldPos::new(-14, 0, -24),
+        //         },
+        //         WorldBlock {
+        //             block_type: BlockType::Leaf,
+        //             extra_data: BlockData::None,
+        //             world_pos: WorldPos::new(-14, 0, -25),
+        //         },
+        //     ],
+        //     Rect3 {
+        //         pos: FineWorldPos {
+        //             x: -14.833749,
+        //             y: 1.03,
+        //             z: -25.27446,
+        //         },
+        //         dim: Size3::new(1.0, 1.0, 1.0),
+        //     },
+        //     FineWorldPos {
+        //         x: -15.493927,
+        //         y: 0.92999995,
+        //         z: -24.523352,
+        //     },
+        //     FineWorldPos {
+        //         x: -15.493927,
+        //         y: 1.03,
+        //         z: -24.523352,
+        //     },
+        // );
     }
 
     fn test_get_rect3_intersecting_blocks(
@@ -691,7 +820,7 @@ pub mod tests {
                     y: 2.3,
                     z: 0.5,
                 },
-                dim: Vec3::new(1.0, 1.0, 1.0),
+                dim: Size3::new(1.0, 1.0, 1.0),
             },
             vec![],
         );
@@ -711,7 +840,7 @@ pub mod tests {
                     y: 0.5,
                     z: 0.0,
                 },
-                dim: Vec3::new(1.0, 1.0, 1.0),
+                dim: Size3::new(1.0, 1.0, 1.0),
             },
             vec![WorldPos::new(0, 0, 0)],
         );

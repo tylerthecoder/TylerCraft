@@ -1,0 +1,116 @@
+import {
+  Direction,
+  EntityActionDto,
+  Game,
+  JumpAction,
+  MoveAction,
+  RotateAction,
+  SecondaryBeltAction,
+  SelectItemAction,
+  SphericalRotation,
+  TeleportAction,
+  UsePrimaryItemAction,
+} from "@craft/rust-world";
+export abstract class PlayerController {
+  private _pendingRotation: SphericalRotation | null = null;
+
+  constructor(
+    protected game: Game,
+    protected handleAction: (action: EntityActionDto) => void,
+    protected playerId: number
+  ) {}
+
+  jump() {
+    const action = JumpAction.make_wasm(this.playerId);
+    this.handleAction(action);
+  }
+
+  rotate(x: number, y: number) {
+    if (!this._pendingRotation) {
+      const player = this.game.getEntityAsPlayer(this.playerId);
+      if (!player) return;
+      this._pendingRotation = player.rot;
+    }
+    const rotDiff = SphericalRotation.new_wasm(x, y);
+    this._pendingRotation = this._pendingRotation.add(rotDiff);
+    // Create a copy for the action since make_wasm consumes the WASM object
+    const rotCopy = SphericalRotation.new_wasm(
+      this._pendingRotation.theta,
+      this._pendingRotation.phi
+    );
+    const action = RotateAction.make_wasm(this.playerId, rotCopy);
+    this.handleAction(action);
+  }
+
+  /** Call once per frame to reset frame-local state like the rotation accumulator. */
+  resetFrame() {
+    this._pendingRotation = null;
+  }
+
+  move(direction: Direction | "None") {
+    let action: EntityActionDto;
+    if (direction === "None") {
+      action = MoveAction.make_wasm(this.playerId, undefined);
+    } else {
+      action = MoveAction.make_wasm(this.playerId, direction);
+    }
+    this.handleAction(action);
+  }
+
+  beltRight() {
+    const player = this.game.getEntityAsPlayer(this.playerId);
+    if (!player) {
+      return;
+    }
+    const index = player.belt.selected_item;
+    if (index === 9) {
+      return;
+    }
+    const action = SelectItemAction.make_wasm(this.playerId, index + 1);
+    this.handleAction(action);
+  }
+
+  beltLeft() {
+    const player = this.game.getEntityAsPlayer(this.playerId);
+    if (!player) {
+      return;
+    }
+    const index = player.belt.selected_item;
+    if (index === 0) {
+      return;
+    }
+    const action = SelectItemAction.make_wasm(this.playerId, index - 1);
+    this.handleAction(action);
+  }
+
+  selectBelt(pos: number) {
+    const action = SelectItemAction.make_wasm(this.playerId, pos);
+    this.handleAction(action);
+  }
+
+  debugBlock() {
+    // TO-DO
+  }
+
+  primaryAction() {
+    const action = UsePrimaryItemAction.make_wasm(this.playerId);
+    this.handleAction(action);
+  }
+
+  secondaryAction() {
+    const action = SecondaryBeltAction.make_wasm(this.playerId);
+    this.handleAction(action);
+  }
+
+  teleport(x: number, y: number, z: number) {
+    const action = TeleportAction.make_wasm(this.playerId, x, y, z);
+    this.handleAction(action);
+  }
+
+  toggleCreative() {
+    // const action = PlayerAction.make(PlayerActionType.ToggleCreative, {
+    //   playerUid: this.player.uid,
+    // });
+    // this.playerActionService.performAction(action);
+  }
+}

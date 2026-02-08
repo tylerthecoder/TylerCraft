@@ -1,5 +1,7 @@
 use crate::{
-    chunk::chunk_mesh::BlockMesh, plane::WorldPlane, positions::FineWorldPos, world::World,
+    chunk::chunk_mesh::BlockMesh, components::fine_world_pos::FineWorldPos,
+    geometry::direction::DirectionVectorExtension, geometry::plane::WorldPlane,
+    geometry::vec::Vector3Ops, world::World,
 };
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
@@ -10,7 +12,7 @@ pub struct LineSegment {
     pub end_pos: FineWorldPos,
 }
 
-#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct LineSegmentIntersectionInfo {
     pub intersection_point: FineWorldPos,
     pub world_plane: WorldPlane,
@@ -19,7 +21,7 @@ pub struct LineSegmentIntersectionInfo {
 
 impl LineSegment {
     pub fn length(&self) -> f32 {
-        self.start_pos.distance_to(self.end_pos)
+        self.start_pos.distance_to(&self.end_pos)
     }
 
     pub fn find_intersection(&self, plane: &WorldPlane) -> Option<FineWorldPos> {
@@ -50,9 +52,9 @@ impl LineSegment {
 
         // println!("t: {}", t);
 
-        let slope = self.end_pos - self.start_pos;
-        let scaled_slope = slope * t;
-        let intersection_point = self.start_pos + scaled_slope;
+        let slope = self.end_pos.sub(&self.start_pos);
+        let scaled_slope = slope.scalar_mult(t);
+        let intersection_point = self.start_pos.add(&scaled_slope);
 
         // println!("Intersection Point: {:?}", intersection_point);
 
@@ -74,7 +76,7 @@ impl LineSegment {
                     .map(|intersection_point| LineSegmentIntersectionInfo {
                         intersection_point,
                         world_plane,
-                        distance: self.start_pos.distance_to(intersection_point),
+                        distance: self.start_pos.distance_to(&intersection_point),
                     })
             })
             // log the values
@@ -96,7 +98,7 @@ impl LineSegment {
                     Some(Ordering::Equal) | None => {
                         // handle by comparing plane centers
                         let plane_center_dist = |info: &LineSegmentIntersectionInfo| {
-                            let dist = info.world_plane.get_center().distance_to(self.start_pos);
+                            let dist = info.world_plane.get_center().distance_to(&self.start_pos);
                             println!("line->block_mesh plane dist: {:?}", dist);
                             dist
                         };
@@ -129,9 +131,16 @@ impl World {
         // println!("Length: {}", line_segment.length());
         // println!("Length: {}", (line_segment.length() + 1.0) as i32);
 
-        for n in 0..(line_segment.length() + 2.0) as i32 {
-            let slope = (line_segment.end_pos - line_segment.start_pos).set_mag(1.0);
-            let marched_pos = line_segment.start_pos + slope * n as f32;
+        // Use smaller step size to catch more intersections, especially near block boundaries
+        let step_size = 0.25;
+        let num_steps = ((line_segment.length() / step_size) + 2.0) as i32;
+
+        for n in 0..num_steps {
+            let slope = line_segment
+                .end_pos
+                .sub(&line_segment.start_pos)
+                .set_mag(step_size);
+            let marched_pos = line_segment.start_pos.add(&slope.scalar_mult(n as f32));
 
             // println!("Marched Pos: {:?}", marched_pos);
             // println!("Slope: {:?}", slope);
@@ -178,12 +187,13 @@ impl World {
 #[cfg(test)]
 pub mod tests {
     use crate::{
-        chunk::{chunk_mesh::BlockMesh, Chunk},
-        direction::{Direction, Directions},
-        plane::WorldPlane,
-        positions::{FineWorldPos, WorldPos},
-        vec::Vec3,
-        world::World,
+        chunk::chunk_mesh::BlockMesh,
+        components::{fine_world_pos::FineWorldPos, world_pos::WorldPos},
+        geometry::{
+            direction::{Direction, Directions},
+            plane::WorldPlane,
+            vec::Vector3Ops,
+        },
     };
 
     use super::{LineSegment, LineSegmentIntersectionInfo};
@@ -205,8 +215,8 @@ pub mod tests {
         };
 
         let line_segment = LineSegment {
-            start_pos: Vec3::new(0.5, 0.0, 0.5),
-            end_pos: Vec3::new(0.5, 1.5, 0.5),
+            start_pos: FineWorldPos::new(0.5, 0.0, 0.5),
+            end_pos: FineWorldPos::new(0.5, 1.5, 0.5),
         };
         let expect_intersection = FineWorldPos {
             x: 0.5,
@@ -221,8 +231,8 @@ pub mod tests {
         };
 
         let line_segment = LineSegment {
-            start_pos: Vec3::new(0.2, 0.5, 0.2),
-            end_pos: Vec3::new(0.4, -0.5, 0.4),
+            start_pos: FineWorldPos::new(0.2, 0.5, 0.2),
+            end_pos: FineWorldPos::new(0.4, -0.5, 0.4),
         };
         let expect_intersection = FineWorldPos {
             x: 0.3,
@@ -237,8 +247,8 @@ pub mod tests {
         };
 
         let line_segment = LineSegment {
-            start_pos: Vec3::new(0.2, 0.5, 0.2),
-            end_pos: Vec3::new(0.4, -0.5, 0.4),
+            start_pos: FineWorldPos::new(0.2, 0.5, 0.2),
+            end_pos: FineWorldPos::new(0.4, -0.5, 0.4),
         };
         let expect_intersection = None;
         run_line_segment_test(plane, line_segment, expect_intersection);
@@ -248,8 +258,8 @@ pub mod tests {
             direction: Direction::East,
         };
         let line_segment = LineSegment {
-            start_pos: Vec3::new(0.5, 0.5, 0.5),
-            end_pos: Vec3::new(1.5, 0.5, 0.5),
+            start_pos: FineWorldPos::new(0.5, 0.5, 0.5),
+            end_pos: FineWorldPos::new(1.5, 0.5, 0.5),
         };
         let expect_intersection = FineWorldPos {
             x: 1.0,
@@ -267,8 +277,8 @@ pub mod tests {
                 direction: Direction::South,
             },
             LineSegment {
-                start_pos: Vec3::new(-1.5, 0.5, -1.9),
-                end_pos: Vec3::new(-1.5, 0.5, -2.1),
+                start_pos: FineWorldPos::new(-1.5, 0.5, -1.9),
+                end_pos: FineWorldPos::new(-1.5, 0.5, -2.1),
             },
             Some(FineWorldPos {
                 x: -1.5,
@@ -286,8 +296,8 @@ pub mod tests {
                 direction: Direction::South,
             },
             LineSegment {
-                start_pos: Vec3::new(-1.5, 0.5, -3.0),
-                end_pos: Vec3::new(-1.5, 0.5, -1.0),
+                start_pos: FineWorldPos::new(-1.5, 0.5, -3.0),
+                end_pos: FineWorldPos::new(-1.5, 0.5, -1.0),
             },
             Some(FineWorldPos {
                 x: -1.5,
@@ -309,8 +319,8 @@ pub mod tests {
     #[test]
     fn find_intersection_with_blockmesh() {
         let line_segment = LineSegment {
-            start_pos: Vec3::new(0.5, 0.0, 0.5),
-            end_pos: Vec3::new(0.5, 1.5, 0.5),
+            start_pos: FineWorldPos::new(0.5, 0.0, 0.5),
+            end_pos: FineWorldPos::new(0.5, 1.5, 0.5),
         };
 
         let block_mesh = BlockMesh {
@@ -323,8 +333,8 @@ pub mod tests {
         run_blockmesh_test(line_segment, block_mesh, expect_intersection_info);
 
         let line_segment = LineSegment {
-            start_pos: Vec3::new(0.5, 2.0, 0.5),
-            end_pos: Vec3::new(0.5, -1.0, 0.5),
+            start_pos: FineWorldPos::new(0.5, 2.0, 0.5),
+            end_pos: FineWorldPos::new(0.5, -1.0, 0.5),
         };
 
         let block_mesh = BlockMesh {

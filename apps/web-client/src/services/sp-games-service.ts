@@ -1,14 +1,107 @@
 import {
-  Game,
-  IGameMetadata,
+  IApiGameMetadata,
   ISerializedGame,
-  ICreateGameOptions,
-  IGameSaver,
-  IGamesService,
-  SandboxGScript,
+  deserializeGame,
+  serializeGame,
 } from "@craft/engine";
+import { CreateGameOptions, Game } from "@craft/rust-world";
+import { getMyUid } from "../utils";
+import { SandBoxGScript } from "@craft/rust-world";
+import { GameRendererGameScript } from "../renders/game-renderer";
+import {
+  addGameRenderer,
+  addHudRenderer,
+  addPlayerController,
+  loadInitialChunks,
+  RunningGame,
+} from "./running-game";
+import { RunGameError } from "./running-game";
 
-export class ClientDbGamesService implements IGamesService {
+const log = (...message: any[]) => {
+  console.log("sp-games-service.ts: ", ...message);
+};
+
+export async function create(options: CreateGameOptions): Promise<string> {
+  log("Creating new game");
+  const startCreation = performance.now();
+  const game = Game.create(options);
+  const endCreation = performance.now();
+  log("Created new game in", endCreation - startCreation, "ms");
+  log("Saving game");
+  const startSaving = performance.now();
+  await spGameService.saveGame(game);
+  const endSaving = performance.now();
+  log("Saved game in", endSaving - startSaving, "ms");
+  return game.id;
+}
+
+export async function run(
+  uiMessage: (message: string) => void,
+  id: string
+): Promise<RunningGame | RunGameError> {
+  log("Starting game", id);
+
+  // ===== Getting or Creating Game =====
+  let game: Game | null = null;
+  uiMessage("Checking records...");
+
+  const serializedGame = await spGameService.getGame(id);
+  if (!serializedGame) {
+    return {
+      error: "Game with id " + id + " not found",
+    };
+  }
+
+  uiMessage("Loading game");
+
+  const start = performance.now();
+  game = deserializeGame(serializedGame);
+  const end = performance.now();
+  log("Deserialized game in", end - start, "ms");
+
+  log("The Game", game);
+  (window as any).game = game;
+
+  // ===== Main Player =====
+  const mainPlayerUid = getMyUid();
+  game.makeAndAddPlayer(mainPlayerUid);
+  game.add_new_entities();
+
+  // ===== Game Scripts =====
+  log("Ensuring scripts");
+  game.ensureScript(SandBoxGScript.name());
+  game.ensureScript(GameRendererGameScript.name);
+  game.add_all_scripts();
+
+  // ===== Running Game =====
+  const runningGame = new RunningGame(game, mainPlayerUid);
+
+  // ===== Load Initial Chunks =====
+  await loadInitialChunks(runningGame, uiMessage);
+
+  // ===== Game Renderer =====
+  const gameRenderer = await addGameRenderer(runningGame, uiMessage);
+
+  // ===== Player Controller =====
+  // TODO: Remove the gameRenderer requirement so we can do this earlier on
+  addPlayerController(runningGame, gameRenderer);
+
+  // ===== Hud Renderer =====
+  // TODO: Remove the gameRenderer requirement so we can do this earlier on
+  addHudRenderer(runningGame, gameRenderer);
+
+  // ===== Add Saving =====
+  runningGame.saveListeners.addListener(() => {
+    spGameService.saveGame(game);
+  }, "save");
+
+  // ===== Start Game =====
+  runningGame.start();
+
+  return runningGame;
+}
+
+export class ClientDbGamesService {
   private static WORLDS_OBS = "worlds";
 
   static async factory() {
@@ -46,24 +139,7 @@ export class ClientDbGamesService implements IGamesService {
 
   private constructor(private db: IDBDatabase) {}
 
-  async createGame(
-    createGameOptions: ICreateGameOptions | ISerializedGame
-  ): Promise<Game> {
-    const gameSaver = this.getGameSaver();
-    const game = Game.make(createGameOptions, gameSaver);
-    game.addGameScript(SandboxGScript);
-    return game;
-  }
-
-  private getGameSaver(): IGameSaver {
-    return {
-      save: async (game: Game) => {
-        this.saveGame(game);
-      },
-    };
-  }
-
-  getAllGames(): Promise<IGameMetadata[]> {
+  getAllGames(): Promise<IApiGameMetadata[]> {
     return new Promise((resolve) => {
       const transaction = this.db.transaction([
         ClientDbGamesService.WORLDS_OBS,
@@ -89,7 +165,28 @@ export class ClientDbGamesService implements IGamesService {
     });
   }
 
-  async getGame(gameId: string): Promise<Game | null> {
+  async hasGame(gameId: string): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      const transaction = this.db.transaction(
+        [ClientDbGamesService.WORLDS_OBS],
+        "readonly"
+      );
+      const objectStore = transaction.objectStore(
+        ClientDbGamesService.WORLDS_OBS
+      );
+
+      // `getKey` is supported in modern browsers, lighter than `get`
+      const request = objectStore.getKey(gameId);
+
+      request.onsuccess = (event: any) => {
+        resolve(event.target.result !== undefined); // key exists if result is not undefined
+      };
+
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async getGame(gameId: string): Promise<ISerializedGame | null> {
     const foundGame: ISerializedGame | null = await new Promise((resolve) => {
       const transaction = this.db.transaction([
         ClientDbGamesService.WORLDS_OBS,
@@ -112,26 +209,30 @@ export class ClientDbGamesService implements IGamesService {
 
     if (!foundGame) return null;
 
-    return this.createGame(foundGame);
+    return foundGame;
   }
 
   async saveGame(data: Game) {
-    const transaction = this.db.transaction(
-      [ClientDbGamesService.WORLDS_OBS],
-      "readwrite"
-    );
+    log("Saving game", data);
+    return new Promise<void>((resolve, reject) => {
+      const transaction = this.db.transaction(
+        [ClientDbGamesService.WORLDS_OBS],
+        "readwrite"
+      );
+      const serializedGame = serializeGame(data);
 
-    console.log("Saving game", data);
+      transaction.oncomplete = async () => {
+        log("Saving game complete");
+        resolve();
+      };
+      transaction.onerror = () => {
+        console.log("There was an error", event);
+        reject(event);
+      };
+      const objStore = transaction.objectStore(ClientDbGamesService.WORLDS_OBS);
 
-    transaction.oncomplete = () => {
-      console.log("All done!");
-    };
-    transaction.onerror = () => {
-      console.log("There was an error", event);
-    };
-    const objStore = transaction.objectStore("worlds");
-
-    objStore.put(data.serialize());
+      objStore.put(serializedGame);
+    });
   }
 
   async deleteGame(gameId: string) {
@@ -151,3 +252,5 @@ export class ClientDbGamesService implements IGamesService {
     objStore.delete(gameId);
   }
 }
+
+export const spGameService = await ClientDbGamesService.factory();

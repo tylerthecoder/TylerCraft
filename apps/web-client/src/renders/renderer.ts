@@ -1,6 +1,6 @@
-import { Camera, arraySub, IDim } from "@craft/engine";
+import { Camera, Vector3D } from "@craft/engine";
 import { mat4, vec3 } from "gl-matrix";
-import { WebGlGScript } from "../game-scripts/webgl-gscript";
+import { GameRenderer } from "./game-renderer";
 
 interface IRenderData {
   positions: number[];
@@ -50,10 +50,10 @@ export abstract class Renderer {
   amount = 0;
   transAmount = 0;
 
-  constructor(protected webGlGScript: WebGlGScript) {}
+  constructor(protected gameRenderer: GameRenderer) {}
 
   protected setBuffers(renData: IRenderData, transRenData?: IRenderData) {
-    const gl = this.webGlGScript.gl;
+    const gl = this.gameRenderer.gl;
 
     this.amount = renData.indices.length;
 
@@ -120,8 +120,8 @@ export abstract class Renderer {
   // Tell WebGL how to pull out the positions from the position
   // buffer into the vertexPosition attribute.
   private bindCube(trans: boolean) {
-    const programInfo = this.webGlGScript.program;
-    const gl = this.webGlGScript.gl;
+    const programInfo = this.gameRenderer.program;
+    const gl = this.gameRenderer.gl;
 
     const posBuffer = trans ? this.transPosBuffer : this.posBuffer;
     const indexBuffer = trans ? this.transIndexBuffer : this.indexBuffer;
@@ -146,8 +146,8 @@ export abstract class Renderer {
 
   // tell webgl how to pull out the texture coordinates from buffer
   private bindTexture(trans: boolean) {
-    const programInfo = this.webGlGScript.program;
-    const gl = this.webGlGScript.gl;
+    const programInfo = this.gameRenderer.program;
+    const gl = this.gameRenderer.gl;
 
     const textureBuffer = trans ? this.transTextureBuffer : this.textureBuffer;
 
@@ -169,9 +169,9 @@ export abstract class Renderer {
 
   abstract render(camera: Camera): void;
 
-  renderXrObject(pos: number[], camera: Camera, trans?: boolean) {
+  renderXrObject(pos: Vector3D, camera: Camera, trans?: boolean) {
     const { currentXRFrame, xrRefSpace, gl, program, webXrSession } =
-      this.webGlGScript;
+      this.gameRenderer;
     if (!currentXRFrame || !xrRefSpace || !webXrSession) {
       return;
     }
@@ -202,11 +202,13 @@ export abstract class Renderer {
         view.transform.inverse.matrix as mat4
       );
 
+      const move_pos = pos.sub(camera.pos).data;
+
       // Now move the drawing position to where we want to start drawing the square.
       mat4.translate(
         modelViewMatrix, // destination matrix
         modelViewMatrix, // matrix to translate
-        new Float32Array(arraySub(pos, camera.pos.data)) as vec3
+        new Float32Array(move_pos) as vec3
       );
 
       gl.uniformMatrix4fv(
@@ -235,34 +237,33 @@ export abstract class Renderer {
     }
   }
 
-  renderObject(pos: IDim, camera: Camera, trans?: boolean) {
-    if (this.webGlGScript.currentXRFrame) {
+  renderObject(pos: Vector3D, camera: Camera, trans?: boolean) {
+    if (this.gameRenderer.currentXRFrame) {
       return this.renderXrObject(pos, camera, trans);
     }
-    const gl = this.webGlGScript.gl;
-    const programInfo = this.webGlGScript.program;
+    const gl = this.gameRenderer.gl;
+    const programInfo = this.gameRenderer.program;
 
     // Set the drawing position to the "identity" point, which is
     // the center of the scene.
+
+    const theta = Math.PI - camera.rot.get(2);
+    const phi = camera.rot.get(1);
     const modelViewMatrix = mat4.create();
-    mat4.rotate(
-      modelViewMatrix,
-      modelViewMatrix,
-      camera.rot.get(2) - Math.PI / 2,
-      [1, 0, 0]
-    );
-    mat4.rotate(
-      modelViewMatrix,
-      modelViewMatrix,
-      camera.rot.get(1) - Math.PI / 2,
-      [0, 1, 0]
-    );
+
+    // Flip the image across the Y-axis by scaling X by -1
+    mat4.scale(modelViewMatrix, modelViewMatrix, [-1, 1, 1]);
+
+    mat4.rotate(modelViewMatrix, modelViewMatrix, phi, [1, 0, 0]);
+    mat4.rotate(modelViewMatrix, modelViewMatrix, theta, [0, 1, 0]);
+
+    const move_pos = pos.sub(camera.pos).data;
 
     // Now move the drawing position to where we want to start drawing the square.
     mat4.translate(
       modelViewMatrix, // destination matrix
       modelViewMatrix, // matrix to translate
-      new Float32Array(arraySub(pos, camera.pos.data)) as vec3
+      new Float32Array(move_pos) as vec3
     );
 
     this.bindCube(trans || false);

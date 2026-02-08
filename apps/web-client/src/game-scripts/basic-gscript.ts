@@ -1,16 +1,17 @@
 import {
   EntityController,
-  Game,
-  Player,
   PlayerActionService,
+  WorldModule,
 } from "@craft/engine";
 import { IS_MOBILE, getMyUid } from "../app";
-import { MobileController } from "../controllers/playerControllers/mobileController";
-import { KeyboardPlayerEntityController } from "../controllers/playerControllers/keyboardPlayerController";
-import { CanvasGameScript } from "../game-scripts/canvas-gscript";
+import { MobileController } from "../controllers/mobileController";
+import { KeyboardPlayerEntityController } from "../controllers/keyboardPlayerController";
+import { CanvasGameScript } from "../renders/game-renderer";
 import { GameScript } from "@craft/engine/game-script";
 import { WebGlGScript } from "./webgl-gscript";
-import { HudGScript } from "./hudRender";
+import { HudGScript } from "../renders/hud-renderer";
+import { Game, Player } from "@craft/rust-world";
+import { GameWrapper, PlayerAction } from "@craft/engine/modules";
 
 export class BasicGScript extends GameScript {
   name = "basic";
@@ -38,16 +39,24 @@ export class BasicGScript extends GameScript {
 
   playerActionService: PlayerActionService;
 
-  constructor(public game: Game) {
-    super(game);
+  constructor(public g: GameWrapper) {
+    const game = WorldModule.createGame();
+
+    super(g);
     console.log("Starting basic usecase");
     console.log("My UID", getMyUid());
 
-    this.mainPlayer = game.addPlayer(getMyUid());
+    const player = g.createPlayer(Number(getMyUid()));
+    this.mainPlayer = player;
+    game.addPlayer(player);
 
     console.log("Main player", this.mainPlayer);
 
     this.playerActionService = new PlayerActionService(game);
+  }
+
+  onPlayerAction(action: PlayerAction) {
+    this.game.handleAction(action);
   }
 
   setup() {

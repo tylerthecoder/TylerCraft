@@ -1,10 +1,10 @@
 use super::{line_segment::LineSegment, rotation::SphericalRotation};
 use crate::{
     chunk::chunk_mesh::BlockMesh,
-    direction::Direction,
-    plane::WorldPlane,
-    positions::FineWorldPos,
-    vec::Vec3,
+    components::fine_world_pos::FineWorldPos,
+    geometry::direction::{Direction, DirectionVectorExtension},
+    geometry::plane::WorldPlane,
+    geometry::vec::Vector3Ops,
     world::{world_block::WorldBlock, World},
 };
 use serde::{Deserialize, Serialize};
@@ -25,27 +25,27 @@ pub struct LookingAt {
     /**
      * The block a camera is pointing at
     	*/
-    block: WorldBlock,
+    pub block: WorldBlock,
     /**
      * The face of the block that is being looked at
      */
-    face: Direction,
+    pub face: Direction,
     /**
      * How far the face is away from the camera
      */
-    distance: f32,
+    pub distance: f32,
 }
 
 impl Ray {
     pub fn move_forward_mut(&mut self, amount: f32) {
-        let rot_vec: Vec3<f32> = self.rot.into();
-        self.pos = rot_vec.scalar_mult(amount)
+        let rot_vec = self.rot.get_unit_vector().scalar_mult(amount);
+        self.pos = FineWorldPos::new(rot_vec.x(), rot_vec.y(), rot_vec.z());
     }
 
     pub fn move_forward(&self, amount: f32) -> Ray {
-        let rot_vec: Vec3<f32> = self.rot.into();
+        let rot_vec = self.rot.get_unit_vector();
         Ray {
-            pos: self.pos.add_vec(rot_vec.scalar_mult(amount)),
+            pos: self.pos.add(&rot_vec.scalar_mult(amount)),
             rot: self.rot,
         }
     }
@@ -69,17 +69,17 @@ impl Ray {
         // PlanePos[dim] = CameraPos[dim] + t * CameraRotation
         // t = (PlanePos[dim] - CameraPos[dim]) / CameraRotation
 
-        let rot_vec: Vec3<f32> = self.rot.into();
+        let rot_vec = self.rot.get_unit_vector();
 
         let t = (plane.get_relative_y() as f32
             - self.pos.get_component_from_direction(plane.direction))
             / rot_vec.get_component_from_direction(plane.direction);
 
         // Now find the actual position
-        let intersect_pos = self.pos.add_vec(rot_vec.scalar_mult(t));
+        let intersect_pos = self.pos.add(&rot_vec.scalar_mult(t));
 
         if plane.contains(intersect_pos) {
-            Some(self.pos.distance_to(intersect_pos))
+            Some(self.pos.distance_to(&intersect_pos))
         } else {
             None
         }
@@ -107,11 +107,12 @@ mod tests {
     use super::{LookingAt, Ray};
     use crate::{
         block::{BlockData, BlockType},
-        chunk::{chunk_mesh::BlockMesh, Chunk},
-        direction::{Direction, Directions},
+        chunk::{chunk::Chunk, chunk_mesh::BlockMesh},
+        components::{fine_world_pos::FineWorldPos, world_pos::WorldPos},
+        geometry::direction::{Direction, Directions},
+        geometry::plane::WorldPlane,
         geometry::rotation::SphericalRotation,
-        plane::WorldPlane,
-        positions::{FineWorldPos, WorldPos},
+        geometry::vec::Vector3Ops,
         world::{world_block::WorldBlock, World},
     };
 

@@ -1,15 +1,19 @@
 use crate::{
-    direction::Directions,
-    plane::WorldPlane,
-    positions::{ChunkPos, InnerChunkPos, WorldPos},
+    chunk::{chunk_pos::ChunkPos, inner_chunk_pos::InnerChunkPos},
+    components::world_pos::WorldPos,
+    geometry::direction::Directions,
+    geometry::plane::WorldPlane,
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use wasm_bindgen::prelude::wasm_bindgen;
 
 #[derive(Serialize, Deserialize, Clone)]
+#[wasm_bindgen]
 pub struct ChunkMesh {
-    face_map: HashMap<usize, Directions>,
-    chunk_pos: ChunkPos,
+    #[wasm_bindgen(skip)]
+    pub face_map: HashMap<usize, Directions>,
+    pub chunk_pos: ChunkPos,
 }
 
 #[derive(PartialEq, Debug, Serialize, Deserialize)]
@@ -80,8 +84,10 @@ impl IntoIterator for &ChunkMesh {
 mod tests {
     use crate::{
         chunk::chunk_mesh::{BlockMesh, ChunkMesh},
-        direction::Directions,
-        positions::{ChunkPos, WorldPos},
+        chunk::chunk_pos::ChunkPos,
+        components::world_pos::WorldPos,
+        geometry::direction::Directions,
+        geometry::vec::Vector3Ops,
     };
 
     #[test]
@@ -90,9 +96,9 @@ mod tests {
         let mut chunk_mesh = ChunkMesh::new(chunk_pos);
         let world_pos = WorldPos::new(0, 0, 0);
         let directions = Directions::all();
-        chunk_mesh.insert(world_pos, directions);
+        chunk_mesh.insert(world_pos.clone(), directions);
         assert_eq!(
-            chunk_mesh.get(world_pos),
+            chunk_mesh.get(world_pos.clone()),
             BlockMesh {
                 world_pos,
                 directions
@@ -106,7 +112,7 @@ mod tests {
         let chunk_mesh = ChunkMesh::new(chunk_pos);
         let world_pos = WorldPos::new(0, 0, 0);
         assert_eq!(
-            chunk_mesh.get(world_pos),
+            chunk_mesh.get(world_pos.clone()),
             BlockMesh {
                 world_pos,
                 directions: Directions::empty()
