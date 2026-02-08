@@ -118,6 +118,7 @@ impl GameScript for SandBoxGScript {
         world: &World,
         query_results: EntityQueryResults,
         chunk_fetcher: &mut ChunkFetcher,
+        _delta_ms: f32,
     ) -> Option<GameSchedule> {
         let entity_poses: Vec<FineWorldPos> = query_results
             .entities

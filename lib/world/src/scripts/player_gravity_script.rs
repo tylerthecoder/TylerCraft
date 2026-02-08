@@ -68,6 +68,7 @@ impl GameScript for GravityScript {
         _world: &World,
         query_results: EntityQueryResults,
         _chunk_fetcher: &mut ChunkFetcher,
+        _delta_ms: f32,
     ) -> Option<GameSchedule> {
         for entity in query_results.entities {
             let data = entity.get::<GravityData>().unwrap();

@@ -9,7 +9,7 @@ use wasm_bindgen::prelude::wasm_bindgen;
 #[wasm_bindgen]
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct RotateActionData {
-    pub rot_diff: SphericalRotation,
+    pub rot: SphericalRotation,
 }
 
 #[wasm_bindgen]
@@ -34,9 +34,7 @@ impl EntityActionHandler for RotateAction {
     ) -> GameSchedule {
         let data = data.get_data::<RotateActionData>().unwrap();
 
-        let new_rot = entity.get::<SphericalRotation>().unwrap().to_owned() + data.rot_diff;
-
-        entity.set::<SphericalRotation>(new_rot);
+        entity.set::<SphericalRotation>(data.rot);
 
         GameSchedule::empty()
     }
@@ -49,8 +47,8 @@ pub mod wasm {
 
     #[wasm_bindgen]
     impl RotateAction {
-        pub fn make_wasm(entity_id: EntityId, rot_diff: SphericalRotation) -> EntityActionDto {
-            let data = RotateActionData { rot_diff };
+        pub fn make_wasm(entity_id: EntityId, rot: SphericalRotation) -> EntityActionDto {
+            let data = RotateActionData { rot };
             RotateAction::make_dto(entity_id, data)
         }
 

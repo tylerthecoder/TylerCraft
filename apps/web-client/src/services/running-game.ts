@@ -4,10 +4,16 @@ import { IS_MOBILE, task } from "../utils";
 import { MobileController } from "../controllers/mobileController";
 import { KeyboardPlayerEntityController } from "../controllers/keyboardPlayerController";
 import { GameRenderer } from "../renders/game-renderer";
+import { EntitySyncChecker } from "./entity-sync-checker";
+import { AppConfig } from "../appConfig";
 
 export interface RunGameError {
   error: string;
 }
+
+// Fixed timestep constants
+const FIXED_TIMESTEP_MS = 1000 / 60; // 16.67ms = 60 ticks per second
+const MAX_ACCUMULATED_TIME = FIXED_TIMESTEP_MS * 5; // Cap at 5 frames to prevent spiral of death
 
 function makeListenerGroup<T extends unknown[]>(listenerGroupName: string) {
   const listeners: Array<{ func: (...args: T) => void; name: string }> = [];
@@ -27,13 +33,34 @@ function makeListenerGroup<T extends unknown[]>(listenerGroupName: string) {
 export class RunningGame {
   private running = true;
   private pendingActions: unknown[] = [];
+  private accumulatedTime = 0;
+  private lastFrameTime = performance.now();
+  public currentFrameTime = 0; // Exposed for renderers to use
+  private entitySyncChecker: EntitySyncChecker | null = null;
 
-  constructor(public game: Game, public playerId: number) {}
+  constructor(
+    public game: Game,
+    public playerId: number,
+    enableEntitySync = false
+  ) {
+    if (enableEntitySync) {
+      this.entitySyncChecker = new EntitySyncChecker(
+        this.game,
+        this.game.id,
+        AppConfig.api.baseUrl
+      );
+    }
+  }
 
   public startListeners = makeListenerGroup<[]>("start");
   public start() {
     console.log("Starting game");
     this.startListeners.callAll();
+
+    // Start entity sync checker if configured
+    if (this.entitySyncChecker) {
+      this.entitySyncChecker.start();
+    }
 
     const updateWrapper = async () => {
       await this.update();
@@ -49,12 +76,29 @@ export class RunningGame {
   public cleanup() {
     console.log("Cleaning up game");
     this.running = false;
+
+    // Stop entity sync checker
+    if (this.entitySyncChecker) {
+      this.entitySyncChecker.stop();
+    }
+
     this.cleanupListeners.callAll();
   }
 
   public updateListeners = makeListenerGroup<[]>("update");
   public async update() {
     const start = performance.now();
+    const now = performance.now();
+    const frameTime = now - this.lastFrameTime;
+    this.lastFrameTime = now;
+    this.currentFrameTime = now;
+
+    // Cap accumulated time to prevent spiral of death
+    this.accumulatedTime = Math.min(
+      this.accumulatedTime + frameTime,
+      MAX_ACCUMULATED_TIME
+    );
+
     // Drain pending actions from JS queue into Rust queue
     // This must happen in a synchronous block before any awaits
     for (const actionData of this.pendingActions) {
@@ -62,7 +106,13 @@ export class RunningGame {
     }
     this.pendingActions = [];
     this.game.handle_actions();
-    this.game.run_scripts();
+
+    // Run fixed timestep updates
+    while (this.accumulatedTime >= FIXED_TIMESTEP_MS) {
+      this.game.run_scripts(FIXED_TIMESTEP_MS);
+      this.accumulatedTime -= FIXED_TIMESTEP_MS;
+    }
+
     await task();
     this.game.add_new_entities();
     await task();
@@ -129,7 +179,8 @@ export async function addGameRenderer(
   const gameRenderer = new GameRenderer(runningGame.game, runningGame.playerId);
   const update = () => {
     gameRenderer.update();
-    gameRenderer.renderLoop(0);
+    // Pass actual timestamp to fix FPS counter (was hardcoded to 0)
+    gameRenderer.renderLoop(runningGame.currentFrameTime);
   };
   const cleanup = () => {
     gameRenderer.cleanup();

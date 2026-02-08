@@ -62,6 +62,7 @@ impl GameScript for VelocityScript {
         world: &crate::world::World,
         query_results: EntityQueryResults,
         _chunk_fetcher: &mut ChunkFetcher,
+        _delta_ms: f32,
     ) -> Option<GameSchedule> {
         for entity in query_results.entities {
             let mut vel = entity.get::<Velocity>().unwrap().to_owned();

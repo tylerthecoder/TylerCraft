@@ -39,6 +39,7 @@ pub trait GameScript: Any + Debug {
         _world: &World,
         _query_results: EntityQueryResults,
         _chunk_fetcher: &mut ChunkFetcher,
+        _delta_ms: f32,
     ) -> Option<GameSchedule> {
         None
     }
@@ -422,6 +423,7 @@ impl GameScript for WasmGameScript {
         _world: &World,
         _query_results: EntityQueryResults,
         _chunk_fetcher: &mut ChunkFetcher,
+        _delta_ms: f32,
     ) -> Option<GameSchedule> {
         None
     }

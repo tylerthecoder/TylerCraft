@@ -24,8 +24,12 @@ export abstract class PlayerController {
   }
 
   rotate(x: number, y: number) {
+    const player = this.game.getEntityAsPlayer(this.playerId);
+    if (!player) return;
+    const currentRot = player.rot;
     const rotDiff = SphericalRotation.new_wasm(x, y);
-    const action = RotateAction.make_wasm(this.playerId, rotDiff);
+    const newRot = currentRot.add(rotDiff);
+    const action = RotateAction.make_wasm(this.playerId, newRot);
     this.handleAction(action);
   }
 

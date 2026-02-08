@@ -154,6 +154,13 @@ impl Game {
     pub fn add_entity(&mut self, entity: Entity) {
         self.entities.add_entity(entity);
     }
+
+    #[wasm_bindgen(js_name = "replaceEntities")]
+    pub fn replace_entities(&mut self, entities_js: JsValue) -> Result<(), serde_wasm_bindgen::Error> {
+        let entities: Entities = from_value(entities_js)?;
+        self.entities = entities;
+        Ok(())
+    }
 }
 
 #[wasm_bindgen]

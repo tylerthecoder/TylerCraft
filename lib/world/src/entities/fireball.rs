@@ -91,6 +91,7 @@ impl GameScript for FireballScript {
         world: &crate::world::World,
         mut query_results: EntityQueryResults,
         _chunk_fetcher: &mut ChunkFetcher,
+        _delta_ms: f32,
     ) -> Option<GameSchedule> {
         let mut game_schedule = GameSchedule::empty();
 

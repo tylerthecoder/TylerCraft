@@ -115,4 +115,17 @@ app.get("/game/:id/chunk/:x/:y", async (req: Request, res: Response) => {
   res.send(chunk);
 });
 
+// Entity sync endpoint for client-server comparison
+app.get("/game/:id/entities", async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const game = games.get(id);
+  if (!game) {
+    res.status(404).send("Game not found");
+    return;
+  }
+
+  const entitiesJs = game.getSerializedEntities();
+  res.json(entitiesJs);
+});
+
 console.log("Server started");

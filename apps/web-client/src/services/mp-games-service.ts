@@ -138,7 +138,7 @@ export async function run(
   console.log("My UID", myUid);
 
   // ===== Running Game =====
-  const runningGame = new RunningGame(game, myUid);
+  const runningGame = new RunningGame(game, myUid, true);
 
   // ===== Load Initial Chunks =====
   await loadInitialChunks(runningGame, uiMessage);

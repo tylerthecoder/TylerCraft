@@ -21,6 +21,10 @@ impl SphericalRotation {
     pub fn new_wasm(theta: f32, phi: f32) -> SphericalRotation {
         SphericalRotation { theta, phi }
     }
+
+    pub fn add(&self, other: &SphericalRotation) -> SphericalRotation {
+        *self + *other
+    }
 }
 
 impl_component!(SphericalRotation);

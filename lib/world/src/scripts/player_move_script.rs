@@ -99,6 +99,7 @@ impl GameScript for MoveScript {
         _world: &crate::world::World,
         query_results: EntityQueryResults,
         _chunk_fetcher: &mut ChunkFetcher,
+        _delta_ms: f32,
     ) -> Option<GameSchedule> {
         for entity in query_results.entities {
             let rot = entity.get::<SphericalRotation>().unwrap().to_owned();

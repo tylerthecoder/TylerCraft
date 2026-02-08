@@ -23,6 +23,8 @@ type ClientId = number;
 
 const AUTO_SAVE_GAME = false;
 const AUTO_SAVE_GAME_INTERVAL = 5000;
+const FIXED_TIMESTEP_MS = 1000 / 60; // 16.67ms = 60 ticks per second
+const FPS_LOG_INTERVAL_MS = 5000; // Log FPS every 5 seconds
 
 const makeGameLogger = (gameId: string) => {
   return makeLogger(`ServerGameManager:${gameId}`);
@@ -71,6 +73,10 @@ export class ServerGameManager {
   is_running = false;
   log: (...args: any[]) => void;
 
+  // FPS tracking
+  private updateCount = 0;
+  private lastFpsLogTime = Date.now();
+
   static async create(
     gameDto: ISerializedGame,
     socketService: SocketServer,
@@ -80,7 +86,7 @@ export class ServerGameManager {
     const log = makeGameLogger(game.id);
     game.ensureScript(SandBoxGScript.name());
 
-    game.run_scripts();
+    game.run_scripts(FIXED_TIMESTEP_MS);
 
     async function task() {
       await new Promise((resolve) => setTimeout(resolve, 0));
@@ -135,13 +141,13 @@ export class ServerGameManager {
       }
 
       this.game.makeAndAddPlayer(myUid);
+      this.game.add_new_entities(); // Ensure player is added before serializing
 
       const entities = this.game.serializeEntities();
-
       this.log("Entities", JSON.stringify(entities, null, 2));
 
       // load chunks around the player
-      this.game.run_scripts();
+      this.game.run_scripts(FIXED_TIMESTEP_MS);
 
       async function task() {
         await new Promise((resolve) => setTimeout(resolve, 0));
@@ -235,7 +241,19 @@ export class ServerGameManager {
   // }
 
   update() {
-    this.game.update();
+    this.game.update(FIXED_TIMESTEP_MS);
+    this.updateCount++;
+
+    // Log FPS periodically
+    const now = Date.now();
+    if (now - this.lastFpsLogTime >= FPS_LOG_INTERVAL_MS) {
+      const elapsed = (now - this.lastFpsLogTime) / 1000;
+      const fps = this.updateCount / elapsed;
+      this.log(`Server FPS: ${fps.toFixed(1)}`);
+      this.updateCount = 0;
+      this.lastFpsLogTime = now;
+    }
+
     // send game diff to clients
     const updatedChunks = this.getGameManagerGameScript().getUpdatedChunks();
     if (updatedChunks.length > 0) {
@@ -301,6 +319,10 @@ export class ServerGameManager {
 
   getOnlinePlayers(): number {
     return this.clients.size;
+  }
+
+  getSerializedEntities(): unknown {
+    return this.game.serializeEntities();
   }
 
   save() {

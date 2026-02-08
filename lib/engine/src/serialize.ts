@@ -53,7 +53,8 @@ export interface ISerializedWorld {
 
 export interface SerializedEntity {
   id: number;
-  components: string[];
+  name: string;
+  components: [string, string][]; // [typeName, jsonValue]
 }
 
 export interface SerializedEntities {
