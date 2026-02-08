@@ -169,7 +169,7 @@ export function addPlayerController(
     );
   };
   const playerController = getPlayerController(runningGame);
-  runningGame.updateListeners.addListener(playerController.update, "update");
+  runningGame.updateListeners.addListener(() => playerController.update(), "update");
 }
 
 export async function addGameRenderer(

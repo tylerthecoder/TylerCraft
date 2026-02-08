@@ -7,6 +7,7 @@ import { GameScript } from "@craft/engine/game-script";
 
 export class AiAgentController extends PlayerController {
   update(): void {
+    this.resetFrame();
     this.move([Direction.Forwards]);
   }
 

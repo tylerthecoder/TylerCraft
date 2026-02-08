@@ -192,7 +192,7 @@ export class MobileController extends PlayerController {
   }
 
   update() {
-    // NO-OP
+    this.resetFrame();
   }
 
   cleanup(): void {

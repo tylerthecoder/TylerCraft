@@ -275,6 +275,7 @@ export class ServerGameManager {
 
   start() {
     this.log("Starting game");
+    this.is_running = true;
     if (this.timer) {
       clearInterval(this.timer);
     }
@@ -294,6 +295,7 @@ export class ServerGameManager {
   }
 
   stop() {
+    this.is_running = false;
     if (this.timer) {
       clearInterval(this.timer);
       this.timer = null;

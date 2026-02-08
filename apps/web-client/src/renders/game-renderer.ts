@@ -279,7 +279,7 @@ export class GameRenderer {
   getCamera(): Camera {
     const player = this.game.getEntityAsPlayer(this.mainPlayerId);
     if (!player) {
-      throw new Error("Player not found");
+      throw new Error("Main player not found with id " + this.mainPlayerId);
     }
     if (this.isXr) {
       return makeXRCamera(player);

@@ -220,6 +220,6 @@ export class KeyboardPlayerEntityController extends PlayerController {
   }
 
   update() {
-    // NO-OP
+    this.resetFrame();
   }
 }

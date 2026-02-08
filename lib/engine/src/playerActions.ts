@@ -12,6 +12,8 @@ import {
   UsePrimaryItemAction,
 } from "@craft/rust-world";
 export abstract class PlayerController {
+  private _pendingRotation: SphericalRotation | null = null;
+
   constructor(
     protected game: Game,
     protected handleAction: (action: EntityActionDto) => void,
@@ -24,13 +26,25 @@ export abstract class PlayerController {
   }
 
   rotate(x: number, y: number) {
-    const player = this.game.getEntityAsPlayer(this.playerId);
-    if (!player) return;
-    const currentRot = player.rot;
+    if (!this._pendingRotation) {
+      const player = this.game.getEntityAsPlayer(this.playerId);
+      if (!player) return;
+      this._pendingRotation = player.rot;
+    }
     const rotDiff = SphericalRotation.new_wasm(x, y);
-    const newRot = currentRot.add(rotDiff);
-    const action = RotateAction.make_wasm(this.playerId, newRot);
+    this._pendingRotation = this._pendingRotation.add(rotDiff);
+    // Create a copy for the action since make_wasm consumes the WASM object
+    const rotCopy = SphericalRotation.new_wasm(
+      this._pendingRotation.theta,
+      this._pendingRotation.phi
+    );
+    const action = RotateAction.make_wasm(this.playerId, rotCopy);
     this.handleAction(action);
+  }
+
+  /** Call once per frame to reset frame-local state like the rotation accumulator. */
+  resetFrame() {
+    this._pendingRotation = null;
   }
 
   move(direction: Direction | "None") {
